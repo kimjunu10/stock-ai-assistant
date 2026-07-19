@@ -1,0 +1,25 @@
+# Secrets and local environment files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dependencies and virtual environments
+**/node_modules/
+**/.venv/
+
+# Python caches and tooling
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+
+# Build output
+**/dist/
+**/build/
+**/*.egg-info/
+
+# OS and editor files
+.DS_Store
+**/.DS_Store
+.vscode/
+.idea/
