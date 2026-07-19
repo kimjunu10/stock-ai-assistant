@@ -23,3 +23,8 @@
 **/.DS_Store
 .vscode/
 .idea/
+
+# Local planning documents and database migrations
+SPEC*.md
+기능정리*.md
+backend/migrations/
