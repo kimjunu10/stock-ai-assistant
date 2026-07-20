@@ -1,121 +1,91 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useCallback, useEffect, useState } from 'react'
+import { AppHeader, MobileNavigation } from './components/AppHeader'
+import { AppLink } from './components/AppLink'
+import { AssistantPanel } from './components/AssistantPanel'
+import { Icon } from './components/Icon'
+import { AskPage } from './pages/AskPage'
+import { HomePage } from './pages/HomePage'
+import { NewsPage } from './pages/NewsPage'
+import { NotFoundPage } from './pages/NotFoundPage'
+import { StockDetailPage } from './pages/StockDetailPage'
+import { StocksPage } from './pages/StocksPage'
+import type { AssistantContext, Theme } from './types'
+
+function getInitialTheme(): Theme {
+  const saved = window.localStorage.getItem('moa-theme')
+  return saved === 'dark' ? 'dark' : 'light'
+}
+
+function getCurrentPath() {
+  return window.location.pathname.replace(/\/$/, '') || '/'
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentPath, setCurrentPath] = useState(getCurrentPath)
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+  const [assistantContext, setAssistantContext] = useState<AssistantContext | null>(null)
+
+  useEffect(() => {
+    const handlePopState = () => setCurrentPath(getCurrentPath())
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    document.documentElement.style.colorScheme = theme
+    window.localStorage.setItem('moa-theme', theme)
+  }, [theme])
+
+  const navigate = useCallback((path: string) => {
+    if (getCurrentPath() !== path) window.history.pushState({}, '', path)
+    setCurrentPath(path)
+    setAssistantContext(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
+  const openAssistant = useCallback((context: AssistantContext) => {
+    setAssistantContext(context)
+  }, [])
+
+  let page
+  const stockMatch = currentPath.match(/^\/stocks\/(\d{6})$/)
+
+  if (currentPath === '/') {
+    page = <HomePage onAsk={openAssistant} onNavigate={navigate} />
+  } else if (currentPath === '/stocks') {
+    page = <StocksPage onNavigate={navigate} />
+  } else if (stockMatch?.[1]) {
+    page = <StockDetailPage onAsk={openAssistant} stockCode={stockMatch[1]} theme={theme} />
+  } else if (currentPath === '/news') {
+    page = <NewsPage onAsk={openAssistant} />
+  } else if (currentPath === '/ask') {
+    page = <AskPage />
+  } else {
+    page = <NotFoundPage onNavigate={navigate} />
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <div className="app">
+      <AppHeader currentPath={currentPath} onNavigate={navigate} onThemeChange={setTheme} theme={theme} />
+      {page}
+      {currentPath !== '/ask' && (
+        <footer className="app-footer">
+          <div className="shell app-footer__inner">
+            <div>
+              <AppLink className="brand brand--footer" href="/" onNavigate={navigate}>
+                <span className="brand__mark" aria-hidden="true"><span /><span /></span>
+                <span>Moa</span><span className="brand__suffix">AI</span>
+              </AppLink>
+              <p>뉴스·공시·리포트를 근거로 쉽게 설명하는 투자 정보 서비스</p>
+            </div>
+            <div className="app-footer__notice"><Icon name="info" size={16} /><span>투자 판단을 위한 참고 정보이며, 매수·매도 추천을 제공하지 않습니다.</span></div>
+          </div>
+        </footer>
+      )}
+      <MobileNavigation currentPath={currentPath} onNavigate={navigate} />
+      <AssistantPanel context={assistantContext} onClose={() => setAssistantContext(null)} open={assistantContext !== null} />
+    </div>
   )
 }
 
