@@ -7,6 +7,9 @@ import { SentimentBadge } from './SentimentBadge'
 import { StockAvatar } from './StockAvatar'
 import { TermUnderline } from './TermUnderline'
 
+const INITIAL_SOURCE_COUNT = 3
+const SOURCE_PAGE_SIZE = 5
+
 interface NewsClusterCardProps {
   cluster: NewsCluster
   compact?: boolean
@@ -66,6 +69,46 @@ function publisherFallbackImage(url: string) {
   }
 }
 
+function splitSentences(value: string) {
+  return value
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(/(?<=[.!?])\s+/)
+    .filter(Boolean)
+}
+
+function factualParagraphs(value: string) {
+  const explicitParagraphs = value
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+  if (explicitParagraphs.length > 1) return explicitParagraphs
+
+  const sentences = splitSentences(value)
+  if (sentences.length <= 2) return sentences.length ? [sentences.join(' ')] : []
+  const paragraphCount = Math.min(3, Math.ceil(sentences.length / 2))
+  const paragraphs: string[] = []
+  let offset = 0
+  for (let index = 0; index < paragraphCount; index += 1) {
+    const remainingSentences = sentences.length - offset
+    const remainingParagraphs = paragraphCount - index
+    const size = Math.ceil(remainingSentences / remainingParagraphs)
+    paragraphs.push(sentences.slice(offset, offset + size).join(' '))
+    offset += size
+  }
+  return paragraphs
+}
+
+function HighlightedParagraph({ children }: { children: string }) {
+  const marked = children.match(/^\*\*(.+?)\*\*\s*(.*)$/s)
+  if (marked) {
+    return <p><strong>{marked[1]}</strong>{marked[2] ? ` ${marked[2]}` : ''}</p>
+  }
+  const [lead, ...rest] = splitSentences(children)
+  if (!lead) return null
+  return <p><strong>{lead}</strong>{rest.length ? ` ${rest.join(' ')}` : ''}</p>
+}
+
 export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = false }: NewsClusterCardProps) {
   const stock = getStock(cluster.stockCode)
   const articleRef = useRef<HTMLElement>(null)
@@ -74,8 +117,12 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
   const [selectionExplanation, setSelectionExplanation] = useState('')
   const [selectionError, setSelectionError] = useState('')
   const [isExplaining, setIsExplaining] = useState(false)
-  const [isEasyExplanationOpen, setIsEasyExplanationOpen] = useState(true)
+  const [isEasyExplanationOpen, setIsEasyExplanationOpen] = useState(false)
+  const [visibleSourceCount, setVisibleSourceCount] = useState(INITIAL_SOURCE_COUNT)
   const sources = cluster.sources ?? []
+  const factualBody = cluster.factualBody ?? cluster.easySummary
+  const visibleSources = sources.slice(0, visibleSourceCount)
+  const hiddenSourceCount = Math.max(0, sources.length - visibleSources.length)
 
   const copySummary = async () => {
     try {
@@ -204,7 +251,11 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
       </details>
       <div className="news-card__factual-body">
         <span>사건 정리</span>
-        <p>{cluster.factualBody ?? cluster.easySummary}</p>
+        <div>
+          {factualParagraphs(factualBody).map((paragraph, index) => (
+            <HighlightedParagraph key={`${cluster.id}:paragraph:${index}`}>{paragraph}</HighlightedParagraph>
+          ))}
+        </div>
       </div>
       {!compact && cluster.sentimentReason && (
         <div className="news-card__reason">
@@ -213,10 +264,18 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
         </div>
       )}
       {sources.length > 0 && (
-        <details className="news-card__sources">
-          <summary>원문 보기</summary>
+        <details
+          className="news-card__sources"
+          onToggle={(event) => {
+            if (!event.currentTarget.open) setVisibleSourceCount(INITIAL_SOURCE_COUNT)
+          }}
+        >
+          <summary>
+            <span>원문 {sources.length}개 보기</span>
+            <Icon name="chevron-right" size={14} />
+          </summary>
           <div>
-            {sources.map((source) => (
+            {visibleSources.map((source) => (
               <a href={source.url} key={source.articleId} rel="noreferrer" target="_blank">
                 <span className="news-card__source-image">
                   <img
@@ -240,15 +299,24 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
                 <Icon className="news-card__source-external" name="external" size={15} />
               </a>
             ))}
+            {hiddenSourceCount > 0 && (
+              <button
+                className="news-card__sources-more"
+                onClick={() => setVisibleSourceCount((count) => Math.min(count + SOURCE_PAGE_SIZE, sources.length))}
+                type="button"
+              >
+                원문 {Math.min(SOURCE_PAGE_SIZE, hiddenSourceCount)}개 더보기
+                <span>{visibleSources.length}/{sources.length}</span>
+                <Icon name="chevron-right" size={14} />
+              </button>
+            )}
           </div>
         </details>
       )}
       <div className="news-card__footer">
         <span>
           기사 {cluster.articleCount}건
-          {cluster.pressList.length > 0 && (
-            <span className="news-card__press-list"> · {cluster.pressList.join(' · ')}</span>
-          )}
+          {cluster.pressList.length > 0 && ` · 언론사 ${cluster.pressList.length}곳`}
         </span>
         {onAsk && (
           <button

@@ -2,7 +2,9 @@
 
 from typing import Any
 
-from app.sources.prices import TossInvestClient
+import pytest
+
+from app.sources.prices import TossApiError, TossInvestClient
 
 
 class FakeResponse:
@@ -114,6 +116,14 @@ class FakeSession:
         )
 
 
+class IpBlockedSession(FakeSession):
+    def post(self, *_args: Any, **_kwargs: Any) -> FakeResponse:
+        return FakeResponse(
+            {"error": "access_denied", "error_description": "IP address not allowed"},
+            status_code=403,
+        )
+
+
 def test_market_data_is_normalized_and_cached() -> None:
     session = FakeSession()
     client = TossInvestClient(
@@ -163,3 +173,17 @@ def test_market_overview_batches_prices_and_caches_previous_closes() -> None:
     assert second is first
     assert session.auth_calls == 1
     assert session.market_calls == 6
+
+
+def test_auth_reports_ip_allowlist_failure() -> None:
+    client = TossInvestClient(
+        "client-id",
+        "client-secret",
+        session=IpBlockedSession(),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(TossApiError) as error:
+        client.get_stock_market_data("005930")
+
+    assert error.value.code == "ip_not_allowed"
+    assert "서버 IP" in str(error.value)

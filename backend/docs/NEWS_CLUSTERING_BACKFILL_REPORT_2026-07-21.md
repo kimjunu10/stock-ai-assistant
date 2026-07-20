@@ -59,7 +59,7 @@
   -> market/info
        -> 기존 날짜·유사도 규칙 경로로 배정 또는 생성
   -> 변경된 클러스터의 centroid/article_count/활성 시각 갱신
-  -> factual_easy_v2 통합 본문 생성 또는 갱신
+  -> factual_easy_v3_readable 통합 본문 생성 또는 갱신
   -> Supabase 저장
 ```
 
@@ -237,15 +237,27 @@ USE_LLM_ASSIGN=true uv run python -m scripts.run_full_news_backfill \
 - 운영 경로는 백필의 지연 요약 방식을 사용하지 않는다. 신규 기사 배정 직후 변경된 해당
   클러스터의 통합 본문을 갱신한다.
 
-## 11. 현재 남은 항목
+## 11. UI 및 후속 검증
 
-- 통합 본문 `pending_retry` 12개 클러스터의 다음 재시도
-- `/api/clusters` 최종 응답 재확인
-- 실제 브라우저에서 복수 원문 클러스터 카드 최종 확인
-- 최종 Ruff, pytest, frontend build 검증
+- `/api/clusters?limit=50`: 200 응답 확인
+- 실제 브라우저에서 93개 원문 클러스터 확인
+- AI 쉬운 설명: 기본 닫힘 확인
+- 사건 정리: 3문단 및 문단별 핵심 문장 볼드 확인
+- 원문 목록: 기본 닫힘, 펼쳤을 때 3개 표시, 더보기 시 5개씩 증가 확인
+- footer: 전체 언론사 문자열 대신 `기사 93건 · 언론사 67곳`으로 축약
+- `factual_easy_v3_readable` 실제 Solar smoke: JSON 파싱 성공, 3문단, 볼드 3개 확인
+- 대표 cluster 69: v3 저장 및 브라우저 재조회 확인
+- backend Ruff/format: 통과
+- backend pytest: 37개 통과
+- frontend lint/build: 통과
 
-위 항목은 클러스터 배정 완료 여부와 별개다. 현재 처리 가능한 미배정 pair는 0건이며,
-자동 신규 클러스터 생성·기존 클러스터 배정 경로는 활성화된 상태다.
+현재 처리 가능한 미배정 pair는 0건이며 자동 신규 클러스터 생성·기존 클러스터 배정
+경로는 활성화된 상태다. 통합 본문 `pending_retry` 12개 클러스터는 다음 재시도 대상이다.
+
+종목 시세 오류는 Toss OAuth 응답을 직접 확인한 결과 현재 핫스팟 외부 IP가 허용 목록에
+없어 발생한 403이다. 애플리케이션은 이제 이 원인을 구체적으로 표시한다. 실제 시세 복구를
+위해서는 Toss증권 WTS의 설정 > Open API에서 현재 서버 IP를 등록하거나 기존 허용
+네트워크를 사용해야 한다.
 
 ## 12. GPT 검토 요청 항목
 
@@ -256,4 +268,3 @@ USE_LLM_ASSIGN=true uv run python -m scripts.run_full_news_backfill \
 5. 백필 2단계 요약 방식과 운영 즉시 요약 방식의 분리가 적절한가?
 6. 12개 summary retry의 적체를 감시하기 위해 필요한 지표와 알림 기준은 무엇인가?
 7. 현재 정확도를 유지하면서 assignment Solar 호출량을 더 낮출 방법은 무엇인가?
-

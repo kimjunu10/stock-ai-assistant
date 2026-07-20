@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from supabase import Client
 
 from app.core.config import Settings
+from experiments.exp_b_factual_summaries import config as cluster_cfg
 
 
 def _now() -> datetime:
@@ -382,7 +383,7 @@ class NewsClusterRepository:
                 "easy_explanation": parsed["easy_explanation"],
                 "factual_body": parsed["factual_body"],
                 "summary_status": "success",
-                "summary_prompt_version": "factual_easy_v2",
+                "summary_prompt_version": cluster_cfg.SUMMARY_PROMPT_VERSION,
                 "summary_error": None,
                 "summary_retry_count": retry_count,
                 "summary_next_retry_at": None,
@@ -391,7 +392,7 @@ class NewsClusterRepository:
         else:
             payload = {
                 "summary_status": "pending_retry",
-                "summary_prompt_version": "factual_easy_v2",
+                "summary_prompt_version": cluster_cfg.SUMMARY_PROMPT_VERSION,
                 "summary_error": str(meta.get("raw") or "invalid summary response")[:1000],
                 "summary_retry_count": retry_count,
                 "summary_next_retry_at": (
