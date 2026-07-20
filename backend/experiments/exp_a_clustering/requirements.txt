@@ -1,0 +1,12 @@
+# 실험 A(뉴스 클러스터링) 전용 의존성. 운영(backend)과 분리.
+numpy>=1.26
+scikit-learn>=1.4
+pandas>=2.0
+matplotlib>=3.8
+python-igraph>=0.11
+leidenalg>=0.10
+sentence-transformers>=3.0
+torch>=2.2
+huggingface_hub>=0.24
+requests>=2.32
+FlagEmbedding>=1.2
