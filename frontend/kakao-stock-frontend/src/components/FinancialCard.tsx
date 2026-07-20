@@ -5,7 +5,7 @@ interface FinancialCardProps {
 }
 
 export function FinancialCard({ item }: FinancialCardProps) {
-  const direction = item.yoyPct > 0 ? 'up' : item.yoyPct < 0 ? 'down' : 'flat'
+  const direction = item.yoyPct === null ? 'flat' : item.yoyPct > 0 ? 'up' : item.yoyPct < 0 ? 'down' : 'flat'
 
   return (
     <article className="financial-card">
@@ -13,7 +13,7 @@ export function FinancialCard({ item }: FinancialCardProps) {
       <strong>{item.display}</strong>
       <div>
         <span className={`financial-card__change financial-card__change--${direction}`}>
-          전년 대비 {item.yoyPct > 0 ? '+' : ''}{item.yoyPct}%
+          {item.yoyPct === null ? '전년 수치 없음' : `전년 대비 ${item.yoyPct > 0 ? '+' : ''}${item.yoyPct}%`}
         </span>
         <small>{item.note}</small>
       </div>

@@ -1,4 +1,4 @@
-import { DISCLOSURES, FINANCIALS, REPORTS, getStock, getStockNews } from '../data/mockData'
+import { getStock, getStockNews } from '../data/mockData'
 import type { AssistantContext, Theme } from '../types'
 import { DisclosureList, ReportList } from '../components/ResearchLists'
 import { FinancialCard } from '../components/FinancialCard'
@@ -8,6 +8,7 @@ import { SectionHeader } from '../components/SectionHeader'
 import { StockHeader } from '../components/StockHeader'
 import { PriceChart } from '../components/PriceChart'
 import { useStockMarketData } from '../hooks/useStockMarketData'
+import { useStockFundamentals } from '../hooks/useStockFundamentals'
 
 interface StockDetailPageProps {
   onAsk: (context: AssistantContext) => void
@@ -18,16 +19,13 @@ interface StockDetailPageProps {
 export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProps) {
   const stock = getStock(stockCode)
   const marketData = useStockMarketData(stockCode)
+  const fundamentals = useStockFundamentals(stockCode)
 
   if (!stock) {
     return <div className="not-found shell"><span>404</span><h1>분석 대상이 아닌 종목이에요.</h1><p>현재는 지정된 5개 종목만 제공하고 있어요.</p></div>
   }
 
   const news = getStockNews(stockCode)
-  const financials = FINANCIALS[stockCode] ?? []
-  const disclosures = DISCLOSURES.filter((item) => item.stockCode === stockCode)
-  const reports = REPORTS.filter((item) => item.stockCode === stockCode)
-
   return (
     <main className="stock-page shell">
       <StockHeader
@@ -64,25 +62,27 @@ export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProp
       <section className="stock-section">
         <SectionHeader
           action={<span className="source-label"><Icon name="check" size={14} /> DART 공식 수치</span>}
-          description="최근 분기의 핵심 항목과 전년 같은 기간 대비 변화를 봅니다."
+          description="DB에 수집된 최근 DART 보고기간의 핵심 항목과 전년 같은 기간 대비 변화를 봅니다."
           eyebrow="핵심 재무"
           title="숫자로 보는 회사"
         />
         <div className="financial-grid">
-          {financials.map((item) => <FinancialCard item={item} key={item.account} />)}
+          {fundamentals.financials.map((item) => <FinancialCard item={item} key={item.account} />)}
         </div>
+        {fundamentals.financialError && <p className="data-notice">{fundamentals.financialError}</p>}
       </section>
 
       <section className="stock-section research-section">
         <div className="research-column">
           <SectionHeader description="회사가 직접 제출한 공식 문서예요." eyebrow="DART" title="최근 공시" />
-          <DisclosureList items={disclosures} onAsk={onAsk} />
+          <DisclosureList items={fundamentals.disclosures} onAsk={onAsk} />
+          {fundamentals.disclosureError && <p className="data-notice">{fundamentals.disclosureError}</p>}
           <button className="list-more-button" type="button">공시 전체 보기 <Icon name="arrow-right" size={16} /></button>
         </div>
         <div className="research-column">
           <SectionHeader description="증권사 분석의 핵심 논리를 모았어요." eyebrow="리서치" title="애널리스트 리포트" />
-          <ReportList items={reports} onAsk={onAsk} />
-          <button className="list-more-button" type="button">리포트 전체 보기 <Icon name="arrow-right" size={16} /></button>
+          <ReportList items={[]} onAsk={onAsk} />
+          <p className="data-notice">로컬 리포트 244건은 적재 전이라 아직 표시하지 않아요.</p>
         </div>
       </section>
     </main>

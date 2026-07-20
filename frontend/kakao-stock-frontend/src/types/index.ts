@@ -95,7 +95,7 @@ export interface NewsCluster {
 export interface FinancialItem {
   account: string
   display: string
-  yoyPct: number
+  yoyPct: number | null
   note: string
 }
 
@@ -106,6 +106,7 @@ export interface DisclosureItem {
   title: string
   date: string
   source: string
+  viewerUrl?: string
 }
 
 export interface ReportItem {
