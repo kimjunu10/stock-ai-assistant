@@ -24,7 +24,7 @@ export function DisclosureList({ items, onAsk }: DisclosureListProps) {
               <span>{item.type}</span>
               <time>{item.date}</time>
             </div>
-            <h3>{item.title}</h3>
+            <h3>{item.viewerUrl ? <a href={item.viewerUrl} rel="noreferrer" target="_blank">{item.title}</a> : item.title}</h3>
             <p>{item.source} 공식 공시</p>
           </div>
           <button

@@ -264,6 +264,7 @@
   .financial-card__change--down { @apply text-warm-ink; }
   .financial-card__change--flat,
   .financial-card small { @apply text-faint; }
+  .data-notice { @apply mt-3 rounded-xl bg-neutral-soft px-4 py-3 text-[11px] text-muted; }
 
   .research-section { @apply grid grid-cols-2 gap-5 border-b-0; }
   .research-column { @apply min-w-0; }
