@@ -13,6 +13,9 @@
 **/.pytest_cache/
 **/.ruff_cache/
 
+# 실험 임베딩 캐시 (대용량 npz, 재생성 가능)
+**/emb_cache/
+
 # Build output
 **/dist/
 **/build/
