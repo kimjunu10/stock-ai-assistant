@@ -9,9 +9,12 @@ description = "FastAPI backend for the stock assistant MVP"
 requires-python = ">=3.11"
 dependencies = [
     "apscheduler>=3.10,<4",
+    "beautifulsoup4>=4.12,<5",
     "fastapi>=0.115,<1",
     "pydantic-settings>=2.7,<3",
+    "requests>=2.32,<3",
     "supabase>=2,<3",
+    "trafilatura>=2,<3",
     "uvicorn[standard]>=0.34,<1",
 ]
 
@@ -19,7 +22,8 @@ dependencies = [
 dev = [
     "httpx>=0.27,<1",
     "pytest>=8,<9",
-    "ruff>=0.9,<1",
+    # ruff는 마이너 버전마다 포맷/린트 규칙이 바뀌므로 CI-로컬 결과 일치를 위해 고정.
+    "ruff==0.15.22",
 ]
 
 [tool.setuptools.packages.find]
@@ -34,3 +38,10 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# DART 엔드포인트/계정 레지스트리는 한 줄=한 항목이 대조·검증에 유리하다.
+"app/sources/dart_major_events.py" = ["E501"]
+"app/sources/dart_regular_facts.py" = ["E501"]
+"app/sources/dart_financials.py" = ["E501"]
+"scripts/verify_dart_backfill.py" = ["E501"]

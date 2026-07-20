@@ -1,6 +1,10 @@
 """Environment-backed application settings."""
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -14,8 +18,71 @@ class Settings(BaseSettings):
     upstage_api_key: str = ""
     supabase_url: str = ""
     supabase_service_key: str = ""
+    # DDL(마이그레이션) 적용 및 검증 SQL 실행용 Postgres 직접 연결 문자열.
+    # 서비스 키(PostgREST)로는 DDL을 실행할 수 없어 별도로 받는다.
+    database_url: str = ""
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    search_display: int = 100
+    request_timeout_seconds: float = 15.0
+    crawl_delay_seconds: float = 1.2
+    user_agent: str = "StockAssistant/0.1 (+news collection prototype)"
+    respect_robots: bool = True
+    robots_fail_closed: bool = False
+    min_body_length: int = 250
+    failed_retry_minutes: int = 60
+    max_crawl_retries: int = 3
+    crawl_batch_size: int = 50
+    supabase_batch_size: int = 100
+    news_scheduler_enabled: bool = True
+    news_scheduler_interval_minutes: int = 30
+    news_scheduler_max_per_stock: int = 100
+
+    # --- DART 수집 튜닝 (SPEC §4-5) ---
+    dart_request_delay_seconds: float = 0.25  # 호출 사이 기본 sleep
+    dart_max_backoff_seconds: float = 8.0  # status=020 지수 백오프 상한
+    dart_request_timeout_seconds: float = 30.0
+    dart_disclosure_lookback_days: int = 365  # 공시 목록/구조화 최근 1년
+    dart_financial_years: int = 2  # 재무/정기보고서 최근 2개 사업연도
+    dart_raw_text_limit: int = 50000  # 원문 저장 앞 50,000자
+
+    def validate_dart_collection(self) -> None:
+        """DART 백필에 필요한 자격 증명이 없으면 즉시 실패."""
+
+        missing = [
+            name
+            for name, value in (
+                ("DART_API_KEY", self.dart_api_key),
+                ("SUPABASE_URL", self.supabase_url),
+                ("SUPABASE_SERVICE_KEY", self.supabase_service_key),
+            )
+            if not value
+        ]
+        if missing:
+            raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+
+    model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
+
+    def validate_news_collection(self) -> None:
+        """Fail fast when credentials required by the backfill are missing."""
+
+        missing = [
+            name
+            for name, value in (
+                ("NAVER_CLIENT_ID", self.naver_client_id),
+                ("NAVER_CLIENT_SECRET", self.naver_client_secret),
+                ("SUPABASE_URL", self.supabase_url),
+                ("SUPABASE_SERVICE_KEY", self.supabase_service_key),
+            )
+            if not value
+        ]
+        if missing:
+            raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+        if not 1 <= self.search_display <= 100:
+            raise RuntimeError("SEARCH_DISPLAY must be between 1 and 100")
+        if self.news_scheduler_interval_minutes < 1:
+            raise RuntimeError("NEWS_SCHEDULER_INTERVAL_MINUTES must be at least 1")
+        if not 1 <= self.news_scheduler_max_per_stock <= 1000:
+            raise RuntimeError("NEWS_SCHEDULER_MAX_PER_STOCK must be between 1 and 1000")
 
 
 settings = Settings()
