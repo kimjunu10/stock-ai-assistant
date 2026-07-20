@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from supabase import Client
 
@@ -27,16 +28,47 @@ class NewsClusterRepository:
     def __init__(self, client: Client, cfg: Settings):
         self.client = client
         self.cfg = cfg
+        self._cluster_cache: dict[int, dict[str, Any]] | None = None
+
+    def enable_cluster_cache(self, stock_code: str, page_size: int = 100) -> None:
+        """Load one worker's stock clusters once to avoid repeated centroid transfers."""
+
+        cache: dict[int, dict[str, Any]] = {}
+        offset = 0
+        while True:
+            response = (
+                self.client.table("news_clusters")
+                .select(
+                    "id,stock_code,kind,centroid,article_count,last_active_at,"
+                    "anchor_article_id,anchor:articles!news_clusters_anchor_article_id_fkey("
+                    "title,description)"
+                )
+                .eq("stock_code", stock_code)
+                .order("id")
+                .range(offset, offset + page_size - 1)
+                .execute()
+            )
+            rows = list(response.data or [])
+            for row in rows:
+                cache[int(row["id"])] = row
+            if len(rows) < page_size:
+                break
+            offset += page_size
+        self._cluster_cache = cache
 
     def get_pipeline_candidates(self, limit: int) -> list[dict[str, Any]]:
-        """Return crawled relevant articles not completed, including due retries."""
+        """Return up to ``limit`` unassigned pairs in publication order.
+
+        ``limit`` is deliberately counted in ``(article_id, stock_code)`` units rather
+        than articles. Successful assignments are the source of truth for resume.
+        """
 
         now = _now()
         stale = now - timedelta(minutes=30)
-        selected: list[dict[str, Any]] = []
+        selected_pairs: list[dict[str, Any]] = []
         offset = 0
-        page_size = max(100, limit * 4)
-        while len(selected) < limit:
+        page_size = 1000
+        while len(selected_pairs) < limit:
             response = (
                 self.client.table("article_stocks")
                 .select(
@@ -45,7 +77,9 @@ class NewsClusterRepository:
                 )
                 .eq("relevance", "relevant")
                 .eq("articles.crawl_status", "success")
+                .order("published_at", foreign_table="articles")
                 .order("article_id")
+                .order("stock_code")
                 .range(offset, offset + page_size - 1)
                 .execute()
             )
@@ -62,75 +96,84 @@ class NewsClusterRepository:
             states = {int(row["article_id"]): row for row in states_response.data or []}
             assignments_response = (
                 self.client.table("news_cluster_assignments")
-                .select("article_id,stock_code,status")
+                .select("article_id,stock_code,status,next_retry_at")
                 .in_("article_id", article_ids)
-                .in_("status", ["assigned_new", "assigned_existing"])
                 .execute()
             )
-            completed_links = {
-                (int(row["article_id"]), row["stock_code"])
+            assignment_states = {
+                (int(row["article_id"]), row["stock_code"]): row
                 for row in assignments_response.data or []
             }
-            grouped: dict[int, dict[str, Any]] = {}
             for link in links:
                 article_id = int(link["article_id"])
+                pair = (article_id, link["stock_code"])
+                assignment = assignment_states.get(pair)
+                if assignment:
+                    if assignment["status"] in {"assigned_new", "assigned_existing"}:
+                        continue
+                    if (
+                        assignment["status"] == "pending_retry"
+                        and (_parse(assignment.get("next_retry_at")) or now) > now
+                    ):
+                        continue
                 state = states.get(article_id)
                 if state:
                     status = state["status"]
-                    if (
-                        status == "completed"
-                        and (
-                            article_id,
-                            link["stock_code"],
-                        )
-                        in completed_links
-                    ):
-                        continue
                     retry_at = _parse(state.get("next_retry_at")) or now
                     if status == "pending_retry" and retry_at > now:
                         continue
                     if status == "processing" and (_parse(state.get("updated_at")) or now) > stale:
                         continue
-                row = grouped.setdefault(
-                    article_id,
+                selected_pairs.append(
                     {
                         **(link.get("articles") or {}),
                         "article_id": article_id,
-                        "stock_codes": [],
+                        "stock_code": link["stock_code"],
                         "retry_count": int((state or {}).get("retry_count") or 0),
-                    },
+                    }
                 )
-                if link["stock_code"] not in row["stock_codes"]:
-                    row["stock_codes"].append(link["stock_code"])
-            for row in grouped.values():
-                if any(item["article_id"] == row["article_id"] for item in selected):
-                    continue
-                selected.append(row)
-                if len(selected) >= limit:
+                if len(selected_pairs) >= limit:
                     break
             if len(links) < page_size:
                 break
             offset += page_size
 
-        # A page can end between two stock links for one article. Re-read all links for
-        # selected article_ids so completing the article never drops a later stock link.
-        selected_ids = [int(row["article_id"]) for row in selected]
-        if selected_ids:
-            all_links_response = (
-                self.client.table("article_stocks")
-                .select("article_id,stock_code")
-                .eq("relevance", "relevant")
-                .in_("article_id", selected_ids)
-                .execute()
+        grouped: dict[int, dict[str, Any]] = {}
+        for pair in selected_pairs:
+            article_id = int(pair["article_id"])
+            row = grouped.setdefault(
+                article_id,
+                {
+                    **pair,
+                    "stock_codes": [],
+                    "pair_count": 0,
+                },
             )
-            stocks_by_article: dict[int, list[str]] = {}
-            for link in all_links_response.data or []:
-                stocks_by_article.setdefault(int(link["article_id"]), []).append(link["stock_code"])
-            for row in selected:
-                row["stock_codes"] = sorted(
-                    set(stocks_by_article.get(int(row["article_id"]), row["stock_codes"]))
-                )
-        return selected
+            row["stock_codes"].append(pair["stock_code"])
+            row["pair_count"] += 1
+        return list(grouped.values())
+
+    def clear_article_processing(self, article_id: int) -> None:
+        """Release a partially processed article so remaining pairs are immediately resumable."""
+
+        self.client.table("news_article_processing").delete().eq("article_id", article_id).execute()
+
+    def has_unassigned_relevant_links(self, article_id: int) -> bool:
+        links = (
+            self.client.table("article_stocks")
+            .select("stock_code")
+            .eq("article_id", article_id)
+            .eq("relevance", "relevant")
+            .execute()
+        ).data or []
+        assigned = (
+            self.client.table("news_cluster_assignments")
+            .select("stock_code")
+            .eq("article_id", article_id)
+            .in_("status", ["assigned_new", "assigned_existing"])
+            .execute()
+        ).data or []
+        return bool({row["stock_code"] for row in links} - {row["stock_code"] for row in assigned})
 
     def mark_article_processing(self, article_id: int, kind: str, retry_count: int) -> None:
         self.client.table("news_article_processing").upsert(
@@ -191,7 +234,21 @@ class NewsClusterRepository:
         published = _parse(published_at)
         if published is None:
             return []
-        cutoff = (published - timedelta(hours=window_hours)).isoformat()
+        cutoff_dt = published - timedelta(hours=window_hours)
+        cutoff = cutoff_dt.isoformat()
+        if self._cluster_cache is not None:
+            return sorted(
+                (
+                    row
+                    for row in self._cluster_cache.values()
+                    if row["stock_code"] == stock_code
+                    and row["kind"] == kind
+                    and (_parse(row.get("last_active_at")) or published) >= cutoff_dt
+                    and (_parse(row.get("last_active_at")) or published) <= published
+                ),
+                key=lambda row: row["last_active_at"],
+                reverse=True,
+            )
         response = (
             self.client.table("news_clusters")
             .select(
@@ -232,21 +289,39 @@ class NewsClusterRepository:
         rows = response.data or []
         if not rows:
             raise RuntimeError("Supabase did not return the created news cluster")
-        return int(rows[0]["id"])
+        cluster_id = int(rows[0]["id"])
+        if self._cluster_cache is not None:
+            self._cluster_cache[cluster_id] = {
+                **rows[0],
+                "anchor": {
+                    "title": article.get("title") or "",
+                    "description": article.get("description") or "",
+                },
+            }
+        return cluster_id
 
     def update_cluster(
-        self, cluster_id: int, *, centroid: list[float], article_count: int, last_active_at: str
+        self,
+        cluster_id: int,
+        *,
+        centroid: list[float],
+        article_count: int,
+        last_active_at: str,
+        representative_article_id: int | None = None,
     ) -> None:
-        self.client.table("news_clusters").update(
-            {
-                "centroid": centroid,
-                "article_count": article_count,
-                "last_active_at": last_active_at,
-                "summary_status": "pending",
-                "summary_error": None,
-                "summary_next_retry_at": None,
-            }
-        ).eq("id", cluster_id).execute()
+        payload: dict[str, Any] = {
+            "centroid": centroid,
+            "article_count": article_count,
+            "last_active_at": last_active_at,
+            "summary_status": "pending",
+            "summary_error": None,
+            "summary_next_retry_at": None,
+        }
+        if representative_article_id is not None:
+            payload["representative_article_id"] = representative_article_id
+        self.client.table("news_clusters").update(payload).eq("id", cluster_id).execute()
+        if self._cluster_cache is not None and cluster_id in self._cluster_cache:
+            self._cluster_cache[cluster_id].update(payload)
 
     def save_assignment(
         self,
@@ -341,3 +416,209 @@ class NewsClusterRepository:
             if row["summary_status"] == "pending"
             or (_parse(row.get("summary_next_retry_at")) or now) <= now
         ][:limit]
+
+    def start_backfill_run(self, run_key: str, limits: dict[str, Any]) -> None:
+        self.client.table("news_backfill_runs").upsert(
+            {
+                "run_key": run_key,
+                "status": "running",
+                "started_at": _now().isoformat(),
+                "finished_at": None,
+                "limits": limits,
+                "last_error": None,
+            },
+            on_conflict="run_key",
+        ).execute()
+
+    def get_backfill_run(self, run_key: str) -> dict[str, Any] | None:
+        response = (
+            self.client.table("news_backfill_runs")
+            .select("*")
+            .eq("run_key", run_key)
+            .limit(1)
+            .execute()
+        )
+        return (response.data or [None])[0]
+
+    def update_backfill_run(
+        self,
+        run_key: str,
+        *,
+        status: str,
+        totals: dict[str, Any],
+        usage: dict[str, Any],
+        article: dict[str, Any] | None = None,
+        last_error: str | None = None,
+    ) -> None:
+        payload: dict[str, Any] = {
+            "status": status,
+            "processed_articles": int(totals.get("scanned") or 0),
+            "processed_pairs": int(totals.get("pairs_scanned") or 0),
+            "completed_articles": int(totals.get("completed") or 0),
+            "pending_retry_articles": int(totals.get("pending_retry") or 0),
+            "assignment_calls": int(usage.get("assignment_calls") or 0),
+            "summary_calls": int(usage.get("summary_calls") or 0),
+            "prompt_tokens": int(usage.get("prompt_tokens") or 0),
+            "completion_tokens": int(usage.get("completion_tokens") or 0),
+            "estimated_cost_usd": float(usage.get("cost_usd") or 0),
+            "totals": totals,
+            "last_error": last_error,
+        }
+        if article is not None:
+            payload.update(
+                {
+                    "last_success_article_id": int(article["article_id"]),
+                    "last_success_stock_code": (article.get("stock_codes") or [None])[-1],
+                    "last_success_published_at": article.get("published_at"),
+                }
+            )
+        if status in {"stopped_budget", "stopped", "completed", "failed"}:
+            payload["finished_at"] = _now().isoformat()
+        self.client.table("news_backfill_runs").update(payload).eq("run_key", run_key).execute()
+
+    def get_today_backfill_cost(self) -> float:
+        seoul = ZoneInfo("Asia/Seoul")
+        start = (
+            _now()
+            .astimezone(seoul)
+            .replace(hour=0, minute=0, second=0, microsecond=0)
+            .astimezone(UTC)
+            .isoformat()
+        )
+        response = (
+            self.client.table("news_backfill_runs")
+            .select("estimated_cost_usd")
+            .gte("started_at", start)
+            .execute()
+        )
+        return sum(float(row.get("estimated_cost_usd") or 0) for row in response.data or [])
+
+    def mark_cluster_dirty(self, run_key: str, cluster_id: int) -> None:
+        self.client.table("news_backfill_dirty_clusters").upsert(
+            {
+                "run_key": run_key,
+                "cluster_id": cluster_id,
+                "status": "dirty",
+                "next_retry_at": None,
+                "last_error": None,
+                "summarized_at": None,
+            },
+            on_conflict="run_key,cluster_id",
+        ).execute()
+
+    def get_dirty_clusters(self, run_key: str) -> list[dict[str, Any]]:
+        fetched: list[dict[str, Any]] = []
+        offset = 0
+        page_size = 1000
+        while True:
+            response = (
+                self.client.table("news_backfill_dirty_clusters")
+                .select("run_key,cluster_id,status,retry_count,claimed_at,next_retry_at,last_error")
+                .eq("run_key", run_key)
+                .in_("status", ["dirty", "pending_retry", "processing"])
+                .order("cluster_id")
+                .range(offset, offset + page_size - 1)
+                .execute()
+            )
+            page = list(response.data or [])
+            fetched.extend(page)
+            if len(page) < page_size:
+                break
+            offset += page_size
+        now = _now()
+        stale = now - timedelta(minutes=30)
+        rows = []
+        for row in fetched:
+            if row["status"] == "pending_retry" and (_parse(row.get("next_retry_at")) or now) > now:
+                continue
+            if row["status"] == "processing" and (_parse(row.get("claimed_at")) or now) > stale:
+                continue
+            rows.append(row)
+        return rows
+
+    def mark_dirty_processing(self, run_key: str, cluster_id: int) -> None:
+        self.client.table("news_backfill_dirty_clusters").update(
+            {"status": "processing", "claimed_at": _now().isoformat()}
+        ).eq("run_key", run_key).eq("cluster_id", cluster_id).neq("status", "success").execute()
+
+    def mark_dirty_success(self, run_key: str, cluster_id: int) -> None:
+        self.client.table("news_backfill_dirty_clusters").update(
+            {
+                "status": "success",
+                "last_error": None,
+                "next_retry_at": None,
+                "summarized_at": _now().isoformat(),
+            }
+        ).eq("run_key", run_key).eq("cluster_id", cluster_id).execute()
+
+    def mark_dirty_retry(self, run_key: str, cluster_id: int, retry_count: int, error: str) -> None:
+        self.client.table("news_backfill_dirty_clusters").update(
+            {
+                "status": "pending_retry",
+                "retry_count": retry_count,
+                "last_error": error[:1000],
+                "next_retry_at": (
+                    _now() + timedelta(minutes=self.cfg.news_clustering_retry_minutes)
+                ).isoformat(),
+            }
+        ).eq("run_key", run_key).eq("cluster_id", cluster_id).execute()
+
+    def has_active_backfill(self) -> bool:
+        cutoff = (_now() - timedelta(minutes=10)).isoformat()
+        response = (
+            self.client.table("news_backfill_runs")
+            .select("run_key")
+            .eq("status", "running")
+            .gte("updated_at", cutoff)
+            .limit(1)
+            .execute()
+        )
+        return bool(response.data)
+
+    def heartbeat_backfill(self, run_key: str, phase: str) -> None:
+        self.client.table("news_backfill_runs").update(
+            {"status": "running", "totals": {"phase": phase}}
+        ).eq("run_key", run_key).execute()
+
+    def claim_backfill_pair(self, run_key: str, article_id: int, stock_code: str) -> bool:
+        response = self.client.rpc(
+            "claim_news_backfill_pair",
+            {
+                "p_run_key": run_key,
+                "p_article_id": article_id,
+                "p_stock_code": stock_code,
+            },
+        ).execute()
+        return bool(response.data)
+
+    def finish_backfill_pair(
+        self,
+        run_key: str,
+        article_id: int,
+        stock_code: str,
+        *,
+        status: str,
+        error: str | None = None,
+    ) -> None:
+        self.client.table("news_backfill_pair_claims").update(
+            {
+                "status": status,
+                "finished_at": _now().isoformat(),
+                "last_error": (error or "")[:1000] or None,
+            }
+        ).eq("run_key", run_key).eq("article_id", article_id).eq("stock_code", stock_code).execute()
+
+    def release_backfill_claims(self, run_key: str, reason: str) -> None:
+        self.client.table("news_backfill_pair_claims").update(
+            {
+                "status": "pending_retry",
+                "finished_at": _now().isoformat(),
+                "last_error": reason[:1000],
+            }
+        ).eq("run_key", run_key).eq("status", "processing").execute()
+
+    def repair_backfill_dirty_clusters(self, run_key: str) -> int:
+        response = self.client.rpc(
+            "repair_news_backfill_dirty_clusters", {"p_run_key": run_key}
+        ).execute()
+        return int(response.data or 0)

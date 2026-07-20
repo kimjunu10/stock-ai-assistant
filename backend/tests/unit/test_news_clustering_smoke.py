@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 
 from app.core.config import Settings
-from app.services.news_clustering import NewsClusteringService
+from app.services.news_clustering import BackfillBudgetExhausted, NewsClusteringService
 
 
 class FakeEmbedder:
@@ -23,6 +23,7 @@ class MemoryClusterRepository:
         self.assignments: dict[tuple[int, str], dict[str, Any]] = {}
         self.clusters: dict[int, dict[str, Any]] = {}
         self.summaries: dict[int, dict[str, Any]] = {}
+        self.dirty_clusters: set[tuple[str, int]] = set()
         self.next_cluster_id = 1
 
     def get_summary_retry_clusters(self, limit: int) -> list[dict[str, Any]]:
@@ -44,6 +45,18 @@ class MemoryClusterRepository:
 
     def mark_article_complete(self, article_id: int, kind: str) -> None:
         self.processing[article_id].update(status="completed", kind=kind)
+
+    def clear_article_processing(self, article_id: int) -> None:
+        self.processing.pop(article_id, None)
+
+    def has_unassigned_relevant_links(self, article_id: int) -> bool:
+        expected = set(self.articles[article_id]["stock_codes"])
+        assigned = {
+            stock_code
+            for (assigned_article_id, stock_code), row in self.assignments.items()
+            if assigned_article_id == article_id and row["status"] != "pending_retry"
+        }
+        return bool(expected - assigned)
 
     def mark_article_retry(self, article_id: int, kind: str, retry_count: int, error: str) -> None:
         self.processing[article_id] = {
@@ -81,11 +94,20 @@ class MemoryClusterRepository:
         }
         return cluster_id
 
-    def update_cluster(self, cluster_id, *, centroid, article_count, last_active_at):
+    def update_cluster(
+        self,
+        cluster_id,
+        *,
+        centroid,
+        article_count,
+        last_active_at,
+        representative_article_id=None,
+    ):
         self.clusters[cluster_id].update(
             centroid=centroid,
             article_count=article_count,
             last_active_at=last_active_at,
+            representative_article_id=representative_article_id,
         )
 
     def save_assignment(self, **payload):
@@ -105,6 +127,9 @@ class MemoryClusterRepository:
             "meta": meta,
             "retry_count": retry_count,
         }
+
+    def mark_cluster_dirty(self, run_key, cluster_id):
+        self.dirty_clusters.add((run_key, cluster_id))
 
 
 def article(article_id: int, title: str, published_at: str) -> dict[str, Any]:
@@ -216,3 +241,54 @@ def test_market_keeps_same_day_rule_path_without_calling_assign_llm() -> None:
     assert result["completed"] == 1
     assert repo.processing[20]["kind"] == "market"
     assert repo.assignments[(20, "042660")]["llm_called"] is False
+
+
+def test_budget_stop_leaves_pair_unassigned_and_immediately_resumable() -> None:
+    base = article(30, "한화오션 수주 계약 체결", "2026-07-20T01:00:00+00:00")
+    pending = article(31, "한화오션 수주 계약 후속", "2026-07-20T02:00:00+00:00")
+    repo = MemoryClusterRepository([pending])
+    repo.create_cluster(article=base, stock_code="042660", kind="company", centroid=[1.0, 0.0])
+
+    def exhausted(_prompt: str):
+        raise BackfillBudgetExhausted("assignment call limit reached")
+
+    service = NewsClusteringService(
+        repo,
+        Settings(use_llm_assign=True, upstage_api_key="test"),
+        embedder=FakeEmbedder({31: [1.0, 0.0]}),
+        assign_call_fn=exhausted,
+        summary_call_fn=summary_ok,
+    )
+
+    result = service.process_pending()
+
+    assert result["stopped_budget"] == 1
+    assert (31, "042660") not in repo.assignments
+    assert 31 not in repo.processing
+
+
+def test_backfill_defers_summary_and_marks_unique_dirty_cluster() -> None:
+    rows = [
+        article(40, "한화오션 함정 수주", "2026-07-20T01:00:00+00:00"),
+        article(41, "한화오션 함정 수주 후속", "2026-07-20T02:00:00+00:00"),
+    ]
+    repo = MemoryClusterRepository(rows)
+    summary_calls = []
+    service = NewsClusteringService(
+        repo,
+        Settings(use_llm_assign=True, upstage_api_key="test"),
+        embedder=FakeEmbedder({40: [1.0, 0.0], 41: [1.0, 0.0]}),
+        assign_call_fn=lambda _prompt: (
+            {"decision": "existing", "matched_cluster_id": 1},
+            {"ok": True, "parse_success": True},
+        ),
+        summary_call_fn=lambda prompt: summary_calls.append(prompt),
+        defer_summaries=True,
+        dirty_run_key="full-v2",
+    )
+
+    result = service.process_pending()
+
+    assert result["completed"] == 2
+    assert summary_calls == []
+    assert repo.dirty_clusters == {("full-v2", 1)}
