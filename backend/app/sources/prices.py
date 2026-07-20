@@ -77,9 +77,9 @@ class TossInvestClient:
 
         for stock_code in stock_codes:
             try:
-                quote_date = datetime.fromisoformat(
-                    raw_prices[stock_code]["timestamp"]
-                ).date().isoformat()
+                quote_date = (
+                    datetime.fromisoformat(raw_prices[stock_code]["timestamp"]).date().isoformat()
+                )
             except (KeyError, TypeError, ValueError) as exc:
                 raise TossApiError("토스증권 현재가 시각을 변환하지 못했습니다.") from exc
             with self._lock:
