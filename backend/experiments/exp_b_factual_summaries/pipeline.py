@@ -24,6 +24,7 @@ sys.path.insert(0, str(EXP_A))
 import clustering_lib as C  # noqa: E402
 
 from . import config as CFG  # noqa: E402
+from . import market_rules as MR  # noqa: E402
 
 
 # --------------------------------------------------------------- 데이터 로드
@@ -121,18 +122,36 @@ class _Cluster:
     member_idx: list[int] = field(default_factory=list)
     first_h: float = 0.0
     last_h: float = 0.0
+    kind: str = "company"  # 'company' | 'market' | 'info' (보호 기능 켰을 때만 의미)
+    day: str = ""  # market/info 클러스터의 거래일(YYYY-MM-DD)
 
 
 def cluster_stock(
-    rows: list[dict], vecs: np.ndarray, idxs: list[int], stock_code: str, next_cluster_id: int
+    rows: list[dict],
+    vecs: np.ndarray,
+    idxs: list[int],
+    stock_code: str,
+    next_cluster_id: int,
+    *,
+    block_market_bridge: bool = False,
+    market_day_boundary: bool = True,
+    separate_info: bool = True,
+    kinds: list[str] | None = None,
 ) -> tuple[dict[int, dict], dict[int, dict], int]:
     """한 종목 내 시간순 online centroid. SPEC Step 5 확정 로직과 동일.
 
     반환:
       assign: idx -> {cluster_id, assigned_similarity, is_new}
       next_cluster_id: 다음 종목에 이어 쓸 전역 cluster_id
-      clusters: cluster_id -> {stock_code, member_idxs, centroid, first_h, last_h}
+      clusters: cluster_id -> {stock_code, member_idxs, centroid, first_h, last_h, kind}
     threshold/window 는 config 값. 활성창은 클러스터 '마지막 기사 시각' 기준(sliding).
+
+    over-merge 보호(block_market_bridge=True):
+      - 각 기사를 kinds[i]='market'(시황)|'info'(비사건형 투자정보)|'company'(기업 사건)로 판별.
+      - kind 가 다른 클러스터에는 붙이지 않는다(시장·정보 뉴스가 종목 사건의 다리 역할 차단).
+      - market/info 클러스터는 market_day_boundary=True 면 같은 거래일 안에서만 묶인다.
+      - separate_info=False 면 info 를 company 로 되돌린다(시황만 분리).
+    block_market_bridge=False 면 kind 는 항상 'company' 로 동작해 기존과 100% 동일하다.
     """
 
     thr = CFG.COSINE_THRESHOLD
@@ -145,15 +164,36 @@ def cluster_stock(
     for i in order:
         t = C.parse_hours(rows[i]["published_at"])
         v = vecs[i]
+        kind_i = kinds[i] if (block_market_bridge and kinds) else "company"
+        if kind_i == "info" and not separate_info:
+            kind_i = "company"
+        day_i = MR.market_day_bucket(rows[i]["published_at"])
+        non_company = kind_i in ("market", "info")
         best, best_sim = None, thr
         for cl in live:
             if t - cl.last_h > win:
                 continue
+            if block_market_bridge:
+                # kind 불일치면 붙이지 않음(시장·정보↔종목 브리지 차단)
+                if cl.kind != kind_i:
+                    continue
+                # market/info 클러스터는 같은 거래일만
+                if non_company and market_day_boundary and cl.day != day_i:
+                    continue
             sim = float(np.dot(v, cl.centroid))  # 둘 다 정규화됨 → cosine
             if sim >= best_sim:
                 best_sim, best = sim, cl
         if best is None:
-            cl = _Cluster(cid_counter, stock_code, v.copy(), [i], t, t)
+            cl = _Cluster(
+                cid_counter,
+                stock_code,
+                v.copy(),
+                [i],
+                t,
+                t,
+                kind=kind_i,
+                day=(day_i if non_company else ""),
+            )
             live.append(cl)
             assign[i] = {"cluster_id": cid_counter, "assigned_similarity": 1.0, "is_new": True}
             cid_counter += 1
@@ -178,14 +218,37 @@ def cluster_stock(
             "centroid": cl.centroid,
             "first_h": cl.first_h,
             "last_h": cl.last_h,
+            "kind": cl.kind,
         }
         for cl in live
     }
     return assign, clusters, cid_counter
 
 
-def cluster_all(rows: list[dict], vecs: np.ndarray) -> tuple[dict[int, dict], dict[int, dict]]:
-    """전 종목 클러스터링. cluster_id 는 전역 유일(종목 간 오프셋)."""
+def cluster_all(
+    rows: list[dict],
+    vecs: np.ndarray,
+    *,
+    block_market_bridge: bool | None = None,
+    market_day_boundary: bool | None = None,
+    separate_info: bool | None = None,
+) -> tuple[dict[int, dict], dict[int, dict]]:
+    """전 종목 클러스터링. cluster_id 는 전역 유일(종목 간 오프셋).
+
+    보호 옵션 기본값은 config(BLOCK_MARKET_BRIDGE / MARKET_DAY_BOUNDARY /
+    SEPARATE_INFO)를 따른다. 명시 인자로 덮어쓸 수 있다(CLI/테스트용). 끄면 기존과 100% 동일.
+    """
+
+    if block_market_bridge is None:
+        block_market_bridge = CFG.BLOCK_MARKET_BRIDGE
+    if market_day_boundary is None:
+        market_day_boundary = CFG.MARKET_DAY_BOUNDARY
+    if separate_info is None:
+        separate_info = CFG.SEPARATE_INFO
+
+    kinds = None
+    if block_market_bridge:
+        kinds = [MR.classify_kind(r.get("title", ""), r.get("description", "")) for r in rows]
 
     by_stock: dict[str, list[int]] = {}
     for i, r in enumerate(rows):
@@ -198,7 +261,17 @@ def cluster_all(rows: list[dict], vecs: np.ndarray) -> tuple[dict[int, dict], di
         idxs = by_stock.get(code, [])
         if not idxs:
             continue
-        assign, clusters, next_id = cluster_stock(rows, vecs, idxs, code, next_id)
+        assign, clusters, next_id = cluster_stock(
+            rows,
+            vecs,
+            idxs,
+            code,
+            next_id,
+            block_market_bridge=block_market_bridge,
+            market_day_boundary=market_day_boundary,
+            separate_info=separate_info,
+            kinds=kinds,
+        )
         all_assign.update(assign)
         all_clusters.update(clusters)
     return all_assign, all_clusters

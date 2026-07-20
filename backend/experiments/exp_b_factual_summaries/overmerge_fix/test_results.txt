@@ -1,0 +1,10 @@
+PASS test_1_same_event_many_press_stays_one
+PASS test_2_different_day_market_news_not_merged
+PASS test_3_market_news_no_bridge_between_events
+PASS test_4_same_event_across_days_kept
+PASS test_5_protection_off_equals_baseline
+PASS test_6_market_rules_copy_matches_service
+PASS test_7_info_not_bridging_company_events
+PASS test_8_event_articles_stay_company
+
+8/8 passed

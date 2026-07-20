@@ -6,6 +6,7 @@
 # Dependencies and virtual environments
 **/node_modules/
 **/.venv/
+**/.venv-exp/
 
 # Python caches and tooling
 **/__pycache__/
@@ -15,6 +16,8 @@
 
 # 실험 임베딩 캐시 (대용량 npz, 재생성 가능)
 **/emb_cache/
+# over-merge 실험 중간 매핑(재생성 가능, 대용량)
+**/overmerge_fix/variant_labels.json
 
 # Build output
 **/dist/
