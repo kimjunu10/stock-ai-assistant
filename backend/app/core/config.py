@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     naver_client_secret: str = ""
     dart_api_key: str = ""
     upstage_api_key: str = ""
+    toss_client_id: str = ""
+    toss_client_secret: str = ""
     supabase_url: str = ""
     supabase_service_key: str = ""
     # DDL(마이그레이션) 적용 및 검증 SQL 실행용 Postgres 직접 연결 문자열.
@@ -36,6 +38,8 @@ class Settings(BaseSettings):
     news_scheduler_enabled: bool = True
     news_scheduler_interval_minutes: int = 30
     news_scheduler_max_per_stock: int = 100
+    toss_request_timeout_seconds: float = 15.0
+    toss_market_data_cache_seconds: int = 15
 
     # --- DART 수집 튜닝 (SPEC §4-5) ---
     dart_request_delay_seconds: float = 0.25  # 호출 사이 기본 sleep
@@ -54,6 +58,20 @@ class Settings(BaseSettings):
                 ("DART_API_KEY", self.dart_api_key),
                 ("SUPABASE_URL", self.supabase_url),
                 ("SUPABASE_SERVICE_KEY", self.supabase_service_key),
+            )
+            if not value
+        ]
+        if missing:
+            raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+
+    def validate_toss_market_data(self) -> None:
+        """토스증권 시세 API 호출에 필요한 OAuth 자격증명을 검증한다."""
+
+        missing = [
+            name
+            for name, value in (
+                ("TOSS_CLIENT_ID", self.toss_client_id),
+                ("TOSS_CLIENT_SECRET", self.toss_client_secret),
             )
             if not value
         ]

@@ -18,6 +18,37 @@ export interface Stock {
   summary: string
 }
 
+export interface PriceCandle {
+  time: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
+export interface StockQuote {
+  price: number
+  previousClose: number
+  change: number
+  changeRate: number
+  currency: 'KRW'
+  asOf: string
+  volume: number
+}
+
+export interface StockMarketData {
+  stockCode: string
+  interval: '1d'
+  period: '6m'
+  adjusted: boolean
+  source: string
+  quote: StockQuote
+  candles: PriceCandle[]
+}
+
+export type MarketDataStatus = 'loading' | 'ready' | 'error'
+
 export interface Term {
   term: string
   easyDefinition: string

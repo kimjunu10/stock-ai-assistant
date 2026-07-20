@@ -1408,7 +1408,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.7,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8,<9" },
     { name = "requests", specifier = ">=2.32,<3" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9,<1" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = "==0.15.22" },
     { name = "supabase", specifier = ">=2,<3" },
     { name = "trafilatura", specifier = ">=2,<3" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34,<1" },

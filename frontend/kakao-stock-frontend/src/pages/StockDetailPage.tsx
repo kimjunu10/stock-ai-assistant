@@ -6,7 +6,8 @@ import { Icon } from '../components/Icon'
 import { NewsClusterCard } from '../components/NewsClusterCard'
 import { SectionHeader } from '../components/SectionHeader'
 import { StockHeader } from '../components/StockHeader'
-import { TradingViewChart } from '../components/TradingViewChart'
+import { PriceChart } from '../components/PriceChart'
+import { useStockMarketData } from '../hooks/useStockMarketData'
 
 interface StockDetailPageProps {
   onAsk: (context: AssistantContext) => void
@@ -16,6 +17,7 @@ interface StockDetailPageProps {
 
 export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProps) {
   const stock = getStock(stockCode)
+  const marketData = useStockMarketData(stockCode)
 
   if (!stock) {
     return <div className="not-found shell"><span>404</span><h1>분석 대상이 아닌 종목이에요.</h1><p>현재는 지정된 5개 종목만 제공하고 있어요.</p></div>
@@ -28,11 +30,19 @@ export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProp
 
   return (
     <main className="stock-page shell">
-      <StockHeader onAsk={onAsk} stock={stock} />
+      <StockHeader
+        marketData={marketData.data}
+        marketDataStatus={marketData.status}
+        onAsk={onAsk}
+        stock={stock}
+      />
 
       <section className="stock-section chart-section">
-        <TradingViewChart
-          stockCode={stock.code}
+        <PriceChart
+          data={marketData.data}
+          error={marketData.error}
+          onRetry={marketData.retry}
+          status={marketData.status}
           stockName={stock.name}
           theme={theme}
         />
@@ -40,7 +50,7 @@ export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProp
 
       <section className="stock-section stock-news-section">
         <SectionHeader
-          action={<span className="section-meta">뉴스 마커는 추후 별도 가격 API 연동 후 제공</span>}
+          action={<span className="section-meta">뉴스 마커는 후속 기능으로 제공</span>}
           description="차트와 섞지 않고, 같은 종목의 주요 사건을 아래에서 확인하세요."
           eyebrow="차트 아래 주요 뉴스"
           title={`${stock.name}에 지금 중요한 소식`}
