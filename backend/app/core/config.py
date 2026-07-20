@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     max_crawl_retries: int = 3
     crawl_batch_size: int = 50
     supabase_batch_size: int = 100
+    news_scheduler_enabled: bool = True
+    news_scheduler_interval_minutes: int = 30
+    news_scheduler_max_per_stock: int = 100
 
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
 
@@ -50,6 +53,10 @@ class Settings(BaseSettings):
             raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
         if not 1 <= self.search_display <= 100:
             raise RuntimeError("SEARCH_DISPLAY must be between 1 and 100")
+        if self.news_scheduler_interval_minutes < 1:
+            raise RuntimeError("NEWS_SCHEDULER_INTERVAL_MINUTES must be at least 1")
+        if not 1 <= self.news_scheduler_max_per_stock <= 1000:
+            raise RuntimeError("NEWS_SCHEDULER_MAX_PER_STOCK must be between 1 and 1000")
 
 
 settings = Settings()
