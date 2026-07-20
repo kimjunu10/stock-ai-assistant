@@ -3,12 +3,16 @@ import { AppLink, type Navigate } from '../components/AppLink'
 import { Icon } from '../components/Icon'
 import { SentimentBadge } from '../components/SentimentBadge'
 import { StockAvatar } from '../components/StockAvatar'
+import { AnimatedPrice } from '../components/AnimatedPrice'
+import { useStockMarketOverview } from '../hooks/useStockMarketOverview'
 
 interface StocksPageProps {
   onNavigate: Navigate
 }
 
 export function StocksPage({ onNavigate }: StocksPageProps) {
+  const marketOverview = useStockMarketOverview()
+
   return (
     <main className="subpage shell">
       <header className="page-title">
@@ -19,17 +23,25 @@ export function StocksPage({ onNavigate }: StocksPageProps) {
 
       <div className="stock-table-card">
         <div className="stock-table-card__head">
-          <span>종목</span><span>전일 종가</span><span>최근 뉴스 신호</span><span>핵심 정보</span><span />
+          <span>종목</span><span>현재가</span><span>최근 뉴스 신호</span><span>핵심 정보</span><span />
         </div>
         {STOCKS.map((stock) => {
           const latestNews = NEWS_CLUSTERS.find((cluster) => cluster.stockCode === stock.code)
+          const quote = marketOverview.quotes[stock.code]
+          const direction = quote ? (quote.change === 0 ? 'flat' : quote.change > 0 ? 'up' : 'down') : stock.direction
+          const changeRate = quote
+            ? `${quote.changeRate > 0 ? '+' : ''}${quote.changeRate.toFixed(2)}%`
+            : stock.changeRate
           return (
             <AppLink className="stock-table-row" href={`/stocks/${stock.code}`} key={stock.code} onNavigate={onNavigate}>
               <div className="stock-table-row__identity">
                 <StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} />
                 <div><strong>{stock.name}</strong><span>{stock.code} · {stock.sector}</span></div>
               </div>
-              <div className="stock-table-row__quote"><strong>{stock.price}</strong><span className={`quote-change quote-change--${stock.direction}`}>{stock.changeRate}</span></div>
+              <div className="stock-table-row__quote">
+                <AnimatedPrice fallback={stock.price} value={quote?.price ?? null} />
+                <span className={`quote-change quote-change--${direction}`}>{changeRate}</span>
+              </div>
               <div>{latestNews && <SentimentBadge sentiment={latestNews.sentiment} />}</div>
               <p>{latestNews?.title ?? '새로운 주요 뉴스가 없어요.'}</p>
               <Icon name="chevron-right" size={18} />
@@ -40,7 +52,10 @@ export function StocksPage({ onNavigate }: StocksPageProps) {
 
       <aside className="data-note">
         <Icon name="info" size={18} />
-        <div><strong>이 화면의 가격은 UI 구성용 샘플입니다.</strong><p>실제 서비스에서는 금융위원회 주식시세정보 API의 데이터 기준일과 전일 종가 기준 문구가 함께 표시됩니다.</p></div>
+        <div>
+          <strong><i className={`live-dot${marketOverview.isRefreshing ? ' live-dot--refreshing' : ''}`} /> 토스증권 실제 시세 · 15초 자동 갱신</strong>
+          <p>{marketOverview.error || '현재가와 전일 대비 등락률이 자동으로 업데이트됩니다.'}</p>
+        </div>
       </aside>
     </main>
   )

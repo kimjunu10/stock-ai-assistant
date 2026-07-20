@@ -8,7 +8,6 @@ export interface Stock {
   initials: string
   imageSrc: string
   market: 'KOSPI'
-  tradingViewSymbol: string
   sector: string
   price: string
   change: string
@@ -18,6 +17,61 @@ export interface Stock {
   volume: string
   summary: string
 }
+
+export interface PriceCandle {
+  time: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
+export interface StockQuote {
+  price: number
+  previousClose: number
+  change: number
+  changeRate: number
+  currency: 'KRW'
+  asOf: string
+  volume: number
+}
+
+export interface OrderbookLevel {
+  price: number
+  volume: number
+}
+
+export interface StockMarketData {
+  stockCode: string
+  interval: '1d'
+  period: '6m'
+  adjusted: boolean
+  source: string
+  quote: StockQuote
+  candles: PriceCandle[]
+  intradayCandles: PriceCandle[]
+  upperLimitPrice: number | null
+  lowerLimitPrice: number | null
+  asks: OrderbookLevel[]
+  bids: OrderbookLevel[]
+}
+
+export interface StockListQuote {
+  stockCode: string
+  price: number
+  previousClose: number
+  change: number
+  changeRate: number
+  asOf: string
+}
+
+export interface StockMarketOverview {
+  source: string
+  quotes: StockListQuote[]
+}
+
+export type MarketDataStatus = 'loading' | 'ready' | 'error'
 
 export interface Term {
   term: string

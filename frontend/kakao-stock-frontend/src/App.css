@@ -197,22 +197,34 @@
   .empty-state p { @apply mt-2 mb-0 text-xs; }
 
   .stock-page { @apply pt-14 pb-[100px]; }
-  .stock-hero { @apply grid grid-cols-[minmax(0,1fr)_auto] gap-8 border-b border-line pb-11; }
-  .stock-hero__identity { @apply flex min-w-0 gap-[18px]; }
+  .stock-hero { @apply grid grid-cols-[minmax(0,1.45fr)_minmax(300px,0.7fr)] items-stretch gap-12 border-b border-line pb-11; }
+  .stock-hero__overview { @apply min-w-0; }
+  .stock-hero__identity { @apply flex min-w-0 items-start gap-[18px]; }
   .stock-hero__labels { @apply flex items-center gap-1.5; }
   .stock-hero__labels span { @apply rounded-md bg-subtle px-2 py-1 text-[9px] font-bold text-faint; }
-  .stock-hero h1 { @apply mt-2 mb-1 text-3xl tracking-[-1.3px]; }
+  .stock-hero__title { @apply mt-2 flex flex-wrap items-baseline gap-2.5; }
+  .stock-hero h1 { @apply m-0 text-3xl tracking-[-1.3px]; }
+  .stock-hero__title > span { @apply text-[15px] font-semibold tracking-[-0.2px] text-faint; }
   .stock-hero__identity p { @apply m-0 text-xs text-muted; }
-  .stock-hero__quote { @apply flex min-w-[245px] flex-col items-end gap-1; }
-  .stock-hero__quote > strong { @apply mt-1 text-3xl tracking-[-1px]; }
-  .sample-label { @apply text-[9px] text-faint; }
-  .stock-hero__facts { @apply col-span-2 flex items-center gap-9 rounded-[17px] bg-subtle px-5 py-[18px]; }
+  .stock-hero__quote { @apply mt-8 flex min-w-0 flex-col items-start gap-1.5; }
+  .stock-hero__price-line { @apply flex flex-wrap items-baseline gap-x-4 gap-y-1; }
+  .stock-hero__price-line > strong { @apply text-[48px] leading-none font-extrabold tracking-[-2.2px]; }
+  .stock-hero__price-line .quote-change { @apply text-[13px]; }
+  .sample-label { @apply inline-flex items-center gap-1.5 text-[9px] text-faint; }
+  .live-dot { @apply inline-block size-1.5 shrink-0 rounded-full bg-[#f04452] shadow-[0_0_0_3px_rgba(240,68,82,0.11)]; }
+  .live-dot--refreshing { @apply animate-pulse; }
+  .animated-price { animation: price-tick 420ms ease-out; font-variant-numeric: tabular-nums; }
+  .stock-hero__facts { @apply grid grid-cols-2 content-center gap-x-8 gap-y-4 rounded-[20px] bg-subtle px-6 py-5; }
   .stock-hero__facts > div { @apply flex flex-col gap-1; }
-  .stock-hero__facts span { @apply text-[9px] text-faint; }
-  .stock-hero__facts strong { @apply text-xs; }
-  .stock-hero__facts .primary-button { @apply ml-auto; }
+  .stock-hero__facts span { @apply text-[10px] text-faint; }
+  .stock-hero__facts strong { @apply text-[13px]; }
+  .stock-hero__facts .quote-up { @apply text-[#f04452]; }
+  .stock-hero__facts .quote-down { @apply text-[#3182f6]; }
+  .stock-hero__facts .price-limit { @apply col-span-2 border-t border-line pt-3; }
+  .stock-hero__facts .price-limit strong { @apply text-[11px] text-muted; }
+  .stock-hero__facts .primary-button { @apply col-span-2 w-full; }
   .stock-section { @apply border-b border-line py-[60px]; }
-  .chart-section { @apply pt-[52px]; }
+  .chart-section { @apply pt-8; }
   .chart-legend,
   .section-meta,
   .source-label { @apply text-[10px] text-faint; }
@@ -221,14 +233,17 @@
   .chart-legend > span { @apply size-[9px] rounded-sm border-2 border-brand; }
   .source-label { @apply rounded-lg bg-brand-soft px-2.5 py-1.5 font-bold text-brand-ink; }
 
-  .tradingview-chart-frame { @apply relative h-[520px] overflow-hidden rounded-[20px] border border-line bg-surface; }
-  .tradingview-widget-container { @apply size-full; }
-  .tradingview-widget-mount { @apply size-full; }
-  .tradingview-widget-copyright { @apply h-[30px] px-3 pt-1.5 text-right text-[10px] text-faint; }
-  .tradingview-widget-copyright a { color: #2962ff; @apply no-underline; }
-  .chart-state { @apply absolute inset-[0_0_30px] z-10 flex flex-col items-center justify-center bg-surface p-6 text-center text-muted; }
+  .price-chart-frame { @apply relative h-[520px] overflow-hidden rounded-[20px] border border-line bg-surface; }
+  .price-chart__meta { @apply absolute inset-x-0 top-0 z-20 flex h-12 items-center justify-between border-b border-line bg-surface/95 px-5 text-[10px] text-faint backdrop-blur; }
+  .price-chart__meta strong { @apply text-ink; }
+  .price-chart__meta > span { @apply flex items-center gap-1.5; }
+  .chart-range-tabs { @apply flex h-8 items-center rounded-[10px] bg-subtle p-0.5; }
+  .chart-range-tabs button { @apply h-7 cursor-pointer rounded-lg border-0 bg-transparent px-3 text-[10px] font-bold text-faint; }
+  .chart-range-tabs button.active { @apply bg-surface text-ink shadow-soft; }
+  .price-chart__canvas { @apply absolute inset-[48px_0_0]; }
+  .chart-state { @apply absolute inset-[48px_0_0] z-10 flex flex-col items-center justify-center bg-surface p-6 text-center text-muted; }
   .chart-state strong { @apply mt-3 text-sm text-ink; }
-  .chart-state p { @apply mt-1.5 mb-0 text-[11px]; }
+  .chart-state p { @apply mt-1.5 mb-0 text-[11px] leading-[1.8]; }
   .chart-loader { @apply size-7 animate-spin rounded-full border-3 border-brand-soft border-t-brand; }
   .chart-state__icon { @apply flex size-11 items-center justify-center rounded-[14px] bg-warm-soft text-warm-ink; }
   .chart-state--error .secondary-button { @apply mt-4; }
@@ -343,6 +358,11 @@
   .not-found p { @apply mt-0 mb-6 text-xs text-muted; }
 }
 
+@keyframes price-tick {
+  0% { opacity: 0.35; transform: translateY(5px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 1024px) {
   @layer components {
     .app-header__inner { @apply gap-6; }
@@ -387,9 +407,7 @@
     .filter-toolbar { @apply top-[62px] flex-col items-start gap-2; }
     .stock-filter { @apply w-full max-w-full; }
     .page-title--row { @apply items-start; }
-    .stock-hero { @apply grid-cols-1; }
-    .stock-hero__quote { @apply items-start; }
-    .stock-hero__facts { @apply col-span-1; }
+    .stock-hero { @apply grid-cols-1 gap-7; }
     .financial-grid,
     .research-section { @apply grid-cols-1; }
     .research-section { @apply gap-14; }
@@ -440,13 +458,18 @@
     .stock-hero__identity { @apply items-start gap-3; }
     .stock-avatar--lg { @apply size-[54px] rounded-[17px] text-xs; }
     .stock-hero__labels span:last-child { @apply hidden; }
-    .stock-hero h1 { @apply text-[25px]; }
+    .stock-hero h1 { @apply text-[26px]; }
+    .stock-hero__title > span { @apply text-xs; }
     .stock-hero__identity p { @apply text-[10px] leading-relaxed; }
-    .stock-hero__quote > strong { @apply text-[26px]; }
-    .stock-hero__facts { @apply flex-wrap gap-x-[30px] gap-y-[18px] p-[15px]; }
-    .stock-hero__facts .primary-button { @apply ml-0 w-full; }
+    .stock-hero__quote { @apply mt-6; }
+    .stock-hero__price-line { @apply flex-col items-start gap-2; }
+    .stock-hero__price-line > strong { @apply text-[39px] tracking-[-1.8px]; }
+    .stock-hero__price-line .quote-change { @apply text-xs; }
+    .stock-hero__facts { @apply gap-x-6 gap-y-[18px] p-[17px]; }
     .stock-section { @apply py-11; }
-    .tradingview-chart-frame { @apply -mx-3.5 h-[390px] rounded-none border-x-0; }
+    .price-chart-frame { @apply -mx-3.5 h-[390px] rounded-none border-x-0; }
+    .price-chart__meta { @apply px-3.5; }
+    .price-chart__meta > span { @apply hidden; }
     .section-meta { @apply hidden; }
     .news-card--compact { @apply p-[18px]; }
     .financial-card { @apply p-[19px]; }
