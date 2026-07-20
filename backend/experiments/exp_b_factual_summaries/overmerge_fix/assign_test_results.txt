@@ -1,0 +1,13 @@
+PASS test_1_first_article_new
+PASS test_2_same_event_followup_assigned
+PASS test_3_similar_topic_diff_event_new
+PASS test_4_gunham_vs_bangsan_separated
+PASS test_5_one_call_per_article_even_many_candidates
+PASS test_6_llm_error_pending_retry
+PASS test_7_idempotent_no_double_assign
+PASS test_8_flag_off_distance_based
+PASS test_9_invalid_response_variants_pending_retry
+PASS test_10_anchor_fixed_on_first_article
+PASS test_parse_decision_validation
+
+11/11 passed

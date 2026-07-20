@@ -1,0 +1,17 @@
+후보: [101, 202]
+
+[✗] 동일 발표 후속(군함 수주)
+    기대=existing/101  실제=new/None  (parse=True, 451ms)
+[✓] 주체·대상 다름(해상풍력과 무관한 실적)
+    기대=new/None  실제=new/None  (parse=True, 981ms)
+[✓] 주제만 비슷(다른 회사 방산 협력)
+    기대=new/None  실제=new/None  (parse=True, 574ms)
+[✓] 동일 사건(해상풍력 착공 후속)
+    기대=existing/202  실제=existing/202  (parse=True, 590ms)
+
+판정 정확: 3/4
+총 호출: 4회 (기사당 1회)
+토큰 실측: prompt=1748 completion=69 (평균 prompt=437/호출)
+
+[추정] company 기사당 후보가 있으면 1회 호출. 후보 있는 기사 N건이면
+       prompt≈437·N, completion≈17·N 토큰.

@@ -1,0 +1,5 @@
+variant,n_clusters,singleton_ratio,max_cluster_size,clusters_ge_50,seconds
+baseline,1310,0.7382,379,35,0.49
+A_market_bridge,1428,0.7283,362,37,0.47
+B_drift_guard,1447,0.7408,331,34,0.62
+C_combined,1578,0.737,317,34,0.54
