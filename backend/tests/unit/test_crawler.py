@@ -28,9 +28,7 @@ def test_extract_script_json_body_reads_react_query_article() -> None:
     </script>
     """
 
-    body = ArticleCrawler._extract_script_json_body(
-        BeautifulSoup(html, "html.parser")
-    )
+    body = ArticleCrawler._extract_script_json_body(BeautifulSoup(html, "html.parser"))
 
     assert body == "첫 번째 본문\n두 번째 문단"
 
@@ -46,9 +44,7 @@ def test_extract_script_json_body_reads_next_content_arrange() -> None:
     </script>
     """
 
-    body = ArticleCrawler._extract_script_json_body(
-        BeautifulSoup(html, "html.parser")
-    )
+    body = ArticleCrawler._extract_script_json_body(BeautifulSoup(html, "html.parser"))
 
     assert body == "첫 번째 본문\n두 번째 문단"
 

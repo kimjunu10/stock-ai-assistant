@@ -80,17 +80,13 @@ def _find_mentions(text: str, rule: StockMentionRule) -> list[tuple[int, int, st
             pattern = re.compile(rf"(?<!\d){re.escape(normalized_term)}(?!\d)")
         else:
             pattern = re.compile(re.escape(normalized_term))
-        candidates.extend(
-            (match.start(), match.end(), term)
-            for match in pattern.finditer(text)
-        )
+        candidates.extend((match.start(), match.end(), term) for match in pattern.finditer(text))
 
     selected: list[tuple[int, int, str]] = []
     for candidate in sorted(candidates, key=lambda item: (item[0], -(item[1] - item[0]))):
         start, end, _ = candidate
         overlaps = any(
-            start < chosen_end and end > chosen_start
-            for chosen_start, chosen_end, _ in selected
+            start < chosen_end and end > chosen_start for chosen_start, chosen_end, _ in selected
         )
         if overlaps:
             continue

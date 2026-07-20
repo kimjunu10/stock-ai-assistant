@@ -266,8 +266,9 @@ class ArticleCrawler:
         soup = BeautifulSoup(html_text, "html.parser")
         tag = soup.find(
             "link",
-            rel=lambda value: value
-            and "amphtml" in (value if isinstance(value, list) else [value]),
+            rel=lambda value: (
+                value and "amphtml" in (value if isinstance(value, list) else [value])
+            ),
         )
         href = tag.get("href") if tag else None
         return urljoin(base_url, href.strip()) if isinstance(href, str) else ""
@@ -394,9 +395,7 @@ class ArticleCrawler:
         if preferred_selector:
             preferred_node = soup.select_one(preferred_selector)
             if preferred_node:
-                preferred_body = self._clean_body(
-                    preferred_node.get_text("\n", strip=True)
-                )
+                preferred_body = self._clean_body(preferred_node.get_text("\n", strip=True))
                 if preferred_body:
                     return preferred_body
 

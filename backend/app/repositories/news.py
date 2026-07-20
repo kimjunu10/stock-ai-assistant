@@ -135,9 +135,7 @@ class NewsRepository:
         return len(response.data or [])
 
     def get_crawl_candidates(self, limit: int) -> list[dict[str, Any]]:
-        fields = (
-            "id,original_url,title,crawl_status,crawl_attempts,last_attempt_at,next_retry_at"
-        )
+        fields = "id,original_url,title,crawl_status,crawl_attempts,last_attempt_at,next_retry_at"
         pending = (
             self.client.table("articles")
             .select(fields)
