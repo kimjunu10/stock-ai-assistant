@@ -1,10 +1,10 @@
-import { NEWS_CLUSTERS, STOCKS } from '../data/mockData'
+import { STOCKS } from '../data/mockData'
 import { AppLink, type Navigate } from '../components/AppLink'
 import { Icon } from '../components/Icon'
-import { SentimentBadge } from '../components/SentimentBadge'
 import { StockAvatar } from '../components/StockAvatar'
 import { AnimatedPrice } from '../components/AnimatedPrice'
 import { useStockMarketOverview } from '../hooks/useStockMarketOverview'
+import { useNewsClusters } from '../hooks/useNewsClusters'
 
 interface StocksPageProps {
   onNavigate: Navigate
@@ -12,6 +12,7 @@ interface StocksPageProps {
 
 export function StocksPage({ onNavigate }: StocksPageProps) {
   const marketOverview = useStockMarketOverview()
+  const news = useNewsClusters({ limit: 50 })
 
   return (
     <main className="subpage shell">
@@ -23,10 +24,10 @@ export function StocksPage({ onNavigate }: StocksPageProps) {
 
       <div className="stock-table-card">
         <div className="stock-table-card__head">
-          <span>종목</span><span>현재가</span><span>최근 뉴스 신호</span><span>핵심 정보</span><span />
+          <span>종목</span><span>현재가</span><span>분류 예정</span><span>최근 뉴스</span><span />
         </div>
         {STOCKS.map((stock) => {
-          const latestNews = NEWS_CLUSTERS.find((cluster) => cluster.stockCode === stock.code)
+          const latestNews = news.clusters.find((cluster) => cluster.stockCode === stock.code)
           const quote = marketOverview.quotes[stock.code]
           const direction = quote ? (quote.change === 0 ? 'flat' : quote.change > 0 ? 'up' : 'down') : stock.direction
           const changeRate = quote
@@ -42,7 +43,7 @@ export function StocksPage({ onNavigate }: StocksPageProps) {
                 <AnimatedPrice fallback={stock.price} value={quote?.price ?? null} />
                 <span className={`quote-change quote-change--${direction}`}>{changeRate}</span>
               </div>
-              <div>{latestNews && <SentimentBadge sentiment={latestNews.sentiment} />}</div>
+              <div aria-label="호재 악재 분류 모델 연결 예정" />
               <p>{latestNews?.title ?? '새로운 주요 뉴스가 없어요.'}</p>
               <Icon name="chevron-right" size={18} />
             </AppLink>

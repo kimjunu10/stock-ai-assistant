@@ -8,3 +8,7 @@ dist/
 build/
 *.egg-info/
 docs/
+!docs/
+docs/*
+!docs/LLM_ASSIGNER_PRODUCTION_PIPELINE.md
+!docs/NEWS_CLUSTERING_GPT_REVIEW.md

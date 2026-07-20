@@ -1,4 +1,4 @@
-import { NEWS_CLUSTERS, STOCKS } from '../data/mockData'
+import { STOCKS } from '../data/mockData'
 import type { AssistantContext } from '../types'
 import { AppLink, type Navigate } from '../components/AppLink'
 import { Icon } from '../components/Icon'
@@ -6,6 +6,7 @@ import { NewsClusterCard } from '../components/NewsClusterCard'
 import { SectionHeader } from '../components/SectionHeader'
 import { StockCard } from '../components/StockCard'
 import { useStockMarketOverview } from '../hooks/useStockMarketOverview'
+import { useNewsClusters } from '../hooks/useNewsClusters'
 
 interface HomePageProps {
   onAsk: (context: AssistantContext) => void
@@ -14,9 +15,9 @@ interface HomePageProps {
 
 export function HomePage({ onAsk, onNavigate }: HomePageProps) {
   const marketOverview = useStockMarketOverview()
-  const featuredNews = [NEWS_CLUSTERS[0], NEWS_CLUSTERS[5], NEWS_CLUSTERS[9]].filter(
-    (cluster) => cluster !== undefined,
-  )
+  const news = useNewsClusters({ limit: 3 })
+  const featuredNews = news.clusters
+  const articleCount = featuredNews.reduce((total, cluster) => total + cluster.articleCount, 0)
 
   return (
     <main>
@@ -43,17 +44,15 @@ export function HomePage({ onAsk, onNavigate }: HomePageProps) {
           <div className="briefing-preview__header">
             <div>
               <span className="assistant-symbol" aria-hidden="true">M</span>
-              <div><strong>오늘의 AI 브리핑</strong><span>새 소식 14건을 5개 사건으로 정리했어요</span></div>
+              <div><strong>오늘의 AI 브리핑</strong><span>기사 {articleCount}건을 {featuredNews.length}개 사건으로 정리했어요</span></div>
             </div>
             <span>오전 9:30</span>
           </div>
-          <div className="briefing-preview__signal">
-            <span className="briefing-preview__score">3</span>
-            <div><strong>긍정 신호가 조금 더 많아요</strong><p>호재 3 · 중립 1 · 악재 1</p></div>
-          </div>
           <div className="briefing-preview__items">
-            <article><span className="signal-dot signal-dot--positive" /><div><strong>AI 메모리 공급 확대 기대</strong><p>삼성전자 · 기사 12개 묶음</p></div><Icon name="chevron-right" size={17} /></article>
-            <article><span className="signal-dot signal-dot--neutral" /><div><strong>원가 협상 결과는 더 지켜봐야 해요</strong><p>한화오션 · 기사 8개 묶음</p></div><Icon name="chevron-right" size={17} /></article>
+            {featuredNews.slice(0, 2).map((cluster) => (
+              <article key={cluster.id}><span className="signal-dot signal-dot--neutral" /><div><strong>{cluster.title}</strong><p>{cluster.articleCount}개 기사 묶음</p></div><Icon name="chevron-right" size={17} /></article>
+            ))}
+            {!news.isLoading && featuredNews.length === 0 && <p className="briefing-preview__empty">아직 생성된 실제 뉴스 브리핑이 없어요.</p>}
           </div>
           <div className="briefing-preview__ask"><Icon name="message" size={17} /><span>“이 소식이 실적에는 어떤 영향이야?”</span><button aria-label="예시 질문 보내기" type="button"><Icon name="send" size={15} /></button></div>
         </div>
@@ -83,6 +82,7 @@ export function HomePage({ onAsk, onNavigate }: HomePageProps) {
             {featuredNews.map((cluster) => (
               <NewsClusterCard cluster={cluster} key={cluster.id} onAsk={onAsk} showStock />
             ))}
+            {!news.isLoading && featuredNews.length === 0 && <div className="empty-state">{news.error || '정리된 실제 뉴스가 아직 없어요.'}</div>}
           </div>
         </div>
       </section>

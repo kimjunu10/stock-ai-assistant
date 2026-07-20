@@ -32,14 +32,14 @@ CLUSTERING_VERSION_PROTECTED = "bge_m3_title_desc_centroid_bridge_info_v3"
 # --- Solar 사실 통합 본문 (SPEC Step 6) ---
 SOLAR_MODEL = "solar-pro3-260323"  # solar-pro3 pinned revision
 SOLAR_BASE_URL = "https://api.upstage.ai/v1"
-SUMMARY_PROMPT_VERSION = "factual_v1"
+SUMMARY_PROMPT_VERSION = "factual_easy_v2"
 SOLAR_TEMPERATURE = 0.0
-SOLAR_MAX_TOKENS = 700
+SOLAR_MAX_TOKENS = 1300
 
 # 요약 입력에 넣을 클러스터당 최대 기사 수(과도한 토큰 방지). 넘으면 발행 시간순으로 자름.
 MAX_ARTICLES_PER_SUMMARY = 12
 # 기사 본문(body)을 요약 입력에 포함할 때 기사당 최대 글자 수.
-MAX_BODY_CHARS = 1200
+MAX_BODY_CHARS = 2400
 
 # --- LLM 동일사건 배정 (하이브리드: BGE-M3 후보검색 → Solar Pro3 판정) ---
 # feature flag. True 면 company 기사를 LLM 판정으로 배정, False 면 기존 거리 단독 배정.
