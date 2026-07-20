@@ -210,6 +210,8 @@ class NewsRepository:
                 "next_retry_at": None,
                 "fail_reason": None,
             }
+            if result.image_url:
+                payload["image_url"] = result.image_url
             if result.title:
                 payload["title"] = result.title
         elif result.skipped:

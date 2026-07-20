@@ -1,4 +1,4 @@
-import { getStock, getStockNews } from '../data/mockData'
+import { getStock } from '../data/mockData'
 import type { AssistantContext, Theme } from '../types'
 import { DisclosureList, ReportList } from '../components/ResearchLists'
 import { FinancialCard } from '../components/FinancialCard'
@@ -9,6 +9,7 @@ import { StockHeader } from '../components/StockHeader'
 import { PriceChart } from '../components/PriceChart'
 import { useStockMarketData } from '../hooks/useStockMarketData'
 import { useStockFundamentals } from '../hooks/useStockFundamentals'
+import { useNewsClusters } from '../hooks/useNewsClusters'
 
 interface StockDetailPageProps {
   onAsk: (context: AssistantContext) => void
@@ -20,12 +21,12 @@ export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProp
   const stock = getStock(stockCode)
   const marketData = useStockMarketData(stockCode)
   const fundamentals = useStockFundamentals(stockCode)
+  const news = useNewsClusters({ limit: 10, stockCode })
 
   if (!stock) {
     return <div className="not-found shell"><span>404</span><h1>분석 대상이 아닌 종목이에요.</h1><p>현재는 지정된 5개 종목만 제공하고 있어요.</p></div>
   }
 
-  const news = getStockNews(stockCode)
   return (
     <main className="stock-page shell">
       <StockHeader
@@ -55,7 +56,10 @@ export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProp
           title={`${stock.name}에 지금 중요한 소식`}
         />
         <div className="stock-news-list">
-          {news.map((cluster) => <NewsClusterCard cluster={cluster} compact key={cluster.id} onAsk={onAsk} />)}
+          {news.clusters.map((cluster) => <NewsClusterCard cluster={cluster} compact key={cluster.id} onAsk={onAsk} />)}
+          {!news.isLoading && news.clusters.length === 0 && (
+            <p className="data-notice">{news.error || '아직 생성된 뉴스 사건 정리가 없어요.'}</p>
+          )}
         </div>
       </section>
 

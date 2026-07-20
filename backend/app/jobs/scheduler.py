@@ -14,6 +14,8 @@ from app.core.config import Settings, settings
 from app.db.client import get_supabase_client
 from app.jobs.news import collect_search_results, crawl_collected_articles
 from app.repositories.news import NewsRepository
+from app.repositories.news_clusters import NewsClusterRepository
+from app.services.news_clustering import NewsClusteringService
 from app.sources.naver_news import NaverNewsClient
 
 logger = logging.getLogger("uvicorn.error.news_scheduler")
@@ -48,12 +50,17 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         wait_for_retries=False,
     )
     relevance_totals = repo.classify_pending_relevance()
+    clustering_totals = NewsClusteringService(
+        NewsClusterRepository(repo.client, cfg),
+        cfg,
+    ).process_pending()
     elapsed_seconds = (datetime.now(UTC) - started_at).total_seconds()
     result = {
         "collected": collected,
         "errors": errors,
         "crawl": crawl_totals,
         "relevance": relevance_totals,
+        "clustering": clustering_totals,
         "elapsed_seconds": round(elapsed_seconds, 3),
     }
     logger.info(
@@ -74,6 +81,13 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         relevance_totals["irrelevant"],
         relevance_totals["deferred"],
         relevance_totals["updated"],
+    )
+    logger.info(
+        "NEWS_CLUSTERING scanned=%d completed=%d pending_retry=%d duplicate=%d",
+        clustering_totals["scanned"],
+        clustering_totals["completed"],
+        clustering_totals["pending_retry"],
+        clustering_totals["duplicate"],
     )
     return result
 

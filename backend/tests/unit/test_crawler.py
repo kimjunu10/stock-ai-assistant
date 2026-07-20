@@ -77,3 +77,19 @@ def test_extract_amp_url_resolves_official_alternate() -> None:
     )
 
     assert target == "https://www.example.com/news/amp/123"
+
+
+def test_extract_image_url_prefers_open_graph_and_resolves_relative_url() -> None:
+    html = """
+    <html><head>
+      <meta property="og:image" content="/images/article-123.jpg">
+      <meta name="twitter:image" content="https://cdn.example.com/twitter.jpg">
+    </head></html>
+    """
+
+    image_url = ArticleCrawler._extract_image_url(
+        html,
+        "https://news.example.com/articles/123",
+    )
+
+    assert image_url == "https://news.example.com/images/article-123.jpg"

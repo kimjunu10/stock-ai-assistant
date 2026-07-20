@@ -34,3 +34,8 @@
 SPEC*.md
 기능정리*.md
 backend/migrations/
+!backend/migrations/
+backend/migrations/*
+!backend/migrations/0003_news_clustering_pipeline.sql
+!backend/migrations/0004_news_easy_explanation.sql
+!backend/migrations/0005_article_image_url.sql

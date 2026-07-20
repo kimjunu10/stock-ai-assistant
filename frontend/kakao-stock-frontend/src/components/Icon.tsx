@@ -18,6 +18,8 @@ export type IconName =
   | 'info'
   | 'calendar'
   | 'menu'
+  | 'copy'
+  | 'sparkles'
 
 interface IconProps {
   name: IconName
@@ -119,6 +121,19 @@ export function Icon({ name, size = 20, strokeWidth = 1.8, className }: IconProp
       </>
     ),
     menu: <path {...common} d="M4 7h16M4 12h16M4 17h16" />,
+    copy: (
+      <>
+        <rect {...common} x="8" y="8" width="11" height="12" rx="2" />
+        <path {...common} d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2" />
+      </>
+    ),
+    sparkles: (
+      <>
+        <path {...common} d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z" />
+        <path {...common} d="m18.5 13 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" />
+        <path {...common} d="m5.5 13 .7 2.3 2.3.7-2.3.7L5.5 19l-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" />
+      </>
+    ),
   }
 
   return (

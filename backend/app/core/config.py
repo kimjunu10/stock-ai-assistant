@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     news_scheduler_enabled: bool = True
     news_scheduler_interval_minutes: int = 30
     news_scheduler_max_per_stock: int = 100
+    news_clustering_batch_size: int = 50
+    news_clustering_retry_minutes: int = 30
+    news_embedding_device: str = "cpu"
+    use_llm_assign: bool = True
     toss_request_timeout_seconds: float = 15.0
     toss_market_data_cache_seconds: int = 15
 
@@ -88,6 +92,7 @@ class Settings(BaseSettings):
             for name, value in (
                 ("NAVER_CLIENT_ID", self.naver_client_id),
                 ("NAVER_CLIENT_SECRET", self.naver_client_secret),
+                ("UPSTAGE_API_KEY", self.upstage_api_key),
                 ("SUPABASE_URL", self.supabase_url),
                 ("SUPABASE_SERVICE_KEY", self.supabase_service_key),
             )

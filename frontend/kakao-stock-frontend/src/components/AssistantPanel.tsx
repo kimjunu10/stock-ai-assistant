@@ -56,7 +56,7 @@ export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) 
           </div>
 
           <div className="question-suggestions">
-            {['왜 호재로 분류됐어?', '실적에는 어떤 영향이 있어?', '관련 공시도 찾아줘'].map((suggestion) => (
+            {['이 사건의 핵심이 뭐야?', '실적에는 어떤 영향이 있어?', '관련 공시도 찾아줘'].map((suggestion) => (
               <button key={suggestion} onClick={() => setInput(suggestion)} type="button">
                 {suggestion}
               </button>

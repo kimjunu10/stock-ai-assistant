@@ -81,15 +81,28 @@ export interface Term {
 export interface NewsCluster {
   id: number
   stockCode: string
+  kind?: 'company' | 'market' | 'info'
   title: string
   easySummary: string
-  sentiment: Sentiment
-  sentimentScore: number
-  sentimentReason: string
+  factualBody?: string
+  sentiment?: Sentiment | null
+  sentimentScore?: number | null
+  sentimentReason?: string | null
   articleCount: number
   pressList: string[]
   publishedAt: string
+  sources?: NewsSource[]
   terms?: Term[]
+}
+
+export interface NewsSource {
+  articleId: number
+  title: string
+  press: string
+  url: string
+  publishedAt: string
+  description: string
+  imageUrl?: string | null
 }
 
 export interface FinancialItem {

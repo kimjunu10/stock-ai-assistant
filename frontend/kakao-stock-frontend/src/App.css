@@ -71,10 +71,10 @@
   .assistant-panel__header > div > div { @apply flex flex-col gap-0.5; }
   .briefing-preview__header strong,
   .global-chat__header strong,
-  .assistant-panel__header strong { @apply text-[13px] text-ink; }
+  .assistant-panel__header strong { @apply text-[15px] font-extrabold text-ink; }
   .briefing-preview__header span,
   .global-chat__header span,
-  .assistant-panel__header span { @apply text-[10px] text-faint; }
+  .assistant-panel__header span { @apply text-[12px] font-medium text-faint; }
   .assistant-symbol { @apply inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand text-[13px] font-black text-[#191919]; }
   .briefing-preview__signal { @apply mt-5 flex items-center gap-3.5 rounded-[17px] bg-tint p-[18px]; }
   .briefing-preview__score { @apply inline-flex size-[46px] items-center justify-center rounded-full border-[6px] border-brand/15 bg-surface text-[17px] font-extrabold text-brand-ink; }
@@ -94,8 +94,8 @@
   .page-section { @apply py-[86px]; }
   .page-section--tinted { @apply bg-subtle; }
   .section-header { @apply mb-7 flex items-end justify-between gap-6; }
-  .section-header h2 { @apply m-0 text-[27px] leading-snug font-bold tracking-[-1.2px] text-ink; }
-  .section-header p { @apply mt-2 mb-0 text-[13px] leading-relaxed text-muted; }
+  .section-header h2 { @apply m-0 text-[30px] leading-snug font-extrabold tracking-[-1.2px] text-ink; }
+  .section-header p { @apply mt-2 mb-0 text-[15px] leading-7 font-medium text-muted; }
   .stock-card-grid { @apply grid grid-cols-5 gap-3; }
   .stock-card { @apply block min-w-0 rounded-[19px] border border-line bg-surface p-[19px] text-ink no-underline transition hover:-translate-y-0.5 hover:border-brand/25 hover:shadow-soft; }
   .stock-card__top { @apply flex items-center; }
@@ -113,22 +113,47 @@
   .stock-card > p { @apply mt-2 mb-0 overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-faint; }
 
   .featured-news-grid { @apply grid grid-cols-3 gap-4; }
-  .news-card { @apply min-w-0 rounded-[20px] border border-line bg-surface p-[22px]; }
+  .news-card { @apply relative min-w-0 rounded-[20px] border border-line bg-surface p-[22px]; }
   .news-card__meta-row,
   .news-card__footer,
   .news-card__badges,
   .news-card__stock { @apply flex items-center; }
   .news-card__meta-row { @apply justify-between gap-3; }
   .news-card__badges { @apply flex-wrap gap-2; }
-  .news-card__stock { @apply gap-1.5 text-[10px] font-bold text-muted; }
-  .news-card__meta-row time { @apply text-[10px] whitespace-nowrap text-faint; }
+  .news-card__stock { @apply gap-1.5 text-[12px] font-bold text-muted; }
+  .news-card__meta-row time { @apply text-[11px] font-medium whitespace-nowrap text-faint; }
+  .news-card__tools { @apply ml-auto flex items-center gap-2; }
+  .news-card__copy { @apply flex size-7 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent p-0 text-faint hover:bg-subtle hover:text-ink; }
   .sentiment-badge { @apply inline-flex min-h-[26px] w-fit items-center gap-1.5 rounded-full px-2.5 text-[10px] font-extrabold; }
   .sentiment-badge__dot { @apply size-[5px] rounded-full bg-current; }
   .sentiment-badge--positive { @apply bg-brand-soft text-brand-ink; }
   .sentiment-badge--negative { @apply bg-warm-soft text-warm-ink; }
   .sentiment-badge--neutral { @apply bg-neutral-soft text-neutral-ink; }
-  .news-card h3 { @apply mt-[17px] mb-2.5 text-base leading-normal tracking-[-0.45px] text-ink; }
+  .news-card h3 { @apply mt-[17px] mb-3 text-[20px] leading-[1.45] font-extrabold tracking-[-0.55px] text-ink; }
   .news-card__summary { @apply m-0 min-h-[66px] text-xs leading-7 text-muted; }
+  .news-card ::selection { @apply bg-[#cfe3ff] text-[#172033]; }
+  .news-card__easy-explanation { @apply mt-4 rounded-[14px] bg-brand-soft px-4 py-3.5; }
+  .news-card__easy-explanation summary { @apply flex cursor-pointer list-none items-center justify-between gap-3; }
+  .news-card__easy-explanation summary::-webkit-details-marker { @apply hidden; }
+  .news-card__easy-explanation summary:focus-visible { @apply rounded-md outline-2 outline-offset-4 outline-brand-ink/30; }
+  .news-card__easy-explanation summary > span:first-child { @apply flex items-center gap-1.5 text-[12px] font-extrabold text-brand-ink; }
+  .news-card__easy-toggle { @apply flex items-center gap-1 text-[11px] font-bold text-brand-ink/70; }
+  .news-card__easy-toggle svg { @apply rotate-90 transition-transform; }
+  .news-card__easy-explanation:not([open]) .news-card__easy-toggle svg { @apply rotate-0; }
+  .news-card__easy-explanation:not([open]) .news-card__easy-toggle > span { @apply hidden; }
+  .news-card__easy-explanation:not([open]) .news-card__easy-toggle::before { content: '펼치기'; }
+  .news-card__easy-explanation p { @apply mt-2.5 mb-0 text-[15px] leading-8 font-semibold text-ink; }
+  .news-card__factual-body { @apply mt-5; }
+  .news-card__factual-body > span { @apply mb-2.5 block text-[12px] font-extrabold text-muted; }
+  .news-card__factual-body p { @apply m-0 whitespace-pre-line text-[15px] leading-8 font-medium text-ink/80; }
+  .selection-explainer { @apply absolute z-40; }
+  .selection-explainer__trigger { @apply flex size-9 cursor-pointer items-center justify-center rounded-full border-2 border-surface bg-brand text-[#191919] shadow-float; }
+  .selection-explainer__popover { @apply absolute top-11 right-0 w-[min(320px,calc(100vw_-_52px))] rounded-[14px] border border-line bg-surface p-4 text-left shadow-float; }
+  .selection-explainer__popover > div { @apply mb-2 flex items-center justify-between gap-3; }
+  .selection-explainer__popover > div span { @apply text-[10px] font-extrabold text-brand-ink; }
+  .selection-explainer__popover > div button { @apply flex size-6 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-faint hover:bg-subtle; }
+  .selection-explainer__popover strong { @apply block text-[10px] leading-relaxed text-muted; }
+  .selection-explainer__popover p { @apply mt-2 mb-0 text-[11px] leading-6 text-ink; }
   .term-wrap { @apply relative; }
   .term-underline { @apply cursor-help border-0 border-b border-dashed border-brand bg-transparent p-0 font-bold text-brand-ink; }
   .term-popover { @apply absolute bottom-[calc(100%+10px)] left-0 z-20 w-60 rounded-[13px] border border-line bg-surface p-3 text-[11px] leading-relaxed text-muted shadow-float; }
@@ -136,7 +161,21 @@
   .news-card__reason { @apply mt-4 rounded-[13px] bg-subtle p-3.5; }
   .news-card__reason span { @apply mb-1 block text-[9px] font-extrabold text-faint; }
   .news-card__reason p { @apply m-0 text-[11px] leading-relaxed text-muted; }
-  .news-card__footer { @apply mt-[17px] min-h-[30px] justify-between gap-2 text-[9px] text-faint; }
+  .news-card__sources { @apply mt-4 border-t border-line pt-3; }
+  .news-card__sources summary { @apply w-fit cursor-pointer list-none text-[12px] font-extrabold text-muted; }
+  .news-card__sources summary::-webkit-details-marker { @apply hidden; }
+  .news-card__sources > div { @apply mt-3 grid gap-2.5; }
+  .news-card__sources a { @apply grid min-h-[104px] grid-cols-[132px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border border-line bg-subtle/40 p-3 text-faint no-underline transition hover:border-brand/25 hover:bg-surface hover:text-ink; }
+  .news-card__source-image { @apply flex h-20 w-full items-center justify-center overflow-hidden rounded-lg bg-surface; }
+  .news-card__source-image img { @apply size-full object-cover; }
+  .news-card__source-image img.is-fallback { @apply size-10 object-contain; }
+  .news-card__source-content { @apply flex min-w-0 flex-col gap-1; }
+  .news-card__source-meta { @apply flex items-center gap-1.5 text-[11px] font-medium text-faint; }
+  .news-card__source-meta strong { @apply text-[12px] font-extrabold text-muted; }
+  .news-card__source-title { @apply overflow-hidden text-[14px] leading-6 font-extrabold text-ink; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .news-card__source-description { @apply overflow-hidden text-[11px] leading-5 font-medium text-faint; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+  .news-card__source-external { @apply shrink-0 text-faint; }
+  .news-card__footer { @apply mt-[17px] min-h-[30px] justify-between gap-2 text-[11px] font-medium text-faint; }
   .news-card__press-list { @apply hidden; }
 
   .process-grid { @apply grid grid-cols-3 gap-4; }
@@ -148,8 +187,8 @@
 
   .subpage { @apply min-h-[calc(100vh-250px)] pt-[70px] pb-[100px]; }
   .page-title { @apply mb-[42px]; }
-  .page-title h1 { @apply m-0 text-[35px] leading-snug tracking-[-1.8px]; }
-  .page-title p { @apply mt-3 mb-0 text-sm leading-7 text-muted; }
+  .page-title h1 { @apply m-0 text-[39px] leading-snug font-extrabold tracking-[-1.8px]; }
+  .page-title p { @apply mt-3 mb-0 text-[16px] leading-8 font-medium text-muted; }
   .page-title--row { @apply flex items-end justify-between gap-8; }
   .briefing-count { @apply grid grid-cols-[auto_auto] items-baseline gap-x-2 gap-y-0.5 rounded-2xl border border-line bg-surface px-5 py-4; }
   .briefing-count strong { @apply text-2xl text-brand-ink; }
@@ -186,8 +225,8 @@
   .stock-filter button { @apply min-h-8 rounded-full border border-line; }
   .stock-filter button.is-active { @apply border-brand/30 bg-brand-soft text-brand-ink; }
   .news-feed { @apply mx-auto max-w-[820px]; }
-  .news-feed__header { @apply mb-3 flex justify-between text-[11px] text-muted; }
-  .news-feed__header strong { @apply text-[13px] text-ink; }
+  .news-feed__header { @apply mb-3 flex justify-between text-[13px] font-medium text-muted; }
+  .news-feed__header strong { @apply text-[15px] font-extrabold text-ink; }
   .news-feed .news-card { @apply mb-3 px-7 py-6; }
   .news-feed .news-card__summary { @apply min-h-0 text-[13px]; }
   .news-feed .news-card__footer { @apply text-[10px]; }
@@ -195,6 +234,7 @@
   .empty-state { @apply rounded-[20px] border border-line bg-surface px-5 py-[90px] text-center text-muted; }
   .empty-state strong { @apply text-[15px] text-ink; }
   .empty-state p { @apply mt-2 mb-0 text-xs; }
+  .briefing-preview__empty { @apply m-0 px-2 py-5 text-center text-[10px] text-faint; }
 
   .stock-page { @apply pt-14 pb-[100px]; }
   .stock-hero { @apply grid grid-cols-[minmax(0,1.45fr)_minmax(300px,0.7fr)] items-stretch gap-12 border-b border-line pb-11; }
@@ -203,9 +243,9 @@
   .stock-hero__labels { @apply flex items-center gap-1.5; }
   .stock-hero__labels span { @apply rounded-md bg-subtle px-2 py-1 text-[9px] font-bold text-faint; }
   .stock-hero__title { @apply mt-2 flex flex-wrap items-baseline gap-2.5; }
-  .stock-hero h1 { @apply m-0 text-3xl tracking-[-1.3px]; }
-  .stock-hero__title > span { @apply text-[15px] font-semibold tracking-[-0.2px] text-faint; }
-  .stock-hero__identity p { @apply m-0 text-xs text-muted; }
+  .stock-hero h1 { @apply m-0 text-[36px] font-extrabold tracking-[-1.3px]; }
+  .stock-hero__title > span { @apply text-[16px] font-bold tracking-[-0.2px] text-faint; }
+  .stock-hero__identity p { @apply m-0 text-[14px] leading-7 font-medium text-muted; }
   .stock-hero__quote { @apply mt-8 flex min-w-0 flex-col items-start gap-1.5; }
   .stock-hero__price-line { @apply flex flex-wrap items-baseline gap-x-4 gap-y-1; }
   .stock-hero__price-line > strong { @apply text-[48px] leading-none font-extrabold tracking-[-2.2px]; }
@@ -216,8 +256,8 @@
   .animated-price { animation: price-tick 420ms ease-out; font-variant-numeric: tabular-nums; }
   .stock-hero__facts { @apply grid grid-cols-2 content-center gap-x-8 gap-y-4 rounded-[20px] bg-subtle px-6 py-5; }
   .stock-hero__facts > div { @apply flex flex-col gap-1; }
-  .stock-hero__facts span { @apply text-[10px] text-faint; }
-  .stock-hero__facts strong { @apply text-[13px]; }
+  .stock-hero__facts span { @apply text-[12px] font-medium text-faint; }
+  .stock-hero__facts strong { @apply text-[15px] font-bold; }
   .stock-hero__facts .quote-up { @apply text-[#f04452]; }
   .stock-hero__facts .quote-down { @apply text-[#3182f6]; }
   .stock-hero__facts .price-limit { @apply col-span-2 border-t border-line pt-3; }
@@ -227,7 +267,7 @@
   .chart-section { @apply pt-8; }
   .chart-legend,
   .section-meta,
-  .source-label { @apply text-[10px] text-faint; }
+  .source-label { @apply text-[12px] font-medium text-faint; }
   .chart-legend,
   .source-label { @apply inline-flex items-center gap-1.5; }
   .chart-legend > span { @apply size-[9px] rounded-sm border-2 border-brand; }
@@ -250,21 +290,21 @@
 
   .stock-news-list { @apply overflow-hidden rounded-[20px] border border-line bg-surface; }
   .news-card--compact { @apply rounded-none border-0 border-b border-line px-6 py-5 last:border-0; }
-  .news-card--compact h3 { @apply mt-3 text-[15px]; }
+  .news-card--compact h3 { @apply mt-3 text-[19px] font-extrabold; }
   .news-card--compact .news-card__summary { @apply min-h-0; }
   .financial-grid { @apply grid grid-cols-3 gap-3; }
   .financial-card { @apply rounded-[17px] border border-line bg-surface p-[22px]; }
-  .financial-card > span { @apply text-[11px] font-bold text-muted; }
-  .financial-card > strong { @apply my-3.5 block text-[21px] tracking-[-0.7px]; }
+  .financial-card > span { @apply text-[13px] font-bold text-muted; }
+  .financial-card > strong { @apply my-3.5 block text-[24px] font-extrabold tracking-[-0.7px]; }
   .financial-card > div { @apply flex items-center justify-between gap-2.5; }
   .financial-card__change,
-  .financial-card small { @apply text-[9px]; }
+  .financial-card small { @apply text-[11px] font-medium; }
   .financial-card__change { @apply font-bold; }
   .financial-card__change--up { @apply text-brand-ink; }
   .financial-card__change--down { @apply text-warm-ink; }
   .financial-card__change--flat,
   .financial-card small { @apply text-faint; }
-  .data-notice { @apply mt-3 rounded-xl bg-neutral-soft px-4 py-3 text-[11px] text-muted; }
+  .data-notice { @apply mt-3 rounded-xl bg-neutral-soft px-4 py-3 text-[13px] font-semibold text-muted; }
 
   .research-section { @apply grid grid-cols-2 gap-5 border-b-0; }
   .research-column { @apply min-w-0; }
@@ -277,11 +317,11 @@
   .research-list__body > div { @apply flex items-center justify-between gap-3; }
   .research-list__body span,
   .research-list__body time,
-  .research-list__body p { @apply text-[9px] text-faint; }
-  .research-list__body h3 { @apply my-1.5 overflow-hidden text-xs text-ellipsis whitespace-nowrap; }
+  .research-list__body p { @apply text-[11px] font-medium text-faint; }
+  .research-list__body h3 { @apply my-1.5 overflow-hidden text-[15px] font-extrabold text-ellipsis whitespace-nowrap; }
   .research-list__body p { @apply m-0; }
   .research-list__ask { @apply flex size-[31px] cursor-pointer items-center justify-center rounded-[9px] border border-line bg-surface p-0 text-muted hover:bg-brand-soft hover:text-brand; }
-  .list-more-button { @apply mt-2.5 flex h-[43px] w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-line bg-surface text-[11px] font-bold text-muted; }
+  .list-more-button { @apply mt-2.5 flex h-[46px] w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-line bg-surface text-[13px] font-extrabold text-muted; }
 
   .assistant-panel { @apply fixed top-0 right-0 bottom-0 z-[510] grid w-[min(430px,100vw)] translate-x-[105%] grid-rows-[auto_1fr_auto] border-l border-line bg-surface shadow-float transition-transform duration-200; }
   .assistant-panel.is-open { @apply translate-x-0; }
@@ -291,61 +331,61 @@
   .context-card { @apply mb-6 flex flex-col gap-1.5 rounded-[14px] border border-brand/20 bg-brand-soft p-[15px]; }
   .context-card span,
   .context-card small { @apply text-[9px] text-brand-ink; }
-  .context-card strong { @apply text-xs leading-relaxed text-ink; }
+  .context-card strong { @apply text-[14px] leading-6 font-bold text-ink; }
   .chat-message { @apply mb-3.5 flex items-start gap-2.5; }
   .chat-avatar { @apply flex size-[30px] shrink-0 items-center justify-center rounded-[10px] bg-brand-soft text-[11px] font-black text-brand-ink; }
   .chat-message > div { @apply rounded-[4px_14px_14px] bg-subtle px-3.5 py-3; }
-  .chat-message p { @apply mb-1 text-[11px] leading-relaxed text-muted last:mb-0; }
+  .chat-message p { @apply mb-1 text-[14px] leading-7 font-medium text-muted last:mb-0; }
   .chat-message--user { @apply justify-end; }
-  .chat-message--user > p { @apply m-0 max-w-[82%] rounded-[14px_4px_14px_14px] bg-brand px-3.5 py-3 text-[11px] leading-relaxed text-[#191919]; }
+  .chat-message--user > p { @apply m-0 max-w-[82%] rounded-[14px_4px_14px_14px] bg-brand px-3.5 py-3 text-[14px] leading-7 font-semibold text-[#191919]; }
   .question-suggestions { @apply mr-0 mb-6 ml-[39px] flex flex-wrap gap-1.5; }
-  .question-suggestions button { @apply min-h-[31px] cursor-pointer rounded-full border border-line bg-surface px-2.5 text-[9px] text-muted; }
-  .source-chip { @apply mt-2 inline-flex min-h-[27px] w-fit items-center gap-1 rounded-lg border border-line bg-surface px-2 text-[9px] text-muted; }
+  .question-suggestions button { @apply min-h-[35px] cursor-pointer rounded-full border border-line bg-surface px-3 text-[11px] font-semibold text-muted; }
+  .source-chip { @apply mt-2 inline-flex min-h-[31px] w-fit items-center gap-1 rounded-lg border border-line bg-surface px-2.5 text-[11px] font-semibold text-muted; }
   .assistant-composer { @apply border-t border-line bg-surface px-4 pt-3.5 pb-[17px]; }
   .assistant-composer > div { @apply flex items-end gap-2 rounded-[14px] border border-line-strong bg-subtle pt-2.5 pr-2 pb-2 pl-3; }
   .assistant-composer textarea,
-  .global-composer textarea { @apply w-full resize-none border-0 bg-transparent text-[11px] leading-relaxed text-ink outline-none; }
+  .global-composer textarea { @apply w-full resize-none border-0 bg-transparent text-[14px] leading-7 font-medium text-ink outline-none; }
   .assistant-composer button,
   .global-composer button { @apply flex size-[34px] shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-brand p-0 text-[#191919] disabled:cursor-default disabled:bg-line disabled:text-faint; }
   .assistant-composer > p,
-  .global-composer > p { @apply mt-2 mb-0 text-center text-[8px] text-faint; }
+  .global-composer > p { @apply mt-2 mb-0 text-center text-[10px] font-medium text-faint; }
 
   .ask-page { @apply grid h-[calc(100vh-72px)] grid-cols-[255px_minmax(0,1fr)] overflow-hidden; }
   .ask-sidebar { @apply flex flex-col border-r border-line bg-subtle px-[17px] py-6; }
-  .ask-sidebar__title { @apply flex items-center gap-2 px-2 text-xs text-muted; }
-  .new-chat-button { @apply mt-5 flex h-[41px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface text-[11px] font-bold text-ink; }
+  .ask-sidebar__title { @apply flex items-center gap-2 px-2 text-[14px] font-extrabold text-muted; }
+  .new-chat-button { @apply mt-5 flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface text-[13px] font-extrabold text-ink; }
   .ask-sidebar__recent { @apply mt-7 flex flex-col; }
-  .ask-sidebar__recent > span { @apply px-2 pb-2 text-[9px] font-extrabold text-faint; }
-  .ask-sidebar__recent button { @apply overflow-hidden rounded-lg border-0 bg-transparent px-2 py-2.5 text-left text-[10px] text-ellipsis whitespace-nowrap text-muted hover:bg-surface hover:text-ink; }
+  .ask-sidebar__recent > span { @apply px-2 pb-2 text-[11px] font-extrabold text-faint; }
+  .ask-sidebar__recent button { @apply overflow-hidden rounded-lg border-0 bg-transparent px-2 py-2.5 text-left text-[12px] font-semibold text-ellipsis whitespace-nowrap text-muted hover:bg-surface hover:text-ink; }
   .ask-sidebar__notice { @apply mt-auto flex gap-2 rounded-xl bg-surface p-3 text-faint; }
   .ask-sidebar__notice svg { @apply shrink-0; }
-  .ask-sidebar__notice p { @apply m-0 text-[9px] leading-relaxed; }
+  .ask-sidebar__notice p { @apply m-0 text-[11px] leading-5 font-medium; }
   .global-chat { @apply grid min-w-0 grid-rows-[auto_1fr_auto] bg-canvas; }
   .global-chat__header { @apply flex min-h-[72px] items-center justify-between gap-6 border-b border-line px-6 py-3; }
   .stock-select { @apply flex items-center gap-2; }
-  .stock-select > span { @apply text-[9px] text-faint; }
-  .stock-select select { @apply h-[38px] rounded-[11px] border border-line bg-surface pr-8 pl-3 text-[11px] font-bold text-ink outline-none; }
+  .stock-select > span { @apply text-[11px] font-medium text-faint; }
+  .stock-select select { @apply h-[40px] rounded-[11px] border border-line bg-surface pr-8 pl-3 text-[13px] font-bold text-ink outline-none; }
   .global-chat__body { @apply min-h-0 overflow-y-auto px-6 py-[30px]; }
   .global-chat__body.is-empty { @apply flex items-center justify-center; }
   .chat-welcome { @apply w-[min(620px,100%)] text-center; }
   .chat-welcome__icon { @apply mx-auto mb-5 flex size-[52px] items-center justify-center rounded-[17px] bg-brand-soft text-brand-ink; }
-  .chat-welcome h1 { @apply m-0 text-3xl leading-snug tracking-[-1.4px]; }
-  .chat-welcome > p { @apply mt-3 mb-0 text-xs leading-7 text-muted; }
+  .chat-welcome h1 { @apply m-0 text-[36px] leading-snug font-extrabold tracking-[-1.4px]; }
+  .chat-welcome > p { @apply mt-3 mb-0 text-[15px] leading-8 font-medium text-muted; }
   .starter-grid { @apply mt-7 grid grid-cols-2 gap-2.5; }
-  .starter-grid button { @apply flex min-h-[51px] cursor-pointer items-center justify-between gap-2 rounded-[14px] border border-line bg-surface px-[15px] text-left text-[10px] text-muted hover:border-brand/25 hover:bg-subtle hover:text-ink; }
+  .starter-grid button { @apply flex min-h-[58px] cursor-pointer items-center justify-between gap-2 rounded-[14px] border border-line bg-surface px-[17px] text-left text-[13px] leading-5 font-semibold text-muted hover:border-brand/25 hover:bg-subtle hover:text-ink; }
   .chat-thread { @apply mx-auto w-[min(760px,100%)]; }
   .global-message { @apply mb-[22px] flex items-start gap-2.5; }
   .global-message > div { @apply max-w-[78%]; }
-  .global-message p { @apply m-0 whitespace-pre-wrap text-xs leading-7 text-muted; }
+  .global-message p { @apply m-0 whitespace-pre-wrap text-[15px] leading-8 font-medium text-muted; }
   .global-message--user { @apply justify-end; }
   .global-message--user > div { @apply rounded-[15px_4px_15px_15px] bg-brand px-3.5 py-3; }
-  .global-message--user p { @apply text-[#191919]; }
+  .global-message--user p { @apply font-semibold text-[#191919]; }
   .source-chip-row { @apply mt-3 flex flex-wrap gap-1.5; }
   .source-chip-row .source-chip { @apply m-0 cursor-pointer; }
   .global-composer { @apply mx-auto w-[min(780px,calc(100%_-_40px))] pb-[15px]; }
   .global-composer__box { @apply rounded-[17px] border border-line-strong bg-surface pt-3 pr-3 pb-2 pl-[15px] shadow-soft; }
   .global-composer__box > div { @apply flex items-center justify-between gap-3; }
-  .global-composer__box > div > span { @apply flex items-center gap-1 text-[8px] text-faint; }
+  .global-composer__box > div > span { @apply flex items-center gap-1 text-[10px] font-medium text-faint; }
 
   .app-footer { @apply border-t border-line bg-subtle; }
   .app-footer__inner { @apply flex min-h-[150px] items-center justify-between gap-8 py-9; }
@@ -432,7 +472,7 @@
     .briefing-preview__header > span { @apply hidden; }
     .page-section { @apply py-14; }
     .section-header { @apply mb-5 flex-col items-start gap-2.5; }
-    .section-header h2 { @apply text-[22px]; }
+    .section-header h2 { @apply text-[26px]; }
     .stock-card-grid { @apply flex w-full snap-x overflow-x-auto pr-3.5; scrollbar-width: none; }
     .stock-card-grid::-webkit-scrollbar { display: none; }
     .stock-card { @apply min-w-[185px] snap-start; }
@@ -440,11 +480,13 @@
     .news-card__meta-row { @apply items-start; }
     .news-card__stock { @apply hidden; }
     .news-card__footer { @apply flex-col items-start; }
+    .news-card__sources a { @apply min-h-[90px] grid-cols-[92px_minmax(0,1fr)_auto] gap-3 p-2.5; }
+    .news-card__source-image { @apply h-16; }
     .process-grid article { @apply p-6; }
     .subpage { @apply pt-12 pb-[110px]; }
     .page-title { @apply mb-[30px]; }
-    .page-title h1 { @apply text-[28px]; }
-    .page-title p { @apply text-xs; }
+    .page-title h1 { @apply text-[32px]; }
+    .page-title p { @apply text-[14px] leading-7; }
     .page-title--row { @apply flex-col; }
     .briefing-count { @apply w-full self-stretch; }
     .stock-table-row { @apply min-h-[84px] grid-cols-[minmax(0,1fr)_auto_auto] gap-2.5 p-3.5; }
@@ -454,14 +496,17 @@
     .segmented-control { @apply grid w-full grid-cols-4; }
     .segmented-control button { @apply px-2; }
     .news-feed .news-card { @apply p-5; }
+    .news-card__sources a { @apply grid-cols-[72px_minmax(0,1fr)_auto] gap-2; }
+    .news-card__source-image { @apply h-14; }
+    .news-card__source-description { @apply hidden; }
     .stock-page { @apply pt-[38px] pb-[110px]; }
     .stock-hero { @apply gap-6 pb-9; }
     .stock-hero__identity { @apply items-start gap-3; }
     .stock-avatar--lg { @apply size-[54px] rounded-[17px] text-xs; }
     .stock-hero__labels span:last-child { @apply hidden; }
-    .stock-hero h1 { @apply text-[26px]; }
-    .stock-hero__title > span { @apply text-xs; }
-    .stock-hero__identity p { @apply text-[10px] leading-relaxed; }
+    .stock-hero h1 { @apply text-[30px]; }
+    .stock-hero__title > span { @apply text-[14px]; }
+    .stock-hero__identity p { @apply text-[13px] leading-6; }
     .stock-hero__quote { @apply mt-6; }
     .stock-hero__price-line { @apply flex-col items-start gap-2; }
     .stock-hero__price-line > strong { @apply text-[39px] tracking-[-1.8px]; }
@@ -483,6 +528,10 @@
     .stock-select > span { @apply hidden; }
     .stock-select select { @apply max-w-[155px]; }
     .global-chat__body { @apply px-3.5 py-[22px]; }
+    .chat-welcome h1 { @apply text-[30px]; }
+    .chat-welcome > p { @apply text-[14px] leading-7; }
+    .starter-grid button { @apply text-[12px]; }
+    .global-message p { @apply text-[14px] leading-7; }
     .chat-welcome h1 { @apply text-[25px]; }
     .chat-welcome > p { @apply text-[10px]; }
     .starter-grid { @apply grid-cols-1; }

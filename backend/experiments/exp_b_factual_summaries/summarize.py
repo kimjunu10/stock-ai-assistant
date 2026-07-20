@@ -1,7 +1,8 @@
 """EXP-5 [4] Solar Pro 라벨 비의존 사실 통합 본문 생성.
 
 각 사건 클러스터의 여러 기사(제목·description·본문 일부)를 입력으로 Solar Pro에
-넣어 중복을 제거한 사실 통합 `title`/`factual_body`를 만든다.
+넣어 중복을 제거한 사실 통합 `title`/`factual_body`와 초보자용
+`easy_explanation`을 만든다.
 
 규칙(SPEC Step 6 / prompt.md):
 - 중복 보도를 하나로 합치되 주체·행위·수치·시점·확정 여부를 보존한다.
@@ -29,8 +30,13 @@ SYSTEM_PROMPT = (
     "3. 기사마다 내용이 다르면 단정하지 말고 차이나 불확실성을 그대로 표시한다.\n"
     "4. 호재, 악재, 긍정, 부정, 매수, 매도, 기대, 우려 같은 투자 판단·감성 표현을 절대 쓰지 않는다.\n"
     "5. 기사에 없는 사실을 새로 만들지 않는다.\n"
-    "6. factual_body는 2~4문장으로 간결하게 쓴다.\n"
-    '출력은 반드시 {"title": "...", "factual_body": "..."} 형태의 JSON 하나만 출력한다.'
+    "6. factual_body는 사건의 배경, 핵심 행위, 중요한 수치, 현재 확정 상태를 "
+    "가능한 범위에서 4~7문장으로 충분히 정리한다. 원문 정보가 적으면 억지로 늘리거나 추측하지 않는다.\n"
+    "7. easy_explanation은 주식 초보자에게 말하듯 2~3문장으로 쓴다. 핵심 금융 용어가 있으면 "
+    "'유상증자는 회사가 새 주식을 발행해 자금을 마련하는 방식이에요'처럼 뜻을 문장 안에서 설명하고, "
+    "전체적으로 어떤 내용의 뉴스인지 '~해요' 말투로 알려준다.\n"
+    '출력은 반드시 {"title": "...", "easy_explanation": "...", "factual_body": "..."} '
+    "형태의 JSON 하나만 출력한다."
 )
 
 
@@ -43,7 +49,7 @@ def build_user_prompt(articles: list[dict], stock_name: str) -> str:
     lines = [
         f"[종목] {stock_name}",
         "",
-        "다음은 같은 사건을 보도한 기사들이다. 사실 통합 제목과 본문을 만들어라.",
+        "다음은 같은 사건을 보도한 기사들이다. 사실 통합 제목, 초보자용 쉬운 설명, 충분한 사건 정리 본문을 만들어라.",
         "",
     ]
     for i, a in enumerate(articles, 1):
@@ -65,7 +71,7 @@ def call_solar(api_key: str, user_prompt: str, max_retries: int = 4) -> tuple[di
     """Solar Pro 호출 → (parsed_json, meta). 지수 백오프 재시도.
 
     meta: {ok, status, latency_ms, usage, raw, parse_success}
-    parsed: {"title", "factual_body"} (parse 실패 시 빈 dict)
+    parsed: {"title", "easy_explanation", "factual_body"} (parse 실패 시 빈 dict)
     """
 
     payload = {
@@ -127,7 +133,7 @@ def call_solar(api_key: str, user_prompt: str, max_retries: int = 4) -> tuple[di
 
 
 def _parse(raw: str) -> tuple[dict, bool]:
-    """모델 출력에서 title/factual_body JSON 추출."""
+    """모델 출력에서 title/easy_explanation/factual_body JSON 추출."""
 
     try:
         obj = json.loads(raw)
@@ -141,7 +147,97 @@ def _parse(raw: str) -> tuple[dict, bool]:
         except json.JSONDecodeError:
             return {}, False
     title = (obj.get("title") or "").strip()
+    easy = (obj.get("easy_explanation") or "").strip()
     body = (obj.get("factual_body") or "").strip()
-    if not title or not body:
-        return {"title": title, "factual_body": body}, False
-    return {"title": title, "factual_body": body}, True
+    parsed = {"title": title, "easy_explanation": easy, "factual_body": body}
+    if not title or not easy or not body:
+        return parsed, False
+    return parsed, True
+
+
+EASY_EXPLAIN_SYSTEM_PROMPT = (
+    "너는 주식 초보자를 위한 금융 용어 설명 도우미다. 사용자가 뉴스에서 선택한 문구를 "
+    "해당 뉴스 문맥 안에서 쉽게 설명한다. 어려운 단어를 더 어려운 단어로 바꾸지 말고, "
+    "2~4문장과 '~해요' 말투를 사용한다. 투자 추천, 호재·악재 판단, 주가 예측은 하지 않는다. "
+    '출력은 반드시 {"explanation":"..."} JSON 하나만 출력한다.'
+)
+
+
+def call_solar_easy_explain(
+    api_key: str, selected_text: str, context: str, max_retries: int = 3
+) -> tuple[dict, dict]:
+    """선택한 뉴스 문구를 문맥에 맞게 쉬운 말로 설명한다."""
+
+    payload = {
+        "model": CFG.SOLAR_MODEL,
+        "messages": [
+            {"role": "system", "content": EASY_EXPLAIN_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": f"[뉴스 문맥]\n{context[:3000]}\n\n[선택한 문구]\n{selected_text}",
+            },
+        ],
+        "temperature": 0,
+        "max_tokens": 450,
+        "response_format": {"type": "json_object"},
+    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    delay, last_error = 1.0, ""
+    for _attempt in range(max_retries):
+        started = time.time()
+        try:
+            response = requests.post(
+                f"{CFG.SOLAR_BASE_URL}/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=60,
+            )
+        except requests.RequestException as exc:
+            last_error = f"request_error: {exc}"
+            time.sleep(delay)
+            delay *= 2
+            continue
+        latency = int((time.time() - started) * 1000)
+        if response.status_code == 429 or response.status_code >= 500:
+            last_error = f"http_{response.status_code}"
+            time.sleep(delay)
+            delay *= 2
+            continue
+        if not response.ok:
+            return {}, {
+                "ok": False,
+                "parse_success": False,
+                "raw": response.text[:500],
+                "latency_ms": latency,
+            }
+        data = response.json()
+        raw = data["choices"][0]["message"]["content"]
+        parsed, parse_success = _parse_easy_explanation(raw)
+        return parsed, {
+            "ok": True,
+            "parse_success": parse_success,
+            "raw": raw,
+            "latency_ms": latency,
+            "usage": data.get("usage", {}),
+        }
+    return {}, {
+        "ok": False,
+        "parse_success": False,
+        "raw": last_error,
+        "latency_ms": 0,
+    }
+
+
+def _parse_easy_explanation(raw: str) -> tuple[dict, bool]:
+    try:
+        obj = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        start, end = str(raw).find("{"), str(raw).rfind("}")
+        if start == -1 or end == -1:
+            return {}, False
+        try:
+            obj = json.loads(str(raw)[start : end + 1])
+        except json.JSONDecodeError:
+            return {}, False
+    explanation = (obj.get("explanation") or "").strip() if isinstance(obj, dict) else ""
+    return {"explanation": explanation}, bool(explanation)

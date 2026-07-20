@@ -34,6 +34,7 @@ class CrawlResult:
     final_url: str = ""
     title: str = ""
     body: str = ""
+    image_url: str = ""
     publisher: str = ""
     error: str = ""
     status_code: int | None = None

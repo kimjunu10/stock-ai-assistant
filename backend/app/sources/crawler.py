@@ -194,6 +194,7 @@ class ArticleCrawler:
                 response.encoding = response.apparent_encoding or response.encoding
                 html_text = response.text
             title = self._extract_title(html_text)
+            image_url = self._extract_image_url(html_text, response.url)
             body = self._extract_body(html_text, response.url)
             if len(body) < self.cfg.min_body_length:
                 amp_url = self._extract_amp_url(html_text, response.url)
@@ -204,6 +205,9 @@ class ArticleCrawler:
                         response = amp_response
                         status_code = response.status_code
                         title = self._extract_title(response.text) or title
+                        image_url = (
+                            self._extract_image_url(response.text, response.url) or image_url
+                        )
                         body = amp_body
             if len(body) < self.cfg.min_body_length:
                 api_body = self._extract_publisher_api_body(response.url)
@@ -240,6 +244,7 @@ class ArticleCrawler:
             final_url=response.url,
             title=title,
             body=body,
+            image_url=image_url,
             publisher=publisher_from_url(response.url),
             status_code=status_code,
         )
@@ -347,6 +352,26 @@ class ArticleCrawler:
                 return compact_whitespace(tag["content"])
         if soup.title and soup.title.string:
             return compact_whitespace(soup.title.string)
+        return ""
+
+    @staticmethod
+    def _extract_image_url(html_text: str, base_url: str) -> str:
+        """Return the publisher-provided representative image when available."""
+
+        soup = BeautifulSoup(html_text, "html.parser")
+        selectors = (
+            ("meta", {"property": "og:image"}),
+            ("meta", {"property": "og:image:url"}),
+            ("meta", {"name": "twitter:image"}),
+        )
+        for tag_name, attrs in selectors:
+            tag = soup.find(tag_name, attrs=attrs)
+            content = tag.get("content") if tag else None
+            if not isinstance(content, str) or not content.strip():
+                continue
+            image_url = urljoin(base_url, content.strip())
+            if urlsplit(image_url).scheme in {"http", "https"}:
+                return image_url
         return ""
 
     def _extract_body(self, html_text: str, url: str) -> str:
