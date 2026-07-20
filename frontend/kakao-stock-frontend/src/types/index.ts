@@ -37,6 +37,11 @@ export interface StockQuote {
   volume: number
 }
 
+export interface OrderbookLevel {
+  price: number
+  volume: number
+}
+
 export interface StockMarketData {
   stockCode: string
   interval: '1d'
@@ -45,6 +50,25 @@ export interface StockMarketData {
   source: string
   quote: StockQuote
   candles: PriceCandle[]
+  intradayCandles: PriceCandle[]
+  upperLimitPrice: number | null
+  lowerLimitPrice: number | null
+  asks: OrderbookLevel[]
+  bids: OrderbookLevel[]
+}
+
+export interface StockListQuote {
+  stockCode: string
+  price: number
+  previousClose: number
+  change: number
+  changeRate: number
+  asOf: string
+}
+
+export interface StockMarketOverview {
+  source: string
+  quotes: StockListQuote[]
 }
 
 export type MarketDataStatus = 'loading' | 'ready' | 'error'

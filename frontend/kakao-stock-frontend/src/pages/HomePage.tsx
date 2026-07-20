@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon'
 import { NewsClusterCard } from '../components/NewsClusterCard'
 import { SectionHeader } from '../components/SectionHeader'
 import { StockCard } from '../components/StockCard'
+import { useStockMarketOverview } from '../hooks/useStockMarketOverview'
 
 interface HomePageProps {
   onAsk: (context: AssistantContext) => void
@@ -12,6 +13,7 @@ interface HomePageProps {
 }
 
 export function HomePage({ onAsk, onNavigate }: HomePageProps) {
+  const marketOverview = useStockMarketOverview()
   const featuredNews = [NEWS_CLUSTERS[0], NEWS_CLUSTERS[5], NEWS_CLUSTERS[9]].filter(
     (cluster) => cluster !== undefined,
   )
@@ -65,7 +67,7 @@ export function HomePage({ onAsk, onNavigate }: HomePageProps) {
           title="5개 종목을 한눈에"
         />
         <div className="stock-card-grid">
-          {STOCKS.map((stock) => <StockCard key={stock.code} onNavigate={onNavigate} stock={stock} />)}
+          {STOCKS.map((stock) => <StockCard key={stock.code} onNavigate={onNavigate} quote={marketOverview.quotes[stock.code]} stock={stock} />)}
         </div>
       </section>
 

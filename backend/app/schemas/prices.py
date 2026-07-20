@@ -35,6 +35,11 @@ class StockQuote(CamelModel):
     volume: int
 
 
+class OrderbookLevel(CamelModel):
+    price: float
+    volume: int
+
+
 class StockMarketData(CamelModel):
     stock_code: str
     interval: str
@@ -43,3 +48,22 @@ class StockMarketData(CamelModel):
     source: str
     quote: StockQuote
     candles: list[Candle]
+    intraday_candles: list[Candle]
+    upper_limit_price: float | None = None
+    lower_limit_price: float | None = None
+    asks: list[OrderbookLevel]
+    bids: list[OrderbookLevel]
+
+
+class StockListQuote(CamelModel):
+    stock_code: str
+    price: float
+    previous_close: float
+    change: float
+    change_rate: float
+    as_of: datetime
+
+
+class StockMarketOverview(CamelModel):
+    source: str
+    quotes: list[StockListQuote]

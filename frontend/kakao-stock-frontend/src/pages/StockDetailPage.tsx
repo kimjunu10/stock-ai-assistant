@@ -31,6 +31,7 @@ export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProp
   return (
     <main className="stock-page shell">
       <StockHeader
+        isRefreshing={marketData.isRefreshing}
         marketData={marketData.data}
         marketDataStatus={marketData.status}
         onAsk={onAsk}

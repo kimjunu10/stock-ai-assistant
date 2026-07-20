@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.config import settings
-from app.schemas.prices import StockMarketData
+from app.schemas.prices import StockMarketData, StockMarketOverview
 from app.sources.prices import SUPPORTED_STOCK_CODES, TossApiError, TossInvestClient
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
@@ -25,12 +25,27 @@ def get_toss_client() -> TossInvestClient:
     )
 
 
+@router.get("/market-overview", response_model=StockMarketOverview)
+def get_stock_market_overview(
+    client: Annotated[TossInvestClient, Depends(get_toss_client)],
+) -> StockMarketOverview:
+    """분석 대상 5개 종목의 실제 현재가를 한 번에 제공한다."""
+
+    try:
+        return client.get_stock_market_overview()
+    except TossApiError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="토스증권 시세를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
+        ) from exc
+
+
 @router.get("/{stock_code}/market-data", response_model=StockMarketData)
 def get_stock_market_data(
     stock_code: str,
     client: Annotated[TossInvestClient, Depends(get_toss_client)],
 ) -> StockMarketData:
-    """지정된 5개 종목의 실제 원화 현재가와 최근 6개월 수정 일봉을 제공한다."""
+    """실제 현재가, 1분봉·일봉, 호가와 가격 제한을 제공한다."""
 
     if stock_code not in SUPPORTED_STOCK_CODES:
         raise HTTPException(status_code=404, detail="현재는 지정된 5개 종목만 제공하고 있어요.")

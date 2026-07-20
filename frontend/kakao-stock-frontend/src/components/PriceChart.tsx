@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   CandlestickSeries,
   ColorType,
@@ -26,12 +26,20 @@ const wonFormatter = new Intl.NumberFormat('ko-KR', {
 
 export function PriceChart({ data, error, onRetry, status, stockName, theme }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [range, setRange] = useState<'intraday' | 'daily'>('intraday')
 
   useEffect(() => {
     const container = containerRef.current
     if (!container || !data || status !== 'ready') return
 
     const isDark = theme === 'dark'
+    const isIntraday = range === 'intraday'
+    const candles = isIntraday && data.intradayCandles.length > 0
+      ? data.intradayCandles
+      : data.candles
+    const toChartTime = (value: string) => (
+      isIntraday ? Math.floor(new Date(value).getTime() / 1000) : value
+    ) as Time
     const chart = createChart(container, {
       autoSize: true,
       layout: {
@@ -55,7 +63,8 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
       timeScale: {
         borderColor: isDark ? '#2b2f38' : '#edf0f3',
         rightOffset: 4,
-        timeVisible: false,
+        secondsVisible: false,
+        timeVisible: isIntraday,
       },
       crosshair: {
         horzLine: { color: isDark ? '#747b87' : '#9aa1ad', labelBackgroundColor: '#191919' },
@@ -78,12 +87,12 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
       wickUpColor: '#f04452',
     })
     candleSeries.setData(
-      data.candles.map((candle) => ({
+      candles.map((candle) => ({
         close: candle.close,
         high: candle.high,
         low: candle.low,
         open: candle.open,
-        time: candle.time as Time,
+        time: toChartTime(candle.time),
       })),
     )
 
@@ -94,25 +103,40 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
     })
     volumeSeries.priceScale().applyOptions({ scaleMargins: { bottom: 0, top: 0.82 } })
     volumeSeries.setData(
-      data.candles.map((candle) => ({
+      candles.map((candle) => ({
         color: isDark ? 'rgba(151,161,176,0.28)' : 'rgba(151,161,176,0.34)',
-        time: candle.time as Time,
+        time: toChartTime(candle.time),
         value: candle.volume,
       })),
     )
 
     chart.timeScale().fitContent()
     return () => chart.remove()
-  }, [data, status, theme])
+  }, [data, range, status, theme])
 
   return (
     <div className="price-chart-frame">
       <div className="price-chart__meta">
-        <span><strong>6개월</strong> · 일봉 · 수정주가</span>
-        <span>{data?.source ?? '토스증권 Open API'}</span>
+        <div className="chart-range-tabs" role="tablist" aria-label="차트 기간">
+          <button
+            aria-selected={range === 'intraday'}
+            className={range === 'intraday' ? 'active' : ''}
+            onClick={() => setRange('intraday')}
+            role="tab"
+            type="button"
+          >오늘 · 1분</button>
+          <button
+            aria-selected={range === 'daily'}
+            className={range === 'daily' ? 'active' : ''}
+            onClick={() => setRange('daily')}
+            role="tab"
+            type="button"
+          >6개월 · 일봉</button>
+        </div>
+        <span><i className="live-dot" /> {range === 'intraday' ? '15초마다 갱신' : '수정주가'} · {data?.source ?? '토스증권 Open API'}</span>
       </div>
       <div
-        aria-label={`${stockName} 실제 원화 6개월 일봉 차트`}
+        aria-label={`${stockName} 실제 원화 ${range === 'intraday' ? '오늘 1분봉' : '6개월 일봉'} 차트`}
         className="price-chart__canvas"
         ref={containerRef}
       />
@@ -120,7 +144,7 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
         <div className="chart-state chart-state--loading" role="status">
           <span className="chart-loader" />
           <strong>실제 원화 차트를 불러오고 있어요</strong>
-          <p>토스증권에서 최근 6개월 일봉과 거래량을 확인하고 있습니다.</p>
+          <p>토스증권에서 1분봉, 일봉과 거래량을 확인하고 있습니다.</p>
         </div>
       )}
       {status === 'error' && (

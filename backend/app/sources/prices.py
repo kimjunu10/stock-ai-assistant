@@ -10,7 +10,14 @@ from typing import Any
 
 import requests
 
-from app.schemas.prices import Candle, StockMarketData, StockQuote
+from app.schemas.prices import (
+    Candle,
+    OrderbookLevel,
+    StockListQuote,
+    StockMarketData,
+    StockMarketOverview,
+    StockQuote,
+)
 
 TOSS_OPEN_API_BASE_URL = "https://openapi.tossinvest.com"
 SUPPORTED_STOCK_CODES = frozenset({"005930", "000660", "034020", "042660", "005380"})
@@ -48,9 +55,90 @@ class TossInvestClient:
         self._access_token: str | None = None
         self._access_token_expires_at = 0.0
         self._market_data_cache: dict[str, tuple[float, StockMarketData]] = {}
+        self._market_overview_cache: tuple[float, StockMarketOverview] | None = None
+        self._previous_close_cache: dict[str, tuple[str, float]] = {}
+
+    def get_stock_market_overview(self) -> StockMarketOverview:
+        """지원 종목 전체의 현재가를 한 번에 조회해 목록 화면에 제공한다."""
+
+        now = self._clock()
+        with self._lock:
+            if self._market_overview_cache and self._market_overview_cache[0] > now:
+                return self._market_overview_cache[1]
+
+        stock_codes = sorted(SUPPORTED_STOCK_CODES)
+        price_payload = self._request_json(
+            "GET", "/api/v1/prices", params={"symbols": ",".join(stock_codes)}
+        )
+        try:
+            raw_prices = {item["symbol"]: item for item in price_payload["result"]}
+        except (KeyError, TypeError) as exc:
+            raise TossApiError("토스증권 현재가 응답을 변환하지 못했습니다.") from exc
+
+        for stock_code in stock_codes:
+            try:
+                quote_date = datetime.fromisoformat(
+                    raw_prices[stock_code]["timestamp"]
+                ).date().isoformat()
+            except (KeyError, TypeError, ValueError) as exc:
+                raise TossApiError("토스증권 현재가 시각을 변환하지 못했습니다.") from exc
+            with self._lock:
+                cached_previous_close = self._previous_close_cache.get(stock_code)
+            if cached_previous_close and cached_previous_close[0] == quote_date:
+                continue
+            candle_payload = self._request_json(
+                "GET",
+                "/api/v1/candles",
+                params={
+                    "symbol": stock_code,
+                    "interval": "1d",
+                    "count": 2,
+                    "adjusted": "true",
+                },
+            )
+            try:
+                candles = sorted(
+                    candle_payload["result"]["candles"],
+                    key=lambda item: item["timestamp"],
+                )
+                previous_close = self._number(candles[-2]["closePrice"])
+            except (IndexError, KeyError, TypeError, ValueError) as exc:
+                raise TossApiError("토스증권 전일 종가 응답을 변환하지 못했습니다.") from exc
+            with self._lock:
+                self._previous_close_cache[stock_code] = (quote_date, previous_close)
+
+        try:
+            quotes = []
+            for stock_code in stock_codes:
+                raw_price = raw_prices[stock_code]
+                price = self._number(raw_price["lastPrice"])
+                previous_close = self._previous_close_cache[stock_code][1]
+                change = price - previous_close
+                quotes.append(
+                    StockListQuote(
+                        stock_code=stock_code,
+                        price=price,
+                        previous_close=previous_close,
+                        change=change,
+                        change_rate=round(change / previous_close * 100, 2)
+                        if previous_close
+                        else 0.0,
+                        as_of=datetime.fromisoformat(raw_price["timestamp"]),
+                    )
+                )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise TossApiError("토스증권 현재가 응답을 변환하지 못했습니다.") from exc
+
+        overview = StockMarketOverview(source="토스증권 Open API", quotes=quotes)
+        with self._lock:
+            self._market_overview_cache = (
+                self._clock() + self._market_data_cache_seconds,
+                overview,
+            )
+        return overview
 
     def get_stock_market_data(self, stock_code: str, *, candle_count: int = 130) -> StockMarketData:
-        """현재가와 최근 약 6개월치 수정 일봉을 하나의 응답으로 반환한다."""
+        """현재가, 일봉, 1분봉, 호가와 가격 제한을 하나의 응답으로 반환한다."""
 
         if stock_code not in SUPPORTED_STOCK_CODES:
             raise ValueError("지원하지 않는 종목 코드입니다.")
@@ -78,7 +166,30 @@ class TossInvestClient:
                 "adjusted": "true",
             },
         )
-        market_data = self._normalize_market_data(stock_code, price_payload, candle_payload)
+        intraday_payload = self._request_json(
+            "GET",
+            "/api/v1/candles",
+            params={
+                "symbol": stock_code,
+                "interval": "1m",
+                "count": 120,
+                "adjusted": "true",
+            },
+        )
+        orderbook_payload = self._request_json(
+            "GET", "/api/v1/orderbook", params={"symbol": stock_code}
+        )
+        price_limit_payload = self._request_json(
+            "GET", "/api/v1/price-limits", params={"symbol": stock_code}
+        )
+        market_data = self._normalize_market_data(
+            stock_code,
+            price_payload,
+            candle_payload,
+            intraday_payload,
+            orderbook_payload,
+            price_limit_payload,
+        )
 
         with self._lock:
             self._market_data_cache[stock_code] = (
@@ -153,6 +264,9 @@ class TossInvestClient:
         stock_code: str,
         price_payload: dict[str, Any],
         candle_payload: dict[str, Any],
+        intraday_payload: dict[str, Any],
+        orderbook_payload: dict[str, Any],
+        price_limit_payload: dict[str, Any],
     ) -> StockMarketData:
         try:
             raw_prices = price_payload["result"]
@@ -172,8 +286,33 @@ class TossInvestClient:
                 ),
                 key=lambda candle: candle.time,
             )
+            intraday_candles = sorted(
+                (
+                    Candle(
+                        time=item["timestamp"],
+                        open=self._number(item["openPrice"]),
+                        high=self._number(item["highPrice"]),
+                        low=self._number(item["lowPrice"]),
+                        close=self._number(item["closePrice"]),
+                        volume=int(item["volume"]),
+                    )
+                    for item in intraday_payload["result"]["candles"]
+                ),
+                key=lambda candle: candle.time,
+            )
             if len(candles) < 2:
                 raise ValueError("비교 가능한 일봉이 부족합니다.")
+
+            raw_orderbook = orderbook_payload["result"]
+            asks = [
+                OrderbookLevel(price=self._number(item["price"]), volume=int(item["volume"]))
+                for item in raw_orderbook["asks"][:5]
+            ]
+            bids = [
+                OrderbookLevel(price=self._number(item["price"]), volume=int(item["volume"]))
+                for item in raw_orderbook["bids"][:5]
+            ]
+            raw_limits = price_limit_payload["result"]
 
             last_price = self._number(raw_price["lastPrice"])
             previous_close = candles[-2].close
@@ -188,6 +327,11 @@ class TossInvestClient:
                 as_of=datetime.fromisoformat(raw_price["timestamp"]),
                 volume=candles[-1].volume,
             )
+            with self._lock:
+                self._previous_close_cache[stock_code] = (
+                    quote.as_of.date().isoformat(),
+                    previous_close,
+                )
         except (KeyError, StopIteration, TypeError, ValueError) as exc:
             raise TossApiError("토스증권 시세 응답을 변환하지 못했습니다.") from exc
 
@@ -199,6 +343,19 @@ class TossInvestClient:
             source="토스증권 Open API",
             quote=quote,
             candles=candles,
+            intraday_candles=intraday_candles,
+            upper_limit_price=(
+                self._number(raw_limits["upperLimitPrice"])
+                if raw_limits.get("upperLimitPrice") is not None
+                else None
+            ),
+            lower_limit_price=(
+                self._number(raw_limits["lowerLimitPrice"])
+                if raw_limits.get("lowerLimitPrice") is not None
+                else None
+            ),
+            asks=asks,
+            bids=bids,
         )
 
     @staticmethod
