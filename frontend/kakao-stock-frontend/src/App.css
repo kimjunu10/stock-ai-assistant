@@ -217,7 +217,7 @@
   .stock-hero__facts strong { @apply text-[13px]; }
   .stock-hero__facts .primary-button { @apply col-span-2 w-full; }
   .stock-section { @apply border-b border-line py-[60px]; }
-  .chart-section { @apply pt-[52px]; }
+  .chart-section { @apply pt-8; }
   .chart-legend,
   .section-meta,
   .source-label { @apply text-[10px] text-faint; }
@@ -227,16 +227,19 @@
   .source-label { @apply rounded-lg bg-brand-soft px-2.5 py-1.5 font-bold text-brand-ink; }
 
   .tradingview-chart-frame { @apply relative h-[520px] overflow-hidden rounded-[20px] border border-line bg-surface; }
+  .tradingview-chart-frame--unavailable { @apply h-[360px]; }
   .tradingview-widget-container { @apply size-full; }
   .tradingview-widget-mount { @apply size-full; }
   .tradingview-widget-copyright { @apply h-[30px] px-3 pt-1.5 text-right text-[10px] text-faint; }
   .tradingview-widget-copyright a { color: #2962ff; @apply no-underline; }
+  .tradingview-widget-copyright--fallback { @apply absolute inset-x-0 bottom-0; }
   .chart-state { @apply absolute inset-[0_0_30px] z-10 flex flex-col items-center justify-center bg-surface p-6 text-center text-muted; }
   .chart-state strong { @apply mt-3 text-sm text-ink; }
-  .chart-state p { @apply mt-1.5 mb-0 text-[11px]; }
+  .chart-state p { @apply mt-1.5 mb-0 text-[11px] leading-[1.8]; }
   .chart-loader { @apply size-7 animate-spin rounded-full border-3 border-brand-soft border-t-brand; }
   .chart-state__icon { @apply flex size-11 items-center justify-center rounded-[14px] bg-warm-soft text-warm-ink; }
   .chart-state--error .secondary-button { @apply mt-4; }
+  .chart-state--unavailable .secondary-button { @apply mt-5; }
 
   .stock-news-list { @apply overflow-hidden rounded-[20px] border border-line bg-surface; }
   .news-card--compact { @apply rounded-none border-0 border-b border-line px-6 py-5 last:border-0; }
@@ -453,6 +456,7 @@
     .stock-hero__facts { @apply gap-x-6 gap-y-[18px] p-[17px]; }
     .stock-section { @apply py-11; }
     .tradingview-chart-frame { @apply -mx-3.5 h-[390px] rounded-none border-x-0; }
+    .tradingview-chart-frame--unavailable { @apply h-[320px]; }
     .section-meta { @apply hidden; }
     .news-card--compact { @apply p-[18px]; }
     .financial-card { @apply p-[19px]; }

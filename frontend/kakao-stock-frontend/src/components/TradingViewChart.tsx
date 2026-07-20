@@ -11,7 +11,7 @@ interface TradingViewChartProps {
   theme: Theme
 }
 
-type ChartStatus = 'loading' | 'ready' | 'error'
+type ChartStatus = 'loading' | 'ready' | 'error' | 'unavailable'
 
 const TRADING_VIEW_SYMBOLS: Record<string, string> = {
   '005930': 'KRX:005930',
@@ -21,13 +21,23 @@ const TRADING_VIEW_SYMBOLS: Record<string, string> = {
   '005380': 'KRX:005380',
 }
 
+// TradingView currently blocks these KRX symbols in third-party widgets.
+// Do not show the widget's misleading AAPL fallback when market data is unavailable.
+const WIDGET_UNAVAILABLE_SYMBOLS = new Set(Object.values(TRADING_VIEW_SYMBOLS))
+
 export function TradingViewChart({ stockCode, stockName, theme }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<ChartStatus>('loading')
   const [attempt, setAttempt] = useState(0)
   const symbol = TRADING_VIEW_SYMBOLS[stockCode] ?? `KRX:${stockCode}`
+  const isWidgetUnavailable = WIDGET_UNAVAILABLE_SYMBOLS.has(symbol)
 
   useEffect(() => {
+    if (isWidgetUnavailable) {
+      setStatus('unavailable')
+      return
+    }
+
     const container = containerRef.current
     if (!container) return
 
@@ -136,15 +146,44 @@ export function TradingViewChart({ stockCode, stockName, theme }: TradingViewCha
       // cannot leave document.currentScript.parentNode as null.
       if (scriptSettled) mount.remove()
     }
-  }, [attempt, stockCode, stockName, symbol, theme])
+  }, [attempt, isWidgetUnavailable, stockCode, stockName, symbol, theme])
 
   return (
-    <div className="tradingview-chart-frame">
+    <div className={`tradingview-chart-frame${isWidgetUnavailable ? ' tradingview-chart-frame--unavailable' : ''}`}>
       <div
         aria-label={`${stockName} TradingView 6개월 일봉 차트`}
         className="tradingview-widget-container"
         ref={containerRef}
       />
+      {status === 'unavailable' && (
+        <>
+          <div className="chart-state chart-state--unavailable" role="status">
+            <span className="chart-state__icon">
+              <Icon name="chart" size={22} />
+            </span>
+            <strong>원화 차트를 준비하고 있어요</strong>
+            <p>
+              TradingView 외부 위젯에서는 현재 {stockName}을 포함한 KRX 종목 데이터를 제공하지 않아요.<br />
+              잘못된 Apple·달러 차트 대신 가격 API 연동 전 안내 화면을 표시합니다.
+            </p>
+            <a
+              className="secondary-button"
+              href={`https://www.tradingview.com/symbols/KRX-${stockCode}/`}
+              rel="noopener nofollow"
+              target="_blank"
+            >
+              TradingView에서 확인
+              <Icon name="arrow-right" size={16} />
+            </a>
+          </div>
+          <div className="tradingview-widget-copyright tradingview-widget-copyright--fallback">
+            <a href={`https://www.tradingview.com/symbols/KRX-${stockCode}/`} rel="noopener nofollow" target="_blank">
+              <span className="blue-text">{stockName} 차트</span>
+            </a>
+            <span className="trademark"> by TradingView</span>
+          </div>
+        </>
+      )}
       {status === 'loading' && (
         <div className="chart-state chart-state--loading" role="status">
           <span className="chart-loader" />
