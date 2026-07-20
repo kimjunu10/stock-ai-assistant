@@ -1,0 +1,61 @@
+{
+  "step": "EXP-5 offline factual summaries",
+  "git_commit": "b770927c3ddec63ea6737f6849a14c597606ebdb",
+  "run_at": "2026-07-20T11:31:55.586378+00:00",
+  "device": "mps",
+  "embedding": {
+    "model": "BAAI/bge-m3",
+    "revision": "5617a9f61b028005a4858fdac845db406aefb181",
+    "dim": 1024,
+    "input_type": "B_title_desc",
+    "preprocess_version": "v1"
+  },
+  "clustering": {
+    "method": "online_centroid",
+    "threshold": 0.74,
+    "active_window_hours": 72,
+    "version": "bge_m3_title_desc_centroid_v1",
+    "reused_existing": false,
+    "reason": "DB에 기존 클러스터 없음 → 확정 설정으로 신규 생성"
+  },
+  "solar": {
+    "model": "solar-pro3-260323",
+    "base_url": "https://api.upstage.ai/v1",
+    "prompt_version": "factual_v1",
+    "temperature": 0.0,
+    "max_articles_per_summary": 12,
+    "system_prompt": "너는 한국어 금융 뉴스 편집 도우미다. 같은 사건을 보도한 여러 기사를 입력받아 사실 중심의 통합 제목과 통합 본문을 만든다.\n반드시 지켜야 할 규칙:\n1. 여러 언론사의 중복 내용을 하나로 정리한다.\n2. 중요한 사실, 수치, 발표 주체, 시점, 확정/예정/잠정 여부를 그대로 보존한다.\n3. 기사마다 내용이 다르면 단정하지 말고 차이나 불확실성을 그대로 표시한다.\n4. 호재, 악재, 긍정, 부정, 매수, 매도, 기대, 우려 같은 투자 판단·감성 표현을 절대 쓰지 않는다.\n5. 기사에 없는 사실을 새로 만들지 않는다.\n6. factual_body는 2~4문장으로 간결하게 쓴다.\n출력은 반드시 {\"title\": \"...\", \"factual_body\": \"...\"} 형태의 JSON 하나만 출력한다."
+  },
+  "input_stats": {
+    "article_stock_links": 7735,
+    "stocks": [
+      "000660",
+      "005380",
+      "005930",
+      "034020",
+      "042660"
+    ]
+  },
+  "output_stats": {
+    "clusters": 1298,
+    "singleton_clusters": 957,
+    "multi_article_clusters": 341,
+    "solar_attempted": 1298,
+    "solar_ok": 1257,
+    "solar_parse_fail": 1,
+    "solar_http_fail": 40,
+    "total_prompt_tokens": 2048117,
+    "total_completion_tokens": 205178,
+    "avg_latency_ms": 2235.9,
+    "solar_final_ok": 1298,
+    "solar_final_empty": 0,
+    "retry_recovered": 41,
+    "note": "solar_ok/http_fail은 1차 실행 기준. retry_failed.py로 41건 전량 복구 → 최종 빈 본문 0."
+  },
+  "did_not_do": [
+    "Supabase write",
+    "KorFinASC / sentiment prediction",
+    "gold_label 자동 생성",
+    "API / UI 구현"
+  ]
+}
