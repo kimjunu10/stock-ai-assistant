@@ -47,11 +47,13 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         cfg=cfg,
         wait_for_retries=False,
     )
+    relevance_totals = repo.classify_pending_relevance()
     elapsed_seconds = (datetime.now(UTC) - started_at).total_seconds()
     result = {
         "collected": collected,
         "errors": errors,
         "crawl": crawl_totals,
+        "relevance": relevance_totals,
         "elapsed_seconds": round(elapsed_seconds, 3),
     }
     logger.info(
@@ -64,6 +66,14 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         crawl_totals["failed"],
         crawl_totals["skipped"],
         elapsed_seconds,
+    )
+    logger.info(
+        "NEWS_RELEVANCE scanned=%d relevant=%d irrelevant=%d deferred=%d updated=%d",
+        relevance_totals["scanned"],
+        relevance_totals["relevant"],
+        relevance_totals["irrelevant"],
+        relevance_totals["deferred"],
+        relevance_totals["updated"],
     )
     return result
 

@@ -62,6 +62,12 @@ def main() -> int:
         )
         print("CRAWL_SUMMARY=" + json.dumps(crawl_totals, ensure_ascii=False, sort_keys=True))
 
+    relevance_totals = repo.classify_pending_relevance()
+    print(
+        "RELEVANCE_SUMMARY="
+        + json.dumps(relevance_totals, ensure_ascii=False, sort_keys=True)
+    )
+
     final = {
         stock.name: repo.get_stock_summary(stock.code)
         for stock in STOCK_TARGETS

@@ -10,6 +10,7 @@ from supabase import Client
 
 from app.core.config import Settings
 from app.schemas.news import CrawlResult, NewsSearchItem
+from app.services.relevance import STOCK_MENTION_RULES, classify_stock_relevance
 from app.sources.news_utils import canonicalize_url
 from app.sources.publishers import publisher_from_url
 
@@ -235,6 +236,91 @@ class NewsRepository:
                 "next_retry_at": retry_at,
             }
         self.client.table("articles").update(payload).eq("id", article_id).execute()
+
+    def classify_pending_relevance(self, *, dry_run: bool = False) -> dict[str, Any]:
+        """Finalize pending article-stock links using stored title/body/description."""
+
+        overall: dict[str, Any] = {
+            "scanned": 0,
+            "relevant": 0,
+            "irrelevant": 0,
+            "deferred": 0,
+            "updated": 0,
+            "stocks": {},
+        }
+        page_size = 250
+        for stock_code, rule in STOCK_MENTION_RULES.items():
+            rows: list[dict[str, Any]] = []
+            offset = 0
+            while True:
+                response = (
+                    self.client.table("article_stocks")
+                    .select(
+                        "article_id,stock_code,matched_query,"
+                        "articles!inner(title,description,body,crawl_status,crawl_attempts)"
+                    )
+                    .eq("stock_code", stock_code)
+                    .eq("relevance", "pending")
+                    .order("article_id")
+                    .range(offset, offset + page_size - 1)
+                    .execute()
+                )
+                batch = response.data or []
+                rows.extend(batch)
+                if len(batch) < page_size:
+                    break
+                offset += page_size
+
+            stock_summary = {
+                "name": rule.name,
+                "scanned": len(rows),
+                "relevant": 0,
+                "irrelevant": 0,
+                "deferred": 0,
+                "updated": 0,
+            }
+            updates: list[dict[str, Any]] = []
+            for row in rows:
+                article = row.get("articles") or {}
+                decision = classify_stock_relevance(
+                    stock_code=stock_code,
+                    title=article.get("title"),
+                    body=article.get("body"),
+                    description=article.get("description"),
+                )
+                crawl_status = article.get("crawl_status")
+                crawl_attempts = int(article.get("crawl_attempts") or 0)
+                crawl_is_final = crawl_status in {"success", "skipped"} or (
+                    crawl_status == "failed" and crawl_attempts >= self.cfg.max_crawl_retries
+                )
+                if decision.relevance == "irrelevant" and not crawl_is_final:
+                    stock_summary["deferred"] += 1
+                    continue
+
+                stock_summary[decision.relevance] += 1
+                updates.append(
+                    {
+                        "article_id": row["article_id"],
+                        "stock_code": stock_code,
+                        "matched_query": row.get("matched_query"),
+                        "relevance": decision.relevance,
+                        "mention_count": decision.mention_count,
+                        "relevance_reason": decision.reason,
+                    }
+                )
+
+            if not dry_run:
+                for update_batch in _batched(updates, self.cfg.supabase_batch_size):
+                    self.client.table("article_stocks").upsert(
+                        update_batch,
+                        on_conflict="article_id,stock_code",
+                    ).execute()
+                stock_summary["updated"] = len(updates)
+
+            overall["stocks"][stock_code] = stock_summary
+            for key in ("scanned", "relevant", "irrelevant", "deferred", "updated"):
+                overall[key] += stock_summary[key]
+        return overall
 
     def get_stock_summary(self, stock_code: str) -> dict[str, Any]:
         rows: list[dict[str, Any]] = []
