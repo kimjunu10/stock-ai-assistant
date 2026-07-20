@@ -10,24 +10,30 @@ interface StockHeaderProps {
 export function StockHeader({ onAsk, stock }: StockHeaderProps) {
   return (
     <section className="stock-hero">
-      <div className="stock-hero__identity">
-        <StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} size="lg" />
-        <div>
-          <div className="stock-hero__labels">
-            <span>{stock.market}</span>
-            <span>{stock.code}</span>
-            <span>{stock.sector}</span>
+      <div className="stock-hero__overview">
+        <div className="stock-hero__identity">
+          <StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} size="lg" />
+          <div>
+            <div className="stock-hero__labels">
+              <span>{stock.market}</span>
+              <span>{stock.sector}</span>
+            </div>
+            <div className="stock-hero__title">
+              <h1>{stock.name}</h1>
+              <span>{stock.code}</span>
+            </div>
+            <p>{stock.summary}</p>
           </div>
-          <h1>{stock.name}</h1>
-          <p>{stock.summary}</p>
         </div>
-      </div>
-      <div className="stock-hero__quote">
-        <span className="sample-label">화면 구성용 샘플 · 전일 종가 기준</span>
-        <strong>{stock.price}</strong>
-        <span className={`quote-change quote-change--${stock.direction}`}>
-          {stock.change} ({stock.changeRate})
-        </span>
+        <div className="stock-hero__quote">
+          <span className="sample-label">전일 종가 · 화면 구성용 샘플</span>
+          <div className="stock-hero__price-line">
+            <strong>{stock.price}</strong>
+            <span className={`quote-change quote-change--${stock.direction}`}>
+              전일 대비 {stock.change} ({stock.changeRate})
+            </span>
+          </div>
+        </div>
       </div>
       <div className="stock-hero__facts">
         <div><span>시가총액</span><strong>{stock.marketCap}</strong></div>

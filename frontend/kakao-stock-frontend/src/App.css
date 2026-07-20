@@ -197,20 +197,25 @@
   .empty-state p { @apply mt-2 mb-0 text-xs; }
 
   .stock-page { @apply pt-14 pb-[100px]; }
-  .stock-hero { @apply grid grid-cols-[minmax(0,1fr)_auto] gap-8 border-b border-line pb-11; }
-  .stock-hero__identity { @apply flex min-w-0 gap-[18px]; }
+  .stock-hero { @apply grid grid-cols-[minmax(0,1.45fr)_minmax(300px,0.7fr)] items-stretch gap-12 border-b border-line pb-11; }
+  .stock-hero__overview { @apply min-w-0; }
+  .stock-hero__identity { @apply flex min-w-0 items-start gap-[18px]; }
   .stock-hero__labels { @apply flex items-center gap-1.5; }
   .stock-hero__labels span { @apply rounded-md bg-subtle px-2 py-1 text-[9px] font-bold text-faint; }
-  .stock-hero h1 { @apply mt-2 mb-1 text-3xl tracking-[-1.3px]; }
+  .stock-hero__title { @apply mt-2 flex flex-wrap items-baseline gap-2.5; }
+  .stock-hero h1 { @apply m-0 text-3xl tracking-[-1.3px]; }
+  .stock-hero__title > span { @apply text-[15px] font-semibold tracking-[-0.2px] text-faint; }
   .stock-hero__identity p { @apply m-0 text-xs text-muted; }
-  .stock-hero__quote { @apply flex min-w-[245px] flex-col items-end gap-1; }
-  .stock-hero__quote > strong { @apply mt-1 text-3xl tracking-[-1px]; }
+  .stock-hero__quote { @apply mt-8 flex min-w-0 flex-col items-start gap-1.5; }
+  .stock-hero__price-line { @apply flex flex-wrap items-baseline gap-x-4 gap-y-1; }
+  .stock-hero__price-line > strong { @apply text-[48px] leading-none font-extrabold tracking-[-2.2px]; }
+  .stock-hero__price-line .quote-change { @apply text-[13px]; }
   .sample-label { @apply text-[9px] text-faint; }
-  .stock-hero__facts { @apply col-span-2 flex items-center gap-9 rounded-[17px] bg-subtle px-5 py-[18px]; }
+  .stock-hero__facts { @apply grid grid-cols-2 content-center gap-x-8 gap-y-6 rounded-[20px] bg-subtle px-6 py-5; }
   .stock-hero__facts > div { @apply flex flex-col gap-1; }
-  .stock-hero__facts span { @apply text-[9px] text-faint; }
-  .stock-hero__facts strong { @apply text-xs; }
-  .stock-hero__facts .primary-button { @apply ml-auto; }
+  .stock-hero__facts span { @apply text-[10px] text-faint; }
+  .stock-hero__facts strong { @apply text-[13px]; }
+  .stock-hero__facts .primary-button { @apply col-span-2 w-full; }
   .stock-section { @apply border-b border-line py-[60px]; }
   .chart-section { @apply pt-[52px]; }
   .chart-legend,
@@ -387,9 +392,7 @@
     .filter-toolbar { @apply top-[62px] flex-col items-start gap-2; }
     .stock-filter { @apply w-full max-w-full; }
     .page-title--row { @apply items-start; }
-    .stock-hero { @apply grid-cols-1; }
-    .stock-hero__quote { @apply items-start; }
-    .stock-hero__facts { @apply col-span-1; }
+    .stock-hero { @apply grid-cols-1 gap-7; }
     .financial-grid,
     .research-section { @apply grid-cols-1; }
     .research-section { @apply gap-14; }
@@ -440,11 +443,14 @@
     .stock-hero__identity { @apply items-start gap-3; }
     .stock-avatar--lg { @apply size-[54px] rounded-[17px] text-xs; }
     .stock-hero__labels span:last-child { @apply hidden; }
-    .stock-hero h1 { @apply text-[25px]; }
+    .stock-hero h1 { @apply text-[26px]; }
+    .stock-hero__title > span { @apply text-xs; }
     .stock-hero__identity p { @apply text-[10px] leading-relaxed; }
-    .stock-hero__quote > strong { @apply text-[26px]; }
-    .stock-hero__facts { @apply flex-wrap gap-x-[30px] gap-y-[18px] p-[15px]; }
-    .stock-hero__facts .primary-button { @apply ml-0 w-full; }
+    .stock-hero__quote { @apply mt-6; }
+    .stock-hero__price-line { @apply flex-col items-start gap-2; }
+    .stock-hero__price-line > strong { @apply text-[39px] tracking-[-1.8px]; }
+    .stock-hero__price-line .quote-change { @apply text-xs; }
+    .stock-hero__facts { @apply gap-x-6 gap-y-[18px] p-[17px]; }
     .stock-section { @apply py-11; }
     .tradingview-chart-frame { @apply -mx-3.5 h-[390px] rounded-none border-x-0; }
     .section-meta { @apply hidden; }

@@ -8,7 +8,6 @@ export interface Stock {
   initials: string
   imageSrc: string
   market: 'KOSPI'
-  tradingViewSymbol: string
   sector: string
   price: string
   change: string

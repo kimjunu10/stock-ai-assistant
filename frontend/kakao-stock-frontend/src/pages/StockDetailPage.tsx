@@ -33,14 +33,13 @@ export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProp
       <section className="stock-section chart-section">
         <SectionHeader
           action={<span className="chart-legend"><span /> 캔들 · 거래량</span>}
-          description="TradingView에서 제공하는 1일봉 차트입니다. 차트 데이터는 AI 답변에 사용하지 않아요."
+          description="한국어로 설정한 TradingView 1일봉 차트입니다. 차트 데이터는 AI 답변에 사용하지 않아요."
           eyebrow="최근 6개월"
           title="주가 흐름"
         />
         <TradingViewChart
           stockCode={stock.code}
           stockName={stock.name}
-          symbol={stock.tradingViewSymbol}
           theme={theme}
         />
       </section>

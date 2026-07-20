@@ -8,16 +8,24 @@ const TRADING_VIEW_SCRIPT =
 interface TradingViewChartProps {
   stockCode: string
   stockName: string
-  symbol: string
   theme: Theme
 }
 
 type ChartStatus = 'loading' | 'ready' | 'error'
 
-export function TradingViewChart({ stockCode, stockName, symbol, theme }: TradingViewChartProps) {
+const TRADING_VIEW_SYMBOLS: Record<string, string> = {
+  '005930': 'KRX:005930',
+  '000660': 'KRX:000660',
+  '034020': 'KRX:034020',
+  '042660': 'KRX:042660',
+  '005380': 'KRX:005380',
+}
+
+export function TradingViewChart({ stockCode, stockName, theme }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<ChartStatus>('loading')
   const [attempt, setAttempt] = useState(0)
+  const symbol = TRADING_VIEW_SYMBOLS[stockCode] ?? `KRX:${stockCode}`
 
   useEffect(() => {
     const container = containerRef.current
@@ -70,7 +78,7 @@ export function TradingViewChart({ stockCode, stockName, symbol, theme }: Tradin
       locale: 'ko',
       withdateranges: true,
       hide_side_toolbar: true,
-      hide_top_toolbar: false,
+      hide_top_toolbar: true,
       hide_legend: false,
       hide_volume: false,
       allow_symbol_change: false,
