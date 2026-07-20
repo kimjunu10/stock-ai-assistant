@@ -129,8 +129,7 @@ def explain_selection(
         raise HTTPException(status_code=404, detail="뉴스 사건 정리를 찾지 못했어요.")
     row = rows[0]
     context = "\n".join(
-        str(row.get(field) or "")
-        for field in ("summary_title", "easy_explanation", "factual_body")
+        str(row.get(field) or "") for field in ("summary_title", "easy_explanation", "factual_body")
     )
     parsed, meta = call_solar_easy_explain(settings.upstage_api_key, selected_text, context)
     if not meta.get("ok") or not meta.get("parse_success"):
