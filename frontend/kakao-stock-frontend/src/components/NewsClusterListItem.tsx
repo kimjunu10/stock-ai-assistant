@@ -4,6 +4,8 @@ import { explainNewsSelection } from '../api/news'
 import { getStock } from '../data/mockData'
 import type { AssistantContext, NewsCluster } from '../types'
 import { Icon } from './Icon'
+import { SelectionExplainer } from './SelectionExplainer'
+import { createSelectionAnchor, type SelectionAnchor } from './selectionAnchor'
 import { StockAvatar } from './StockAvatar'
 
 const INITIAL_SOURCE_COUNT = 5
@@ -13,12 +15,6 @@ interface Props {
   cluster: NewsCluster
   onAssistantClose?: () => void
   onAsk: (context: AssistantContext) => void
-}
-
-interface SelectedText {
-  left: number
-  text: string
-  top: number
 }
 
 function formatPublishedAt(value: string) {
@@ -86,7 +82,7 @@ function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: P
   const stock = getStock(cluster.stockCode)
   const articleRef = useRef<HTMLElement>(null)
   const [sourceCount, setSourceCount] = useState(INITIAL_SOURCE_COUNT)
-  const [selectedText, setSelectedText] = useState<SelectedText | null>(null)
+  const [selectedText, setSelectedText] = useState<SelectionAnchor | null>(null)
   const [explanation, setExplanation] = useState('')
   const [explanationError, setExplanationError] = useState('')
   const [isExplaining, setIsExplaining] = useState(false)
@@ -121,13 +117,7 @@ function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: P
       ? range.commonAncestorContainer.parentElement
       : range.commonAncestorContainer as Element
     if (!ancestor || !article.contains(ancestor)) return
-    const rect = range.getClientRects()[range.getClientRects().length - 1] ?? range.getBoundingClientRect()
-    const articleRect = article.getBoundingClientRect()
-    setSelectedText({
-      text: text.slice(0, 500),
-      top: rect.top - articleRect.top - 34,
-      left: Math.min(Math.max(12, rect.right - articleRect.left - 18), articleRect.width - 48),
-    })
+    setSelectedText(createSelectionAnchor(range, text))
     setExplanation('')
     setExplanationError('')
   }
@@ -149,16 +139,18 @@ function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: P
     <div className={assistantOpen ? 'news-detail-backdrop news-detail-backdrop--with-assistant' : 'news-detail-backdrop'} onMouseDown={(event) => event.target === event.currentTarget && onClose()} role="presentation">
       <article aria-labelledby={`news-detail-title-${cluster.id}`} aria-modal="true" className="news-detail" onMouseUp={handleSelection} ref={articleRef} role="dialog">
         {selectedText && (
-          <div className="selection-explainer" style={{ left: selectedText.left, top: selectedText.top }}>
-            <button aria-label="선택한 문구 쉽게 설명" className="selection-explainer__trigger" onClick={requestExplanation} onMouseDown={(event) => event.preventDefault()} type="button"><Icon name="sparkles" size={16} /></button>
-            {(isExplaining || explanation || explanationError) && (
-              <div className="selection-explainer__popover">
-                <div><span>AI 쉬운 설명</span><button aria-label="쉬운 설명 닫기" onClick={() => setSelectedText(null)} type="button"><Icon name="close" size={14} /></button></div>
-                <strong>“{selectedText.text}”</strong>
-                <p>{isExplaining ? '쉽게 풀어 쓰고 있어요…' : explanation || explanationError}</p>
-              </div>
-            )}
-          </div>
+          <SelectionExplainer
+            anchor={selectedText}
+            error={explanationError}
+            explanation={explanation}
+            isLoading={isExplaining}
+            onAsk={() => {
+              onAsk({ stockCode: cluster.stockCode, sourceType: 'news_cluster', sourceId: String(cluster.id), title: cluster.title, presentation: 'news_detail', selectedText: selectedText.text })
+              setSelectedText(null)
+            }}
+            onClose={() => setSelectedText(null)}
+            onRequest={requestExplanation}
+          />
         )}
         <header className="news-detail__header">
           <div className="news-detail__identity">

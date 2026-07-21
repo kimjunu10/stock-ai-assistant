@@ -49,6 +49,10 @@ select = ["E", "F", "I", "UP"]
 "app/sources/dart_regular_facts.py" = ["E501"]
 "app/sources/dart_financials.py" = ["E501"]
 "scripts/verify_dart_backfill.py" = ["E501"]
+# 한국어 기준·설명 문자열이 많아 100자 제한이 부적절하다.
+"scripts/build_clustering_eval_sample.py" = ["E501"]
+"scripts/eval_offline_reclustering.py" = ["E501"]
+"scripts/run_full_news_v2.py" = ["E501"]
 # 실험 폴더는 self-contained라 sys.path 주입 후 import(E402)가 불가피하다.
 # 한국어 프롬프트·설명 문자열은 100자 제한이 부적절해 E501도 예외.
 "experiments/**/*.py" = ["E402", "E501"]

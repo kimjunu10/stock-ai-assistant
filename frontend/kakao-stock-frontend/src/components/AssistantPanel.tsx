@@ -44,6 +44,7 @@ export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) 
             <div className="context-card">
               <span>{stock?.name ?? context.stockCode}에서 보고 있던 내용</span>
               <strong>{context.title}</strong>
+              {context.selectedText && <q>{context.selectedText}</q>}
               <small>이 문서를 우선 근거로 찾아볼게요.</small>
             </div>
           )}

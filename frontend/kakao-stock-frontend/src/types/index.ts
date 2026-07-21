@@ -132,6 +132,7 @@ export interface ReportItem {
 }
 
 export interface AssistantContext {
+  selectedText?: string
   stockCode: string
   sourceType: 'news_cluster' | 'disclosure' | 'report' | 'stock'
   sourceId: string

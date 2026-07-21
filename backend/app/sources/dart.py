@@ -59,6 +59,14 @@ class DartResult:
         return self.status == STATUS_NO_DATA
 
 
+@dataclass(frozen=True)
+class DartArchive:
+    """OpenDART ZIP 원본과 해제된 멤버를 함께 보존한다."""
+
+    content: bytes
+    members: dict[str, bytes]
+
+
 class DartClient:
     """OpenDART REST 호출을 감싸는 얇은 클라이언트."""
 
@@ -143,28 +151,44 @@ class DartClient:
             )
 
     # -- 바이너리 엔드포인트 (corpCode.xml, document.xml → zip) ------------
-    def get_zip_members(self, endpoint: str, params: dict[str, Any]) -> dict[str, bytes]:
+    def get_zip_archive(self, endpoint: str, params: dict[str, Any]) -> DartArchive | None:
         """zip 응답을 파일명→bytes 딕셔너리로 반환.
 
         corpCode.xml / document.xml 모두 zip으로 반환된다. JSON 오류 응답이
         올 수도 있으므로(예: 인증 오류) content-type/시그니처를 확인한다.
         """
 
-        self._sleep_between_calls()
-        resp = self._get(endpoint, params, expect="binary")
-        content = resp.content
-        if content[:2] != b"PK":
-            # zip이 아니면 대개 JSON 오류 응답이다.
+        backoff = self._cfg.dart_request_delay_seconds or 0.25
+        while True:
+            self._sleep_between_calls()
+            resp = self._get(endpoint, params, expect="binary")
+            content = resp.content
+            if content[:2] == b"PK":
+                with zipfile.ZipFile(io.BytesIO(content)) as zf:
+                    members = {name: zf.read(name) for name in zf.namelist()}
+                return DartArchive(content=content, members=members)
+
+            # zip이 아니면 대개 JSON/XML 오류 응답이다.
             text = content.decode("utf-8", errors="replace")
-            if '"status"' in text:
-                status = _extract_status(text)
-                if status in AUTH_ERROR_STATUSES:
-                    raise DartAuthError(f"DART 인증 오류 endpoint={endpoint} body={text[:200]}")
-                if status == STATUS_NO_DATA:
-                    return {}
+            status = _extract_status(text)
+            if status in AUTH_ERROR_STATUSES:
+                raise DartAuthError(f"DART 인증 오류 endpoint={endpoint} body={text[:200]}")
+            if status == STATUS_NO_DATA or status == "014":
+                return None
+            if status == STATUS_RATE_LIMIT:
+                if backoff > self._cfg.dart_max_backoff_seconds:
+                    raise DartRateLimitError(f"DART 요청 제한 지속 status=020 endpoint={endpoint}")
+                logger.warning("DART ZIP 요청 제한(020) — %.2fs 백오프 후 재시도", backoff)
+                time.sleep(backoff)
+                backoff *= 2
+                continue
             raise RuntimeError(f"DART {endpoint} zip 아님: {text[:200]}")
-        with zipfile.ZipFile(io.BytesIO(content)) as zf:
-            return {name: zf.read(name) for name in zf.namelist()}
+
+    def get_zip_members(self, endpoint: str, params: dict[str, Any]) -> dict[str, bytes]:
+        """하위 호환용: ZIP 원본 대신 멤버만 반환한다."""
+
+        archive = self.get_zip_archive(endpoint, params)
+        return archive.members if archive else {}
 
 
 def _to_int(value: Any) -> int | None:
@@ -178,4 +202,6 @@ def _extract_status(text: str) -> str:
     import re
 
     m = re.search(r'"status"\s*:\s*"?(\d+)"?', text)
+    if not m:
+        m = re.search(r"<status>\s*(\d+)\s*</status>", text, flags=re.IGNORECASE)
     return m.group(1) if m else ""

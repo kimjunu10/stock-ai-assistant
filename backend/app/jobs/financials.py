@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 
 from app.core.config import Settings
 from app.repositories.dart import DartRepository
-from app.sources.dart import DartClient
+from app.sources.dart import DartAuthError, DartClient
 from app.sources.dart_financials import extract_financial_rows
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def _recent_business_years(cfg: Settings) -> list[str]:
     """최근 N개 사업연도. 전년도부터 역순 (당해년도 사업보고서는 아직 미제출 가능)."""
 
     this_year = datetime.now(UTC).year
-    return [str(this_year - 1 - offset) for offset in range(cfg.dart_financial_years)]
+    return [str(this_year - offset) for offset in range(cfg.dart_financial_years)]
 
 
 def collect_financials(
@@ -38,6 +38,8 @@ def collect_financials(
         for reprt_code in REPRT_CODES:
             try:
                 rows, used_div = _fetch_one(client, corp_code, bsns_year, reprt_code)
+            except DartAuthError:
+                raise
             except Exception:  # noqa: BLE001
                 logger.exception("재무 조회 실패 stock=%s %s/%s", stock_code, bsns_year, reprt_code)
                 continue
