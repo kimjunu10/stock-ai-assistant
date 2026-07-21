@@ -26,6 +26,10 @@ SUPPORTED_STOCK_CODES = frozenset({"005930", "000660", "034020", "042660", "0053
 class TossApiError(RuntimeError):
     """토스증권 인증 또는 시세 응답을 처리할 수 없을 때 발생한다."""
 
+    def __init__(self, message: str, *, code: str = "toss_api_error") -> None:
+        super().__init__(message)
+        self.code = code
+
 
 class TossInvestClient:
     """OAuth 토큰과 짧은 시세 캐시를 관리하는 동기식 API 클라이언트."""
@@ -215,10 +219,32 @@ class TossInvestClient:
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                     timeout=self._timeout_seconds,
                 )
+                if response.status_code >= 400:
+                    try:
+                        error_payload = response.json()
+                    except (TypeError, ValueError):
+                        error_payload = {}
+                    error_code = str(error_payload.get("error") or "")
+                    error_description = str(error_payload.get("error_description") or "")
+                    is_ip_blocked = (
+                        response.status_code == 403
+                        and "IP address not allowed" in error_description
+                    )
+                    if is_ip_blocked:
+                        raise TossApiError(
+                            "현재 서버 IP가 토스증권 Open API 허용 목록에 없습니다.",
+                            code="ip_not_allowed",
+                        )
+                    raise TossApiError(
+                        error_description or "토스증권 인증 요청이 거부됐습니다.",
+                        code=error_code or "auth_failed",
+                    )
                 response.raise_for_status()
                 payload = response.json()
                 access_token = str(payload["access_token"])
                 expires_in = int(payload.get("expires_in", 3600))
+            except TossApiError:
+                raise
             except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
                 raise TossApiError("토스증권 인증에 실패했습니다.") from exc
 

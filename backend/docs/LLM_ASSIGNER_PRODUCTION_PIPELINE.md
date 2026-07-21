@@ -108,7 +108,7 @@ NEWS_EMBEDDING_DEVICE=cpu
 - `false`: company 기사도 기존 cosine 0.74 거리 기반 배정 사용
 - market/info 경로에는 영향 없음
 
-기본값은 안전한 롤백을 위해 `false`다. Solar 배정과 클러스터 요약에는
+현재 운영 기본값은 `true`이며, 즉시 롤백이 필요하면 `false`로 바꿀 수 있다. Solar 배정과 클러스터 요약에는
 `UPSTAGE_API_KEY`가 사용된다.
 
 ## 5. BGE-M3 로딩 방식
@@ -237,10 +237,29 @@ Solar 오류가 발생하면 다음 두 위치에 상태가 남는다.
 2. 최대 12개 기사를 발행/배정 순서로 구성
 3. `summarize.build_user_prompt()` 호출
 4. `summarize.call_solar()` 호출
-5. `summary_title`, `factual_body`, prompt version과 상태 저장
+5. `summary_title`, `easy_explanation`, `factual_body`, prompt version과 상태 저장
 
-요약 프롬프트에는 호재/악재 등 투자 판단을 금지하는 기존 사실 통합 규칙이 그대로
-적용된다.
+현재 prompt version은 `factual_easy_v2`다. 호재/악재 등 투자 판단은 생성하지 않는다.
+
+## 8.1 전체 백필과 중단·재개
+
+백필의 처리량 기준은 기사 수가 아니라 `(article_id, stock_code)`다. 성공한 배정은
+`news_cluster_assignments`의 복합키와 성공 상태를 기준으로 건너뛰므로 같은 명령을 다시
+실행해도 남은 쌍부터 이어진다. `news_backfill_runs`에는 실행 상태, 마지막 성공 기사·종목,
+처리 쌍 수, 호출 수, 토큰, 비용, 적용 상한을 저장한다.
+
+안전장치는 실행당 batch size, 동일사건 판정/통합 본문 호출 수 상한, 실행당·일일 비용
+상한, Solar 호출 간격, 진행률 로그, SIGINT 체크포인트다. `--all`은
+`--approve-full-backfill`을 함께 지정해야만 동작한다.
+
+```bash
+cd backend
+USE_LLM_ASSIGN=true uv run python -m scripts.backfill_news_clusters --inventory
+USE_LLM_ASSIGN=true uv run python -m scripts.backfill_news_clusters \
+  --execute --batch-size 25 --run-key relevant-news-v1
+```
+
+`backend/migrations/0006_news_backfill_runs.sql`은 현재 Supabase에 적용했다.
 
 ## 9. 변경 파일과 역할
 
@@ -281,36 +300,27 @@ smoke test를 실행했다.
 - 완료된 article ID가 다음 실행에서 다시 처리되지 않음
 - 기존 LLMAssigner 회귀 동작 유지
 
-최종 결과:
+최종 결과(2026-07-21):
 
 ```text
 Ruff: 통과
-전체 backend unit tests: 28 passed
-신규 운영 파이프라인 smoke tests: 3 passed
-기존 LLMAssigner 회귀 tests: 11/11 passed
+전체 backend tests: 35 passed
 git diff --check: 통과
 ```
 
-## 11. 실제 연동 smoke 결과
+## 11. 실제 DB 집계와 제한 실행 결과
 
-`USE_LLM_ASSIGN=true`로 실제 기사 3건을 제한 실행했다. 세 기사가 각각 두 종목에
-relevant로 연결되어 종목별 총 6개 클러스터가 생성됐다.
+2026-07-21 최종 집계는 전체 기사 6,234건, 크롤링 성공 6,102건, relevant 고유 기사
+6,192건, relevant 연결 7,994쌍이다. 크롤링 성공 relevant 중 미처리는 고유 기사
+6,060건, `(article_id, stock_code)` 7,827쌍이다. 미처리 쌍의 예상 kind는 company
+6,012, market 1,048, info 767이다.
 
-- 기사 처리: 3건 모두 `completed`
-- 배정: 6건 모두 `assigned_new`
-- 요약: 6개 클러스터 모두 `summary_status=success`
-- 첫 배치에는 기존 후보 클러스터가 없어서 동일 사건 Solar 판정은 호출되지 않음
-- 실제 BGE-M3 임베딩과 Solar 사실 요약 호출 완료
+실제 후보가 있는 company 1쌍을 선택해 Solar를 호출했다. 후보 1개에 대해 `new`가
+반환돼 cluster 7을 생성했고, `factual_easy_v2` 저장까지 성공했다. 이어 발행 순서상
+오래된 3쌍만 처리해 cluster 8~10을 생성했다. 이 3쌍은 후보가 없어 동일사건 Solar는
+호출하지 않았고 통합 본문 3회만 호출했다. 네 쌍 모두 오류와 pending_retry는 없었다.
 
-전체 데이터와 혼동하지 않도록 당시 DB 현황은 다음과 같다.
-
-- 크롤링 성공 기사: 7,783건
-- relevant 고유 기사: 6,000건
-- relevant `(article_id, stock_code)` 연결: 7,733건
-- smoke 처리 완료 기사: 3건
-- smoke 생성 클러스터: 6개
-
-즉 6개 클러스터는 전체 백필 결과가 아니라 제한 실행 결과다.
+전체 백필은 실행하지 않았다.
 
 ## 12. 실제 뉴스 UI 연결
 

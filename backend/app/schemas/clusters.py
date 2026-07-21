@@ -27,6 +27,10 @@ class NewsClusterItem(BaseModel):
 
 class NewsClusterList(BaseModel):
     items: list[NewsClusterItem]
+    total: int
+    offset: int
+    limit: int
+    hasMore: bool
 
 
 class SelectionExplanationRequest(BaseModel):

@@ -41,6 +41,7 @@ def get_clusters(
     client: Annotated[Client, Depends(get_supabase_client)],
     stock_code: Annotated[str | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> NewsClusterList:
     """Return factual summaries and original sources for completed clusters."""
 
@@ -51,31 +52,44 @@ def get_clusters(
         client.table("news_clusters")
         .select(
             "id,stock_code,kind,summary_title,easy_explanation,factual_body,"
-            "article_count,last_active_at"
+            "article_count,last_active_at",
+            count="exact",
         )
         .eq("summary_status", "success")
         .order("last_active_at", desc=True)
-        .limit(limit)
     )
     if stock_code is not None:
         query = query.eq("stock_code", stock_code)
-    clusters = list(query.execute().data or [])
+    cluster_response = query.range(offset, offset + limit - 1).execute()
+    clusters = list(cluster_response.data or [])
+    total = int(cluster_response.count or 0)
     if not clusters:
-        return NewsClusterList(items=[])
+        return NewsClusterList(items=[], total=total, offset=offset, limit=limit, hasMore=False)
 
     cluster_ids = [int(row["id"]) for row in clusters]
-    assignment_response = (
-        client.table("news_cluster_assignments")
-        .select(
-            "cluster_id,article_id,articles!inner("
-            "title,description,press,final_url,original_url,published_at,image_url)"
+    assignments: list[dict[str, Any]] = []
+    assignment_offset = 0
+    assignment_page_size = 1000
+    while True:
+        assignment_response = (
+            client.table("news_cluster_assignments")
+            .select(
+                "cluster_id,article_id,articles!inner("
+                "title,description,press,final_url,original_url,published_at,image_url)"
+            )
+            .in_("cluster_id", cluster_ids)
+            .in_("status", ["assigned_new", "assigned_existing"])
+            .range(assignment_offset, assignment_offset + assignment_page_size - 1)
+            .execute()
         )
-        .in_("cluster_id", cluster_ids)
-        .in_("status", ["assigned_new", "assigned_existing"])
-        .execute()
-    )
+        page = list(assignment_response.data or [])
+        assignments.extend(page)
+        if len(page) < assignment_page_size:
+            break
+        assignment_offset += assignment_page_size
+
     sources_by_cluster: dict[int, list[NewsClusterSource]] = {}
-    for assignment in assignment_response.data or []:
+    for assignment in assignments:
         source = _source_from_assignment(assignment)
         if source is not None:
             sources_by_cluster.setdefault(int(assignment["cluster_id"]), []).append(source)
@@ -101,7 +115,13 @@ def get_clusters(
                 sources=sources,
             )
         )
-    return NewsClusterList(items=items)
+    return NewsClusterList(
+        items=items,
+        total=total,
+        offset=offset,
+        limit=limit,
+        hasMore=offset + len(items) < total,
+    )
 
 
 @router.post("/explain-selection", response_model=SelectionExplanationResponse)

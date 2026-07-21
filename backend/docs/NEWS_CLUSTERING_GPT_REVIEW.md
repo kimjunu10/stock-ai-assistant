@@ -171,26 +171,23 @@ UI에는 다음을 표시한다.
 
 ## 9. 실제 데이터 및 smoke 결과
 
-작업 당시 Supabase 데이터 규모:
+2026-07-21 Supabase 실집계:
 
-- 크롤링 성공 기사: 7,783건
-- 관련 기사 distinct article: 약 6,000건
-- 관련 `(article_id, stock_code)` 연결: 7,733건
+- 전체 기사: 6,234건
+- 크롤링 성공 기사: 6,102건
+- relevant 고유 기사: 6,192건
+- relevant `(article_id, stock_code)`: 7,994쌍
+- 크롤링 성공 relevant 미처리: 고유 기사 6,060건, 연결 7,827쌍
+- 미처리 예상 kind: company 6,012 / market 1,048 / info 767쌍
 
-실제 운영 smoke는 비용과 대량 변경을 제한하기 위해 기사 3건만 실행했다.
+실제 후보가 있는 company 1쌍을 제한 실행했다. BGE 후보 1개가 Solar에 전달됐고 Solar는
+`new`를 반환했다. 배정 cluster 7과 `factual_easy_v2` 통합 본문이 Supabase에 성공
+저장됐다. 이어 오래된 미처리 3쌍을 작은 배치로 실행해 cluster 8~10과 통합 본문을
+저장했다. 실패 및 pending_retry는 0건이다. 기존 `GET /api/clusters`에서도 네 클러스터를
+조회했다.
 
-- 완료 기사: 3건
-- 생성 클러스터: 6개
-- 이유: 기사별로 관련 종목이 2개씩 존재
-- 모든 배정: `assigned_new`
-- 후보가 없어서 실제 Solar 동일 사건 판정 호출: 없음 (`llm_called=false`)
-- 클러스터 정리 Solar 호출 및 Supabase 저장: 성공
-- 기존 6개 클러스터를 `factual_easy_v2`로 재생성: 성공
-- 원문 이미지 3건 백필: 3/3 성공
-
-중요한 제한: 실제 DB smoke는 **후보가 있는 company 기사의 Solar existing/new 판정**을
-검증하지 못했다. 이 경로는 unit smoke에서 mock Solar 응답으로 검증했다. 따라서 운영
-평가 시 이 부분을 실제 후속 소량 실행이 필요한 위험으로 봐야 한다.
+읽기 전용 BGE 시뮬레이션에서는 미처리 company 6,015쌍 중 5,950쌍이 후보를 가져 Solar
+동일사건 판정을 호출할 것으로 추정됐다. 전체 백필은 실행하지 않았다.
 
 ## 10. 자동화 검증
 
@@ -210,7 +207,7 @@ UI에는 다음을 표시한다.
 현재 결과:
 
 - backend Ruff: 통과
-- backend pytest: 31개 통과
+- backend pytest: 35개 통과
 - frontend build: 통과
 - frontend lint: 통과
 - `git diff --check`: 통과
@@ -233,13 +230,12 @@ UI에는 다음을 표시한다.
 4. 기사 단위와 기사·종목 단위 멱등성 경계가 충분한가?
 5. 배정 성공과 정리 성공의 retry 상태를 분리한 구조가 일관적인가?
 6. scheduler 한 프로세스 내 순차 실행이 장애 격리와 처리량 측면에서 충분한가?
-7. 실제 후보가 있는 company 기사 소량 검증 전에 보완해야 할 관측 지표가 무엇인가?
-8. 전체 6,000건 백필 전에 필요한 rate limit, 비용 상한, 중단·재개 전략은 무엇인가?
+7. BGE 후보 발생률 98.9%와 예상 Solar 호출량을 낮추면서 recall을 지킬 방법은 무엇인가?
+8. 쌍 단위 체크포인트·호출 상한·비용 상한이 장시간 백필 재개에 충분한가?
 
 ## 13. 아직 하지 않은 작업
 
-- 전체 관련 기사 약 6,000건 백필
-- 실제 후보가 있는 company 기사로 Solar existing/new 운영 검증
+- 전체 미처리 7,827쌍 백필
 - 호재/악재 분류 모델 실험 및 UI 표시
 - 대량 처리 성능·비용 측정
 - retry 적체 모니터링 대시보드와 운영 알림

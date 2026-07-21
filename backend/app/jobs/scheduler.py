@@ -50,10 +50,24 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         wait_for_retries=False,
     )
     relevance_totals = repo.classify_pending_relevance()
-    clustering_totals = NewsClusteringService(
-        NewsClusterRepository(repo.client, cfg),
-        cfg,
-    ).process_pending()
+    cluster_repo = NewsClusterRepository(repo.client, cfg)
+    if cluster_repo.has_active_backfill():
+        logger.info("NEWS_CLUSTERING_SKIPPED active_backfill=true")
+        clustering_totals = {
+            "scanned": 0,
+            "pairs_scanned": 0,
+            "completed": 0,
+            "pending_retry": 0,
+            "duplicate": 0,
+            "summaries_retried": 0,
+            "assigned_new": 0,
+            "assigned_existing": 0,
+            "assignment_calls": 0,
+            "summary_calls": 0,
+            "stopped_budget": 0,
+        }
+    else:
+        clustering_totals = NewsClusteringService(cluster_repo, cfg).process_pending()
     elapsed_seconds = (datetime.now(UTC) - started_at).total_seconds()
     result = {
         "collected": collected,
@@ -83,11 +97,17 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         relevance_totals["updated"],
     )
     logger.info(
-        "NEWS_CLUSTERING scanned=%d completed=%d pending_retry=%d duplicate=%d",
+        "NEWS_CLUSTERING scanned=%d pairs=%d completed=%d pending_retry=%d duplicate=%d "
+        "assigned_new=%d assigned_existing=%d assignment_calls=%d summary_calls=%d",
         clustering_totals["scanned"],
+        clustering_totals["pairs_scanned"],
         clustering_totals["completed"],
         clustering_totals["pending_retry"],
         clustering_totals["duplicate"],
+        clustering_totals["assigned_new"],
+        clustering_totals["assigned_existing"],
+        clustering_totals["assignment_calls"],
+        clustering_totals["summary_calls"],
     )
     return result
 

@@ -32,9 +32,9 @@ CLUSTERING_VERSION_PROTECTED = "bge_m3_title_desc_centroid_bridge_info_v3"
 # --- Solar 사실 통합 본문 (SPEC Step 6) ---
 SOLAR_MODEL = "solar-pro3-260323"  # solar-pro3 pinned revision
 SOLAR_BASE_URL = "https://api.upstage.ai/v1"
-SUMMARY_PROMPT_VERSION = "factual_easy_v2"
+SUMMARY_PROMPT_VERSION = "factual_easy_v4_bounded"
 SOLAR_TEMPERATURE = 0.0
-SOLAR_MAX_TOKENS = 1300
+SOLAR_MAX_TOKENS = 1800
 
 # 요약 입력에 넣을 클러스터당 최대 기사 수(과도한 토큰 방지). 넘으면 발행 시간순으로 자름.
 MAX_ARTICLES_PER_SUMMARY = 12

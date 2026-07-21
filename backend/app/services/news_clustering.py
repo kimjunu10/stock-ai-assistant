@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from collections.abc import Callable
 from datetime import datetime
 from functools import lru_cache
@@ -30,6 +31,10 @@ class Embedder(Protocol):
     def encode(self, article: dict[str, Any]) -> np.ndarray: ...
 
 
+class BackfillBudgetExhausted(RuntimeError):
+    """Raised before a Solar call when a configured safety limit is reached."""
+
+
 @lru_cache(maxsize=4)
 def _load_embedding_model(model_name: str, revision: str, device: str):
     from sentence_transformers import SentenceTransformer
@@ -42,23 +47,35 @@ class BgeM3Embedder:
 
     def __init__(self, device: str):
         self.device = device
+        self._encode_lock = threading.Lock()
 
     def encode(self, article: dict[str, Any]) -> np.ndarray:
-        title = (article.get("title") or "").strip()
-        description = (article.get("description") or "").strip()
-        text = " ".join(part for part in (title, description) if part)
-        model = _load_embedding_model(
-            cluster_cfg.EMBEDDING_MODEL,
-            cluster_cfg.EMBEDDING_REVISION,
-            self.device,
-        )
-        vector = model.encode(
-            [text],
-            convert_to_numpy=True,
-            normalize_embeddings=True,
-            show_progress_bar=False,
-        )[0]
-        return np.asarray(vector, dtype=np.float32)
+        return self.encode_many([article])[0]
+
+    def encode_many(self, articles: list[dict[str, Any]], *, batch_size: int = 32) -> np.ndarray:
+        """Batch encoding used by read-only backfill planning."""
+
+        if not articles:
+            return np.empty((0, cluster_cfg.EMBEDDING_DIM), dtype=np.float32)
+        texts = []
+        for article in articles:
+            title = (article.get("title") or "").strip()
+            description = (article.get("description") or "").strip()
+            texts.append(" ".join(part for part in (title, description) if part))
+        with self._encode_lock:
+            model = _load_embedding_model(
+                cluster_cfg.EMBEDDING_MODEL,
+                cluster_cfg.EMBEDDING_REVISION,
+                self.device,
+            )
+            vectors = model.encode(
+                texts,
+                batch_size=batch_size,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+                show_progress_bar=False,
+            )
+        return np.asarray(vectors, dtype=np.float32)
 
 
 def _hours(value: str) -> float:
@@ -77,6 +94,10 @@ class NewsClusteringService:
         embedder: Embedder | None = None,
         assign_call_fn: Callable[[str], tuple[dict, dict]] | None = None,
         summary_call_fn: Callable[[str], tuple[dict, dict]] | None = None,
+        progress_fn: Callable[[dict[str, Any], str, dict[str, int]], None] | None = None,
+        defer_summaries: bool = False,
+        dirty_run_key: str | None = None,
+        manage_article_state: bool = True,
     ) -> None:
         self.repo = repo
         self.cfg = cfg
@@ -85,35 +106,73 @@ class NewsClusteringService:
         self.summary_call_fn = summary_call_fn or (
             lambda prompt: summarize.call_solar(cfg.upstage_api_key, prompt)
         )
+        self.progress_fn = progress_fn
+        self.defer_summaries = defer_summaries
+        self.dirty_run_key = dirty_run_key
+        self.manage_article_state = manage_article_state
+        self._metrics: dict[str, int] = {}
 
-    def process_pending(self, limit: int | None = None) -> dict[str, int]:
+    def process_pending(
+        self,
+        limit: int | None = None,
+        *,
+        candidates: list[dict[str, Any]] | None = None,
+        retry_summaries: bool = True,
+    ) -> dict[str, int]:
         limit = limit or self.cfg.news_clustering_batch_size
         totals = {
             "scanned": 0,
+            "pairs_scanned": 0,
             "completed": 0,
             "pending_retry": 0,
             "duplicate": 0,
             "summaries_retried": 0,
+            "assigned_new": 0,
+            "assigned_existing": 0,
+            "assignment_calls": 0,
+            "summary_calls": 0,
+            "stopped_budget": 0,
         }
-        for cluster in self.repo.get_summary_retry_clusters(limit):
-            self._summarize_cluster(
-                int(cluster["id"]),
-                cluster["stock_code"],
-                int(cluster.get("summary_retry_count") or 0) + 1,
-            )
-            totals["summaries_retried"] += 1
+        self._metrics = totals
+        summary_retries = self.repo.get_summary_retry_clusters(limit) if retry_summaries else []
+        for cluster in summary_retries:
+            try:
+                self._summarize_cluster(
+                    int(cluster["id"]),
+                    cluster["stock_code"],
+                    int(cluster.get("summary_retry_count") or 0) + 1,
+                )
+                totals["summaries_retried"] += 1
+            except BackfillBudgetExhausted:
+                totals["stopped_budget"] = 1
+                return totals
+            except Exception:  # noqa: BLE001 - isolate one summary retry
+                logger.exception("NEWS_SUMMARY_RETRY_FAILED cluster_id=%s", cluster.get("id"))
 
-        for article in self.repo.get_pipeline_candidates(limit):
+        articles = (
+            candidates if candidates is not None else self.repo.get_pipeline_candidates(limit)
+        )
+        for article in articles:
             totals["scanned"] += 1
-            outcome = self._process_article(article)
+            totals["pairs_scanned"] += int(article.get("pair_count") or len(article["stock_codes"]))
+            try:
+                outcome = self._process_article(article)
+            except BackfillBudgetExhausted:
+                if self.manage_article_state:
+                    self.repo.clear_article_processing(int(article["article_id"]))
+                totals["stopped_budget"] = 1
+                break
             totals[outcome] += 1
+            if self.progress_fn is not None:
+                self.progress_fn(article, outcome, totals)
         return totals
 
     def _process_article(self, article: dict[str, Any]) -> str:
         article_id = int(article["article_id"])
         kind = market_rules.classify_kind(article.get("title", ""), article.get("description", ""))
         retry_count = int(article.get("retry_count") or 0) + 1
-        self.repo.mark_article_processing(article_id, kind, retry_count)
+        if self.manage_article_state:
+            self.repo.mark_article_processing(article_id, kind, retry_count)
         vector: np.ndarray | None = None
         errors: list[str] = []
         processed_any = False
@@ -132,14 +191,38 @@ class NewsClusteringService:
                     error = self._assign_rule_based(article, stock_code, kind, vector, retry_count)
                 if error:
                     errors.append(f"{stock_code}: {error}")
+        except BackfillBudgetExhausted:
+            raise
         except Exception as exc:  # noqa: BLE001 - persist and isolate one article
             logger.exception("NEWS_CLUSTER_PROCESS_FAILED article_id=%d", article_id)
             errors.append(f"{type(exc).__name__}: {exc}")
 
         if errors:
-            self.repo.mark_article_retry(article_id, kind, retry_count, "; ".join(errors))
+            if self.manage_article_state:
+                self.repo.mark_article_retry(article_id, kind, retry_count, "; ".join(errors))
+            else:
+                for stock_code in article["stock_codes"]:
+                    previous = self.repo.get_assignment(article_id, stock_code)
+                    if previous and previous["status"] in {"assigned_new", "assigned_existing"}:
+                        continue
+                    self.repo.save_assignment(
+                        article_id=article_id,
+                        stock_code=stock_code,
+                        cluster_id=None,
+                        kind=kind,
+                        status="pending_retry",
+                        llm_called=bool((previous or {}).get("llm_called")),
+                        candidate_count=int((previous or {}).get("candidate_count") or 0),
+                        reason="; ".join(errors),
+                        error_code="unexpected_error",
+                        retry_count=retry_count,
+                    )
             return "pending_retry"
-        self.repo.mark_article_complete(article_id, kind)
+        if self.manage_article_state:
+            if self.repo.has_unassigned_relevant_links(article_id):
+                self.repo.clear_article_processing(article_id)
+            else:
+                self.repo.mark_article_complete(article_id, kind)
         return "completed" if processed_any else "duplicate"
 
     def _hydrate_assigner(self, rows: list[dict[str, Any]]) -> LLMAssigner:
@@ -189,6 +272,8 @@ class NewsClusteringService:
             "description": article.get("description") or "",
         }
         result = assigner.assign(assign_article, vector, _hours(article["published_at"]))
+        if result.llm_called:
+            self._metrics["assignment_calls"] += 1
         if result.status == "pending_retry":
             self.repo.save_assignment(
                 article_id=int(article["article_id"]),
@@ -219,6 +304,7 @@ class NewsClusteringService:
                 centroid=cluster.centroid.astype(float).tolist(),
                 article_count=len(cluster.member_article_ids),
                 last_active_at=article["published_at"],
+                representative_article_id=int(article["article_id"]),
             )
         self.repo.save_assignment(
             article_id=int(article["article_id"]),
@@ -232,7 +318,7 @@ class NewsClusteringService:
             error_code=None,
             retry_count=retry_count,
         )
-        self._summarize_cluster(cluster_id, stock_code, 1)
+        self._record_cluster_change(cluster_id, stock_code, result.status)
         return None
 
     def _assign_rule_based(
@@ -277,6 +363,7 @@ class NewsClusteringService:
                 centroid=updated.astype(float).tolist(),
                 article_count=count + 1,
                 last_active_at=article["published_at"],
+                representative_article_id=int(article["article_id"]),
             )
             status, reason = "assigned_existing", f"rule: cosine={best_sim:.6f}"
         self.repo.save_assignment(
@@ -291,6 +378,15 @@ class NewsClusteringService:
             error_code=None,
             retry_count=retry_count,
         )
+        self._record_cluster_change(cluster_id, stock_code, status)
+
+    def _record_cluster_change(self, cluster_id: int, stock_code: str, status: str) -> None:
+        self._metrics[status] += 1
+        if self.defer_summaries:
+            if not self.dirty_run_key:
+                raise RuntimeError("dirty_run_key is required when summaries are deferred")
+            self.repo.mark_cluster_dirty(self.dirty_run_key, cluster_id)
+            return
         self._summarize_cluster(cluster_id, stock_code, 1)
 
     def _summarize_cluster(self, cluster_id: int, stock_code: str, retry_count: int) -> None:
@@ -301,6 +397,10 @@ class NewsClusteringService:
         )
         try:
             parsed, meta = self.summary_call_fn(prompt)
+        except BackfillBudgetExhausted:
+            raise
         except Exception as exc:  # noqa: BLE001 - summary has its own persistent retry state
             parsed, meta = {}, {"ok": False, "parse_success": False, "raw": str(exc)}
+        else:
+            self._metrics["summary_calls"] += 1
         self.repo.save_summary(cluster_id, parsed, meta, retry_count)

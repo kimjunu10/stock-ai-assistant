@@ -8,6 +8,7 @@ import {
 } from 'lightweight-charts'
 import type { MarketDataStatus, StockMarketData, Theme } from '../types'
 import { Icon } from './Icon'
+import { LoadingDots } from './LoadingDots'
 
 interface PriceChartProps {
   data: StockMarketData | null
@@ -142,9 +143,7 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
       />
       {status === 'loading' && (
         <div className="chart-state chart-state--loading" role="status">
-          <span className="chart-loader" />
-          <strong>실제 원화 차트를 불러오고 있어요</strong>
-          <p>토스증권에서 1분봉, 일봉과 거래량을 확인하고 있습니다.</p>
+          <LoadingDots label="주가 차트 불러오는 중" />
         </div>
       )}
       {status === 'error' && (

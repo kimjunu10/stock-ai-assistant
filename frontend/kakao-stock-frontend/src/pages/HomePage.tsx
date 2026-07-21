@@ -3,6 +3,7 @@ import type { AssistantContext } from '../types'
 import { AppLink, type Navigate } from '../components/AppLink'
 import { Icon } from '../components/Icon'
 import { NewsClusterCard } from '../components/NewsClusterCard'
+import { LoadingDots } from '../components/LoadingDots'
 import { SectionHeader } from '../components/SectionHeader'
 import { StockCard } from '../components/StockCard'
 import { useStockMarketOverview } from '../hooks/useStockMarketOverview'
@@ -49,6 +50,7 @@ export function HomePage({ onAsk, onNavigate }: HomePageProps) {
             <span>오전 9:30</span>
           </div>
           <div className="briefing-preview__items">
+            {news.isLoading && <p className="briefing-preview__empty"><LoadingDots label="오늘의 뉴스 불러오는 중" /></p>}
             {featuredNews.slice(0, 2).map((cluster) => (
               <article key={cluster.id}><span className="signal-dot signal-dot--neutral" /><div><strong>{cluster.title}</strong><p>{cluster.articleCount}개 기사 묶음</p></div><Icon name="chevron-right" size={17} /></article>
             ))}
@@ -79,6 +81,7 @@ export function HomePage({ onAsk, onNavigate }: HomePageProps) {
             title="클릭하기 전에 이해하는 뉴스"
           />
           <div className="featured-news-grid">
+            {news.isLoading && <div className="empty-state empty-state--loading"><LoadingDots label="주요 뉴스 불러오는 중" /></div>}
             {featuredNews.map((cluster) => (
               <NewsClusterCard cluster={cluster} key={cluster.id} onAsk={onAsk} showStock />
             ))}

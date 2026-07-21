@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     news_clustering_retry_minutes: int = 30
     news_embedding_device: str = "cpu"
     use_llm_assign: bool = True
+    news_backfill_batch_size: int = 25
+    news_backfill_max_assignment_calls: int = 25
+    news_backfill_max_summary_calls: int = 25
+    news_backfill_max_cost_usd: float = 1.0
+    news_backfill_daily_cost_usd: float = 5.0
+    news_backfill_solar_min_interval_seconds: float = 0.25
     toss_request_timeout_seconds: float = 15.0
     toss_market_data_cache_seconds: int = 15
 
@@ -106,6 +112,10 @@ class Settings(BaseSettings):
             raise RuntimeError("NEWS_SCHEDULER_INTERVAL_MINUTES must be at least 1")
         if not 1 <= self.news_scheduler_max_per_stock <= 1000:
             raise RuntimeError("NEWS_SCHEDULER_MAX_PER_STOCK must be between 1 and 1000")
+        if self.news_clustering_batch_size < 1 or self.news_backfill_batch_size < 1:
+            raise RuntimeError("News clustering batch sizes must be positive")
+        if self.news_backfill_max_cost_usd <= 0 or self.news_backfill_daily_cost_usd <= 0:
+            raise RuntimeError("News backfill cost caps must be positive")
 
 
 settings = Settings()

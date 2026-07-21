@@ -39,3 +39,6 @@ backend/migrations/*
 !backend/migrations/0003_news_clustering_pipeline.sql
 !backend/migrations/0004_news_easy_explanation.sql
 !backend/migrations/0005_article_image_url.sql
+!backend/migrations/0006_news_backfill_runs.sql
+!backend/migrations/0007_news_backfill_dirty_clusters.sql
+!backend/migrations/0008_news_backfill_dirty_repair.sql

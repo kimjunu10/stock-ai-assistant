@@ -3,7 +3,8 @@ import type { AssistantContext, Theme } from '../types'
 import { DisclosureList, ReportList } from '../components/ResearchLists'
 import { FinancialCard } from '../components/FinancialCard'
 import { Icon } from '../components/Icon'
-import { NewsClusterCard } from '../components/NewsClusterCard'
+import { NewsClusterListItem } from '../components/NewsClusterListItem'
+import { LoadingDots } from '../components/LoadingDots'
 import { SectionHeader } from '../components/SectionHeader'
 import { StockHeader } from '../components/StockHeader'
 import { PriceChart } from '../components/PriceChart'
@@ -12,12 +13,14 @@ import { useStockFundamentals } from '../hooks/useStockFundamentals'
 import { useNewsClusters } from '../hooks/useNewsClusters'
 
 interface StockDetailPageProps {
+  assistantOpen: boolean
+  onAssistantClose: () => void
   onAsk: (context: AssistantContext) => void
   stockCode: string
   theme: Theme
 }
 
-export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProps) {
+export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockCode, theme }: StockDetailPageProps) {
   const stock = getStock(stockCode)
   const marketData = useStockMarketData(stockCode)
   const fundamentals = useStockFundamentals(stockCode)
@@ -56,7 +59,8 @@ export function StockDetailPage({ onAsk, stockCode, theme }: StockDetailPageProp
           title={`${stock.name}에 지금 중요한 소식`}
         />
         <div className="stock-news-list">
-          {news.clusters.map((cluster) => <NewsClusterCard cluster={cluster} compact key={cluster.id} onAsk={onAsk} />)}
+          {news.isLoading && <div className="stock-news-loading"><LoadingDots label={`${stock.name} 뉴스 불러오는 중`} /></div>}
+          {news.clusters.map((cluster) => <NewsClusterListItem assistantOpen={assistantOpen} cluster={cluster} key={cluster.id} onAssistantClose={onAssistantClose} onAsk={onAsk} />)}
           {!news.isLoading && news.clusters.length === 0 && (
             <p className="data-notice">{news.error || '아직 생성된 뉴스 사건 정리가 없어요.'}</p>
           )}
