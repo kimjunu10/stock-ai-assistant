@@ -122,8 +122,9 @@ def cosine(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / (na * nb))
 
 
-def pick_seed_clusters(clusters: dict[int, dict], eligible_ids: set[int],
-                       rng: random.Random) -> list[int]:
+def pick_seed_clusters(
+    clusters: dict[int, dict], eligible_ids: set[int], rng: random.Random
+) -> list[int]:
     """버킷별로 시드 클러스터를 층화 선택. 최근/기존 배정 사례가 섞이도록,
     또 종목이 몰리지 않도록 종목·최신성 균형을 고려해 고른다."""
     by_bucket: dict[str, list[dict]] = defaultdict(list)
@@ -160,8 +161,9 @@ def pick_seed_clusters(clusters: dict[int, dict], eligible_ids: set[int],
     return chosen
 
 
-def find_neighbors(seed: dict, clusters: dict[int, dict], centroids: dict[int, np.ndarray],
-                   exclude: set[int]) -> list[tuple[int, float]]:
+def find_neighbors(
+    seed: dict, clusters: dict[int, dict], centroids: dict[int, np.ndarray], exclude: set[int]
+) -> list[tuple[int, float]]:
     """시드와 같은 stock_code이고 발행 시각 창이 ±72h 이내로 겹치며 centroid 유사도가
     높은 인접 클러스터를 최대 NEIGHBORS_PER_SEED개 반환한다(미병합 확인용)."""
     if seed["id"] not in centroids:
@@ -212,9 +214,7 @@ def main() -> None:
 
     clusters = {c["id"]: c for c in clusters_rows}
     centroids = {
-        c["id"]: np.asarray(c["centroid"], dtype=float)
-        for c in clusters_rows
-        if c.get("centroid")
+        c["id"]: np.asarray(c["centroid"], dtype=float) for c in clusters_rows if c.get("centroid")
     }
 
     # cluster_id -> 그 클러스터에 속한 (평가 대상) pair 목록.
@@ -267,7 +267,11 @@ def main() -> None:
     sample_rows: list[dict] = []
     seen: set[tuple[int, str]] = set()
     cluster_order = sorted(
-        selected, key=lambda cid: (clusters[cid]["stock_code"], parse_ts(clusters[cid]["first_published_at"]))
+        selected,
+        key=lambda cid: (
+            clusters[cid]["stock_code"],
+            parse_ts(clusters[cid]["first_published_at"]),
+        ),
     )
     for cid in cluster_order:
         rows = sorted(
@@ -286,33 +290,68 @@ def main() -> None:
     blind_path = outdir / "clustering_eval_blind.csv"
     with blind_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow([
-            "sample_order", "article_id", "stock_code", "stock_name", "published_at",
-            "title", "description", "body_excerpt", "press", "article_url", "gold_event_id",
-        ])
+        w.writerow(
+            [
+                "sample_order",
+                "article_id",
+                "stock_code",
+                "stock_name",
+                "published_at",
+                "title",
+                "description",
+                "body_excerpt",
+                "press",
+                "article_url",
+                "gold_event_id",
+            ]
+        )
         for p in sample_rows:
-            w.writerow([
-                p["sample_order"], p["article_id"], p["stock_code"], p["stock_name"],
-                p["published_at"], p["title"], p.get("description") or "",
-                excerpt(p.get("body")), p.get("press") or "", p.get("article_url") or "", "",
-            ])
+            w.writerow(
+                [
+                    p["sample_order"],
+                    p["article_id"],
+                    p["stock_code"],
+                    p["stock_name"],
+                    p["published_at"],
+                    p["title"],
+                    p.get("description") or "",
+                    excerpt(p.get("body")),
+                    p.get("press") or "",
+                    p.get("article_url") or "",
+                    "",
+                ]
+            )
 
     # --- answer key CSV (시스템 정답: system_cluster_id 보존) ---
     key_path = outdir / "clustering_eval_answer_key.csv"
     with key_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow([
-            "sample_order", "article_id", "stock_code", "system_cluster_id",
-            "assignment_status", "cluster_article_count", "representative_article_id",
-            "cluster_summary_title",
-        ])
+        w.writerow(
+            [
+                "sample_order",
+                "article_id",
+                "stock_code",
+                "system_cluster_id",
+                "assignment_status",
+                "cluster_article_count",
+                "representative_article_id",
+                "cluster_summary_title",
+            ]
+        )
         for p in sample_rows:
             c = clusters[p["cluster_id"]]
-            w.writerow([
-                p["sample_order"], p["article_id"], p["stock_code"], p["cluster_id"],
-                p["assignment_status"], c["article_count"],
-                c["representative_article_id"], c.get("summary_title") or "",
-            ])
+            w.writerow(
+                [
+                    p["sample_order"],
+                    p["article_id"],
+                    p["stock_code"],
+                    p["cluster_id"],
+                    p["assignment_status"],
+                    c["article_count"],
+                    c["representative_article_id"],
+                    c.get("summary_title") or "",
+                ]
+            )
 
     # --- manifest ---
     n = len(sample_rows)
@@ -389,10 +428,16 @@ def main() -> None:
     ]
     manifest.write_text("\n".join(lines), encoding="utf-8")
 
-    print(f"모집단 pair={population}, 추출 pair={n}, 클러스터={len(selected)}"
-          f"(seed {len(seed_clusters)}/neighbor {len(neighbor_clusters)}), 종목={len(stocks)}")
-    print(f"seed 버킷: large={seed_buckets['large']} mid={seed_buckets['mid']} small={seed_buckets['small']}")
-    print(f"pair 버킷: large={pair_buckets['large']} mid={pair_buckets['mid']} small={pair_buckets['small']}")
+    print(
+        f"모집단 pair={population}, 추출 pair={n}, 클러스터={len(selected)}"
+        f"(seed {len(seed_clusters)}/neighbor {len(neighbor_clusters)}), 종목={len(stocks)}"
+    )
+    print(
+        f"seed 버킷: large={seed_buckets['large']} mid={seed_buckets['mid']} small={seed_buckets['small']}"
+    )
+    print(
+        f"pair 버킷: large={pair_buckets['large']} mid={pair_buckets['mid']} small={pair_buckets['small']}"
+    )
     print(f"산출물: {blind_path}, {key_path}, {manifest}")
 
 

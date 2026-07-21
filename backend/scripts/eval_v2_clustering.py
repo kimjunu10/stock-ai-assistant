@@ -77,8 +77,9 @@ def main() -> None:
     args = ap.parse_args()
 
     gold_rows = list(csv.DictReader(open(args.gold, encoding="utf-8")))
-    gold = {(int(r["article_id"]), pad(r["stock_code"])): r["gold_event_id"].strip()
-            for r in gold_rows}
+    gold = {
+        (int(r["article_id"]), pad(r["stock_code"])): r["gold_event_id"].strip() for r in gold_rows
+    }
     aids = sorted({k[0] for k in gold})
 
     # 운영 DB 에서 216 pair 의 v2 배정(사건 클러스터) 조회.

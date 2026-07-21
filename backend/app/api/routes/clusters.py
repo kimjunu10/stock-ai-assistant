@@ -25,9 +25,7 @@ router = APIRouter(prefix="/clusters", tags=["clusters"])
 def _active_version(client: Client) -> str | None:
     """API 가 읽을 활성 clustering_version. 없으면 None(모든 버전 = 하위호환)."""
     try:
-        resp = (
-            client.table("news_pipeline_state").select("active_version").eq("id", 1).execute()
-        )
+        resp = client.table("news_pipeline_state").select("active_version").eq("id", 1).execute()
     except Exception:  # noqa: BLE001 - 상태 테이블이 없던 구버전 호환
         return None
     rows = resp.data or []

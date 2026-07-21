@@ -80,15 +80,17 @@ def load_rows(blind_path: str, gold_path: str, answer_path: str) -> list[dict]:
         g, a = gold.get(key), answer.get(key)
         if not g or not a:
             continue
-        rows.append({
-            "article_id": key[0],
-            "stock_code": key[1],
-            "title": b.get("title") or "",
-            "description": b.get("description") or "",
-            "published_at": b.get("published_at") or "",
-            "gold_event_id": g["gold_event_id"].strip(),
-            "system_cluster_id": a["system_cluster_id"].strip(),
-        })
+        rows.append(
+            {
+                "article_id": key[0],
+                "stock_code": key[1],
+                "title": b.get("title") or "",
+                "description": b.get("description") or "",
+                "published_at": b.get("published_at") or "",
+                "gold_event_id": g["gold_event_id"].strip(),
+                "system_cluster_id": a["system_cluster_id"].strip(),
+            }
+        )
     return rows
 
 
@@ -169,13 +171,15 @@ def run(rows: list[dict], prompt: str, *, exclude_opinion: bool = False) -> dict
         # opinion gate: 명확한 오피니언 기사는 company 동일사건 클러스터링 입력에서 제외.
         if exclude_opinion and market_rules.is_opinion(r["title"], r["description"]):
             m = market_rules._OPINION_RE.search(r["title"])
-            opinions.append({
-                "article_id": r["article_id"],
-                "stock_code": r["stock_code"],
-                "title": r["title"],
-                "rule": m.group() if m else "",
-                "gold_event_id": r["gold_event_id"],
-            })
+            opinions.append(
+                {
+                    "article_id": r["article_id"],
+                    "stock_code": r["stock_code"],
+                    "title": r["title"],
+                    "rule": m.group() if m else "",
+                    "gold_event_id": r["gold_event_id"],
+                }
+            )
             continue
         art = {
             "article_id": r["article_id"],
@@ -235,14 +239,18 @@ def main() -> None:
 
     tag = "opinion-gate" if args.exclude_opinion else args.prompt
     print(f"=== 오프라인 재클러스터링 결과 (prompt={args.prompt}, {tag}) ===")
-    print(f"평가 pair 수: {len(items)} (배정 실패 제외 {out['pending']}, opinion 제외 {len(out['opinions'])})")
+    print(
+        f"평가 pair 수: {len(items)} (배정 실패 제외 {out['pending']}, opinion 제외 {len(out['opinions'])})"
+    )
     print()
 
     if out["opinions"]:
         print(f"opinion 으로 판정된 기사 ({len(out['opinions'])}건) — 각 기사에 적용된 규칙:")
         for o in out["opinions"]:
-            print(f"  - [{o['rule']}] {o['article_id']}/{o['stock_code']} (gold={o['gold_event_id']}): "
-                  f"{o['title'][:50]}")
+            print(
+                f"  - [{o['rule']}] {o['article_id']}/{o['stock_code']} (gold={o['gold_event_id']}): "
+                f"{o['title'][:50]}"
+            )
         print()
 
     print(f"B-cubed Precision : {metrics['precision']:.10f}")
@@ -265,10 +273,14 @@ def main() -> None:
         c = CURRENT_RESULT[key]
         v = metrics[key]
         print(f"  {name:<10}{c:>16.10f}{v:>16.10f}{v - c:>+14.6f}")
-    print(f"  {'과병합':<10}{CURRENT_RESULT['overmerge']:>16}{diag['overmerge_clusters']:>16}"
-          f"{diag['overmerge_clusters'] - CURRENT_RESULT['overmerge']:>+14}")
-    print(f"  {'미병합':<10}{CURRENT_RESULT['undermerge']:>16}{diag['undermerge_events']:>16}"
-          f"{diag['undermerge_events'] - CURRENT_RESULT['undermerge']:>+14}")
+    print(
+        f"  {'과병합':<10}{CURRENT_RESULT['overmerge']:>16}{diag['overmerge_clusters']:>16}"
+        f"{diag['overmerge_clusters'] - CURRENT_RESULT['overmerge']:>+14}"
+    )
+    print(
+        f"  {'미병합':<10}{CURRENT_RESULT['undermerge']:>16}{diag['undermerge_events']:>16}"
+        f"{diag['undermerge_events'] - CURRENT_RESULT['undermerge']:>+14}"
+    )
     print()
     print("(전체 백필과 운영 반영은 실행하지 않음)")
 

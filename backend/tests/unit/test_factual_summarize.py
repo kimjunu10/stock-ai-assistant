@@ -66,7 +66,8 @@ def test_selection_explanation_is_requested_as_short_beginner_copy(monkeypatch) 
         del headers, timeout
         payloads.append(json)
         return FakeResponse(
-            '{"explanation":"쉽게 말하면 로봇 사업을 한곳에서 이끄는 전담팀이에요.\\n\\n기술 개발부터 실제 사업 적용까지 맡아요."}',
+            '{"explanation":"쉽게 말하면 로봇 사업을 한곳에서 이끄는 전담팀이에요.'
+            '\\n\\n기술 개발부터 실제 사업 적용까지 맡아요."}',
             "stop",
             20,
         )

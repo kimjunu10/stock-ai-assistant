@@ -58,8 +58,7 @@ def test_role_classifier_pending_on_llm_failure():
 def test_parse_role_forces_eligible_consistency():
     # company_event 가 아니면 event_eligible 은 강제로 False.
     parsed, ok = classify_role.parse_role(
-        '{"article_role":"opinion","event_eligible":true,"reason":"x",'
-        '"event_signature":{}}'
+        '{"article_role":"opinion","event_eligible":true,"reason":"x","event_signature":{}}'
     )
     assert ok is True
     assert parsed["event_eligible"] is False
@@ -69,9 +68,15 @@ def test_v2_assigner_new_when_no_candidates():
     a = assign_llm_v2.LLMAssignerV2(call_fn=lambda _p: ({}, {"ok": True, "parse_success": True}))
     vec = np.array([1.0, 0.0], dtype=np.float32)
     res = a.assign(
-        {"article_id": "005380:1", "stock_code": "005380", "title": "t", "description": "d",
-         "event_signature": {"subject": "현대차"}},
-        vec, 100.0,
+        {
+            "article_id": "005380:1",
+            "stock_code": "005380",
+            "title": "t",
+            "description": "d",
+            "event_signature": {"subject": "현대차"},
+        },
+        vec,
+        100.0,
     )
     assert res.status == "assigned_new"
     assert res.llm_called is False  # 후보 0개면 LLM 미호출
@@ -81,45 +86,107 @@ def test_v2_assigner_signature_conflict_new():
     # 유사 임베딩이지만 Solar 가 event_signature 충돌로 new 판정 → 별도 클러스터.
     # (첫 기사는 후보 0개라 LLM 미호출이므로, LLM 은 항상 new 를 반환하도록 둔다.)
     def fake(_prompt):
-        return ({"decision": "new", "matched_cluster_id": None},
-                {"ok": True, "parse_success": True, "usage": {}})
+        return (
+            {"decision": "new", "matched_cluster_id": None},
+            {"ok": True, "parse_success": True, "usage": {}},
+        )
 
     a = assign_llm_v2.LLMAssignerV2(call_fn=fake)
     vec = np.array([1.0, 0.0], dtype=np.float32)
-    r1 = a.assign({"article_id": "005380:1", "stock_code": "005380", "title": "현대차 착공",
-                   "description": "A", "event_signature": {"action": "착공"}}, vec, 100.0)
-    r2 = a.assign({"article_id": "005380:2", "stock_code": "005380", "title": "현대차 실적",
-                   "description": "B", "event_signature": {"action": "실적발표"}}, vec, 101.0)
+    r1 = a.assign(
+        {
+            "article_id": "005380:1",
+            "stock_code": "005380",
+            "title": "현대차 착공",
+            "description": "A",
+            "event_signature": {"action": "착공"},
+        },
+        vec,
+        100.0,
+    )
+    r2 = a.assign(
+        {
+            "article_id": "005380:2",
+            "stock_code": "005380",
+            "title": "현대차 실적",
+            "description": "B",
+            "event_signature": {"action": "실적발표"},
+        },
+        vec,
+        101.0,
+    )
     assert r1.status == "assigned_new"
     assert r2.status == "assigned_new"  # 충돌 → 별도 클러스터
     assert r1.cluster_id != r2.cluster_id
 
 
 def test_v2_assigner_existing_merge():
-    responses = iter([
-        ({"decision": "existing", "matched_cluster_id": 1},
-         {"ok": True, "parse_success": True, "usage": {}}),
-    ])
+    responses = iter(
+        [
+            (
+                {"decision": "existing", "matched_cluster_id": 1},
+                {"ok": True, "parse_success": True, "usage": {}},
+            ),
+        ]
+    )
     a = assign_llm_v2.LLMAssignerV2(call_fn=lambda _p: next(responses))
     vec = np.array([1.0, 0.0], dtype=np.float32)
-    a.assign({"article_id": "005380:1", "stock_code": "005380", "title": "현대차 착공",
-              "description": "A", "event_signature": {"action": "착공"}}, vec, 100.0)
-    r2 = a.assign({"article_id": "005380:2", "stock_code": "005380", "title": "현대차 착공 추가",
-                   "description": "A2", "event_signature": {"action": "착공"}}, vec, 101.0)
+    a.assign(
+        {
+            "article_id": "005380:1",
+            "stock_code": "005380",
+            "title": "현대차 착공",
+            "description": "A",
+            "event_signature": {"action": "착공"},
+        },
+        vec,
+        100.0,
+    )
+    r2 = a.assign(
+        {
+            "article_id": "005380:2",
+            "stock_code": "005380",
+            "title": "현대차 착공 추가",
+            "description": "A2",
+            "event_signature": {"action": "착공"},
+        },
+        vec,
+        101.0,
+    )
     assert r2.status == "assigned_existing"
     assert r2.cluster_id == 1
 
 
 def test_v2_assigner_invalid_response_pending():
     a = assign_llm_v2.LLMAssignerV2(
-        call_fn=lambda _p: ({"decision": "existing", "matched_cluster_id": 999},
-                            {"ok": True, "parse_success": True})
+        call_fn=lambda _p: (
+            {"decision": "existing", "matched_cluster_id": 999},
+            {"ok": True, "parse_success": True},
+        )
     )
     vec = np.array([1.0, 0.0], dtype=np.float32)
-    a.assign({"article_id": "005380:1", "stock_code": "005380", "title": "t1",
-              "description": "d", "event_signature": None}, vec, 100.0)
+    a.assign(
+        {
+            "article_id": "005380:1",
+            "stock_code": "005380",
+            "title": "t1",
+            "description": "d",
+            "event_signature": None,
+        },
+        vec,
+        100.0,
+    )
     # 후보에 없는 cluster_id(999) → pending_retry (신규 생성/임의 배정 금지)
-    r2 = a.assign({"article_id": "005380:2", "stock_code": "005380", "title": "t2",
-                   "description": "d", "event_signature": None}, vec, 101.0)
+    r2 = a.assign(
+        {
+            "article_id": "005380:2",
+            "stock_code": "005380",
+            "title": "t2",
+            "description": "d",
+            "event_signature": None,
+        },
+        vec,
+        101.0,
+    )
     assert r2.status == "pending_retry"
     assert r2.error == "invalid_response"
