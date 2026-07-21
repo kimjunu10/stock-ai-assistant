@@ -1,0 +1,33 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be set}
+    container_name: stock-assistant-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      NEWS_SCHEDULER_ENABLED: "true"
+      NEWS_EMBEDDING_DEVICE: cpu
+      PORT: "8000"
+    volumes:
+      - dart-raw-documents:/app/data/dart/raw_documents
+      - huggingface-cache:/root/.cache/huggingface
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:8000/docs', timeout=5)
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+volumes:
+  dart-raw-documents:
+  huggingface-cache:
