@@ -3,6 +3,8 @@ import { explainNewsSelection } from '../api/news'
 import { getStock } from '../data/mockData'
 import type { AssistantContext, NewsCluster } from '../types'
 import { Icon } from './Icon'
+import { SelectionExplainer } from './SelectionExplainer'
+import { createSelectionAnchor, type SelectionAnchor } from './selectionAnchor'
 import { SentimentBadge } from './SentimentBadge'
 import { StockAvatar } from './StockAvatar'
 import { TermUnderline } from './TermUnderline'
@@ -15,12 +17,6 @@ interface NewsClusterCardProps {
   compact?: boolean
   onAsk?: (context: AssistantContext) => void
   showStock?: boolean
-}
-
-interface SelectedText {
-  left: number
-  text: string
-  top: number
 }
 
 function EasySummary({ cluster }: { cluster: NewsCluster }) {
@@ -113,7 +109,7 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
   const stock = getStock(cluster.stockCode)
   const articleRef = useRef<HTMLElement>(null)
   const [copied, setCopied] = useState(false)
-  const [selectedText, setSelectedText] = useState<SelectedText | null>(null)
+  const [selectedText, setSelectedText] = useState<SelectionAnchor | null>(null)
   const [selectionExplanation, setSelectionExplanation] = useState('')
   const [selectionError, setSelectionError] = useState('')
   const [isExplaining, setIsExplaining] = useState(false)
@@ -151,17 +147,7 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
       ? range.commonAncestorContainer.parentElement
       : range.commonAncestorContainer as Element
     if (!ancestor || !article.contains(ancestor)) return
-    const rangeRects = Array.from(range.getClientRects())
-    const rangeRect = rangeRects.at(-1) ?? range.getBoundingClientRect()
-    const articleRect = article.getBoundingClientRect()
-    setSelectedText({
-      text: text.slice(0, 500),
-      top: Math.max(8, rangeRect.top - articleRect.top - 38),
-      left: Math.min(
-        Math.max(12, rangeRect.right - articleRect.left - 18),
-        articleRect.width - 48,
-      ),
-    })
+    setSelectedText(createSelectionAnchor(range, text))
     setSelectionExplanation('')
     setSelectionError('')
   }
@@ -199,24 +185,18 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
       ref={articleRef}
     >
       {selectedText && (
-        <div className="selection-explainer" style={{ left: selectedText.left, top: selectedText.top }}>
-          <button
-            aria-label="선택한 문구 쉽게 설명"
-            className="selection-explainer__trigger"
-            onClick={requestEasyExplanation}
-            onMouseDown={(event) => event.preventDefault()}
-            type="button"
-          >
-            <Icon name="sparkles" size={16} />
-          </button>
-          {(isExplaining || selectionExplanation || selectionError) && (
-            <div className="selection-explainer__popover">
-              <div><span>AI 쉬운 설명</span><button aria-label="쉬운 설명 닫기" onClick={() => setSelectedText(null)} type="button"><Icon name="close" size={14} /></button></div>
-              <strong>“{selectedText.text}”</strong>
-              <p>{isExplaining ? '쉽게 풀어 쓰고 있어요…' : selectionExplanation || selectionError}</p>
-            </div>
-          )}
-        </div>
+        <SelectionExplainer
+          anchor={selectedText}
+          error={selectionError}
+          explanation={selectionExplanation}
+          isLoading={isExplaining}
+          onAsk={onAsk ? () => {
+            onAsk({ stockCode: cluster.stockCode, sourceType: 'news_cluster', sourceId: String(cluster.id), title: cluster.title, selectedText: selectedText.text })
+            setSelectedText(null)
+          } : undefined}
+          onClose={() => setSelectedText(null)}
+          onRequest={requestEasyExplanation}
+        />
       )}
       <div className="news-card__meta-row">
         <div className="news-card__badges">

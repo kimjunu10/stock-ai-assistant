@@ -62,8 +62,9 @@ def build_normalized(source_api: str, row: dict[str, Any]) -> dict[str, Any]:
     누락된 필수 필드는 로그로 남긴다(SPEC §4-3: 원본에 없으면 억지로 만들지 않음).
     """
 
+    out: dict[str, Any] = {}
     if source_api in TREASURY_NORMALIZE:
-        normalized, missing = normalize_treasury(source_api, row)
+        out, missing = normalize_treasury(source_api, row)
         if missing:
             logger.info(
                 "자기주식 normalized 필수 누락 api=%s rcept=%s 누락=%s (원본에 값 없음)",
@@ -71,9 +72,7 @@ def build_normalized(source_api: str, row: dict[str, Any]) -> dict[str, Any]:
                 row.get("rcept_no"),
                 ",".join(missing),
             )
-        return normalized
-
-    out: dict[str, Any] = {}
+        # 전용 표준키 외의 원본 필드도 아래 generic 정규화로 보존한다.
     for key in _NORMALIZE_NUMERIC:
         if key in row:
             amt = parse_amount(row.get(key))
@@ -84,6 +83,29 @@ def build_normalized(source_api: str, row: dict[str, Any]) -> dict[str, Any]:
             dt = parse_dart_date(row.get(key))
             if dt is not None:
                 out[key] = dt.date().isoformat()
+
+    # 36종 전체에 대해 raw_data의 비어 있지 않은 업무 필드를 결정론적으로
+    # typed JSON으로 보강한다. 공식 필드명을 그대로 유지하므로 추측이 없다.
+    meta = {"status", "message", "corp_code", "corp_cls", "corp_name", "stock_code", "rcept_no"}
+    empty = {"", "-", "―", "－", "N/A", "해당사항없음", "해당없음"}
+    for key, value in row.items():
+        if key in meta or key in out:
+            continue
+        text = "" if value is None else str(value).strip()
+        if text in empty:
+            continue
+        if key in _NORMALIZE_DATE or key.endswith(("_de", "_dt", "_dd", "_bgd", "_edd")):
+            dt = parse_dart_date(text)
+            if dt is not None:
+                out[key] = dt.date().isoformat()
+                continue
+        if any(marker in text for marker in ("년", "월", "일")):
+            dt = parse_dart_date(text)
+            if dt is not None:
+                out[key] = dt.date().isoformat()
+                continue
+        number = parse_amount(text)
+        out[key] = number if number is not None else text
     return out
 
 

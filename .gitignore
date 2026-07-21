@@ -42,3 +42,5 @@ backend/migrations/*
 !backend/migrations/0006_news_backfill_runs.sql
 !backend/migrations/0007_news_backfill_dirty_clusters.sql
 !backend/migrations/0008_news_backfill_dirty_repair.sql
+!backend/migrations/0010_dart_source_completion.sql
+!backend/migrations/0011_dart_document_unavailable_status.sql

@@ -57,3 +57,31 @@ def test_call_solar_retries_invalid_json_with_compact_prompt(monkeypatch) -> Non
     assert meta["usage"]["total_tokens"] == 60
     assert payloads[1]["messages"][0]["content"] == summarize.COMPACT_RETRY_SYSTEM_PROMPT
     assert payloads[1]["max_tokens"] == 1100
+
+
+def test_selection_explanation_is_requested_as_short_beginner_copy(monkeypatch) -> None:
+    payloads: list[dict] = []
+
+    def fake_post(_url, *, headers, json, timeout):
+        del headers, timeout
+        payloads.append(json)
+        return FakeResponse(
+            '{"explanation":"쉽게 말하면 로봇 사업을 한곳에서 이끄는 전담팀이에요.\\n\\n기술 개발부터 실제 사업 적용까지 맡아요."}',
+            "stop",
+            20,
+        )
+
+    monkeypatch.setattr(summarize.requests, "post", fake_post)
+
+    parsed, meta = summarize.call_solar_easy_explain(
+        "key",
+        "RX사업추진실",
+        "삼성전자가 대표이사 직속 조직을 신설했다.",
+        max_retries=1,
+    )
+
+    assert meta["parse_success"] is True
+    assert "\\n\\n" not in parsed["explanation"]
+    assert "\n\n" in parsed["explanation"]
+    assert payloads[0]["max_tokens"] == 240
+    assert "최대 3문장, 180자 이내" in payloads[0]["messages"][0]["content"]

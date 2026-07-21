@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 .env
+data/dart/raw_documents/
 .pytest_cache/
 .ruff_cache/
 .venv/
@@ -13,3 +14,7 @@ docs/*
 !docs/LLM_ASSIGNER_PRODUCTION_PIPELINE.md
 !docs/NEWS_CLUSTERING_GPT_REVIEW.md
 !docs/NEWS_CLUSTERING_BACKFILL_REPORT_2026-07-21.md
+!docs/DART_DATA_INVENTORY_BEFORE.md
+!docs/DART_DATA_GAP_PLAN.md
+!docs/DART_DATA_INVENTORY_AFTER.md
+!docs/DART_COLLECTION_COMPLETION_README.md

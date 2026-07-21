@@ -11,6 +11,8 @@ from app.schemas.clusters import (
     NewsClusterItem,
     NewsClusterList,
     NewsClusterSource,
+    RelatedArticle,
+    RelatedArticleList,
     SelectionExplanationRequest,
     SelectionExplanationResponse,
 )
@@ -18,6 +20,18 @@ from app.sources.prices import SUPPORTED_STOCK_CODES
 from experiments.exp_b_factual_summaries.summarize import call_solar_easy_explain
 
 router = APIRouter(prefix="/clusters", tags=["clusters"])
+
+
+def _active_version(client: Client) -> str | None:
+    """API 가 읽을 활성 clustering_version. 없으면 None(모든 버전 = 하위호환)."""
+    try:
+        resp = (
+            client.table("news_pipeline_state").select("active_version").eq("id", 1).execute()
+        )
+    except Exception:  # noqa: BLE001 - 상태 테이블이 없던 구버전 호환
+        return None
+    rows = resp.data or []
+    return rows[0]["active_version"] if rows else None
 
 
 def _source_from_assignment(row: dict[str, Any]) -> NewsClusterSource | None:
@@ -58,6 +72,10 @@ def get_clusters(
         .eq("summary_status", "success")
         .order("last_active_at", desc=True)
     )
+    active_version = _active_version(client)
+    if active_version:
+        # 활성 버전(v1 또는 v2)만 event_clusters 로 노출해 버전 혼합을 막는다.
+        query = query.eq("clustering_version", active_version)
     if stock_code is not None:
         query = query.eq("stock_code", stock_code)
     cluster_response = query.range(offset, offset + limit - 1).execute()
@@ -116,6 +134,68 @@ def get_clusters(
             )
         )
     return NewsClusterList(
+        items=items,
+        total=total,
+        offset=offset,
+        limit=limit,
+        hasMore=offset + len(items) < total,
+    )
+
+
+@router.get("/related", response_model=RelatedArticleList)
+def get_related_articles(
+    client: Annotated[Client, Depends(get_supabase_client)],
+    stock_code: Annotated[str | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> RelatedArticleList:
+    """사건 클러스터에 넣지 않은 개별 관련 뉴스(v2 역할분류에서 event_eligible=false).
+
+    칼럼·시장 종합·주가 반응·전망/해설·단순 언급 등. 웹사이트에서 뉴스가 사라지지 않도록
+    개별 기사로 반환한다. (역할 분류 미완료 환경에서는 빈 목록을 반환한다.)
+    """
+
+    if stock_code is not None and stock_code not in SUPPORTED_STOCK_CODES:
+        raise HTTPException(status_code=404, detail="현재는 지정된 5개 종목만 제공하고 있어요.")
+
+    query = (
+        client.table("article_stocks")
+        .select(
+            "article_id,stock_code,article_role,"
+            "articles!inner(title,description,press,final_url,original_url,"
+            "published_at,image_url)",
+            count="exact",
+        )
+        .eq("relevance", "relevant")
+        .eq("event_eligible", False)
+        .order("published_at", desc=True, foreign_table="articles")
+    )
+    if stock_code is not None:
+        query = query.eq("stock_code", stock_code)
+    response = query.range(offset, offset + limit - 1).execute()
+    rows = list(response.data or [])
+    total = int(response.count or 0)
+
+    items = []
+    for row in rows:
+        article = row.get("articles") or {}
+        url = article.get("final_url") or article.get("original_url")
+        if not url:
+            continue
+        items.append(
+            RelatedArticle(
+                articleId=int(row["article_id"]),
+                stockCode=str(row["stock_code"]),
+                articleRole=str(row.get("article_role") or ""),
+                title=str(article.get("title") or "원문 기사"),
+                press=str(article.get("press") or "언론사 미상"),
+                url=str(url),
+                publishedAt=str(article.get("published_at") or ""),
+                description=str(article.get("description") or ""),
+                imageUrl=article.get("image_url") or None,
+            )
+        )
+    return RelatedArticleList(
         items=items,
         total=total,
         offset=offset,

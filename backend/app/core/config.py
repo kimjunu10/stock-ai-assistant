@@ -57,7 +57,8 @@ class Settings(BaseSettings):
     dart_request_timeout_seconds: float = 30.0
     dart_disclosure_lookback_days: int = 365  # 공시 목록/구조화 최근 1년
     dart_financial_years: int = 2  # 재무/정기보고서 최근 2개 사업연도
-    dart_raw_text_limit: int = 50000  # 원문 저장 앞 50,000자
+    # DART document.xml 원본 ZIP 저장 루트. 절대경로를 환경변수로 덮어쓸 수 있다.
+    dart_raw_document_dir: str = "data/dart/raw_documents"
 
     def validate_dart_collection(self) -> None:
         """DART 백필에 필요한 자격 증명이 없으면 즉시 실패."""

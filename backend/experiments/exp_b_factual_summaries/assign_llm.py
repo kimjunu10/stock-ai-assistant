@@ -71,18 +71,24 @@ def build_user_prompt(article: dict, candidates: list[dict]) -> str:
 
 # ------------------------------------------------------------------ Solar 호출
 def call_solar_assign(
-    api_key: str, user_prompt: str, *, max_retries: int = 3, timeout: float = 60.0
+    api_key: str,
+    user_prompt: str,
+    *,
+    max_retries: int = 3,
+    timeout: float = 60.0,
+    system: str | None = None,
 ) -> tuple[dict, dict]:
     """Solar Pro 동일사건 판정 호출 → (parsed, meta). 429/5xx 지수 백오프.
 
     parsed: {"decision","matched_cluster_id"} (실패 시 {}).
     meta: {ok, status, latency_ms, usage, raw, parse_success}
+    system: 시스템 프롬프트 override(기본은 v1 SYSTEM_PROMPT). v2 판정에 사용.
     """
 
     payload = {
         "model": CFG.LLM_ASSIGN_MODEL,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system or SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ],
         "temperature": 0,

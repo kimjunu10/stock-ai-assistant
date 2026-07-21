@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 from app.core.config import Settings
 from app.repositories.dart import DartRepository
 from app.sources.dart import DartClient
+from app.sources.dart_documents import RawDocumentStore, document_priority, needs_document
 from app.sources.dart_parsing import (
     extract_document_text,
     parse_corp_code_map,
@@ -112,35 +114,94 @@ def collect_disclosure_list(
 
 
 def collect_disclosure_texts(
-    client: DartClient, repo: DartRepository, cfg: Settings, stock_code: str
+    client: DartClient,
+    repo: DartRepository,
+    cfg: Settings,
+    stock_code: str,
+    *,
+    dry_run: bool = False,
+    on_failure: Callable[[dict], None] | None = None,
 ) -> dict[str, int]:
-    """대상 공시 원문을 document.xml로 추출해 앞 50,000자까지 저장."""
+    """누락·잘림·중요 공시 원문만 전체 재수집하고 원본 ZIP을 보존한다."""
 
-    targets = repo.disclosures_needing_text(stock_code, RAW_TEXT_TARGET_PATTERNS)
+    candidates = repo.list_disclosures_for_documents(stock_code)
+    targets = [row for row in candidates if needs_document(row)]
+    targets.sort(
+        key=lambda row: (
+            0 if document_priority(row) == "required" else 1,
+            str(row.get("disclosed_at") or ""),
+            str(row.get("rcept_no") or ""),
+        )
+    )
+    priorities: dict[str, int] = {"required": 0, "important": 0}
+    for row in targets:
+        priority = document_priority(row)
+        priorities[priority] = priorities.get(priority, 0) + 1
+    if dry_run:
+        return {
+            "selected": len(targets),
+            "required": priorities.get("required", 0),
+            "important": priorities.get("important", 0),
+            "success": 0,
+            "failed": 0,
+        }
+
+    store = RawDocumentStore(cfg)
     success = 0
     failed = 0
-    limit = cfg.dart_raw_text_limit
+    unavailable = 0
     for row in targets:
         rcept_no = row["rcept_no"]
         try:
-            members = client.get_zip_members("document.xml", {"rcept_no": rcept_no})
-            if not members:
-                failed += 1
-                logger.warning("원문 없음 stock=%s rcept=%s", stock_code, rcept_no)
+            archive = client.get_zip_archive("document.xml", {"rcept_no": rcept_no})
+            if archive is None:
+                repo.mark_disclosure_unavailable(
+                    rcept_no, "DART document.xml 원본 파일 없음(status=013/014)"
+                )
+                unavailable += 1
                 continue
-            text = extract_document_text(members, rcept_no)
+            text = extract_document_text(archive.members, rcept_no)
             if not text:
-                failed += 1
-                logger.warning("원문 텍스트 추출 실패 stock=%s rcept=%s", stock_code, rcept_no)
-                continue
-            truncated = len(text) > limit
-            repo.update_disclosure_text(rcept_no, text[:limit], truncated)
+                raise RuntimeError("DART document.xml 텍스트 추출 결과가 비어 있음")
+            stored = store.save(stock_code, rcept_no, archive.content)
+            repo.update_disclosure_document(
+                rcept_no,
+                raw_text=text,
+                raw_document_path=stored.relative_path,
+                raw_text_length=len(text),
+                content_hash=stored.content_hash,
+            )
             success += 1
-        except Exception:  # noqa: BLE001 - 한 건 실패가 전체를 막지 않게
+        except Exception as exc:  # noqa: BLE001 - 한 건 실패가 전체를 막지 않게
             failed += 1
+            repo.mark_disclosure_parse_failed(rcept_no, str(exc))
+            if on_failure:
+                on_failure(
+                    {
+                        "stage": "disclosure_document",
+                        "stock_code": stock_code,
+                        "rcept_no": rcept_no,
+                        "title": row.get("title"),
+                        "error": str(exc),
+                    }
+                )
             logger.exception("원문 처리 실패 stock=%s rcept=%s", stock_code, rcept_no)
-    logger.info("원문 저장 stock=%s success=%d failed=%d", stock_code, success, failed)
-    return {"success": success, "failed": failed}
+    logger.info(
+        "원문 저장 stock=%s selected=%d success=%d unavailable=%d failed=%d",
+        stock_code,
+        len(targets),
+        success,
+        unavailable,
+        failed,
+    )
+    return {
+        "selected": len(targets),
+        "required": priorities.get("required", 0),
+        "important": priorities.get("important", 0),
+        "success": success,
+        "unavailable": unavailable,
+        "failed": failed,
+    }
 
 
 def _iso_or_none(dt: datetime | None) -> str | None:
