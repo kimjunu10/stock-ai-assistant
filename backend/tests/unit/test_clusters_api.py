@@ -5,8 +5,9 @@ from experiments.exp_b_factual_summaries.summarize import _parse_easy_explanatio
 class FakeQuery:
     def __init__(self, rows):
         self.data = [dict(row) for row in rows]
+        self.count = len(self.data)
 
-    def select(self, *_args):
+    def select(self, *_args, **_kwargs):
         return self
 
     def eq(self, field, value):
@@ -23,6 +24,11 @@ class FakeQuery:
 
     def limit(self, value):
         self.data = self.data[:value]
+        return self
+
+    def range(self, start, end):
+        self.count = len(self.data)
+        self.data = self.data[start : end + 1]
         return self
 
     def execute(self):
@@ -81,6 +87,8 @@ def test_clusters_api_maps_summary_and_original_sources() -> None:
     assert response.items[0].sources[0].url == "https://example.com/final"
     assert response.items[0].sources[0].description.startswith("새 일감")
     assert response.items[0].sources[0].imageUrl == "https://example.com/article.jpg"
+    assert response.total == 1
+    assert response.hasMore is False
 
 
 def test_easy_explanation_parser_accepts_json_and_rejects_empty_text() -> None:

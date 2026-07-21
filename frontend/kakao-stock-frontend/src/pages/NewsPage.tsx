@@ -1,30 +1,31 @@
 import { useState } from 'react'
 import { STOCKS } from '../data/mockData'
 import type { AssistantContext } from '../types'
-import { NewsClusterCard } from '../components/NewsClusterCard'
+import { NewsClusterListItem } from '../components/NewsClusterListItem'
+import { LoadingDots } from '../components/LoadingDots'
 import { useNewsClusters } from '../hooks/useNewsClusters'
 
 interface NewsPageProps {
+  assistantOpen: boolean
+  onAssistantClose: () => void
   onAsk: (context: AssistantContext) => void
 }
 
-export function NewsPage({ onAsk }: NewsPageProps) {
+export function NewsPage({ assistantOpen, onAssistantClose, onAsk }: NewsPageProps) {
   const [stockCode, setStockCode] = useState('all')
-  const news = useNewsClusters({ limit: 50 })
-
-  const filtered = news.clusters.filter(
-    (cluster) => stockCode === 'all' || cluster.stockCode === stockCode,
-  )
+  const news = useNewsClusters({
+    limit: 20,
+    stockCode: stockCode === 'all' ? undefined : stockCode,
+  })
 
   return (
     <main className="subpage shell news-page">
       <header className="page-title page-title--row">
         <div>
-          <span className="eyebrow">AI 뉴스 브리핑</span>
+          <span className="eyebrow">AI 뉴스</span>
           <h1>같은 사건은 한 번만 읽으세요</h1>
           <p>여러 언론사의 기사를 사건별로 묶고, 확인된 사실과 원문을 함께 보여드려요.</p>
         </div>
-        <div className="briefing-count"><strong>{news.clusters.length}</strong><span>사건 브리핑</span><small>Supabase 실제 데이터</small></div>
       </header>
 
       <div className="filter-toolbar">
@@ -35,13 +36,22 @@ export function NewsPage({ onAsk }: NewsPageProps) {
       </div>
 
       <div className="news-feed">
-        <div className="news-feed__header"><strong>{filtered.length}개의 사건</strong><span>최신순</span></div>
+        <div className="news-feed__header"><strong>뉴스 {news.total}개</strong><span>최신순</span></div>
         {news.isLoading ? (
-          <div className="empty-state"><strong>실제 뉴스 브리핑을 불러오는 중이에요.</strong></div>
+          <div className="empty-state empty-state--loading"><LoadingDots label="뉴스 불러오는 중" /></div>
         ) : news.error ? (
           <div className="empty-state"><strong>뉴스를 불러오지 못했어요.</strong><p>{news.error}</p><button className="text-button" onClick={news.retry} type="button">다시 시도</button></div>
-        ) : filtered.length > 0 ? (
-          filtered.map((cluster) => <NewsClusterCard cluster={cluster} key={cluster.id} onAsk={onAsk} showStock />)
+        ) : news.clusters.length > 0 ? (
+          <>
+            <div className="news-list">
+              {news.clusters.map((cluster) => <NewsClusterListItem assistantOpen={assistantOpen} cluster={cluster} key={cluster.id} onAssistantClose={onAssistantClose} onAsk={onAsk} />)}
+            </div>
+            {news.hasMore && (
+              <button className="list-more-button" disabled={news.isLoadingMore} onClick={news.loadMore} type="button">
+                {news.isLoadingMore ? <LoadingDots label="뉴스 더 불러오는 중" /> : `뉴스 20개 더보기 (${news.clusters.length}/${news.total})`}
+              </button>
+            )}
+          </>
         ) : (
           <div className="empty-state"><strong>조건에 맞는 브리핑이 없어요.</strong><p>뉴스 사건 정리가 생성되면 이곳에 표시됩니다.</p></div>
         )}

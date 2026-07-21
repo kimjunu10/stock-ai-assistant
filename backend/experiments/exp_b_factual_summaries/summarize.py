@@ -31,17 +31,26 @@ SYSTEM_PROMPT = (
     "4. 호재, 악재, 긍정, 부정, 매수, 매도, 기대, 우려 같은 투자 판단·감성 표현을 절대 쓰지 않는다.\n"
     "5. 기사에 없는 사실을 새로 만들지 않는다.\n"
     "6. factual_body는 사건의 배경, 핵심 행위, 중요한 수치, 현재 확정 상태를 "
-    "가능한 범위에서 4~7문장으로 충분히 정리한다. 원문 정보가 적으면 억지로 늘리거나 추측하지 않는다.\n"
+    "가능한 범위에서 4~6문장, 900자 이내로 정리한다. 원문 정보가 적으면 억지로 늘리거나 추측하지 않는다.\n"
     "7. factual_body는 한 덩어리로 쓰지 말고 내용 흐름에 따라 2~3개 문단으로 나누며 문단 사이는 "
     "반드시 빈 줄(\\n\\n) 하나를 둔다. 각 문단은 가장 중요한 첫 문장 하나만 **문장** 형태로 감싸 강조하고, "
     "나머지는 보충 설명으로 쓴다. 불릿, 소제목, 다른 Markdown은 사용하지 않는다.\n"
     "8. 첫 문단은 지금 확인된 핵심 사실, 둘째 문단은 배경·수치·시장 반응, 마지막 문단은 확정된 "
     "향후 일정이나 아직 결정되지 않은 사항을 우선 배치한다. 정보가 없으면 해당 내용을 만들지 않는다.\n"
-    "9. easy_explanation은 주식 초보자에게 말하듯 2~3문장으로 쓴다. 핵심 금융 용어가 있으면 "
+    "9. easy_explanation은 주식 초보자에게 말하듯 2~3문장, 300자 이내로 쓴다. 핵심 금융 용어가 있으면 "
     "'유상증자는 회사가 새 주식을 발행해 자금을 마련하는 방식이에요'처럼 뜻을 문장 안에서 설명하고, "
     "전체적으로 어떤 내용의 뉴스인지 '~해요' 말투로 알려준다.\n"
     '출력은 반드시 {"title": "...", "easy_explanation": "...", "factual_body": "..."} '
     "형태의 JSON 하나만 출력한다."
+)
+
+COMPACT_RETRY_SYSTEM_PROMPT = (
+    "직전 응답이 너무 길거나 JSON 형식이 깨졌다. 같은 기사만 근거로 다시 작성한다. "
+    "title은 90자 이내, easy_explanation은 2문장·220자 이내, factual_body는 "
+    "2~3문단·4~5문장·700자 이내로 제한한다. 각 문단 첫 문장만 **문장**으로 강조한다. "
+    "불릿과 소제목을 쓰지 말고 불필요한 공백이나 반복을 만들지 않는다. "
+    "기사에 없는 내용과 투자 판단을 추가하지 않는다. "
+    '반드시 {"title":"...","easy_explanation":"...","factual_body":"..."} JSON 하나만 출력한다.'
 )
 
 
@@ -93,6 +102,8 @@ def call_solar(api_key: str, user_prompt: str, max_retries: int = 4) -> tuple[di
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     delay = 2.0
     last_err = ""
+    usage_total = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+    request_count = 0
     for attempt in range(max_retries):
         t0 = time.time()
         try:
@@ -119,15 +130,27 @@ def call_solar(api_key: str, user_prompt: str, max_retries: int = 4) -> tuple[di
                 "latency_ms": latency,
             }
         data = r.json()
-        raw = data["choices"][0]["message"]["content"]
+        request_count += 1
+        for key in usage_total:
+            usage_total[key] += int((data.get("usage") or {}).get(key) or 0)
+        choice = data["choices"][0]
+        raw = choice["message"]["content"]
         parsed, ok = _parse(raw)
+        if not ok and attempt < max_retries - 1:
+            last_err = f"invalid_json finish_reason={choice.get('finish_reason')}"
+            payload["messages"][0]["content"] = COMPACT_RETRY_SYSTEM_PROMPT
+            payload["max_tokens"] = 1100
+            time.sleep(min(delay, 1.0))
+            continue
         return parsed, {
             "ok": True,
             "status": 200,
             "latency_ms": latency,
-            "usage": data.get("usage", {}),
+            "usage": usage_total,
             "raw": raw,
             "parse_success": ok,
+            "finish_reason": choice.get("finish_reason"),
+            "request_count": request_count,
         }
     return {}, {
         "ok": False,
@@ -135,6 +158,8 @@ def call_solar(api_key: str, user_prompt: str, max_retries: int = 4) -> tuple[di
         "raw": last_err,
         "parse_success": False,
         "latency_ms": 0,
+        "usage": usage_total,
+        "request_count": request_count,
     }
 
 

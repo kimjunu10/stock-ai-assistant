@@ -16,6 +16,10 @@ interface NewsClusterApiItem {
 
 interface NewsClusterResponse {
   items: NewsClusterApiItem[]
+  total: number
+  offset: number
+  limit: number
+  hasMore: boolean
 }
 
 function uniquePresses(item: NewsClusterApiItem) {
@@ -24,9 +28,12 @@ function uniquePresses(item: NewsClusterApiItem) {
 
 export async function fetchNewsClusters(
   signal: AbortSignal,
-  options: { limit?: number; stockCode?: string } = {},
+  options: { limit?: number; offset?: number; stockCode?: string } = {},
 ) {
-  const params = new URLSearchParams({ limit: String(options.limit ?? 20) })
+  const params = new URLSearchParams({
+    limit: String(options.limit ?? 20),
+    offset: String(options.offset ?? 0),
+  })
   if (options.stockCode) params.set('stock_code', options.stockCode)
   const response = await fetch(`${API_BASE_URL}/api/clusters?${params}`, { signal })
   if (!response.ok) {
@@ -34,7 +41,7 @@ export async function fetchNewsClusters(
     throw new Error(body.detail ?? '뉴스 브리핑을 불러오지 못했어요.')
   }
   const payload = await response.json() as NewsClusterResponse
-  return payload.items.map<NewsCluster>((item) => ({
+  const clusters = payload.items.map<NewsCluster>((item) => ({
     id: item.id,
     stockCode: item.stockCode,
     kind: item.kind,
@@ -49,6 +56,7 @@ export async function fetchNewsClusters(
     sentimentReason: null,
     sources: item.sources,
   }))
+  return { clusters, hasMore: payload.hasMore, total: payload.total }
 }
 
 export async function explainNewsSelection(clusterId: number, text: string) {

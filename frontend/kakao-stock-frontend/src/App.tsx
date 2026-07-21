@@ -56,9 +56,9 @@ function App() {
   } else if (currentPath === '/stocks') {
     page = <StocksPage onNavigate={navigate} />
   } else if (stockMatch?.[1]) {
-    page = <StockDetailPage onAsk={openAssistant} stockCode={stockMatch[1]} theme={theme} />
+    page = <StockDetailPage assistantOpen={assistantContext?.presentation === 'news_detail'} onAssistantClose={() => setAssistantContext(null)} onAsk={openAssistant} stockCode={stockMatch[1]} theme={theme} />
   } else if (currentPath === '/news') {
-    page = <NewsPage onAsk={openAssistant} />
+    page = <NewsPage assistantOpen={assistantContext?.presentation === 'news_detail'} onAssistantClose={() => setAssistantContext(null)} onAsk={openAssistant} />
   } else if (currentPath === '/ask') {
     page = <AskPage />
   } else {

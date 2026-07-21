@@ -13,6 +13,7 @@ export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) 
   const [input, setInput] = useState('')
   const [question, setQuestion] = useState<string | null>(null)
   const stock = context ? getStock(context.stockCode) : undefined
+  const dockedToNews = context?.presentation === 'news_detail'
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -23,8 +24,8 @@ export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) 
 
   return (
     <>
-      {open && <button aria-label="AI 패널 닫기" className="panel-scrim" onClick={onClose} type="button" />}
-      <aside aria-hidden={!open} aria-label="문서에 관해 AI에게 질문" className={open ? 'assistant-panel is-open' : 'assistant-panel'}>
+      {open && !dockedToNews && <button aria-label="AI 패널 닫기" className="panel-scrim" onClick={onClose} type="button" />}
+      <aside aria-hidden={!open} aria-label="문서에 관해 AI에게 질문" className={`assistant-panel${dockedToNews ? ' assistant-panel--news' : ''}${open ? ' is-open' : ''}`}>
         <header className="assistant-panel__header">
           <div>
             <span className="assistant-symbol" aria-hidden="true">M</span>

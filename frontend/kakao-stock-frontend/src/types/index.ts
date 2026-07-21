@@ -136,4 +136,5 @@ export interface AssistantContext {
   sourceType: 'news_cluster' | 'disclosure' | 'report' | 'stock'
   sourceId: string
   title: string
+  presentation?: 'news_detail'
 }
