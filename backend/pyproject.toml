@@ -16,6 +16,7 @@ dependencies = [
     "requests>=2.32,<3",
     "sentence-transformers>=5,<6",
     "supabase>=2,<3",
+    "torch>=2,<3",
     "trafilatura>=2,<3",
     "uvicorn[standard]>=0.34,<1",
 ]
@@ -33,6 +34,16 @@ include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.ruff]
 target-version = "py311"
