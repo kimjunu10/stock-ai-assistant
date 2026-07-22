@@ -192,6 +192,39 @@ class NewsV2Repository:
             offset += page
         return out
 
+    def get_v2_assignment_clusters(self, stock_code: str) -> list[dict[str, Any]]:
+        """Return persisted v2 clusters needed to resume incremental assignment.
+
+        The assigner must see clusters created by earlier runs. Otherwise the first
+        article in every resumed batch has no candidates and is incorrectly forced
+        into a new cluster.
+        """
+
+        out: list[dict[str, Any]] = []
+        offset = 0
+        page = 1000
+        while True:
+            resp = (
+                self.client.table("news_clusters")
+                .select(
+                    "id,stock_code,centroid,article_count,last_active_at,event_signature,"
+                    "anchor:articles!news_clusters_anchor_article_id_fkey(title,description),"
+                    "representative:articles!news_clusters_representative_article_id_fkey("
+                    "title,description)"
+                )
+                .eq("clustering_version", self.version)
+                .eq("stock_code", stock_code)
+                .order("id")
+                .range(offset, offset + page - 1)
+                .execute()
+            )
+            rows = resp.data or []
+            out.extend(rows)
+            if len(rows) < page:
+                break
+            offset += page
+        return out
+
     def get_v2_assignment(self, article_id: int, stock_code: str) -> dict[str, Any] | None:
         """이 pair 가 이미 v2 클러스터에 배정됐는지(멱등 재개용)."""
         resp = (
@@ -270,6 +303,10 @@ class NewsV2Repository:
         reason: str,
         error_code: str | None,
     ) -> None:
+        from experiments.exp_b_factual_summaries.assign_llm_v2 import (
+            ASSIGN_V2_PROMPT_VERSION,
+        )
+
         assigned_at = _now().isoformat() if cluster_id is not None else None
         retry_at = None
         if status == "pending_retry":
@@ -287,7 +324,7 @@ class NewsV2Repository:
                 "candidate_count": candidate_count,
                 "assignment_reason": reason,
                 "error_code": error_code,
-                "prompt_version": "same_event_sig_v2" if llm_called else None,
+                "prompt_version": ASSIGN_V2_PROMPT_VERSION if llm_called else None,
                 "retry_count": 0,
                 "next_retry_at": retry_at,
                 "assigned_at": assigned_at,
@@ -363,7 +400,7 @@ class NewsV2Repository:
             self.client.table("article_stocks")
             .select("article_id", count="exact")
             .eq("relevance", "relevant")
-            .neq("role_version", self.version)
+            .or_(f"role_version.is.null,role_version.neq.{self.version}")
             .limit(1)
             .execute()
         )

@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 
+from app.repositories.news_v2 import NewsV2Repository
 from experiments.exp_b_factual_summaries import assign_llm_v2, classify_role
+from scripts.run_full_news_v2 import _cluster_one_stock, _hydrate_v2_assigner
 
 
 def test_rule_gate_flags_opinion_as_ineligible():
@@ -190,3 +194,137 @@ def test_v2_assigner_invalid_response_pending():
     )
     assert r2.status == "pending_retry"
     assert r2.error == "invalid_response"
+
+
+def test_resumed_v2_assignment_hydrates_existing_cluster():
+    rows = [
+        {
+            "id": 41,
+            "stock_code": "005380",
+            "centroid": [1.0, 0.0],
+            "article_count": 3,
+            "last_active_at": "2026-07-21T00:00:00+00:00",
+            "event_signature": {"subject": "현대차", "action": "착공"},
+            "anchor": {"title": "현대차 공장 착공", "description": "첫 보도"},
+            "representative": {"title": "현대차 착공 후속", "description": "후속 보도"},
+        }
+    ]
+    assigner = _hydrate_v2_assigner(rows)
+    assigner._call = lambda _prompt: (
+        {"decision": "existing", "matched_cluster_id": 41},
+        {"ok": True, "parse_success": True, "usage": {}},
+    )
+
+    result = assigner.assign(
+        {
+            "article_id": "005380:99",
+            "stock_code": "005380",
+            "title": "현대차 미국 공장 착공 관련 추가 보도",
+            "description": "같은 착공 발표",
+            "event_signature": {"subject": "현대차", "action": "착공"},
+        },
+        np.array([1.0, 0.0], dtype=np.float32),
+        495577.0,
+    )
+
+    assert result.status == "assigned_existing"
+    assert result.cluster_id == 41
+    assert len(assigner.clusters[41].member_article_ids) == 4
+
+
+def test_incremental_cluster_phase_can_merge_into_persisted_cluster(monkeypatch):
+    persisted = {
+        "id": 41,
+        "stock_code": "005380",
+        "centroid": [1.0, 0.0],
+        "article_count": 3,
+        "last_active_at": "2026-07-21T00:00:00+00:00",
+        "event_signature": {"subject": "현대차", "action": "착공"},
+        "anchor": {"title": "현대차 공장 착공", "description": "첫 보도"},
+        "representative": {"title": "현대차 착공 후속", "description": "후속 보도"},
+    }
+
+    class Repo:
+        def __init__(self):
+            self.updated = []
+            self.saved = []
+
+        def get_v2_assignment_clusters(self, _stock_code):
+            return [persisted]
+
+        def update_v2_cluster(self, cluster_id, **values):
+            self.updated.append((cluster_id, values))
+
+        def save_v2_assignment(self, **values):
+            self.saved.append(values)
+
+    real_assigner = assign_llm_v2.LLMAssignerV2
+
+    def build_assigner(*, api_key):
+        del api_key
+        return real_assigner(
+            call_fn=lambda _prompt: (
+                {"decision": "existing", "matched_cluster_id": 41},
+                {"ok": True, "parse_success": True, "usage": {}},
+            )
+        )
+
+    monkeypatch.setattr(assign_llm_v2, "LLMAssignerV2", build_assigner)
+    repo = Repo()
+    item = {
+        "article_id": 99,
+        "stock_code": "005380",
+        "title": "현대차 미국 공장 착공 관련 추가 보도",
+        "description": "같은 착공 발표",
+        "published_at": "2026-07-21T01:00:00+00:00",
+        "event_signature": {"subject": "현대차", "action": "착공"},
+    }
+    totals = {"cluster_pending": 0, "assigned_existing": 0, "assign_llm_calls": 0}
+
+    _cluster_one_stock(
+        repo,
+        [item],
+        {99: np.array([1.0, 0.0], dtype=np.float32)},
+        set(),
+        totals,
+    )
+
+    assert repo.updated[0][0] == 41
+    assert repo.updated[0][1]["article_count"] == 4
+    assert repo.saved[0]["cluster_id"] == 41
+    assert repo.saved[0]["status"] == "assigned_existing"
+
+
+def test_v2_assignment_persists_actual_prompt_version():
+    class Query:
+        def __init__(self):
+            self.payload = None
+
+        def upsert(self, payload, **_kwargs):
+            self.payload = payload
+            return self
+
+        def execute(self):
+            return SimpleNamespace(data=[])
+
+    class Client:
+        def __init__(self):
+            self.query = Query()
+
+        def table(self, _name):
+            return self.query
+
+    client = Client()
+    repo = NewsV2Repository(client, SimpleNamespace(news_clustering_retry_minutes=30))
+    repo.save_v2_assignment(
+        article_id=99,
+        stock_code="005380",
+        cluster_id=41,
+        status="assigned_existing",
+        llm_called=True,
+        candidate_count=1,
+        reason="same event",
+        error_code=None,
+    )
+
+    assert client.query.payload["prompt_version"] == assign_llm_v2.ASSIGN_V2_PROMPT_VERSION

@@ -9,7 +9,9 @@ services:
       - .env
     environment:
       APP_ENV: production
-      NEWS_SCHEDULER_ENABLED: "true"
+      # Keep collection paused by default during backlog repair. The server-side
+      # .env explicitly opts in with NEWS_SCHEDULER_ENABLED=true after recovery.
+      NEWS_SCHEDULER_ENABLED: "${NEWS_SCHEDULER_ENABLED:-false}"
       NEWS_EMBEDDING_DEVICE: cpu
       PORT: "8000"
     volumes:
