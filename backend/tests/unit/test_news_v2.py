@@ -8,7 +8,7 @@ import numpy as np
 
 from app.repositories.news_v2 import NewsV2Repository
 from experiments.exp_b_factual_summaries import assign_llm_v2, classify_role
-from scripts.run_full_news_v2 import _cluster_one_stock, _hydrate_v2_assigner
+from scripts.run_full_news_v2 import _cluster_one_stock, _hydrate_v2_assigner, phase_cluster
 
 
 def test_rule_gate_flags_opinion_as_ineligible():
@@ -249,7 +249,8 @@ def test_incremental_cluster_phase_can_merge_into_persisted_cluster(monkeypatch)
             self.updated = []
             self.saved = []
 
-        def get_v2_assignment_clusters(self, _stock_code):
+        def get_v2_assignment_clusters(self, _stock_code, *, active_since=None):
+            assert active_since == "2026-07-18T01:00:00+00:00"
             return [persisted]
 
         def update_v2_cluster(self, cluster_id, **values):
@@ -328,3 +329,60 @@ def test_v2_assignment_persists_actual_prompt_version():
     )
 
     assert client.query.payload["prompt_version"] == assign_llm_v2.ASSIGN_V2_PROMPT_VERSION
+
+
+def test_role_candidates_are_filtered_in_database_before_body_download():
+    class Query:
+        def __init__(self):
+            self.or_filters = []
+
+        def select(self, *_args, **_kwargs):
+            return self
+
+        def eq(self, *_args, **_kwargs):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def or_(self, expression):
+            self.or_filters.append(expression)
+            return self
+
+        def range(self, *_args, **_kwargs):
+            return self
+
+        def execute(self):
+            return SimpleNamespace(data=[])
+
+    class Client:
+        def __init__(self):
+            self.query = Query()
+
+        def table(self, _name):
+            return self.query
+
+    client = Client()
+    repo = NewsV2Repository(client, SimpleNamespace())
+
+    assert repo.get_relevant_pairs_for_roles(only_unclassified=True) == []
+    assert client.query.or_filters == [
+        "role_version.is.null,role_version.neq.v2_event_role_20260721"
+    ]
+
+
+def test_incremental_cluster_phase_does_not_scan_historical_pairs():
+    class Repo:
+        def get_retryable_v2_event_pairs(self):
+            return []
+
+        def get_event_pairs(self):
+            raise AssertionError("incremental scheduler must not fetch all event pairs")
+
+        def get_assigned_v2_pairs(self):
+            raise AssertionError("incremental scheduler must not fetch all assignments")
+
+    totals = {"cluster_skipped": 0}
+
+    assert phase_cluster(Repo(), totals, candidates=[]) == {}
+    assert totals["cluster_skipped"] == 0

@@ -71,8 +71,8 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         logger.info("NEWS_CLUSTERING_SKIPPED active_backfill=true")
         v2_totals["skipped_active_backfill"] = 1
     else:
-        phase_roles(v2_repo, v2_totals, workers=1)
-        phase_cluster(v2_repo, v2_totals)
+        new_event_pairs = phase_roles(v2_repo, v2_totals, workers=1)
+        phase_cluster(v2_repo, v2_totals, candidates=new_event_pairs)
         phase_summary(v2_repo, v2_totals)
         v2_ok, v2_problems = phase_verify(v2_repo, v2_totals)
         v2_totals["verification_ok"] = int(v2_ok)
