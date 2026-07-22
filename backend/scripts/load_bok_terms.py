@@ -82,9 +82,8 @@ def main() -> int:
     )
     if args.dry_run:
         est_tokens = int(sum(len(t.search_text) for t, _ in to_upsert) / 2.5)
-        print(
-            f"[dry-run] 임베딩 예상 토큰 ~{est_tokens:,}, 비용 ~${est_tokens / 1_000_000 * 0.10:.4f}"
-        )
+        est_cost = est_tokens / 1_000_000 * 0.10
+        print(f"[dry-run] 임베딩 예상 토큰 ~{est_tokens:,}, 비용 ~${est_cost:.4f}")
         return 0
 
     t0 = time.perf_counter()
