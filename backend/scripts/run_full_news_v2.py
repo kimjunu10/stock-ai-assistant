@@ -126,13 +126,11 @@ def phase_cluster(repo: NewsV2Repository, totals: dict) -> dict[int, int]:
     if not todo:
         return {}  # 새로 배정할 게 없으면 임베딩 로딩 자체를 건너뛴다.
 
-    # 미배정 종목의 클러스터 상태를 재현하려면 그 종목의 '전체' event pair 가 필요하다
-    # (앵커·centroid 를 시간순으로 다시 쌓아야 하므로). 미배정이 있는 종목만 처리한다.
-    stocks_with_todo = {p["stock_code"] for p in todo}
+    # 기존 클러스터는 DB에서 hydrate하므로 미배정 pair만 임베딩하고 처리한다.
+    # 과거 전체 pair를 매 증분 실행마다 다시 임베딩하면 스케줄러 비용이 선형 증가한다.
     by_stock: dict[str, list[dict]] = {}
-    for p in pairs:
-        if p["stock_code"] in stocks_with_todo:
-            by_stock.setdefault(p["stock_code"], []).append(p)
+    for p in todo:
+        by_stock.setdefault(p["stock_code"], []).append(p)
 
     # 임베딩 배치 계산(처리 대상 종목의 기사만).
     embedder = BgeM3Embedder(settings.news_embedding_device)
@@ -156,7 +154,8 @@ def _cluster_one_stock(repo, items, vec_cache, assigned, totals) -> None:
 
     assigned: 이미 v2 성공 배정된 (article_id, stock_code) 집합(배치 조회, 개별 조회 회피)."""
     items.sort(key=lambda r: (r["published_at"], r["article_id"]))
-    assigner = assign_llm_v2.LLMAssignerV2(api_key=settings.upstage_api_key)
+    stock_code = items[0]["stock_code"]
+    assigner = _hydrate_v2_assigner(repo.get_v2_assignment_clusters(stock_code))
     stock_local_to_db: dict[int, int] = {}  # local cluster_id -> DB cluster_id
     for p in items:
         if (p["article_id"], p["stock_code"]) in assigned:
@@ -194,8 +193,17 @@ def _cluster_one_stock(repo, items, vec_cache, assigned, totals) -> None:
                 event_signature=p.get("event_signature"),
             )
             stock_local_to_db[local_cid] = db_cid
+            # The in-memory id is allocated locally, while Postgres owns the real
+            # identity value. Remap immediately so later articles in this same run
+            # can match and update the newly persisted cluster safely.
+            if db_cid != local_cid:
+                del assigner.clusters[local_cid]
+                cl.cluster_id = db_cid
+                assigner.clusters[db_cid] = cl
+                assigner._seen[art["article_id"]] = db_cid
+                assigner._next_id = max(assigner._next_id, db_cid + 1)
         else:
-            db_cid = stock_local_to_db[local_cid]
+            db_cid = stock_local_to_db.get(local_cid, local_cid)
             repo.update_v2_cluster(
                 db_cid,
                 centroid=cl.centroid.astype(float).tolist(),
@@ -215,6 +223,42 @@ def _cluster_one_stock(repo, items, vec_cache, assigned, totals) -> None:
         )
         totals[res.status] += 1
     totals["assign_llm_calls"] += assigner.calls
+
+
+def _hydrate_v2_assigner(rows: list[dict]) -> assign_llm_v2.LLMAssignerV2:
+    """Restore persisted v2 clusters before assigning a resumed/incremental batch."""
+
+    assigner = assign_llm_v2.LLMAssignerV2(api_key=settings.upstage_api_key)
+    max_id = 0
+    for row in rows:
+        cluster_id = int(row["id"])
+        anchor = row.get("anchor") or {}
+        representative = row.get("representative") or anchor
+        count = max(1, int(row.get("article_count") or 1))
+        recent = []
+        if representative.get("title") or representative.get("description"):
+            recent.append(
+                {
+                    "title": representative.get("title") or "",
+                    "description": representative.get("description") or "",
+                }
+            )
+        assigner.clusters[cluster_id] = assign_llm_v2.ClusterV2(
+            cluster_id=cluster_id,
+            stock_code=row["stock_code"],
+            centroid=np.asarray(row["centroid"], dtype=np.float32),
+            anchor_title=anchor.get("title") or "",
+            anchor_description=anchor.get("description") or "",
+            rep_title=representative.get("title") or "",
+            rep_description=representative.get("description") or "",
+            event_signature=row.get("event_signature"),
+            recent=recent,
+            member_article_ids=[f"persisted:{cluster_id}:{i}" for i in range(count)],
+            last_active_h=_hours(row["last_active_at"]),
+        )
+        max_id = max(max_id, cluster_id)
+    assigner._next_id = max_id + 1
+    return assigner
 
 
 def phase_summary(repo: NewsV2Repository, totals: dict) -> None:

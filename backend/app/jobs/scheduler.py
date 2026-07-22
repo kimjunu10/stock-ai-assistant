@@ -15,8 +15,10 @@ from app.db.client import get_supabase_client
 from app.jobs.news import collect_search_results, crawl_collected_articles
 from app.repositories.news import NewsRepository
 from app.repositories.news_clusters import NewsClusterRepository
-from app.services.news_clustering import NewsClusteringService
+from app.repositories.news_v2 import V2_VERSION, NewsV2Repository
 from app.sources.naver_news import NaverNewsClient
+from experiments.exp_b_factual_summaries.assign_llm_v2 import ASSIGN_V2_PROMPT_VERSION
+from scripts.run_full_news_v2 import phase_cluster, phase_roles, phase_summary, phase_verify
 
 logger = logging.getLogger("uvicorn.error.news_scheduler")
 
@@ -50,31 +52,39 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         wait_for_retries=False,
     )
     relevance_totals = repo.classify_pending_relevance()
-    cluster_repo = NewsClusterRepository(repo.client, cfg)
-    if cluster_repo.has_active_backfill():
+    cluster_guard = NewsClusterRepository(repo.client, cfg)
+    v2_repo = NewsV2Repository(repo.client, cfg, version=V2_VERSION)
+    v2_totals = {
+        "role_classified": 0,
+        "role_rule": 0,
+        "role_llm": 0,
+        "role_pending": 0,
+        "assigned_new": 0,
+        "assigned_existing": 0,
+        "cluster_pending": 0,
+        "cluster_skipped": 0,
+        "assign_llm_calls": 0,
+        "summaries": 0,
+        "summary_failed": 0,
+    }
+    if cluster_guard.has_active_backfill():
         logger.info("NEWS_CLUSTERING_SKIPPED active_backfill=true")
-        clustering_totals = {
-            "scanned": 0,
-            "pairs_scanned": 0,
-            "completed": 0,
-            "pending_retry": 0,
-            "duplicate": 0,
-            "summaries_retried": 0,
-            "assigned_new": 0,
-            "assigned_existing": 0,
-            "assignment_calls": 0,
-            "summary_calls": 0,
-            "stopped_budget": 0,
-        }
+        v2_totals["skipped_active_backfill"] = 1
     else:
-        clustering_totals = NewsClusteringService(cluster_repo, cfg).process_pending()
+        phase_roles(v2_repo, v2_totals, workers=1)
+        phase_cluster(v2_repo, v2_totals)
+        phase_summary(v2_repo, v2_totals)
+        v2_ok, v2_problems = phase_verify(v2_repo, v2_totals)
+        v2_totals["verification_ok"] = int(v2_ok)
+        if v2_problems:
+            logger.warning("NEWS_V2_INCOMPLETE problems=%s", "; ".join(v2_problems))
     elapsed_seconds = (datetime.now(UTC) - started_at).total_seconds()
     result = {
         "collected": collected,
         "errors": errors,
         "crawl": crawl_totals,
         "relevance": relevance_totals,
-        "clustering": clustering_totals,
+        "clustering": v2_totals,
         "elapsed_seconds": round(elapsed_seconds, 3),
     }
     logger.info(
@@ -97,17 +107,16 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         relevance_totals["updated"],
     )
     logger.info(
-        "NEWS_CLUSTERING scanned=%d pairs=%d completed=%d pending_retry=%d duplicate=%d "
-        "assigned_new=%d assigned_existing=%d assignment_calls=%d summary_calls=%d",
-        clustering_totals["scanned"],
-        clustering_totals["pairs_scanned"],
-        clustering_totals["completed"],
-        clustering_totals["pending_retry"],
-        clustering_totals["duplicate"],
-        clustering_totals["assigned_new"],
-        clustering_totals["assigned_existing"],
-        clustering_totals["assignment_calls"],
-        clustering_totals["summary_calls"],
+        "NEWS_V2 roles=%d role_pending=%d assigned_new=%d assigned_existing=%d "
+        "cluster_pending=%d summaries=%d summary_failed=%d prompt_version=%s",
+        v2_totals["role_classified"],
+        v2_totals["role_pending"],
+        v2_totals["assigned_new"],
+        v2_totals["assigned_existing"],
+        v2_totals["cluster_pending"],
+        v2_totals["summaries"],
+        v2_totals["summary_failed"],
+        ASSIGN_V2_PROMPT_VERSION,
     )
     return result
 
