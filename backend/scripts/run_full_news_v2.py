@@ -61,7 +61,7 @@ def _save_with_retry(
     raise RuntimeError(f"save_role failed after retries: {last}")
 
 
-def phase_roles(repo: NewsV2Repository, totals: dict, workers: int) -> None:
+def phase_roles(repo: NewsV2Repository, totals: dict, workers: int) -> list[dict]:
     """1) 전체 relevant pair 역할 분류(규칙 게이트 → LLM). 결과를 article_stocks 에 저장.
 
     pair 는 독립이고 저장이 pair 단위 upsert 라 워커 병렬 처리한다. 각 워커는 자기
@@ -72,6 +72,7 @@ def phase_roles(repo: NewsV2Repository, totals: dict, workers: int) -> None:
     logger.info("ROLE_PHASE start: %d pairs to classify (workers=%d)", len(pairs), workers)
     lock = threading.Lock()
     counters = {"done": 0, "llm_calls": 0}
+    newly_classified_events: list[dict] = []
 
     def worker(chunk: list[dict]) -> None:
         wrepo = NewsV2Repository(create_supabase_client(), settings, version=repo.version)
@@ -95,6 +96,12 @@ def phase_roles(repo: NewsV2Repository, totals: dict, workers: int) -> None:
                 else:
                     totals["role_classified"] += 1
                     totals[outcome] += 1
+                    if result and result.get("article_role") == "company_event" and result.get(
+                        "event_eligible"
+                    ):
+                        newly_classified_events.append(
+                            {**p, "event_signature": result.get("event_signature")}
+                        )
                 if counters["done"] % 200 == 0:
                     logger.info("  role progress %d/%d", counters["done"], len(pairs))
         with lock:
@@ -107,15 +114,35 @@ def phase_roles(repo: NewsV2Repository, totals: dict, workers: int) -> None:
     with ThreadPoolExecutor(max_workers=max(1, workers)) as ex:
         list(ex.map(worker, chunks))
     totals["role_llm_calls"] = counters["llm_calls"]
+    return newly_classified_events
 
 
-def phase_cluster(repo: NewsV2Repository, totals: dict) -> dict[int, int]:
+def phase_cluster(
+    repo: NewsV2Repository,
+    totals: dict,
+    *,
+    candidates: list[dict] | None = None,
+) -> dict[int, int]:
     """3~4) company_event pair 를 종목별 시간순으로 v2 클러스터링. 대표기사 선정 포함.
 
     이미 배정된 pair 는 배치로 한 번에 조회해 스킵하고, 재실행 시 미배정이 없으면
     임베딩 로딩·순회를 통째로 건너뛴다(무거운 BGE-M3 로딩·전체 재순회 방지)."""
-    pairs = repo.get_event_pairs()
-    assigned = repo.get_assigned_v2_pairs()
+    if candidates is None:
+        # Explicit full-backfill mode keeps the historical scan for resumability.
+        pairs = repo.get_event_pairs()
+        assigned = repo.get_assigned_v2_pairs()
+    else:
+        # Scheduler mode passes only events classified in this cycle plus due retries.
+        deduplicated = {
+            (int(p["article_id"]), p["stock_code"]): p
+            for p in [*candidates, *repo.get_retryable_v2_event_pairs()]
+        }
+        pairs = list(deduplicated.values())
+        assigned = set()
+        for p in pairs:
+            current = repo.get_v2_assignment(int(p["article_id"]), p["stock_code"])
+            if current and current.get("status") in {"assigned_new", "assigned_existing"}:
+                assigned.add((int(p["article_id"]), p["stock_code"]))
     totals["cluster_skipped"] = len(assigned)
     todo = [p for p in pairs if (p["article_id"], p["stock_code"]) not in assigned]
     logger.info(
@@ -155,7 +182,15 @@ def _cluster_one_stock(repo, items, vec_cache, assigned, totals) -> None:
     assigned: 이미 v2 성공 배정된 (article_id, stock_code) 집합(배치 조회, 개별 조회 회피)."""
     items.sort(key=lambda r: (r["published_at"], r["article_id"]))
     stock_code = items[0]["stock_code"]
-    assigner = _hydrate_v2_assigner(repo.get_v2_assignment_clusters(stock_code))
+    from datetime import datetime, timedelta
+
+    earliest = min(
+        datetime.fromisoformat(item["published_at"].replace("Z", "+00:00")) for item in items
+    )
+    active_since = (earliest - timedelta(hours=CFG.ACTIVE_WINDOW_HOURS)).isoformat()
+    assigner = _hydrate_v2_assigner(
+        repo.get_v2_assignment_clusters(stock_code, active_since=active_since)
+    )
     stock_local_to_db: dict[int, int] = {}  # local cluster_id -> DB cluster_id
     for p in items:
         if (p["article_id"], p["stock_code"]) in assigned:

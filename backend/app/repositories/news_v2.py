@@ -52,7 +52,7 @@ class NewsV2Repository:
         offset = 0
         page = 1000
         while True:
-            resp = (
+            query = (
                 self.client.table("article_stocks")
                 .select(
                     "article_id,stock_code,article_role,role_version,"
@@ -63,13 +63,14 @@ class NewsV2Repository:
                 .order("published_at", foreign_table="articles")
                 .order("article_id")
                 .order("stock_code")
-                .range(offset, offset + page - 1)
-                .execute()
             )
+            if only_unclassified:
+                # Filter before selecting the joined article body. Filtering in
+                # Python downloaded every historical body on every scheduler run.
+                query = query.or_(f"role_version.is.null,role_version.neq.{self.version}")
+            resp = query.range(offset, offset + page - 1).execute()
             rows = resp.data or []
             for r in rows:
-                if only_unclassified and r.get("role_version") == self.version:
-                    continue
                 art = r.get("articles") or {}
                 out.append(
                     {
@@ -192,7 +193,9 @@ class NewsV2Repository:
             offset += page
         return out
 
-    def get_v2_assignment_clusters(self, stock_code: str) -> list[dict[str, Any]]:
+    def get_v2_assignment_clusters(
+        self, stock_code: str, *, active_since: str | None = None
+    ) -> list[dict[str, Any]]:
         """Return persisted v2 clusters needed to resume incremental assignment.
 
         The assigner must see clusters created by earlier runs. Otherwise the first
@@ -204,7 +207,7 @@ class NewsV2Repository:
         offset = 0
         page = 1000
         while True:
-            resp = (
+            query = (
                 self.client.table("news_clusters")
                 .select(
                     "id,stock_code,centroid,article_count,last_active_at,event_signature,"
@@ -215,14 +218,62 @@ class NewsV2Repository:
                 .eq("clustering_version", self.version)
                 .eq("stock_code", stock_code)
                 .order("id")
-                .range(offset, offset + page - 1)
-                .execute()
             )
+            if active_since:
+                query = query.gte("last_active_at", active_since)
+            resp = query.range(offset, offset + page - 1).execute()
             rows = resp.data or []
             out.extend(rows)
             if len(rows) < page:
                 break
             offset += page
+        return out
+
+    def get_retryable_v2_event_pairs(self) -> list[dict[str, Any]]:
+        """Return only due v2 assignment retries, normally a very small queue."""
+
+        rows = (
+            self.client.table("news_cluster_assignments")
+            .select(
+                "article_id,stock_code,articles!inner("
+                "title,description,published_at,crawl_status)"
+            )
+            .eq("status", "pending_retry")
+            .lte("next_retry_at", _now().isoformat())
+            .limit(100)
+            .execute()
+        ).data or []
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            role_rows = (
+                self.client.table("article_stocks")
+                .select("event_signature,article_role,event_eligible,role_version")
+                .eq("article_id", row["article_id"])
+                .eq("stock_code", row["stock_code"])
+                .limit(1)
+                .execute()
+            ).data or []
+            if not role_rows:
+                continue
+            role = role_rows[0]
+            article = row.get("articles") or {}
+            if not (
+                role.get("role_version") == self.version
+                and role.get("article_role") == "company_event"
+                and role.get("event_eligible") is True
+                and article.get("crawl_status") == "success"
+            ):
+                continue
+            out.append(
+                {
+                    "article_id": int(row["article_id"]),
+                    "stock_code": row["stock_code"],
+                    "title": article.get("title") or "",
+                    "description": article.get("description") or "",
+                    "published_at": article.get("published_at") or "",
+                    "event_signature": role.get("event_signature"),
+                }
+            )
         return out
 
     def get_v2_assignment(self, article_id: int, stock_code: str) -> dict[str, Any] | None:
