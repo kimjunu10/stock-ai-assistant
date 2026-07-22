@@ -18,3 +18,5 @@ docs/*
 !docs/DART_DATA_GAP_PLAN.md
 !docs/DART_DATA_INVENTORY_AFTER.md
 !docs/DART_COLLECTION_COMPLETION_README.md
+!docs/rag/
+!docs/rag/**

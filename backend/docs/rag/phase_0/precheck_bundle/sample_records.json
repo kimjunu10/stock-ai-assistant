@@ -1,0 +1,375 @@
+{
+  "_meta": {
+    "observed_at": "2026-07-22",
+    "sanitization": "Selected non-secret business metadata only; raw bodies, raw_data, paths, hashes, errors, credentials, and personal fields omitted.",
+    "report_metadata_note": "No reports/research_reports table exists in the actual public schema, so zero report metadata records are available."
+  },
+  "news_events": [
+    {
+      "id": 6226,
+      "kind": "company",
+      "stock_code": "005930",
+      "article_count": 9,
+      "summary_title": "S&P, 삼성전자 신용등급 전망 '긍정적' 상향…메모리 슈퍼사이클 수혜 기대",
+      "last_active_at": "2026-07-22T03:36:00+00:00",
+      "summary_status": "success",
+      "clustering_version": "v2_event_role_20260721",
+      "first_published_at": "2026-07-21T08:56:00+00:00"
+    },
+    {
+      "id": 3741,
+      "kind": "company",
+      "stock_code": "005930",
+      "article_count": 35,
+      "summary_title": "삼성전자, 대표이사 직속 'RX사업추진실' 신설…로봇 사업 통합 추진",
+      "last_active_at": "2026-07-22T03:33:00+00:00",
+      "summary_status": "success",
+      "clustering_version": "v2_event_role_20260721",
+      "first_published_at": "2026-07-21T01:04:00+00:00"
+    },
+    {
+      "id": 4035,
+      "kind": "company",
+      "stock_code": "000660",
+      "article_count": 2,
+      "summary_title": "김정관 산업장관 방미, 한미 통상 현안 조율…쿠팡·반도체 투자·관세 논의",
+      "last_active_at": "2026-07-22T03:28:00+00:00",
+      "summary_status": "success",
+      "clustering_version": "v2_event_role_20260721",
+      "first_published_at": "2026-07-20T01:08:00+00:00"
+    }
+  ],
+  "dart_original_metadata": [
+    {
+      "id": 17927,
+      "title": "임원ㆍ주요주주특정증권등소유상황보고서",
+      "rcept_no": "20260721000745",
+      "is_latest": true,
+      "stock_code": "005930",
+      "disclosed_at": "2026-07-21T00:00:00+00:00",
+      "parse_status": "pending",
+      "is_correction": false,
+      "disclosure_type": "임원ㆍ주요주주특정증권등소유상황보고서",
+      "raw_text_length": null,
+      "correction_status": "original",
+      "raw_text_truncated": false
+    },
+    {
+      "id": 17928,
+      "title": "임원ㆍ주요주주특정증권등소유상황보고서",
+      "rcept_no": "20260721000744",
+      "is_latest": true,
+      "stock_code": "005930",
+      "disclosed_at": "2026-07-21T00:00:00+00:00",
+      "parse_status": "pending",
+      "is_correction": false,
+      "disclosure_type": "임원ㆍ주요주주특정증권등소유상황보고서",
+      "raw_text_length": null,
+      "correction_status": "original",
+      "raw_text_truncated": false
+    },
+    {
+      "id": 17926,
+      "title": "임원ㆍ주요주주특정증권등소유상황보고서",
+      "rcept_no": "20260721000746",
+      "is_latest": true,
+      "stock_code": "005930",
+      "disclosed_at": "2026-07-21T00:00:00+00:00",
+      "parse_status": "pending",
+      "is_correction": false,
+      "disclosure_type": "임원ㆍ주요주주특정증권등소유상황보고서",
+      "raw_text_length": null,
+      "correction_status": "original",
+      "raw_text_truncated": false
+    }
+  ],
+  "structured_disclosures": [
+    {
+      "id": 348,
+      "rcept_no": "20260710000002",
+      "bsns_year": null,
+      "data_group": "major_event",
+      "event_type": "overseas_listing_decision",
+      "reprt_code": null,
+      "source_api": "ovLstDecsn",
+      "stock_code": "000660",
+      "announced_at": "2026-06-24T00:00:00+00:00",
+      "summary_text": "SK하이닉스 해외 증권시장 주권등 상장 결정 / 접수번호 20260710000002 / 접수번호: 20260710000002, bddd: 2026년 06월 24일, 이사회출석이사수: 6, od_a_at_b: 0, lstprstk_ostk_cnt: 17,790,000, tisstk_ostk: 712,702,365, psmth_nstk_sl: 17,790,000, fdpp: 시설자금, lststk_drlst: 177,900,000, lstex_nt: 미국 나스닥 증권거래소(Nasdaq Global Select Market), lstpp: 글로벌 투자자 기반 확장, lstprd: 2026년 .0월 10일",
+      "normalized_data": {
+        "bddd": "2026-06-24",
+        "fdpp": "시설자금",
+        "lstpp": "글로벌 투자자 기반 확장",
+        "lstprd": "2026년 .0월 10일",
+        "lstex_nt": "미국 나스닥 증권거래소(Nasdaq Global Select Market)",
+        "od_a_at_b": 0,
+        "od_a_at_t": 6,
+        "tisstk_ostk": 712702365,
+        "lststk_drlst": 177900000,
+        "psmth_nstk_sl": 17790000,
+        "lstprstk_ostk_cnt": 17790000
+      }
+    },
+    {
+      "id": 6815,
+      "rcept_no": "20260513000552",
+      "bsns_year": "2026",
+      "data_group": "regular_report",
+      "event_type": "capital_change_status",
+      "reprt_code": "11013",
+      "source_api": "irdsSttus",
+      "stock_code": "042660",
+      "announced_at": null,
+      "summary_text": "한화오션 증자(감자) 현황 / 접수번호 20260513000552 / 접수번호: 20260513000552, 발행감소일자: 2024.07.11, 발행감소형태: 유상증자(제3자배정), isu_dcrs_stock_knd: 기명식보통주식, 수량: 54,495, isu_dcrs_mstvdv_fval_amount: 5,000, isu_dcrs_mstvdv_amount: 40,350, 결산기준일: 2026-03-31",
+      "normalized_data": {
+        "stlm_dt": "2026-03-31",
+        "isu_dcrs_de": "2024-07-11",
+        "isu_dcrs_qy": 54495,
+        "isu_dcrs_stle": "유상증자(제3자배정)",
+        "isu_dcrs_stock_knd": "기명식보통주식",
+        "isu_dcrs_mstvdv_amount": 40350,
+        "isu_dcrs_mstvdv_fval_amount": 5000
+      }
+    },
+    {
+      "id": 6814,
+      "rcept_no": "20260513000552",
+      "bsns_year": "2026",
+      "data_group": "regular_report",
+      "event_type": "dividend_matter",
+      "reprt_code": "11013",
+      "source_api": "alotMatter",
+      "stock_code": "042660",
+      "announced_at": null,
+      "summary_text": "한화오션 배당에 관한 사항 / 접수번호 20260513000552 / 접수번호: 20260513000552, 구분: 주당 주식배당(주), 결산기준일: 2026-03-31",
+      "normalized_data": {
+        "se": "주당 주식배당(주)",
+        "stlm_dt": "2026-03-31"
+      }
+    }
+  ],
+  "financial_periods": [
+    {
+      "fs_div": "CFS",
+      "accounts": [
+        {
+          "account_nm": "당기순이익",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 8222878000000,
+          "thstrm_amount": 47225272000000
+        },
+        {
+          "account_nm": "당기순이익",
+          "amount_type": "quarter",
+          "frmtrm_amount": 8222878000000,
+          "thstrm_amount": 47225272000000
+        },
+        {
+          "account_nm": "매출액",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 79140503000000,
+          "thstrm_amount": 133873444000000
+        },
+        {
+          "account_nm": "매출액",
+          "amount_type": "quarter",
+          "frmtrm_amount": 79140503000000,
+          "thstrm_amount": 133873444000000
+        },
+        {
+          "account_nm": "부채총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 130621773000000,
+          "thstrm_amount": 146703628000000
+        },
+        {
+          "account_nm": "영업이익",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 6685272000000,
+          "thstrm_amount": 57232797000000
+        },
+        {
+          "account_nm": "영업이익",
+          "amount_type": "quarter",
+          "frmtrm_amount": 6685272000000,
+          "thstrm_amount": 57232797000000
+        },
+        {
+          "account_nm": "영업활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": null,
+          "thstrm_amount": 40274106000000
+        },
+        {
+          "account_nm": "자본총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 436320337000000,
+          "thstrm_amount": 486635976000000
+        },
+        {
+          "account_nm": "자산총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 566942110000000,
+          "thstrm_amount": 633339604000000
+        },
+        {
+          "account_nm": "재무활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": null,
+          "thstrm_amount": -5455268000000
+        },
+        {
+          "account_nm": "투자활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": null,
+          "thstrm_amount": -21456000000000
+        }
+      ],
+      "bsns_year": "2026",
+      "reprt_code": "11013",
+      "stock_code": "005930"
+    },
+    {
+      "fs_div": "CFS",
+      "accounts": [
+        {
+          "account_nm": "당기순이익",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 34451351000000,
+          "thstrm_amount": 45206805000000
+        },
+        {
+          "account_nm": "매출액",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 300870903000000,
+          "thstrm_amount": 333605938000000
+        },
+        {
+          "account_nm": "부채총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 112339878000000,
+          "thstrm_amount": 130621773000000
+        },
+        {
+          "account_nm": "영업이익",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 32725961000000,
+          "thstrm_amount": 43601051000000
+        },
+        {
+          "account_nm": "영업활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 72982621000000,
+          "thstrm_amount": 85315148000000
+        },
+        {
+          "account_nm": "자본총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 402192070000000,
+          "thstrm_amount": 436320337000000
+        },
+        {
+          "account_nm": "자산총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 514531948000000,
+          "thstrm_amount": 566942110000000
+        },
+        {
+          "account_nm": "재무활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": -7797243000000,
+          "thstrm_amount": -13478040000000
+        },
+        {
+          "account_nm": "투자활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": -85381702000000,
+          "thstrm_amount": -68512206000000
+        }
+      ],
+      "bsns_year": "2025",
+      "reprt_code": "11011",
+      "stock_code": "005930"
+    },
+    {
+      "fs_div": "CFS",
+      "accounts": [
+        {
+          "account_nm": "당기순이익",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 26696957000000,
+          "thstrm_amount": 25565060000000
+        },
+        {
+          "account_nm": "당기순이익",
+          "amount_type": "quarter",
+          "frmtrm_amount": 10100904000000,
+          "thstrm_amount": 12225747000000
+        },
+        {
+          "account_nm": "매출액",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 225082634000000,
+          "thstrm_amount": 239768567000000
+        },
+        {
+          "account_nm": "매출액",
+          "amount_type": "quarter",
+          "frmtrm_amount": 79098731000000,
+          "thstrm_amount": 86061747000000
+        },
+        {
+          "account_nm": "부채총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 112339878000000,
+          "thstrm_amount": 110158092000000
+        },
+        {
+          "account_nm": "영업이익",
+          "amount_type": "cumulative",
+          "frmtrm_amount": 26233258000000,
+          "thstrm_amount": 23527391000000
+        },
+        {
+          "account_nm": "영업이익",
+          "amount_type": "quarter",
+          "frmtrm_amount": 9183371000000,
+          "thstrm_amount": 12166062000000
+        },
+        {
+          "account_nm": "영업활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": null,
+          "thstrm_amount": 56515496000000
+        },
+        {
+          "account_nm": "자본총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 402192070000000,
+          "thstrm_amount": 413501494000000
+        },
+        {
+          "account_nm": "자산총계",
+          "amount_type": "point_in_time",
+          "frmtrm_amount": 514531948000000,
+          "thstrm_amount": 523659586000000
+        },
+        {
+          "account_nm": "재무활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": null,
+          "thstrm_amount": -18936143000000
+        },
+        {
+          "account_nm": "투자활동현금흐름",
+          "amount_type": "cumulative",
+          "frmtrm_amount": null,
+          "thstrm_amount": -37521178000000
+        }
+      ],
+      "bsns_year": "2025",
+      "reprt_code": "11014",
+      "stock_code": "005930"
+    }
+  ],
+  "report_metadata": []
+}

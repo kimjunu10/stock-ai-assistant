@@ -66,3 +66,9 @@ backend/migrations/*
 !backend/migrations/0008_news_backfill_dirty_repair.sql
 !backend/migrations/0010_dart_source_completion.sql
 !backend/migrations/0011_dart_document_unavailable_status.sql
+!backend/migrations/0012_rag_core.sql
+!backend/migrations/0013_research_reports.sql
+!backend/migrations/0014_rag_hybrid_search.sql
+!backend/migrations/0015_rag_rls_storage.sql
+!backend/migrations/rollback/
+!backend/migrations/rollback/*.sql
