@@ -13,7 +13,7 @@ from app.core.config import settings
 from app.db.client import get_supabase_client
 from app.ml.embeddings import UpstageEmbedder
 from app.ml.generation import SolarGenerator
-from app.rag.retrieval import SemanticRetriever
+from app.rag.retrieval import HybridRetriever
 from app.schemas.qa import QaRequest, QaResponse
 from app.services.rag_qa import RagQaService, validate_citations
 
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/qa", tags=["qa"])
 def get_qa_service() -> RagQaService:
     client = get_supabase_client()
     embedder = UpstageEmbedder(settings)
-    retriever = SemanticRetriever(client, settings, embedder)
+    retriever = HybridRetriever(client, settings, embedder)
     generator = SolarGenerator(settings)
     return RagQaService(retriever, generator, settings)
 

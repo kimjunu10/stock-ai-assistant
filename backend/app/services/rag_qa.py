@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from app.core.config import Settings
 from app.ml.generation import SolarGenerator
 from app.rag.prompting import SYSTEM_PROMPT, build_sources, build_user_prompt
-from app.rag.retrieval import RetrievedChunk, SemanticRetriever
+from app.rag.retrieval import HybridRetriever, RetrievedChunk, SemanticRetriever
 
 _CITATION = re.compile(r"\[(\d+)\]")
 
@@ -37,7 +37,10 @@ def validate_citations(answer: str, source_count: int) -> list[int]:
 
 class RagQaService:
     def __init__(
-        self, retriever: SemanticRetriever, generator: SolarGenerator, cfg: Settings
+        self,
+        retriever: SemanticRetriever | HybridRetriever,
+        generator: SolarGenerator,
+        cfg: Settings,
     ) -> None:
         self._retriever = retriever
         self._generator = generator
