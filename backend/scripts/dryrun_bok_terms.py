@@ -276,7 +276,8 @@ def main() -> int:
     lines.append("\n### 본문엔 있으나 목차 미연결 (원인)")
     for e in extra:
         reason = (
-            "슬래시 통합(목차엔 구성어 개별 표기)" if "/" in e
+            "슬래시 통합(목차엔 구성어 개별 표기)"
+            if "/" in e
             else "목차 표기 차이(영문 병기·약칭·공백)"
         )
         lines.append(f"- `{e}`: {reason}")

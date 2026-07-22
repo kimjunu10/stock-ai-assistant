@@ -111,9 +111,7 @@ def main() -> int:
         pnorm2 = pnorm + re.sub(r"\s", "", _page_text(doc, page + 1) if page else "")
         c_boundary = bool(head) and head[:12] in pnorm
         # 4. 연관검색어: related 각 항목이 원문(현재+다음 페이지)에 존재
-        c_related = (
-            all(re.sub(r"\s", "", r) in pnorm2 for r in related) if related else True
-        )
+        c_related = all(re.sub(r"\s", "", r) in pnorm2 for r in related) if related else True
 
         ok["term"] += c_term
         ok["page"] += c_page

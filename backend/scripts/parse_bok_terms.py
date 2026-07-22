@@ -151,8 +151,7 @@ def _is_related(span: dict) -> bool:
     - 상한(9.6): 본문(10.5)·「」 인용부호를 배제.
     """
     return (
-        RELATED_FONT_HINT in span["font"]
-        and RELATED_SIZE_MIN <= span["size"] <= RELATED_SIZE_MAX
+        RELATED_FONT_HINT in span["font"] and RELATED_SIZE_MIN <= span["size"] <= RELATED_SIZE_MAX
     )
 
 

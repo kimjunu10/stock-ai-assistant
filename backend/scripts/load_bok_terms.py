@@ -82,7 +82,9 @@ def main() -> int:
     )
     if args.dry_run:
         est_tokens = int(sum(len(t.search_text) for t, _ in to_upsert) / 2.5)
-        print(f"[dry-run] 임베딩 예상 토큰 ~{est_tokens:,}, 비용 ~${est_tokens/1_000_000*0.10:.4f}")
+        print(
+            f"[dry-run] 임베딩 예상 토큰 ~{est_tokens:,}, 비용 ~${est_tokens / 1_000_000 * 0.10:.4f}"
+        )
         return 0
 
     t0 = time.perf_counter()
@@ -133,7 +135,7 @@ def main() -> int:
     est_tokens = int(sum(len(t.search_text) for t, _ in to_upsert) / 2.5)
     print(
         f"완료: inserted={inserted} embedded={embedded} failures={len(failures)} "
-        f"elapsed={elapsed}s 임베딩토큰~{est_tokens:,} 비용~${est_tokens/1_000_000*0.10:.4f}"
+        f"elapsed={elapsed}s 임베딩토큰~{est_tokens:,} 비용~${est_tokens / 1_000_000 * 0.10:.4f}"
     )
     if failures:
         print(f"실패 배치: {failures}")

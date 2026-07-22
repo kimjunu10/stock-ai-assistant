@@ -120,7 +120,7 @@ def main() -> int:
     print(f"신규 {n} | NULL임베딩 {null_emb} | def누락 {null_def} | sp누락 {null_sp} | 혼입 {mix}")
     print(f"원문대조 경계 {boundary_ok}/{len(sample)}, page규칙 {page_ok}/{len(sample)}")
     for kind, q, expect, got, ok in search_results:
-        print(f"  [{kind}] {got} {'OK' if ok else 'FAIL(기대 '+expect+')'}")
+        print(f"  [{kind}] {got} {'OK' if ok else 'FAIL(기대 ' + expect + ')'}")
     return 0
 
 
