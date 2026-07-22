@@ -5,9 +5,11 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from app.repositories.news_v2 import NewsV2Repository
 from experiments.exp_b_factual_summaries import assign_llm_v2, classify_role
+from scripts import run_full_news_v2
 from scripts.run_full_news_v2 import _cluster_one_stock, _hydrate_v2_assigner, phase_cluster
 
 
@@ -331,6 +333,42 @@ def test_v2_assignment_persists_actual_prompt_version():
     assert client.query.payload["prompt_version"] == assign_llm_v2.ASSIGN_V2_PROMPT_VERSION
 
 
+def test_incremental_assignment_queue_uses_one_batch_upsert():
+    class Query:
+        def __init__(self):
+            self.payload = None
+            self.execute_calls = 0
+
+        def upsert(self, payload, **_kwargs):
+            self.payload = payload
+            return self
+
+        def execute(self):
+            self.execute_calls += 1
+            return SimpleNamespace(data=[])
+
+    class Client:
+        def __init__(self):
+            self.query = Query()
+
+        def table(self, _name):
+            return self.query
+
+    client = Client()
+    repo = NewsV2Repository(client, SimpleNamespace(news_clustering_retry_minutes=30))
+
+    repo.queue_v2_assignments(
+        [
+            {"article_id": 10, "stock_code": "005930"},
+            {"article_id": 11, "stock_code": "000660"},
+        ]
+    )
+
+    assert client.query.execute_calls == 1
+    assert [row["article_id"] for row in client.query.payload] == [10, 11]
+    assert {row["status"] for row in client.query.payload} == {"pending_retry"}
+
+
 def test_role_candidates_are_filtered_in_database_before_body_download():
     class Query:
         def __init__(self):
@@ -386,3 +424,45 @@ def test_incremental_cluster_phase_does_not_scan_historical_pairs():
 
     assert phase_cluster(Repo(), totals, candidates=[]) == {}
     assert totals["cluster_skipped"] == 0
+
+
+def test_incremental_cluster_is_queued_before_embedding(monkeypatch):
+    queued = []
+
+    class Repo:
+        def get_retryable_v2_event_pairs(self):
+            return []
+
+        def get_v2_assignment(self, _article_id, _stock_code):
+            return None
+
+        def queue_v2_assignments(self, pairs):
+            queued.extend(pairs)
+
+    class FailingEmbedder:
+        def __init__(self, _device):
+            pass
+
+        def encode_many(self, _articles):
+            raise RuntimeError("model unavailable")
+
+    monkeypatch.setattr(run_full_news_v2, "BgeM3Embedder", FailingEmbedder)
+    candidate = {
+        "article_id": 99,
+        "stock_code": "005380",
+        "title": "현대차 신규 투자",
+        "description": "신규 공장 투자 발표",
+        "published_at": "2026-07-22T07:00:00+00:00",
+        "event_signature": {"subject": "현대차", "action": "투자"},
+    }
+    totals = {
+        "cluster_skipped": 0,
+        "cluster_pending": 0,
+        "assigned_new": 0,
+        "assigned_existing": 0,
+    }
+
+    with pytest.raises(RuntimeError, match="model unavailable"):
+        phase_cluster(Repo(), totals, candidates=[candidate])
+
+    assert queued == [candidate]

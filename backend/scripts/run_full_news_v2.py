@@ -129,6 +129,7 @@ def phase_cluster(
 
     이미 배정된 pair 는 배치로 한 번에 조회해 스킵하고, 재실행 시 미배정이 없으면
     임베딩 로딩·순회를 통째로 건너뛴다(무거운 BGE-M3 로딩·전체 재순회 방지)."""
+    incremental_mode = candidates is not None
     if candidates is None:
         # Explicit full-backfill mode keeps the historical scan for resumability.
         pairs = repo.get_event_pairs()
@@ -155,6 +156,12 @@ def phase_cluster(
     if not todo:
         return {}  # 새로 배정할 게 없으면 임베딩 로딩 자체를 건너뛴다.
 
+    # 모델 로딩·임베딩·DB 갱신 도중 프로세스가 중단돼도 다음 사이클이 이 pair를
+    # 다시 찾을 수 있도록 먼저 재시도 큐에 등록한다. 성공 배정은 아래에서 이 row를
+    # assigned_new/assigned_existing으로 덮어쓴다.
+    if incremental_mode:
+        repo.queue_v2_assignments(todo)
+
     # 기존 클러스터는 DB에서 hydrate하므로 미배정 pair만 임베딩하고 처리한다.
     # 과거 전체 pair를 매 증분 실행마다 다시 임베딩하면 스케줄러 비용이 선형 증가한다.
     by_stock: dict[str, list[dict]] = {}
@@ -171,10 +178,13 @@ def phase_cluster(
     for stock_code, items in by_stock.items():
         # 한 종목의 오류가 전체 클러스터링을 죽이지 않도록 종목 단위로 격리한다.
         # 실패 종목은 배정이 남으므로 재실행 시 이어서 처리된다.
+        completed_before = totals["assigned_new"] + totals["assigned_existing"]
         try:
             _cluster_one_stock(repo, items, vec_cache, assigned, totals)
         except Exception as exc:  # noqa: BLE001 - 종목 단위 격리, 재실행이 재시도
             logger.warning("CLUSTER_STOCK_FAILED %s: %s", stock_code, exc)
+            completed_after = totals["assigned_new"] + totals["assigned_existing"]
+            totals["cluster_pending"] += max(0, len(items) - (completed_after - completed_before))
     return {}
 
 
