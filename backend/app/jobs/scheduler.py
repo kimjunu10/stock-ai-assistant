@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+import time
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, TypeVar
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -24,6 +26,29 @@ logger = logging.getLogger("uvicorn.error.news_scheduler")
 
 NEWS_COLLECTION_JOB_ID = "news-collection"
 SEOUL_TIMEZONE = ZoneInfo("Asia/Seoul")
+T = TypeVar("T")
+
+
+def _run_news_stage(stage: str, operation: Callable[[], T]) -> T:
+    """Run one cycle stage with concise lifecycle and failure logging."""
+
+    started_at = time.monotonic()
+    logger.info("NEWS_STAGE_START stage=%s", stage)
+    try:
+        result = operation()
+    except Exception:  # noqa: BLE001 - log the stage, then let APScheduler record the failure
+        logger.exception(
+            "NEWS_STAGE_FAILED stage=%s elapsed_seconds=%.3f",
+            stage,
+            time.monotonic() - started_at,
+        )
+        raise
+    logger.info(
+        "NEWS_STAGE_DONE stage=%s elapsed_seconds=%.3f",
+        stage,
+        time.monotonic() - started_at,
+    )
+    return result
 
 
 def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
@@ -34,26 +59,39 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         "NEWS_CYCLE_START max_per_stock=%d",
         cfg.news_scheduler_max_per_stock,
     )
-    cfg.validate_news_collection()
-    repo = NewsRepository(get_supabase_client(), cfg)
-    naver = NaverNewsClient(cfg)
-    try:
-        collected, errors = collect_search_results(
-            repo=repo,
-            naver=naver,
-            max_per_stock=cfg.news_scheduler_max_per_stock,
-        )
-    finally:
-        naver.close()
 
-    crawl_totals = crawl_collected_articles(
-        repo=repo,
-        cfg=cfg,
-        wait_for_retries=False,
+    def setup_repositories() -> tuple[NewsRepository, NewsClusterRepository, NewsV2Repository]:
+        cfg.validate_news_collection()
+        repo = NewsRepository(get_supabase_client(), cfg)
+        return (
+            repo,
+            NewsClusterRepository(repo.client, cfg),
+            NewsV2Repository(repo.client, cfg, version=V2_VERSION),
+        )
+
+    repo, cluster_guard, v2_repo = _run_news_stage("setup", setup_repositories)
+
+    def collect() -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+        naver = NaverNewsClient(cfg)
+        try:
+            return collect_search_results(
+                repo=repo,
+                naver=naver,
+                max_per_stock=cfg.news_scheduler_max_per_stock,
+            )
+        finally:
+            naver.close()
+
+    collected, errors = _run_news_stage("search", collect)
+    crawl_totals = _run_news_stage(
+        "crawl",
+        lambda: crawl_collected_articles(
+            repo=repo,
+            cfg=cfg,
+            wait_for_retries=False,
+        ),
     )
-    relevance_totals = repo.classify_pending_relevance()
-    cluster_guard = NewsClusterRepository(repo.client, cfg)
-    v2_repo = NewsV2Repository(repo.client, cfg, version=V2_VERSION)
+    relevance_totals = _run_news_stage("relevance", repo.classify_pending_relevance)
     v2_totals = {
         "role_classified": 0,
         "role_rule": 0,
@@ -67,14 +105,20 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         "summaries": 0,
         "summary_failed": 0,
     }
-    if cluster_guard.has_active_backfill():
+    has_active_backfill = _run_news_stage("backfill_guard", cluster_guard.has_active_backfill)
+    if has_active_backfill:
         logger.info("NEWS_CLUSTERING_SKIPPED active_backfill=true")
         v2_totals["skipped_active_backfill"] = 1
     else:
-        new_event_pairs = phase_roles(v2_repo, v2_totals, workers=1)
-        phase_cluster(v2_repo, v2_totals, candidates=new_event_pairs)
-        phase_summary(v2_repo, v2_totals)
-        v2_ok, v2_problems = phase_verify(v2_repo, v2_totals)
+        new_event_pairs = _run_news_stage(
+            "roles", lambda: phase_roles(v2_repo, v2_totals, workers=1)
+        )
+        _run_news_stage(
+            "cluster",
+            lambda: phase_cluster(v2_repo, v2_totals, candidates=new_event_pairs),
+        )
+        _run_news_stage("summary", lambda: phase_summary(v2_repo, v2_totals))
+        v2_ok, v2_problems = _run_news_stage("verify", lambda: phase_verify(v2_repo, v2_totals))
         v2_totals["verification_ok"] = int(v2_ok)
         if v2_problems:
             logger.warning("NEWS_V2_INCOMPLETE problems=%s", "; ".join(v2_problems))

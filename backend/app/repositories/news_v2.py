@@ -382,6 +382,35 @@ class NewsV2Repository:
             on_conflict="article_id,stock_code",
         ).execute()
 
+    def queue_v2_assignments(self, pairs: list[dict[str, Any]]) -> None:
+        """Persist incremental candidates as one retryable batch before heavy work."""
+
+        if not pairs:
+            return
+        retry_at = (_now() + timedelta(minutes=self.cfg.news_clustering_retry_minutes)).isoformat()
+        payload = [
+            {
+                "article_id": int(pair["article_id"]),
+                "stock_code": pair["stock_code"],
+                "cluster_id": None,
+                "kind": "company",
+                "status": "pending_retry",
+                "llm_called": False,
+                "candidate_count": 0,
+                "assignment_reason": "queued before clustering attempt",
+                "error_code": "clustering_in_progress",
+                "prompt_version": None,
+                "retry_count": 0,
+                "next_retry_at": retry_at,
+                "assigned_at": None,
+            }
+            for pair in pairs
+        ]
+        self.client.table("news_cluster_assignments").upsert(
+            payload,
+            on_conflict="article_id,stock_code",
+        ).execute()
+
     # ------------------------------------------------------------------ 요약
     def get_v2_clusters(self, *, only_unsummarized: bool = False) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
