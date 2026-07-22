@@ -96,8 +96,10 @@ def phase_roles(repo: NewsV2Repository, totals: dict, workers: int) -> list[dict
                 else:
                     totals["role_classified"] += 1
                     totals[outcome] += 1
-                    if result and result.get("article_role") == "company_event" and result.get(
-                        "event_eligible"
+                    if (
+                        result
+                        and result.get("article_role") == "company_event"
+                        and result.get("event_eligible")
                     ):
                         newly_classified_events.append(
                             {**p, "event_signature": result.get("event_signature")}

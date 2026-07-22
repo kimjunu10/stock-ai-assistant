@@ -235,8 +235,7 @@ class NewsV2Repository:
         rows = (
             self.client.table("news_cluster_assignments")
             .select(
-                "article_id,stock_code,articles!inner("
-                "title,description,published_at,crawl_status)"
+                "article_id,stock_code,articles!inner(title,description,published_at,crawl_status)"
             )
             .eq("status", "pending_retry")
             .lte("next_retry_at", _now().isoformat())
