@@ -336,8 +336,13 @@ def phase_summary(repo: NewsV2Repository, totals: dict) -> None:
     totals["summary_calls"] = calls
 
 
-def phase_verify(repo: NewsV2Repository, totals: dict) -> tuple[bool, list[str]]:
-    """7~8) 누락·pending·요약실패 검사. 활성화 가능 여부 판정."""
+def phase_verify(
+    repo: NewsV2Repository, totals: dict, *, require_summaries: bool = True
+) -> tuple[bool, list[str]]:
+    """7~8) 누락·pending·요약실패 검사. 활성화 가능 여부 판정.
+
+    require_summaries=False 이면(요약 지연 모드) 미요약은 문제로 보지 않는다.
+    """
     problems: list[str] = []
     pending_roles = repo.count_pending_roles()
     if pending_roles:
@@ -345,7 +350,7 @@ def phase_verify(repo: NewsV2Repository, totals: dict) -> tuple[bool, list[str]]
     if totals["cluster_pending"]:
         problems.append(f"클러스터 배정 pending {totals['cluster_pending']}건")
     unsummarized = repo.count_unsummarized_v2()
-    if unsummarized:
+    if unsummarized and require_summaries:
         problems.append(f"미완료 v2 요약 {unsummarized}건")
     totals["pending_roles"] = pending_roles
     totals["unsummarized_v2"] = unsummarized

@@ -20,3 +20,6 @@ docs/*
 !docs/DART_COLLECTION_COMPLETION_README.md
 !docs/rag/
 !docs/rag/**
+# docs/rag/** 화이트리스트가 하위 .DS_Store 까지 포함시키지 않도록 다시 무시.
+.DS_Store
+**/.DS_Store

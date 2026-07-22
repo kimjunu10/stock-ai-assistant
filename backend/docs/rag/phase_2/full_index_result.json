@@ -1,0 +1,56 @@
+{
+  "total_active_events": 2940,
+  "final_current_docs": 2940,
+  "final_active_chunks": 3112,
+  "ghost_docs_without_chunks": 0,
+  "excluded": 0,
+  "first_run": {
+    "processed": 2940,
+    "indexed": 2838,
+    "skipped_unchanged": 101,
+    "chunks_written": 3001,
+    "embedded_chunks": 3001,
+    "failures": 1,
+    "elapsed_seconds": 1645.6,
+    "ingestion_run_id": "8ebaad32-0fdd-4eb6-b5cd-bb6332828deb",
+    "status": "partial"
+  },
+  "recovery_runs": [
+    {
+      "note": "1차 배치 재실행. 해시 skip 다수, 그러나 활성 집합 유동으로 실패 1건(cluster 4748) 미복구.",
+      "indexed": 1,
+      "skipped_unchanged": 2939,
+      "failures": 0,
+      "ingestion_run_id": "80172e09-a5a1-4402-a8b7-f6a6f9608b40",
+      "status": "success"
+    },
+    {
+      "note": "미인덱싱으로 남은 cluster 4748 개별 재인덱싱 → 성공. 총 2940건 완결.",
+      "cluster_id": 4748,
+      "indexed": 1,
+      "failures": 0,
+      "status": "success"
+    }
+  ],
+  "failed_then_recovered": {
+    "cluster_id": 4748,
+    "stock_code": "005380",
+    "title": "현대차그룹, 보스턴다이내믹스 완전 자회사 편입 추진 및 계열사 로보틱스·AI 사업",
+    "cause": "1차 전체 인덱싱 중 임베딩 단계 일시 예외로 실패. 문서/청크 미생성(유령 데이터 없음). 1차 복구 재실행이 스케줄러 활동과 타이밍이 겹쳐 이 건을 놓침 → 개별 재인덱싱으로 복구.",
+    "note": "본문(factual_body 863자)이 정상 존재하는 사건이며 '본문 없어 제외'가 아니었음. 최종적으로 정상 인덱싱됨."
+  },
+  "cost": {
+    "estimated_usd_full_reembed": 0.1075,
+    "actual_usd_embedded": 0.1037,
+    "unit_basis": "Upstage Embed 2 참고 단가 $0.10/1M tokens, 약 107만 토큰 추정",
+    "note": "추정치. 실제 청구액은 Upstage 콘솔 기준. 재실행분은 해시 skip으로 추가 비용 거의 0."
+  },
+  "search_validation": {
+    "self_in_top_5_stocks": "5/5",
+    "cross_query_examples": {
+      "HBM 반도체 수요 어때?": ["005930 AI메모리", "000660 SK하이닉스 HBM", "005930 HBM4"],
+      "조선업 수주 상황": ["042660 삼성중공업 수주", "042660 HD한국조선해양", "042660 조선3사"]
+    },
+    "search_latency_ms_range": "97-318"
+  }
+}
