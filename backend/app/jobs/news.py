@@ -11,6 +11,7 @@ from app.core.config import Settings
 from app.repositories.news import NewsRepository
 from app.sources.crawler import ArticleCrawler
 from app.sources.naver_news import NaverNewsClient
+from app.sources.publishers import is_allowed_news_url
 
 logger = logging.getLogger(__name__)
 
@@ -56,24 +57,30 @@ def collect_search_results(
                     round_number,
                 )
                 result = naver.search_latest(stock.name, max_results=max_per_stock)
+                allowed_items = [
+                    item for item in result.items if is_allowed_news_url(item.original_url)
+                ]
+                filtered_out = len(result.items) - len(allowed_items)
                 persisted = repo.upsert_search_items(
                     stock_code=stock.code,
                     query=stock.name,
-                    items=result.items,
+                    items=allowed_items,
                 )
                 completed[stock.code] = {
                     "name": stock.name,
                     "pages": result.pages_requested,
                     "raw": result.raw_items_received,
                     "api_total": result.api_total,
+                    "filtered_out": filtered_out,
                     **persisted,
                 }
                 errors.pop(stock.code, None)
                 logger.info(
-                    "SEARCH_DONE stock=%s pages=%d raw=%d unique=%d linked=%d",
+                    "SEARCH_DONE stock=%s pages=%d raw=%d filtered_out=%d unique=%d linked=%d",
                     stock.name,
                     result.pages_requested,
                     result.raw_items_received,
+                    filtered_out,
                     persisted["unique"],
                     persisted["linked"],
                 )
