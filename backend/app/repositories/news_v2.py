@@ -412,18 +412,23 @@ class NewsV2Repository:
         ).execute()
 
     # ------------------------------------------------------------------ 요약
-    def get_v2_clusters(self, *, only_unsummarized: bool = False) -> list[dict[str, Any]]:
+    def get_v2_clusters(
+        self, *, only_unsummarized: bool = False, since: str | None = None
+    ) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
         offset = 0
         page = 1000
         while True:
             q = (
                 self.client.table("news_clusters")
-                .select("id,stock_code,summary_status,article_count")
+                .select("id,stock_code,summary_status,article_count,last_active_at")
                 .eq("clustering_version", self.version)
             )
             if only_unsummarized:
                 q = q.neq("summary_status", "success")
+            if since:
+                # 원하는 날짜부터 요약: 해당 시점 이후 활성 사건만.
+                q = q.gte("last_active_at", since)
             resp = q.order("id").range(offset, offset + page - 1).execute()
             rows = resp.data or []
             out.extend(rows)

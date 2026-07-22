@@ -21,8 +21,10 @@ MIGRATIONS = [
     "0013_research_reports.sql",
     "0014_rag_hybrid_search.sql",
     "0015_rag_rls_storage.sql",
+    "0016_rag_search_semantic.sql",
 ]
 ROLLBACKS = [
+    "0016_rag_search_semantic_down.sql",
     "0015_rag_rls_storage_down.sql",
     "0014_rag_hybrid_search_down.sql",
     "0013_research_reports_down.sql",

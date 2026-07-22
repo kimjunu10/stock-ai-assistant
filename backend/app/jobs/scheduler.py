@@ -15,6 +15,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from app.core.config import Settings, settings
 from app.db.client import get_supabase_client
 from app.jobs.news import collect_search_results, crawl_collected_articles
+from app.jobs.rag_index_job import run_incremental_news_index
 from app.repositories.news import NewsRepository
 from app.repositories.news_clusters import NewsClusterRepository
 from app.repositories.news_v2 import V2_VERSION, NewsV2Repository
@@ -117,17 +118,32 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
             "cluster",
             lambda: phase_cluster(v2_repo, v2_totals, candidates=new_event_pairs),
         )
-        _run_news_stage("summary", lambda: phase_summary(v2_repo, v2_totals))
-        v2_ok, v2_problems = _run_news_stage("verify", lambda: phase_verify(v2_repo, v2_totals))
+        if cfg.news_summary_enabled:
+            _run_news_stage("summary", lambda: phase_summary(v2_repo, v2_totals))
+        else:
+            logger.info("NEWS_SUMMARY_SKIPPED news_summary_enabled=false (비용 절감; 요약 지연)")
+            v2_totals["summary_skipped"] = 1
+        v2_ok, v2_problems = _run_news_stage(
+            "verify",
+            lambda: phase_verify(v2_repo, v2_totals, require_summaries=cfg.news_summary_enabled),
+        )
         v2_totals["verification_ok"] = int(v2_ok)
         if v2_problems:
             logger.warning("NEWS_V2_INCOMPLETE problems=%s", "; ".join(v2_problems))
+
+    # summary/verify 이후 RAG 증분 인덱싱. 예외를 스스로 격리하므로
+    # 실패해도 뉴스 수집/클러스터링 사이클을 중단시키지 않는다.
+    rag_index_summary: dict[str, Any] = {"status": "disabled"}
+    if cfg.rag_index_on_schedule and not has_active_backfill:
+        rag_index_summary = run_incremental_news_index(cfg)
+
     elapsed_seconds = (datetime.now(UTC) - started_at).total_seconds()
     result = {
         "collected": collected,
         "errors": errors,
         "crawl": crawl_totals,
         "relevance": relevance_totals,
+        "rag_index": rag_index_summary,
         "clustering": v2_totals,
         "elapsed_seconds": round(elapsed_seconds, 3),
     }

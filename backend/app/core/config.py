@@ -42,6 +42,14 @@ class Settings(BaseSettings):
     news_clustering_retry_minutes: int = 30
     news_embedding_device: str = "cpu"
     use_llm_assign: bool = True
+    # 스케줄러 사이클에서 사건 요약(title+easy_explanation+factual_body, Solar 1회 호출)을
+    # 생성할지 여부. 서비스 미운영 중에는 False 로 두어 요약 LLM 비용을 아끼고,
+    # 나중에 scripts/summarize_v2.py 로 원하는 날짜부터 일괄 요약한다.
+    # (동일사건 판정 assign_llm 은 클러스터링에 필수라 이 플래그와 무관하게 유지된다.)
+    news_summary_enabled: bool = False
+    # 스케줄러 뉴스 사이클(summary/verify) 후 RAG 증분 인덱싱을 자동 실행할지 여부.
+    # 실패해도 뉴스 수집/클러스터링을 중단시키지 않는다(예외 격리).
+    rag_index_on_schedule: bool = True
     news_backfill_batch_size: int = 25
     news_backfill_max_assignment_calls: int = 25
     news_backfill_max_summary_calls: int = 25
@@ -50,6 +58,18 @@ class Settings(BaseSettings):
     news_backfill_solar_min_interval_seconds: float = 0.25
     toss_request_timeout_seconds: float = 15.0
     toss_market_data_cache_seconds: int = 15
+
+    # --- RAG (Phase 2+) ---
+    upstage_base_url: str = "https://api.upstage.ai/v1"
+    rag_embedding_query_model: str = "solar-embedding-2-query"
+    rag_embedding_passage_model: str = "solar-embedding-2-passage"
+    rag_embedding_dimension: int = 1024
+    rag_chat_model: str = "solar-pro3-260323"
+    rag_chat_temperature: float = 0.0
+    rag_embedding_batch_size: int = 100  # Upstage 배치 최대 100
+    rag_request_timeout_seconds: float = 90.0
+    rag_retrieval_top_k: int = 8  # 최종 문맥 개수
+    rag_retrieval_candidate_k: int = 24  # 의미 검색 후보 개수
 
     # --- DART 수집 튜닝 (SPEC §4-5) ---
     dart_request_delay_seconds: float = 0.25  # 호출 사이 기본 sleep

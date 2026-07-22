@@ -1,0 +1,110 @@
+{
+  "limit": 100,
+  "fetched_clusters": 100,
+  "indexing": {
+    "processed": 100,
+    "indexed": 0,
+    "skipped_unchanged": 100,
+    "chunks_written": 0,
+    "embedded_chunks": 0,
+    "failures": 0,
+    "seconds": 2.4
+  },
+  "questions": [
+    {
+      "cluster_id": 6857,
+      "stock_code": "042660",
+      "question": "한화오션, 협력사 143곳에 경영 혁신 컨설팅 제공…영업기밀 공유로 조선업계 경쟁력 제고",
+      "self_in_top": true,
+      "self_rank": 1,
+      "num_sources": 8,
+      "invalid_citations": [],
+      "answer_len": 1284,
+      "latency_ms": {
+        "retrieve": 95,
+        "generate": 4273
+      },
+      "answer_preview": "## 한 줄 결론\n한화오션이 협력사 143곳에 경영 혁신 컨설팅을 제공하며 조선업계 경쟁력 강화를 추진하고 있다.\n\n## 쉽게 설명하면\n한화오션은 사내 최고의 경영 혁신 전담팀을 외부 협력사 143곳에 개방해 생산성 향상과 원가 절감을 지원하고 있어요. 이는 회사가 조선 업계 전반의 경쟁력을 높이기 위해 협력사와 함께 성장하려는 상생 전략의 일환이에요.\n\n## 자세히 보면\n한화오션은 사내 경영 혁신 전담팀을 외부 협력사 143곳에 개방해 생산성 증대와 원가 절감을 지원하고 있다. 2023년부터 추"
+    },
+    {
+      "cluster_id": 6361,
+      "stock_code": "042660",
+      "question": "한화오션, 웰리브 노동자 사용자성 인정 판정에 행정소송 제기",
+      "self_in_top": true,
+      "self_rank": 1,
+      "num_sources": 8,
+      "invalid_citations": [],
+      "answer_len": 909,
+      "latency_ms": {
+        "retrieve": 98,
+        "generate": 3648
+      },
+      "answer_preview": "## 한 줄 결론\n한화오션이 웰리브 소속 하청노동자의 사용자성 인정 판정에 불복해 행정소송을 제기했으며, 이는 원청과 하청 간 법적 책임 범위를 명확히 하기 위한 절차입니다.\n\n## 쉽게 설명하면\n한화오션은 사내 급식·통근버스 등을 운영하는 웰리브 노동자들의 사용자로 인정된다는 중앙노동위원회 판정에 이의를 제기해 법원에 소송을 냈습니다. 사측은 법적 판단을 통해 원청과 하청 간 책임 범위를 명확히 하려는 절차일 뿐, 단체교섭을 지연시키려는 의도는 없다고 밝혔습니다.\n\n## 자세히 보면\n한화오션은 "
+    },
+    {
+      "cluster_id": 6808,
+      "stock_code": "005930",
+      "question": "기후에너지환경부 장관, 삼성전자 수원사업장 등 현장 점검",
+      "self_in_top": true,
+      "self_rank": 1,
+      "num_sources": 8,
+      "invalid_citations": [],
+      "answer_len": 617,
+      "latency_ms": {
+        "retrieve": 103,
+        "generate": 2930
+      },
+      "answer_preview": "## 한 줄 결론\n기후에너지환경부 장관이 삼성전자 수원사업장 등 현장을 방문해 친환경 설비 및 순환경제 현황을 점검했습니다.\n\n## 쉽게 설명하면\n김성환 장관이 삼성전자 수원사업장과 삼성물산 연구소, 수도권자원순환센터를 찾아 히트펌프, 다회용기, 폐가전 재활용 현장을 확인했어요. 이는 정부의 친환경 정책과 순환경제 확대 방향을 모색하기 위한 방문입니다.\n\n## 자세히 보면\n- **방문 장소**: 삼성전자 수원사업장, 삼성물산 주거성능연구소, 수도권자원순환센터\n- **주요 확인 내용**: 히트펌프 "
+    },
+    {
+      "cluster_id": 6787,
+      "stock_code": "005930",
+      "question": "이재용·최태원·이해진, 미국서 젠슨 황 엔비디아 CEO와 라운드테이블 회동 추진",
+      "self_in_top": true,
+      "self_rank": 1,
+      "num_sources": 8,
+      "invalid_citations": [],
+      "answer_len": 1016,
+      "latency_ms": {
+        "retrieve": 96,
+        "generate": 4013
+      },
+      "answer_preview": "## 한 줄 결론\n글로벌 AI 핵심 기업 수장들의 비공개 회동이 추진 중이지만, 구체적 일정과 참석 여부는 아직 확정되지 않았습니다.\n\n## 쉽게 설명하면\n삼성전자, SK, 네이버, 엔비디아 등 AI 관련 주요 기업 대표들이 미국에서 만나 협력 방안을 논의할 예정입니다. 이 자리에는 엔비디아의 젠슨 황 CEO와 오픈AI·앤트로픽 CEO도 참석할 가능성이 있지만, 아직 확정된 것은 아닙니다.\n\n## 자세히 보면\n- **회동 주체**: 이재용 삼성전자 회장, 최태원 SK그룹 회장, 이해진 네이버 의장"
+    },
+    {
+      "cluster_id": 4110,
+      "stock_code": "000660",
+      "question": "SK하이닉스, 청주 P&T7 첨단 패키징 공장 건설 투자 7조931억원 확정",
+      "self_in_top": true,
+      "self_rank": 1,
+      "num_sources": 8,
+      "invalid_citations": [],
+      "answer_len": 826,
+      "latency_ms": {
+        "retrieve": 109,
+        "generate": 3145
+      },
+      "answer_preview": "## 한 줄 결론\nSK하이닉스가 AI 메모리 수요 대응을 위해 청주 P&T7 공장 건설에 7조931억원을 신규 투자하기로 결정했습니다.\n\n## 쉽게 설명하면\nSK하이닉스는 AI 메모리 칩 수요가 급증하자, 청주에서 패키징과 테스트를 담당하는 첨단 공장을 짓기로 했어요. 이 공장은 내년 하반기에 가동될 예정이며, 기존 계획보다 클린룸 개장 일정을 앞당겨 생산 능력을 빠르게 확보하려는 목적입니다.\n\n## 자세히 보면\n- **투자 금액**: 7조931억원 (자기자본 대비 5.88%) [1]\n- **투자"
+    },
+    {
+      "cluster_id": 6811,
+      "stock_code": "005930",
+      "question": "아산시-삼성전자, HBM 생산공장 증설 협약 체결…10월 착공·2029년 양산 목표",
+      "self_in_top": true,
+      "self_rank": 1,
+      "num_sources": 8,
+      "invalid_citations": [],
+      "answer_len": 1426,
+      "latency_ms": {
+        "retrieve": 179,
+        "generate": 5533
+      },
+      "answer_preview": "## 한 줄 결론\n아산시와 삼성전자가 HBM 생산공장 증설 협약을 체결해 10월 착공, 2029년 5월 양산을 목표로 합니다.\n\n## 쉽게 설명하면\n아산시와 삼성전자가 AI 서버에 쓰이는 고성능 반도체인 HBM 공장을 더 짓기로 했어요. 10월에 공사를 시작하고, 2029년 5월부터 제품을 생산할 계획이에요. 이 투자로 약 700명이 직접 고용되고, 건설 기간 동안 하루 3400명이 일하며 지역 경제에 큰 도움이 될 거예요.\n\n## 자세히 보면\n아산시와 삼성전자는 HBM 생산공장 증설을 위한 업무"
+    }
+  ],
+  "summary": {
+    "self_in_top_rate": 1.0,
+    "any_invalid_citation": false,
+    "avg_generate_ms": 3924
+  }
+}

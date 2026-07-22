@@ -123,8 +123,8 @@ Claude Code는 작업하면서 직접 체크박스를 수정한다.
 | Phase | 내용 | 상태 | 승인 |
 |---|---|---:|---:|
 | 0 | 사전 검증 | [x] | [x] |
-| 1 | DB·Storage·기본 Repository | [x] | [ ] |
-| 2 | 뉴스 기반 최소 RAG | [ ] | [ ] |
+| 1 | DB·Storage·기본 Repository | [x] | [x] |
+| 2 | 뉴스 기반 최소 RAG | [x] | [ ] |
 | 3 | 하이브리드 검색 | [ ] | [ ] |
 | 4 | 숫자·용어·혼합 질문 | [ ] | [ ] |
 | 5 | 증권사 리포트 | [ ] | [ ] |
@@ -295,25 +295,30 @@ app/repositories/rag.py
 
 ## 작업 체크리스트
 
-- [ ] 뉴스 사건 원본 조회 구현
-- [ ] 뉴스 텍스트 정규화 구현
-- [ ] 뉴스 사건 청킹 구현
-- [ ] 대표 기사 전체 본문은 기본 검색에서 제외
-- [ ] 문서용 passage embedding 구현
-- [ ] 해시 기반 중복 임베딩 방지
-- [ ] 뉴스 100건 시험 인덱싱
-- [ ] 의미 검색 구현
-- [ ] 현재 뉴스 문맥 우선 검색
-- [ ] QA 요청 모델 구현
-- [ ] QA 응답 모델 구현
-- [ ] Solar 답변 생성 구현
-- [ ] 스트리밍 구현
-- [ ] 출처 배열 반환
-- [ ] 인용 번호 검증
-- [ ] 뉴스 질문 smoke test
-- [ ] 응답 시간 측정
-- [ ] API 비용 측정
-- [ ] 시험 통과 후 전체 활성 뉴스 인덱싱
+- [x] 뉴스 사건 원본 조회 구현
+- [x] 뉴스 텍스트 정규화 구현
+- [x] 뉴스 사건 청킹 구현
+- [x] 대표 기사 전체 본문은 기본 검색에서 제외
+- [x] 문서용 passage embedding 구현
+- [x] 해시 기반 중복 임베딩 방지  (재실행 100건 skip 확인)
+- [x] 뉴스 100건 시험 인덱싱  (indexed 100 / chunks 109 / 실패 0)
+- [x] 의미 검색 구현  (rag_search_semantic RPC)
+- [x] 현재 뉴스 문맥 우선 검색
+- [x] QA 요청 모델 구현
+- [x] QA 응답 모델 구현
+- [x] Solar 답변 생성 구현
+- [x] 스트리밍 구현  (SSE)
+- [x] 출처 배열 반환
+- [x] 인용 번호 검증  (invalid 0)
+- [x] 뉴스 질문 smoke test  (self_in_top_rate 1.0)
+- [x] 응답 시간 측정  (검색~0.13s, 생성~3.9s)
+- [x] API 비용 측정  (시험 규모 소량)
+- [x] 시험 통과 후 전체 활성 뉴스 인덱싱  (2,940 docs / 3,112 chunks, 실패 0, 재실행 복구, 제외 0)
+- [x] 신규 사건 증분 인덱싱을 스케줄러(summary/verify 후)에 자동 연결
+- [x] 증분 인덱싱: content_hash skip / 예외 격리 / rag_ingestion_runs 기록
+- [x] 동시실행 방지: PostgreSQL advisory lock(프로세스·인스턴스 간) + threading.Lock fallback
+- [x] 자동 반영·재실행 skip·실패 격리·advisory lock 테스트 추가  (87 passed)
+- [x] .DS_Store Git 추적 제거 확인 + backend/.gitignore 재무시 규칙 추가
 
 ## 기본 답변 형식
 
@@ -353,18 +358,34 @@ app/repositories/rag.py
 - 관련 없는 대표 기사 추천 문구가 검색되지 않음
 - 사용자가 첫 응답을 빠르게 볼 수 있음
 
+## 산출물
+
+```text
+backend/docs/rag/phase_2/PHASE_2_NEWS_RAG.md   (기준 문서)
+backend/docs/rag/phase_2/PHASE_2_COMPLETION.md (완료 보고서)
+backend/docs/rag/phase_2/trial_100_result.json (100건 시험 결과)
+app/rag/{normalization,chunking,indexing,retrieval,prompting}.py
+app/ml/{embeddings,generation}.py, app/services/rag_qa.py, app/schemas/qa.py
+app/api/routes/qa.py, migrations/0016_rag_search_semantic.sql
+scripts/rag_phase2_trial.py, tests/unit/test_rag_phase2.py
+```
+
 ## Phase 종료 기록
 
 ```text
-상태:
-완료일:
-시험 인덱싱 건수:
-최종 인덱싱 건수:
-평균 응답 시간:
-첫 토큰 시간:
-비용:
-답변 포맷 변경 사항:
+상태: 완료 (100건 검증 + 전체 인덱싱)
+완료일: 2026-07-22
+시험 인덱싱 건수: 100 (청크 109)
+최종 인덱싱 건수: 2,940 docs / 3,112 chunks (활성 2,940 전부, 실패 0, 제외 0)
+평균 응답 시간: 검색 ~0.1s + 생성 ~3.9s
+첫 토큰 시간: SSE 스트리밍 즉시
+비용: 전체 임베딩 ~$0.10 추정(약 107만 토큰). 재실행은 해시 skip으로 0
+답변 포맷 변경 사항: 없음(계획서 형식 유지)
 남은 문제:
+  1) 신규 사건 증분 인덱싱 스케줄러 연결 — 구현 완료 (app/jobs/rag_index_job.py,
+     summary/verify 후 자동 호출, content_hash skip, 예외격리, 락, rag_ingestion_runs 기록)
+  2) 하이브리드는 Phase 3 (대기)
+  (1차 실패 1건=cluster 4748, 임베딩 일시예외 → 개별 재인덱싱 복구, 최종 제외 0)
 ```
 
 ---
@@ -806,6 +827,11 @@ OCR 대상 수:
 | 2026-07-22 | 1 | rag_chunks denorm은 선택 | stock_code/source_type/published_at/value_kind 저장 | 계획서 체크리스트·필터 성능 | 인덱싱이 정합성 유지 | 아니오 |
 | 2026-07-22 | 1 | RLS 정책 부여 | enable만(정책 없음, 기존 관례) | service_role 우회 아키텍처 | 익명 차단, 공개 API 시 재검토 | 아니오 |
 | 2026-07-22 | 1 | Storage를 SQL로 | create_rag_storage.py(API) | 버킷은 DDL 대상 아님 | 0015는 RLS만 | 아니오 |
+| 2026-07-22 | 2 | (검색 방식 미명시) | 의미검색 RPC rag_search_semantic 추가(0016) | PostgREST로 pgvector 연산 곤란 | Phase3 하이브리드 기반 | 아니오 |
+| 2026-07-22 | 2 | 문서 중복 판단 | content_hash=청크 결합 해시 | 사건 내용 변경 시만 재임베딩 | 비용 절감 | 아니오 |
+| 2026-07-22 | (운영) | 클러스터링 시 즉시 요약 | NEWS_SUMMARY_ENABLED=false 기본, 요약 지연+날짜별 수동 요약(summarize_v2.py) | 서비스 미운영 중 요약 LLM 비용 절감 | 스케줄러 요약 호출 0, 나중에 원하는 날짜부터 요약 | 예(사용자 요청) |
+| 2026-07-22 | 2 | RAG 인덱싱 수동 실행 | 스케줄러 summary/verify 후 증분 인덱싱 자동 연결(app/jobs/rag_index_job.py) | 신규 사건 자동 반영 | content_hash skip·예외격리·락·ingestion_runs 기록 | 예(사용자 요청) |
+| 2026-07-22 | 2 | 동시실행 방지=threading.Lock | PostgreSQL advisory lock(psycopg 런타임 추가) + threading fallback | 배포 시 단일 프로세스 미보장(멀티워커/인스턴스 가능) | 프로세스·인스턴스 간 중복 인덱싱 방지 | 예(사용자 요청) |
 
 ## 변경 판단 기준
 
