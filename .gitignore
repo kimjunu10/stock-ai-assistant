@@ -71,5 +71,7 @@ backend/migrations/*
 !backend/migrations/0014_rag_hybrid_search.sql
 !backend/migrations/0015_rag_rls_storage.sql
 !backend/migrations/0016_rag_search_semantic.sql
+!backend/migrations/0017_rag_hybrid_rrf.sql
+!backend/migrations/0018_rag_hybrid_lexical_exact_first.sql
 !backend/migrations/rollback/
 !backend/migrations/rollback/*.sql

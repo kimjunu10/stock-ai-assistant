@@ -1,0 +1,110 @@
+{
+  "top_k": 8,
+  "num_events": 40,
+  "num_cases": 52,
+  "semantic": {
+    "nl_title": {
+      "n": 40,
+      "recall@8": 0.975,
+      "mrr": 0.938
+    },
+    "exact_token": {
+      "n": 12,
+      "recall@8": 0.25,
+      "mrr": 0.181
+    }
+  },
+  "hybrid": {
+    "nl_title": {
+      "n": 40,
+      "recall@8": 0.975,
+      "mrr": 0.963
+    },
+    "exact_token": {
+      "n": 12,
+      "recall@8": 0.917,
+      "mrr": 0.449
+    }
+  },
+  "latency_ms": {
+    "semantic_avg": 119,
+    "hybrid_avg": 607
+  },
+  "improved_count": 11,
+  "worsened_count": 2,
+  "improved_examples": [
+    {
+      "kind": "exact_token",
+      "q": "CEO",
+      "stock": "005930",
+      "sem_rank": null,
+      "hyb_rank": 4
+    },
+    {
+      "kind": "nl_title",
+      "q": "SK하이닉스 성과급 제도 개편 논란",
+      "stock": "000660",
+      "sem_rank": 2,
+      "hyb_rank": 1
+    },
+    {
+      "kind": "exact_token",
+      "q": "CEO",
+      "stock": "005380",
+      "sem_rank": null,
+      "hyb_rank": 7
+    },
+    {
+      "kind": "exact_token",
+      "q": "CEO",
+      "stock": "000660",
+      "sem_rank": null,
+      "hyb_rank": 4
+    },
+    {
+      "kind": "exact_token",
+      "q": "3700",
+      "stock": "034020",
+      "sem_rank": null,
+      "hyb_rank": 1
+    },
+    {
+      "kind": "exact_token",
+      "q": "HBM4",
+      "stock": "005930",
+      "sem_rank": null,
+      "hyb_rank": 6
+    },
+    {
+      "kind": "exact_token",
+      "q": "6730",
+      "stock": "005380",
+      "sem_rank": null,
+      "hyb_rank": 1
+    },
+    {
+      "kind": "exact_token",
+      "q": "3500",
+      "stock": "042660",
+      "sem_rank": null,
+      "hyb_rank": 4
+    }
+  ],
+  "worsened_examples": [
+    {
+      "kind": "exact_token",
+      "q": "2042",
+      "stock": "000660",
+      "sem_rank": 1,
+      "hyb_rank": 2
+    },
+    {
+      "kind": "exact_token",
+      "q": "ADR",
+      "stock": "000660",
+      "sem_rank": 6,
+      "hyb_rank": null
+    }
+  ],
+  "offset": 0
+}

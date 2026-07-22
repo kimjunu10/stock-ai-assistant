@@ -124,8 +124,8 @@ Claude Code는 작업하면서 직접 체크박스를 수정한다.
 |---|---|---:|---:|
 | 0 | 사전 검증 | [x] | [x] |
 | 1 | DB·Storage·기본 Repository | [x] | [x] |
-| 2 | 뉴스 기반 최소 RAG | [x] | [ ] |
-| 3 | 하이브리드 검색 | [ ] | [ ] |
+| 2 | 뉴스 기반 최소 RAG | [x] | [x] |
+| 3 | 하이브리드 검색 | [x] | [ ] |
 | 4 | 숫자·용어·혼합 질문 | [ ] | [ ] |
 | 5 | 증권사 리포트 | [ ] | [ ] |
 | 6 | 주가 질문 | [ ] | [ ] |
@@ -398,24 +398,24 @@ scripts/rag_phase2_trial.py, tests/unit/test_rag_phase2.py
 
 ## 작업 체크리스트
 
-- [ ] query embedding 구현
-- [ ] 의미 검색 후보 조회
-- [ ] `pg_trgm` 키워드 검색 구현
-- [ ] 제목·본문·종목코드 검색 지원
-- [ ] 영문 약어·제품명·공시 표현 검색 확인
-- [ ] RRF 순위 결합 구현
-- [ ] 종목 필터
-- [ ] 날짜 필터
-- [ ] 출처 종류 필터
-- [ ] 실제값·전망값 필터
-- [ ] 현재 문서 우선 처리
-- [ ] 같은 문서 청크 제한
-- [ ] 같은 뉴스 사건 중복 제거
-- [ ] 동일 내용 해시 중복 제거
-- [ ] 부모 문맥 확장
-- [ ] 문맥 길이 제한
-- [ ] 의미 검색 단독과 하이브리드 비교
-- [ ] 검색 시간 측정
+- [x] query embedding 구현
+- [x] 의미 검색 후보 조회
+- [x] `pg_trgm` 키워드 검색 구현  (word_similarity + ILIKE)
+- [x] 제목·본문·종목코드 검색 지원
+- [x] 영문 약어·제품명·공시 표현 검색 확인  (HBM/CEO/005930/숫자)
+- [x] RRF 순위 결합 구현  (RPC rag_search_hybrid, rrf_k=50)
+- [x] 종목 필터
+- [x] 날짜 필터
+- [x] 출처 종류 필터
+- [x] 실제값·전망값 필터  (value_kind 필터, 뉴스엔 미적용이나 RPC 지원)
+- [x] 현재 문서 우선 처리  (현재문서 4 + 전체 12)
+- [x] 같은 문서 청크 제한  (최대 2)
+- [x] 같은 뉴스 사건 중복 제거  (사건당 최대 2)
+- [x] 동일 내용 해시 중복 제거  (content_hash)
+- [x] 부모 문맥 확장  (앞뒤 청크 배경)
+- [x] 문맥 길이 제한  (char budget 12000)
+- [x] 의미 검색 단독과 하이브리드 비교  (recall/MRR, scripts/rag_phase3_eval.py)
+- [x] 검색 시간 측정  (semantic ~134ms / hybrid ~635ms)
 
 ## 유연하게 판단할 부분
 
@@ -432,18 +432,30 @@ scripts/rag_phase2_trial.py, tests/unit/test_rag_phase2.py
 - 중복 자료가 최종 문맥을 독점하지 않음
 - 현재 문서 질문이 다른 문서로 과도하게 튀지 않음
 
+## 산출물
+
+```text
+backend/docs/rag/phase_3/PHASE_3_HYBRID_SEARCH.md  (기준 문서)
+backend/docs/rag/phase_3/PHASE_3_COMPLETION.md      (완료 보고서)
+backend/docs/rag/phase_3/eval_result.json + holdout_result.json (비교 평가/홀드아웃)
+migrations/0017_rag_hybrid_rrf.sql + 0018_rag_hybrid_lexical_exact_first.sql (+rollback)
+app/rag/retrieval.py(HybridRetriever), app/rag/fusion.py
+scripts/rag_phase3_eval.py, tests/unit/test_hybrid_fusion.py, test_source_dedup.py
+```
+
 ## Phase 종료 기록
 
 ```text
-상태:
-완료일:
-semantic 후보 수:
-lexical 후보 수:
-RRF 설정:
-최종 문맥 수:
-개선된 질문 사례:
-악화된 질문 사례:
-기획서와 달라진 점:
+상태: 완료
+완료일: 2026-07-22
+semantic 후보 수: 24
+lexical 후보 수: 24
+RRF 설정: rrf_k=50, semantic_weight=lexical_weight=1.0
+최종 문맥 수: 8 (문서·사건당 최대 2)
+개선된 질문 사례: 정확명칭 recall@8 최신 0.25→0.92 / 홀드아웃 0.65→0.94 (숫자·RFI·CEO 등 회수)
+악화된 질문 사례: SDV(1→5), ASML EUV(1→2) — top-8 유지(recall 손실 없음)
+기획서와 달라진 점: 키워드=word_similarity+ILIKE, lexical 정확일치 우선, 부모문맥=앞뒤 청크, fusion.py, 평가토큰 일반화(종목명 제외+DF임계)
+하드코딩 여부: 없음. 홀드아웃(offset 200)에서 재현 확인 → 과적합 아님
 ```
 
 ---
@@ -832,6 +844,11 @@ OCR 대상 수:
 | 2026-07-22 | (운영) | 클러스터링 시 즉시 요약 | NEWS_SUMMARY_ENABLED=false 기본, 요약 지연+날짜별 수동 요약(summarize_v2.py) | 서비스 미운영 중 요약 LLM 비용 절감 | 스케줄러 요약 호출 0, 나중에 원하는 날짜부터 요약 | 예(사용자 요청) |
 | 2026-07-22 | 2 | RAG 인덱싱 수동 실행 | 스케줄러 summary/verify 후 증분 인덱싱 자동 연결(app/jobs/rag_index_job.py) | 신규 사건 자동 반영 | content_hash skip·예외격리·락·ingestion_runs 기록 | 예(사용자 요청) |
 | 2026-07-22 | 2 | 동시실행 방지=threading.Lock | PostgreSQL advisory lock(psycopg 런타임 추가) + threading fallback | 배포 시 단일 프로세스 미보장(멀티워커/인스턴스 가능) | 프로세스·인스턴스 간 중복 인덱싱 방지 | 예(사용자 요청) |
+| 2026-07-22 | 3 | 키워드=전체 similarity(%) | word_similarity(<%) + ILIKE 부분일치 | 긴 문서·짧은 쿼리에서 %가 threshold 미달로 매칭 0 | 정확명칭/약어 회수 개선 | 아니오 |
+| 2026-07-22 | 3 | 부모문맥=section 범위 | 뉴스엔 section 없어 앞뒤 청크(±1)로 확장 | 뉴스 사건 구조상 | 배경 문맥 추가, 인용은 핵심 청크 기준 | 아니오 |
+| 2026-07-22 | 3 | lexical=word_similarity 단일 | 정확 부분일치(ILIKE) 우선 → word_similarity 2단계 | 완전일치가 근사유사와 뒤섞여 밀림 | 정확명칭 recall 대폭↑(전체 공통 규칙, 하드코딩 없음) | 아니오 |
+| 2026-07-22 | 3 | (개선을 0017 파일 수정) | 0018 신규 마이그레이션에서 CREATE OR REPLACE로 분리 | 0017이 DB에 이미 적용된 이력 보존 | 이력 무수정, 롤백 시 0017로 복원 | 아니오 |
+| 2026-07-22 | 3 | 평가 정확명칭=제목 토큰 | 종목명 조각 제외 + 코퍼스 DF 임계로 변별력 토큰만 | 초빈도 조각(SK/AI)은 정확명칭 아님 | 공정 평가, 홀드아웃 재현 | 아니오 |
 
 ## 변경 판단 기준
 

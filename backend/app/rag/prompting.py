@@ -44,7 +44,12 @@ def build_context_block(chunks: list[RetrievedChunk]) -> str:
             meta.append(str(c.published_at)[:10])
         if meta:
             header += f" ({', '.join(meta)})"
-        lines.append(f"{header}\n{c.content}")
+        body = c.content
+        # 부모 문맥(앞뒤 청크)은 배경으로만 덧붙인다. 인용 번호는 핵심 청크 기준(SPEC §10.7).
+        parent = getattr(c, "parent_context", None)
+        if parent:
+            body = f"{body}\n(배경) {parent}"
+        lines.append(f"{header}\n{body}")
     return "\n\n".join(lines)
 
 

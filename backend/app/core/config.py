@@ -70,6 +70,15 @@ class Settings(BaseSettings):
     rag_request_timeout_seconds: float = 90.0
     rag_retrieval_top_k: int = 8  # 최종 문맥 개수
     rag_retrieval_candidate_k: int = 24  # 의미 검색 후보 개수
+    # --- Phase 3 하이브리드 검색 ---
+    rag_semantic_candidates: int = 24
+    rag_lexical_candidates: int = 24
+    rag_rrf_k: int = 50  # RRF 상수 (SPEC 기본)
+    rag_max_chunks_per_document: int = 2
+    rag_context_char_budget: int = 12000
+    # 현재 문서 우선(SPEC §10.4)
+    rag_current_doc_candidates: int = 4
+    rag_global_candidates: int = 12
 
     # --- DART 수집 튜닝 (SPEC §4-5) ---
     dart_request_delay_seconds: float = 0.25  # 호출 사이 기본 sleep
