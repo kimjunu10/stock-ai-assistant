@@ -22,6 +22,10 @@
   --color-warm-ink: var(--warm-ink);
   --color-neutral-soft: var(--neutral-soft);
   --color-neutral-ink: var(--neutral-ink);
+  --color-positive-soft: var(--positive-soft);
+  --color-positive-ink: var(--positive-ink);
+  --color-negative-soft: var(--negative-soft);
+  --color-negative-ink: var(--negative-ink);
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
   --shadow-soft: 0 5px 18px rgba(25, 25, 25, 0.05);
   --shadow-float: 0 18px 50px rgba(25, 25, 25, 0.1);
@@ -45,6 +49,10 @@
   --warm-ink: #965b21;
   --neutral-soft: #f0f1f3;
   --neutral-ink: #5e6570;
+  --positive-soft: #e8f7ef;
+  --positive-ink: #137a4e;
+  --negative-soft: #fff0f2;
+  --negative-ink: #c43d4e;
   color: var(--ink);
   background: var(--canvas);
   font-family: var(--font-sans);
@@ -71,6 +79,10 @@
   --warm-ink: #e0a970;
   --neutral-soft: #252830;
   --neutral-ink: #b4b8c2;
+  --positive-soft: #173429;
+  --positive-ink: #67d5a2;
+  --negative-soft: #3a2025;
+  --negative-ink: #ff8795;
 }
 
 @layer base {

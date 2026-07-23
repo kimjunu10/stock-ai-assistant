@@ -11,6 +11,11 @@ interface NewsClusterApiItem {
   factualBody: string
   articleCount: number
   publishedAt: string
+  sentimentLabel?: 'negative' | 'neutral' | 'positive' | 'unknown' | null
+  sentimentScore?: number | null
+  sentimentPositiveScore?: number | null
+  sentimentNeutralScore?: number | null
+  sentimentNegativeScore?: number | null
   sources: NonNullable<NewsCluster['sources']>
 }
 
@@ -24,6 +29,10 @@ interface NewsClusterResponse {
 
 function uniquePresses(item: NewsClusterApiItem) {
   return [...new Set(item.sources.map((source) => source.press))]
+}
+
+function visibleSentiment(label: NewsClusterApiItem['sentimentLabel']) {
+  return label === 'negative' || label === 'neutral' || label === 'positive' ? label : null
 }
 
 export async function fetchNewsClusters(
@@ -51,8 +60,11 @@ export async function fetchNewsClusters(
     articleCount: item.articleCount,
     pressList: uniquePresses(item),
     publishedAt: item.publishedAt,
-    sentiment: null,
-    sentimentScore: null,
+    sentiment: visibleSentiment(item.sentimentLabel),
+    sentimentScore: item.sentimentScore ?? null,
+    sentimentPositiveScore: item.sentimentPositiveScore ?? null,
+    sentimentNeutralScore: item.sentimentNeutralScore ?? null,
+    sentimentNegativeScore: item.sentimentNegativeScore ?? null,
     sentimentReason: null,
     sources: item.sources,
   }))

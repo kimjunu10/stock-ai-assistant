@@ -57,6 +57,11 @@ def test_clusters_api_maps_summary_and_original_sources() -> None:
                     "article_count": 2,
                     "last_active_at": "2026-07-20T03:00:00+00:00",
                     "summary_status": "success",
+                    "sentiment_label": "positive",
+                    "sentiment_score": 0.91,
+                    "sentiment_positive_score": 0.91,
+                    "sentiment_neutral_score": 0.07,
+                    "sentiment_negative_score": 0.02,
                 }
             ],
             "news_cluster_assignments": [
@@ -87,6 +92,11 @@ def test_clusters_api_maps_summary_and_original_sources() -> None:
     assert response.items[0].sources[0].url == "https://example.com/final"
     assert response.items[0].sources[0].description.startswith("새 일감")
     assert response.items[0].sources[0].imageUrl == "https://example.com/article.jpg"
+    assert response.items[0].sentimentLabel == "positive"
+    assert response.items[0].sentimentScore == 0.91
+    assert response.items[0].sentimentPositiveScore == 0.91
+    assert response.items[0].sentimentNeutralScore == 0.07
+    assert response.items[0].sentimentNegativeScore == 0.02
     assert response.total == 1
     assert response.hasMore is False
 

@@ -19,6 +19,7 @@ dependencies = [
     "supabase>=2,<3",
     "torch>=2,<3",
     "trafilatura>=2,<3",
+    "transformers>=5,<6",
     "uvicorn[standard]>=0.34,<1",
 ]
 

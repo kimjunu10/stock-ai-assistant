@@ -105,6 +105,10 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         "assign_llm_calls": 0,
         "summaries": 0,
         "summary_failed": 0,
+        "sentiment_analyzed": 0,
+        "sentiment_skipped": 0,
+        "sentiment_unknown": 0,
+        "sentiment_failed": 0,
     }
     has_active_backfill = _run_news_stage("backfill_guard", cluster_guard.has_active_backfill)
     if has_active_backfill:
@@ -168,7 +172,8 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
     )
     logger.info(
         "NEWS_V2 roles=%d role_pending=%d assigned_new=%d assigned_existing=%d "
-        "cluster_pending=%d summaries=%d summary_failed=%d prompt_version=%s",
+        "cluster_pending=%d summaries=%d summary_failed=%d sentiment_analyzed=%d "
+        "sentiment_unknown=%d sentiment_failed=%d prompt_version=%s",
         v2_totals["role_classified"],
         v2_totals["role_pending"],
         v2_totals["assigned_new"],
@@ -176,6 +181,9 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         v2_totals["cluster_pending"],
         v2_totals["summaries"],
         v2_totals["summary_failed"],
+        v2_totals["sentiment_analyzed"],
+        v2_totals["sentiment_unknown"],
+        v2_totals["sentiment_failed"],
         ASSIGN_V2_PROMPT_VERSION,
     )
     return result

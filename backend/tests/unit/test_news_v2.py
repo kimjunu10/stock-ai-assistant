@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from app.repositories.news_v2 import NewsV2Repository
+from app.services.news_sentiment import SentimentResult
 from experiments.exp_b_factual_summaries import assign_llm_v2, classify_role
 from scripts import run_full_news_v2
 from scripts.run_full_news_v2 import _cluster_one_stock, _hydrate_v2_assigner, phase_cluster
@@ -296,6 +297,74 @@ def test_incremental_cluster_phase_can_merge_into_persisted_cluster(monkeypatch)
     assert repo.updated[0][1]["article_count"] == 4
     assert repo.saved[0]["cluster_id"] == 41
     assert repo.saved[0]["status"] == "assigned_existing"
+
+
+def test_new_cluster_persists_sentiment_from_representative_title():
+    class Repo:
+        def __init__(self):
+            self.assignments = []
+            self.sentiments = []
+
+        def get_v2_assignment_clusters(self, _stock_code, *, active_since=None):
+            return []
+
+        def create_v2_cluster(self, **_values):
+            return 77
+
+        def save_v2_assignment(self, **values):
+            self.assignments.append(values)
+
+        def get_cluster_sentiment_state(self, _cluster_id):
+            return {}
+
+        def save_cluster_sentiment(self, cluster_id, value, *, input_hash):
+            self.sentiments.append((cluster_id, value, input_hash))
+
+    class SentimentService:
+        model_id = "test-model"
+        model_revision = "test-revision"
+
+        def __init__(self):
+            self.titles = []
+
+        def analyze(self, title):
+            self.titles.append(title)
+            return SentimentResult(
+                label="positive",
+                score=0.9,
+                positive_score=0.9,
+                neutral_score=0.08,
+                negative_score=0.02,
+                model_id=self.model_id,
+                model_revision=self.model_revision,
+            )
+
+    repo = Repo()
+    service = SentimentService()
+    item = {
+        "article_id": 100,
+        "stock_code": "005380",
+        "title": "현대차, 신규 공장 투자 발표",
+        "description": "투자 계획",
+        "published_at": "2026-07-22T07:00:00+00:00",
+        "event_signature": {"subject": "현대차", "action": "투자"},
+    }
+    totals = {"cluster_pending": 0, "assigned_new": 0, "assign_llm_calls": 0}
+
+    _cluster_one_stock(
+        repo,
+        [item],
+        {100: np.array([1.0, 0.0], dtype=np.float32)},
+        set(),
+        totals,
+        sentiment_service=service,
+    )
+
+    assert service.titles == ["현대차, 신규 공장 투자 발표"]
+    assert repo.assignments[0]["cluster_id"] == 77
+    assert repo.sentiments[0][0] == 77
+    assert repo.sentiments[0][1].label == "positive"
+    assert totals["sentiment_analyzed"] == 1
 
 
 def test_v2_assignment_persists_actual_prompt_version():

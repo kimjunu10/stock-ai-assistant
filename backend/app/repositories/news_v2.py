@@ -341,6 +341,66 @@ class NewsV2Repository:
             }
         ).eq("id", cluster_id).execute()
 
+    # -------------------------------------------------------------- 감성분류
+    def get_cluster_sentiment_state(self, cluster_id: int) -> dict[str, Any] | None:
+        rows = (
+            self.client.table("news_clusters")
+            .select(
+                "id,sentiment_label,sentiment_model,sentiment_model_revision,"
+                "sentiment_input_version,sentiment_input_hash"
+            )
+            .eq("id", cluster_id)
+            .limit(1)
+            .execute()
+        ).data or []
+        return rows[0] if rows else None
+
+    def save_cluster_sentiment(
+        self,
+        cluster_id: int,
+        result: Any,
+        *,
+        input_hash: str,
+    ) -> None:
+        self.client.table("news_clusters").update(
+            {
+                "sentiment_label": result.label,
+                "sentiment_score": result.score,
+                "sentiment_positive_score": result.positive_score,
+                "sentiment_neutral_score": result.neutral_score,
+                "sentiment_negative_score": result.negative_score,
+                "sentiment_model": result.model_id,
+                "sentiment_model_revision": result.model_revision,
+                "sentiment_input_version": result.input_version,
+                "sentiment_input_hash": input_hash,
+                "sentiment_analyzed_at": _now().isoformat(),
+            }
+        ).eq("id", cluster_id).execute()
+
+    def get_sentiment_backfill_batch(
+        self,
+        *,
+        after_id: int,
+        batch_size: int,
+    ) -> list[dict[str, Any]]:
+        """Page clusters by primary key without loading the full table into memory."""
+
+        return list(
+            (
+                self.client.table("news_clusters")
+                .select(
+                    "id,sentiment_label,sentiment_model,sentiment_model_revision,"
+                    "sentiment_input_version,sentiment_input_hash,"
+                    "representative:articles!news_clusters_representative_article_id_fkey(title)"
+                )
+                .gt("id", after_id)
+                .order("id")
+                .limit(batch_size)
+                .execute()
+            ).data
+            or []
+        )
+
     def save_v2_assignment(
         self,
         *,

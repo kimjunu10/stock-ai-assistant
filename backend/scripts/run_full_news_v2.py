@@ -31,6 +31,13 @@ from app.core.config import settings
 from app.db.client import create_supabase_client, get_supabase_client
 from app.repositories.news_v2 import V2_VERSION, NewsV2Repository
 from app.services.news_clustering import BgeM3Embedder
+from app.services.news_sentiment import (
+    NewsSentimentService,
+    get_news_sentiment_service,
+    normalize_sentiment_title,
+    sentiment_input_hash,
+    sentiment_state_is_current,
+)
 from experiments.exp_b_factual_summaries import assign_llm_v2, classify_role, summarize
 from experiments.exp_b_factual_summaries import config as CFG
 
@@ -42,6 +49,43 @@ def _hours(value: str) -> float:
 
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     return parsed.timestamp() / 3600.0
+
+
+def classify_and_save_cluster_sentiment(
+    repo: NewsV2Repository,
+    cluster_id: int,
+    representative_title: str | None,
+    service: NewsSentimentService,
+    *,
+    force: bool = False,
+) -> str:
+    """Classify one representative title without allowing failures to escape."""
+
+    normalized = normalize_sentiment_title(representative_title)
+    input_hash = sentiment_input_hash(normalized)
+    try:
+        state = repo.get_cluster_sentiment_state(cluster_id) or {}
+        is_current = sentiment_state_is_current(state, normalized, service)
+        if is_current and not force:
+            return "skipped"
+
+        result = service.analyze(normalized)
+        repo.save_cluster_sentiment(cluster_id, result, input_hash=input_hash)
+        if result.label == "unknown":
+            logger.warning(
+                "NEWS_SENTIMENT_UNKNOWN cluster_id=%d error=%s",
+                cluster_id,
+                result.error or "unknown",
+            )
+            return "unknown"
+        return "analyzed"
+    except Exception as exc:  # noqa: BLE001 - sentiment must never roll back clustering
+        logger.exception(
+            "NEWS_SENTIMENT_CLUSTER_FAILED cluster_id=%d error=%s",
+            cluster_id,
+            exc,
+        )
+        return "failed"
 
 
 def _save_with_retry(
@@ -174,13 +218,21 @@ def phase_cluster(
     arts = list(uniq.values())
     vecs = embedder.encode_many(arts) if arts else np.empty((0,))
     vec_cache = {a["article_id"]: v for a, v in zip(arts, vecs, strict=True)}
+    sentiment_service = get_news_sentiment_service(settings)
 
     for stock_code, items in by_stock.items():
         # 한 종목의 오류가 전체 클러스터링을 죽이지 않도록 종목 단위로 격리한다.
         # 실패 종목은 배정이 남으므로 재실행 시 이어서 처리된다.
         completed_before = totals["assigned_new"] + totals["assigned_existing"]
         try:
-            _cluster_one_stock(repo, items, vec_cache, assigned, totals)
+            _cluster_one_stock(
+                repo,
+                items,
+                vec_cache,
+                assigned,
+                totals,
+                sentiment_service=sentiment_service,
+            )
         except Exception as exc:  # noqa: BLE001 - 종목 단위 격리, 재실행이 재시도
             logger.warning("CLUSTER_STOCK_FAILED %s: %s", stock_code, exc)
             completed_after = totals["assigned_new"] + totals["assigned_existing"]
@@ -188,7 +240,15 @@ def phase_cluster(
     return {}
 
 
-def _cluster_one_stock(repo, items, vec_cache, assigned, totals) -> None:
+def _cluster_one_stock(
+    repo,
+    items,
+    vec_cache,
+    assigned,
+    totals,
+    *,
+    sentiment_service: NewsSentimentService | None = None,
+) -> None:
     """한 종목의 company_event pair 를 시간순으로 v2 클러스터링(대표기사 갱신 포함).
 
     assigned: 이미 v2 성공 배정된 (article_id, stock_code) 집합(배치 조회, 개별 조회 회피)."""
@@ -268,6 +328,15 @@ def _cluster_one_stock(repo, items, vec_cache, assigned, totals) -> None:
             reason=res.reason,
             error_code=None,
         )
+        if sentiment_service is not None:
+            sentiment_outcome = classify_and_save_cluster_sentiment(
+                repo,
+                db_cid,
+                p.get("title"),
+                sentiment_service,
+            )
+            metric = f"sentiment_{sentiment_outcome}"
+            totals[metric] = totals.get(metric, 0) + 1
         totals[res.status] += 1
     totals["assign_llm_calls"] += assigner.calls
 
@@ -373,6 +442,12 @@ def build_report(repo: NewsV2Repository, totals: dict, activated: bool, run_key:
         "role_llm_calls": totals.get("role_llm_calls", 0),
         "assign_llm_calls": totals.get("assign_llm_calls", 0),
         "summary_calls": totals.get("summary_calls", 0),
+        "sentiment": {
+            "analyzed": totals.get("sentiment_analyzed", 0),
+            "skipped": totals.get("sentiment_skipped", 0),
+            "unknown": totals.get("sentiment_unknown", 0),
+            "failed": totals.get("sentiment_failed", 0),
+        },
         "failed_or_pending": {
             "role_pending": totals.get("role_pending", 0),
             "cluster_pending": totals.get("cluster_pending", 0),
@@ -414,6 +489,10 @@ def main() -> int:
         "assign_llm_calls": 0,
         "summaries": 0,
         "summary_failed": 0,
+        "sentiment_analyzed": 0,
+        "sentiment_skipped": 0,
+        "sentiment_unknown": 0,
+        "sentiment_failed": 0,
     }
 
     phase_roles(repo, totals, args.workers)
