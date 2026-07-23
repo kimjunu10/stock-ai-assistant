@@ -59,6 +59,13 @@ def test_call_solar_retries_invalid_json_with_compact_prompt(monkeypatch) -> Non
     assert payloads[1]["max_tokens"] == 1100
 
 
+def test_summary_prompt_requests_short_plain_core_explanation() -> None:
+    assert "1~2문장, 140자 이내" in summarize.SYSTEM_PROMPT
+    assert "첫 문장은 반드시 '쉽게 말해, '" in summarize.SYSTEM_PROMPT
+    assert "배경과 수치를 나열하지 말고" in summarize.SYSTEM_PROMPT
+    assert "호재·악재 판단이나 주가 예측은 넣지 않는다" in summarize.SYSTEM_PROMPT
+
+
 def test_selection_explanation_is_requested_as_short_beginner_copy(monkeypatch) -> None:
     payloads: list[dict] = []
 

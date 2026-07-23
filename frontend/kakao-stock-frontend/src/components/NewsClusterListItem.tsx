@@ -6,7 +6,7 @@ import type { AssistantContext, NewsCluster } from '../types'
 import { Icon } from './Icon'
 import { SelectionExplainer } from './SelectionExplainer'
 import { createSelectionAnchor, type SelectionAnchor } from './selectionAnchor'
-import { SentimentBadge } from './SentimentBadge'
+import { SentimentBadge, SentimentSummary } from './SentimentBadge'
 import { StockAvatar } from './StockAvatar'
 
 const INITIAL_SOURCE_COUNT = 5
@@ -167,6 +167,7 @@ function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: P
         <div className="news-detail__scroll">
           <section className="news-detail__easy">
             <div><Icon name="sparkles" size={17} /><strong>AI 쉬운 설명</strong></div>
+            {cluster.sentiment && <SentimentSummary score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}
             <p>{cluster.easySummary}</p>
           </section>
           <button className={assistantOpen ? 'news-detail__ask is-active' : 'news-detail__ask'} onClick={() => onAsk({ stockCode: cluster.stockCode, sourceType: 'news_cluster', sourceId: String(cluster.id), title: cluster.title, presentation: 'news_detail' })} type="button">
@@ -216,7 +217,11 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
 
   return (
     <>
-      <article className={easyOpen ? 'news-list-item is-easy-open' : 'news-list-item'}>
+      <article className={[
+        'news-list-item',
+        easyOpen ? 'is-easy-open' : '',
+        cluster.sentiment ? `news-list-item--${cluster.sentiment}` : '',
+      ].filter(Boolean).join(' ')}>
         <div
           aria-label={`${cluster.title} 상세 보기`}
           className="news-list-item__button"
@@ -236,9 +241,13 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
           <span className="news-list-item__content">
             <span className="news-list-item__eyebrow">
               {stock && <span className="news-list-item__stock"><StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} size="sm" />{stock.name}</span>}
-              {cluster.sentiment && <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}
               <span>기사 {cluster.sources?.length || cluster.articleCount}건</span>
             </span>
+            {cluster.sentiment && (
+              <span className="news-list-item__sentiment">
+                <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} variant="prominent" />
+              </span>
+            )}
             <strong className="news-list-item__title">{cluster.title}</strong>
             <span className="news-list-item__body-preview">{cleanMarkdown(cluster.factualBody ?? '')}</span>
             <span className="news-list-item__lower">
@@ -257,7 +266,8 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
         {easyOpen && (
           <div className="news-list-item__easy-popover">
             <div><span><Icon name="sparkles" size={14} /> AI 쉬운 설명</span><button aria-label="AI 쉬운 설명 닫기" onClick={() => setEasyOpen(false)} type="button"><Icon name="close" size={14} /></button></div>
-            <p>{cluster.easySummary}</p>
+            {cluster.sentiment && <SentimentSummary score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}
+            <p className="news-list-item__easy-copy">{cluster.easySummary}</p>
             <button onClick={() => { setEasyOpen(false); setOpen(true) }} type="button">상세 뉴스에서 이어 읽기 <Icon name="arrow-right" size={14} /></button>
           </div>
         )}

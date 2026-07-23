@@ -5,7 +5,7 @@ import type { AssistantContext, NewsCluster } from '../types'
 import { Icon } from './Icon'
 import { SelectionExplainer } from './SelectionExplainer'
 import { createSelectionAnchor, type SelectionAnchor } from './selectionAnchor'
-import { SentimentBadge } from './SentimentBadge'
+import { SentimentBadge, SentimentSummary } from './SentimentBadge'
 import { StockAvatar } from './StockAvatar'
 import { TermUnderline } from './TermUnderline'
 
@@ -227,6 +227,7 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
           <span><Icon name="sparkles" size={14} /> AI 쉬운 설명</span>
           <span className="news-card__easy-toggle"><span>접기</span><Icon name="chevron-right" size={14} /></span>
         </summary>
+        {cluster.sentiment && <SentimentSummary score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}
         <p><EasySummary cluster={cluster} /></p>
       </details>
       <div className="news-card__factual-body">
