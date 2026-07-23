@@ -1,6 +1,8 @@
 """News-cluster API routes."""
 
+from datetime import UTC, date, datetime, time
 from typing import Annotated, Any
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from supabase import Client
@@ -15,6 +17,7 @@ from app.schemas.clusters import (
     RelatedArticleList,
     SelectionExplanationRequest,
     SelectionExplanationResponse,
+    StockIssueBrief,
 )
 from app.sources.prices import SUPPORTED_STOCK_CODES
 from experiments.exp_b_factual_summaries.summarize import call_solar_easy_explain
@@ -48,12 +51,42 @@ def _source_from_assignment(row: dict[str, Any]) -> NewsClusterSource | None:
     )
 
 
+def _stock_issue_brief(client: Client, stock_code: str | None) -> StockIssueBrief | None:
+    if stock_code is None:
+        return None
+    seoul = ZoneInfo("Asia/Seoul")
+    seoul_today = datetime.now(seoul).date()
+    day_start = datetime.combine(seoul_today, time.min, tzinfo=seoul).astimezone(UTC)
+    try:
+        response = (
+            client.table("stock_news_issue_briefs")
+            .select("stock_code,positive_items,negative_items,generated_at")
+            .eq("stock_code", stock_code)
+            .gte("generated_at", day_start.isoformat())
+            .limit(1)
+            .execute()
+        )
+    except Exception:  # noqa: BLE001 - migration 전 배포와 테스트 더블 호환
+        return None
+    rows = response.data or []
+    if not rows:
+        return None
+    row = rows[0]
+    return StockIssueBrief(
+        stockCode=stock_code,
+        positiveItems=row.get("positive_items") or [],
+        negativeItems=row.get("negative_items") or [],
+        generatedAt=str(row.get("generated_at") or ""),
+    )
+
+
 @router.get("", response_model=NewsClusterList)
 def get_clusters(
     client: Annotated[Client, Depends(get_supabase_client)],
     stock_code: Annotated[str | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
+    published_date: Annotated[date | None, Query()] = None,
 ) -> NewsClusterList:
     """Return factual summaries and original sources for completed clusters."""
 
@@ -77,11 +110,26 @@ def get_clusters(
         query = query.eq("clustering_version", active_version)
     if stock_code is not None:
         query = query.eq("stock_code", stock_code)
+    if published_date is not None:
+        seoul = ZoneInfo("Asia/Seoul")
+        day_start = datetime.combine(published_date, time.min, tzinfo=seoul).astimezone(UTC)
+        day_end = datetime.combine(published_date, time.max, tzinfo=seoul).astimezone(UTC)
+        query = query.gte("last_active_at", day_start.isoformat()).lte(
+            "last_active_at", day_end.isoformat()
+        )
     cluster_response = query.range(offset, offset + limit - 1).execute()
     clusters = list(cluster_response.data or [])
     total = int(cluster_response.count or 0)
+    issue_brief = _stock_issue_brief(client, stock_code)
     if not clusters:
-        return NewsClusterList(items=[], total=total, offset=offset, limit=limit, hasMore=False)
+        return NewsClusterList(
+            items=[],
+            total=total,
+            offset=offset,
+            limit=limit,
+            hasMore=False,
+            issueBrief=issue_brief,
+        )
 
     cluster_ids = [int(row["id"]) for row in clusters]
     assignments: list[dict[str, Any]] = []
@@ -143,6 +191,7 @@ def get_clusters(
         offset=offset,
         limit=limit,
         hasMore=offset + len(items) < total,
+        issueBrief=issue_brief,
     )
 
 

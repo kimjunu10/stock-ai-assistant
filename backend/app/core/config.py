@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     # 나중에 scripts/summarize_v2.py 로 원하는 날짜부터 일괄 요약한다.
     # (동일사건 판정 assign_llm 은 클러스터링에 필수라 이 플래그와 무관하게 유지된다.)
     news_summary_enabled: bool = False
+    # 오늘의 핵심 이슈는 변경된 종목들을 한 요청으로 묶어 최대 스케줄러 주기당
+    # Solar 1회만 호출한다. 입력 해시가 같으면 호출하지 않는다.
+    news_issue_brief_enabled: bool = True
     # 스케줄러 뉴스 사이클(summary/verify) 후 RAG 증분 인덱싱을 자동 실행할지 여부.
     # 실패해도 뉴스 수집/클러스터링을 중단시키지 않는다(예외 격리).
     rag_index_on_schedule: bool = True

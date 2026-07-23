@@ -35,14 +35,30 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
     return <div className="not-found shell"><span>404</span><h1>분석 대상이 아닌 종목이에요.</h1><p>현재는 지정된 5개 종목만 제공하고 있어요.</p></div>
   }
 
+  if (marketData.status === 'loading' || news.isLoading) {
+    return (
+      <main className="stock-page-loading shell">
+        <div className="stock-page-loading__mark">
+          <span />
+          <span />
+        </div>
+        <strong>{stock.name} 핵심 정보를 준비하고 있어요</strong>
+        <p>실시간 주가와 오늘의 뉴스 흐름을 함께 불러오는 중입니다.</p>
+        <LoadingDots label={`${stock.name} 종목 상세 불러오는 중`} />
+      </main>
+    )
+  }
+
   return (
     <main className="stock-page shell">
       <StockHeader
         isRefreshing={marketData.isRefreshing}
         marketData={marketData.data}
         marketDataStatus={marketData.status}
+        newsClusters={news.clusters}
         onAsk={onAsk}
         stock={stock}
+        issueBrief={news.issueBrief}
       />
 
       <section className="stock-section chart-section">

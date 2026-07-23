@@ -112,6 +112,18 @@ export interface NewsCluster {
   terms?: Term[]
 }
 
+export interface StockIssueBriefItem {
+  text: string
+  clusterIds: number[]
+}
+
+export interface StockIssueBrief {
+  stockCode: string
+  positiveItems: StockIssueBriefItem[]
+  negativeItems: StockIssueBriefItem[]
+  generatedAt: string
+}
+
 export interface NewsSource {
   articleId: number
   title: string

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from supabase import Client
 
@@ -536,6 +537,71 @@ class NewsV2Repository:
                 ).isoformat(),
             }
         self.client.table("news_clusters").update(payload).eq("id", cluster_id).execute()
+
+    # -------------------------------------------------------- 오늘의 핵심 이슈
+    def get_today_issue_brief_candidates(self) -> list[dict[str, Any]]:
+        """Return today's confident directional summaries in Seoul time."""
+
+        seoul = ZoneInfo("Asia/Seoul")
+        now = _now().astimezone(seoul)
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(UTC)
+        end = (start + timedelta(days=1)).isoformat()
+        return list(
+            (
+                self.client.table("news_clusters")
+                .select(
+                    "id,stock_code,easy_explanation,article_count,last_active_at,"
+                    "sentiment_label,sentiment_score"
+                )
+                .eq("clustering_version", self.version)
+                .eq("summary_status", "success")
+                .in_("sentiment_label", ["positive", "negative"])
+                .gte("sentiment_score", 0.65)
+                .gte("last_active_at", start.isoformat())
+                .lt("last_active_at", end)
+                .order("article_count", desc=True)
+                .execute()
+            ).data
+            or []
+        )
+
+    def get_issue_brief_states(self, stock_codes: list[str]) -> dict[str, dict[str, Any]]:
+        if not stock_codes:
+            return {}
+        rows = (
+            self.client.table("stock_news_issue_briefs")
+            .select("stock_code,source_hash,generated_at")
+            .in_("stock_code", stock_codes)
+            .execute()
+        ).data or []
+        return {str(row["stock_code"]): row for row in rows}
+
+    def save_issue_brief(
+        self,
+        *,
+        stock_code: str,
+        positive_items: list[dict[str, Any]],
+        negative_items: list[dict[str, Any]],
+        source_cluster_ids: list[int],
+        source_hash: str,
+        model: str,
+        prompt_version: str,
+    ) -> None:
+        now = _now().isoformat()
+        self.client.table("stock_news_issue_briefs").upsert(
+            {
+                "stock_code": stock_code,
+                "positive_items": positive_items,
+                "negative_items": negative_items,
+                "source_cluster_ids": source_cluster_ids,
+                "source_hash": source_hash,
+                "model": model,
+                "prompt_version": prompt_version,
+                "generated_at": now,
+                "updated_at": now,
+            },
+            on_conflict="stock_code",
+        ).execute()
 
     # -------------------------------------------------------------- 검사/활성화
     def count_pending_roles(self) -> int:

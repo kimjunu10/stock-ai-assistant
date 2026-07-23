@@ -1,4 +1,4 @@
-import type { NewsCluster } from '../types'
+import type { NewsCluster, StockIssueBrief } from '../types'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 
@@ -25,14 +25,29 @@ interface NewsClusterResponse {
   offset: number
   limit: number
   hasMore: boolean
+  issueBrief?: StockIssueBrief | null
 }
 
 function uniquePresses(item: NewsClusterApiItem) {
   return [...new Set(item.sources.map((source) => source.press))]
 }
 
-function visibleSentiment(label: NewsClusterApiItem['sentimentLabel']) {
-  return label === 'negative' || label === 'neutral' || label === 'positive' ? label : null
+const DIRECTIONAL_SENTIMENT_THRESHOLD = 0.65
+
+function visibleSentiment(
+  label: NewsClusterApiItem['sentimentLabel'],
+  score: number | null | undefined,
+) {
+  if (label !== 'negative' && label !== 'neutral' && label !== 'positive') {
+    return { label: null, score: null }
+  }
+  if (
+    (label === 'negative' || label === 'positive')
+    && (score ?? 0) < DIRECTIONAL_SENTIMENT_THRESHOLD
+  ) {
+    return { label: 'neutral' as const, score: null }
+  }
+  return { label, score: score ?? null }
 }
 
 function cleanEasyExplanation(value: string) {
@@ -44,38 +59,49 @@ function cleanEasyExplanation(value: string) {
 
 export async function fetchNewsClusters(
   signal: AbortSignal,
-  options: { limit?: number; offset?: number; stockCode?: string } = {},
+  options: { limit?: number; offset?: number; publishedDate?: string; stockCode?: string } = {},
 ) {
   const params = new URLSearchParams({
     limit: String(options.limit ?? 20),
     offset: String(options.offset ?? 0),
   })
   if (options.stockCode) params.set('stock_code', options.stockCode)
+  if (options.publishedDate) params.set('published_date', options.publishedDate)
   const response = await fetch(`${API_BASE_URL}/api/clusters?${params}`, { signal })
   if (!response.ok) {
     const body = await response.json().catch(() => ({})) as { detail?: string }
     throw new Error(body.detail ?? '뉴스 브리핑을 불러오지 못했어요.')
   }
   const payload = await response.json() as NewsClusterResponse
-  const clusters = payload.items.map<NewsCluster>((item) => ({
-    id: item.id,
-    stockCode: item.stockCode,
-    kind: item.kind,
-    title: item.title,
-    easySummary: cleanEasyExplanation(item.easyExplanation),
-    factualBody: item.factualBody,
-    articleCount: item.articleCount,
-    pressList: uniquePresses(item),
-    publishedAt: item.publishedAt,
-    sentiment: visibleSentiment(item.sentimentLabel),
-    sentimentScore: item.sentimentScore ?? null,
-    sentimentPositiveScore: item.sentimentPositiveScore ?? null,
-    sentimentNeutralScore: item.sentimentNeutralScore ?? null,
-    sentimentNegativeScore: item.sentimentNegativeScore ?? null,
-    sentimentReason: null,
-    sources: item.sources,
-  }))
-  return { clusters, hasMore: payload.hasMore, total: payload.total }
+  const clusters = payload.items.map<NewsCluster>((item) => {
+    const sentiment = visibleSentiment(item.sentimentLabel, item.sentimentScore)
+    return {
+      id: item.id,
+      stockCode: item.stockCode,
+      kind: item.kind,
+      title: item.title,
+      easySummary: cleanEasyExplanation(item.easyExplanation),
+      factualBody: item.factualBody,
+      articleCount: item.articleCount,
+      pressList: uniquePresses(item),
+      publishedAt: item.publishedAt,
+      sentiment: sentiment.label,
+      sentimentScore: sentiment.score,
+      sentimentPositiveScore: item.sentimentPositiveScore ?? null,
+      sentimentNeutralScore: item.sentimentNeutralScore ?? null,
+      sentimentNegativeScore: item.sentimentNegativeScore ?? null,
+      sentimentReason: sentiment.score === null && item.sentimentScore != null
+        ? 'low_confidence'
+        : null,
+      sources: item.sources,
+    }
+  })
+  return {
+    clusters,
+    hasMore: payload.hasMore,
+    issueBrief: payload.issueBrief ?? null,
+    total: payload.total,
+  }
 }
 
 export async function explainNewsSelection(clusterId: number, text: string) {

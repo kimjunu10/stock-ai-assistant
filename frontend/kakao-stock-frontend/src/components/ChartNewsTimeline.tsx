@@ -4,6 +4,7 @@ import type { AssistantContext, NewsCluster } from '../types'
 import type { NewsMoment } from '../utils/chartNews'
 import { Icon } from './Icon'
 import { SentimentBadge } from './SentimentBadge'
+import { NewsClusterDetail } from './NewsClusterListItem'
 
 interface ChartNewsMarkersProps {
   moments: NewsMoment[]
@@ -52,8 +53,13 @@ export function ChartNewsMarkers({
             style={{ left }}
             type="button"
           >
-            <i />
-            {moment.clusters.length > 1 && <b>{moment.clusters.length}</b>}
+            <span className="price-chart__news-marker-time">{timeFormatter.format(moment.time)}</span>
+            <span className="price-chart__news-marker-stem" />
+            <span className="price-chart__news-marker-label">
+              <i />
+              뉴스
+              <b>{moment.clusters.length}</b>
+            </span>
           </button>
         )
       })}
@@ -64,9 +70,11 @@ export function ChartNewsMarkers({
 function TimelineStory({
   cluster,
   onAsk,
+  onOpen,
 }: {
   cluster: NewsCluster
   onAsk: ChartNewsPanelProps['onAsk']
+  onOpen: () => void
 }) {
   const stock = getStock(cluster.stockCode)
   const source = cluster.sources?.[0]
@@ -83,7 +91,19 @@ function TimelineStory({
   }
 
   return (
-    <article className="chart-news-story">
+    <article
+      aria-label={`${cluster.title} 상세 보기`}
+      className="chart-news-story"
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen()
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <div className="chart-news-story__image">
         {image && <img alt="" onError={handleImageError} src={image} />}
         <time dateTime={cluster.publishedAt}>
@@ -102,12 +122,15 @@ function TimelineStory({
         </div>
         <strong>{cluster.title}</strong>
         <button
-          onClick={() => onAsk({
-            stockCode: cluster.stockCode,
-            sourceId: String(cluster.id),
-            sourceType: 'news_cluster',
-            title: cluster.title,
-          })}
+          onClick={(event) => {
+            event.stopPropagation()
+            onAsk({
+              stockCode: cluster.stockCode,
+              sourceId: String(cluster.id),
+              sourceType: 'news_cluster',
+              title: cluster.title,
+            })
+          }}
           type="button"
         >
           <Icon name="message" size={16} />
@@ -120,6 +143,7 @@ function TimelineStory({
 
 export function ChartNewsPanel({ moment, onAsk }: ChartNewsPanelProps) {
   const [visibleCount, setVisibleCount] = useState(3)
+  const [openCluster, setOpenCluster] = useState<NewsCluster | null>(null)
 
   useEffect(() => {
     setVisibleCount(3)
@@ -139,7 +163,9 @@ export function ChartNewsPanel({ moment, onAsk }: ChartNewsPanelProps) {
         <p>사진과 제목, 호재·악재 여부를 먼저 확인하세요.</p>
       </div>
       <div className="chart-news-panel__grid">
-        {visible.map((cluster) => <TimelineStory cluster={cluster} key={cluster.id} onAsk={onAsk} />)}
+        {visible.map((cluster) => (
+          <TimelineStory cluster={cluster} key={cluster.id} onAsk={onAsk} onOpen={() => setOpenCluster(cluster)} />
+        ))}
       </div>
       {moment.clusters.length > 3 && (
         <button
@@ -154,6 +180,13 @@ export function ChartNewsPanel({ moment, onAsk }: ChartNewsPanelProps) {
             : '접기'}
           <Icon name="arrow-right" size={16} />
         </button>
+      )}
+      {openCluster && (
+        <NewsClusterDetail
+          cluster={openCluster}
+          onAsk={onAsk}
+          onClose={() => setOpenCluster(null)}
+        />
       )}
     </section>
   )

@@ -147,7 +147,7 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
       ? range.commonAncestorContainer.parentElement
       : range.commonAncestorContainer as Element
     if (!ancestor || !article.contains(ancestor)) return
-    setSelectedText(createSelectionAnchor(range, text))
+    setSelectedText(createSelectionAnchor(range, text, { clientX: event.clientX, clientY: event.clientY }))
     setSelectionExplanation('')
     setSelectionError('')
   }

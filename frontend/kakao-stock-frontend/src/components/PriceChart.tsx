@@ -74,6 +74,15 @@ export function PriceChart({
   }, [moments, selectedMomentKey])
 
   useEffect(() => {
+    if (range !== 'intraday' || Object.keys(markerPositions).length === 0) return
+    const visibleMoments = moments.filter((moment) => typeof markerPositions[moment.key] === 'number')
+    if (visibleMoments.length === 0) return
+    if (!visibleMoments.some((moment) => moment.key === selectedMomentKey)) {
+      setSelectedMomentKey(visibleMoments.at(-1)?.key ?? '')
+    }
+  }, [markerPositions, moments, range, selectedMomentKey])
+
+  useEffect(() => {
     const container = containerRef.current
     if (!container || !data || status !== 'ready') return
 
@@ -186,7 +195,9 @@ export function PriceChart({
     }
   }, [data, moments, range, status, theme])
 
-  const selectedMoment = moments.find((moment) => moment.key === selectedMomentKey)
+  const selectedMoment = typeof markerPositions[selectedMomentKey] === 'number'
+    ? moments.find((moment) => moment.key === selectedMomentKey)
+    : undefined
 
   return (
     <div className="price-chart-experience">

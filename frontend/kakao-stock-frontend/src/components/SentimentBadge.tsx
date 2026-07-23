@@ -55,7 +55,7 @@ export function SentimentSummary({ score, sentiment }: Omit<SentimentBadgeProps,
     <div className={`sentiment-summary sentiment-summary--${sentiment}`}>
       <div>
         <span className="sentiment-summary__signal"><span />{PROMINENT_LABELS[sentiment]}</span>
-        {typeof score === 'number' && <span className="sentiment-summary__score">분석 확률 {Math.round(score * 100)}%</span>}
+        {typeof score === 'number' && <span className="sentiment-summary__score">모델 확신도 {Math.round(score * 100)}%</span>}
       </div>
       <strong>{copy.headline}</strong>
       <p>{copy.description} <small>실제 주가의 상승·하락을 예측하는 뜻은 아니에요.</small></p>

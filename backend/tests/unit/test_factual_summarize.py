@@ -93,4 +93,9 @@ def test_selection_explanation_is_requested_as_short_beginner_copy(monkeypatch) 
     assert "\\n\\n" not in parsed["explanation"]
     assert "\n\n" in parsed["explanation"]
     assert payloads[0]["max_tokens"] == 240
-    assert "최대 3문장, 180자 이내" in payloads[0]["messages"][0]["content"]
+    assert "최대 2문장, 120자 이내" in payloads[0]["messages"][0]["content"]
+    system_prompt = payloads[0]["messages"][0]["content"]
+    no_forced_prefix_rule = (
+        "'뜻:', '여기서는:' 같은 접두어나 글머리 기호를 습관적으로 붙이지 않는다"
+    )
+    assert no_forced_prefix_rule in system_prompt
