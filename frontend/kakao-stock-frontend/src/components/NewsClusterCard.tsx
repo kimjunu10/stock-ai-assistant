@@ -224,7 +224,7 @@ export function NewsClusterCard({ cluster, compact = false, onAsk, showStock = f
         open={isEasyExplanationOpen}
       >
         <summary>
-          <span><Icon name="sparkles" size={14} /> AI 쉬운 설명</span>
+          <span><Icon name="sparkles" size={14} /> 핵심 정리</span>
           <span className="news-card__easy-toggle"><span>접기</span><Icon name="chevron-right" size={14} /></span>
         </summary>
         {cluster.sentiment && <SentimentSummary score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}

@@ -175,7 +175,7 @@ export function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClo
         </header>
         <div className="news-detail__scroll">
           <section className="news-detail__easy">
-            <div><Icon name="sparkles" size={17} /><strong>AI 쉬운 설명</strong></div>
+            <div><Icon name="sparkles" size={17} /><strong>핵심 정리</strong></div>
             {cluster.sentiment && <SentimentSummary score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}
             <ul>
               {easyPoints(cluster.easySummary).map((point) => <li key={point}>{point}</li>)}
@@ -269,7 +269,7 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
                 className="news-list-item__easy-button"
                 onClick={(event) => { event.stopPropagation(); setEasyOpen((value) => !value) }}
                 type="button"
-              ><Icon name="sparkles" size={13} /> AI 쉽게 보기 <Icon name="chevron-right" size={13} /></button>
+              ><Icon name="sparkles" size={13} /> 핵심만 보기 <Icon name="chevron-right" size={13} /></button>
               <PublisherLogos cluster={cluster} />
             </span>
           </span>

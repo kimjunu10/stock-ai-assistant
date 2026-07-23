@@ -74,10 +74,10 @@ export function SelectionExplainer({ anchor, error, explanation, isLoading, onAs
         </div>
       )}
       {showExplanation && (
-        <section aria-label="선택한 문구 AI 쉬운 설명" className={popoverClass}>
-          <header><span>AI 쉬운 설명</span><button aria-label="쉬운 설명 닫기" onClick={onClose} type="button">닫기</button></header>
+        <section aria-label="선택한 문구 핵심 설명" className={popoverClass}>
+          <header><span>핵심 설명</span><button aria-label="핵심 설명 닫기" onClick={onClose} type="button">닫기</button></header>
           <blockquote>“{anchor.text}”</blockquote>
-          {isLoading ? <div className="selection-explainer__loading"><LoadingDots label="쉬운 설명 생성 중" /></div> : (
+          {isLoading ? <div className="selection-explainer__loading"><LoadingDots label="핵심 설명 생성 중" /></div> : (
             <div className={error ? 'selection-explainer__answer is-error' : 'selection-explainer__answer'}>
               {explanationParagraphs(explanation || error).map((paragraph, index) => (
                 <div className={`selection-explainer__point${paragraph.isBullet && !error ? ' is-bullet' : ''}`} key={`${index}:${paragraph.text}`}>

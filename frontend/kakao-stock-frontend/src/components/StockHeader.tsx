@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { AssistantContext, MarketDataStatus, NewsCluster, Stock, StockIssueBrief, StockMarketData } from '../types'
 import { AnimatedPrice } from './AnimatedPrice'
 import { NewsClusterDetail } from './NewsClusterListItem'
@@ -32,13 +32,6 @@ function formatAsOf(value: string) {
   }).format(new Date(value))
 }
 
-function isTodayInSeoul(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return false
-  const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' })
-  return formatter.format(date) === formatter.format(new Date())
-}
-
 export function StockHeader({ isRefreshing, issueBrief, marketData, marketDataStatus, newsClusters, onAsk, stock }: StockHeaderProps) {
   const [openCluster, setOpenCluster] = useState<NewsCluster | null>(null)
   const quote = marketData?.quote
@@ -46,14 +39,6 @@ export function StockHeader({ isRefreshing, issueBrief, marketData, marketDataSt
   const changeText = quote
     ? `어제보다 ${formatSignedWon(quote.change)} (${quote.changeRate > 0 ? '+' : ''}${quote.changeRate.toFixed(2)}%)`
     : marketDataStatus === 'loading' ? '실제 시세를 확인하고 있어요' : '시세를 불러오지 못했어요'
-  const issues = useMemo(() => {
-    const today = newsClusters.filter((cluster) => isTodayInSeoul(cluster.publishedAt))
-    const pick = (sentiment: 'positive' | 'negative') => today.filter(
-      (cluster) => cluster.sentiment === sentiment,
-    )
-    return { negative: pick('negative'), positive: pick('positive') }
-  }, [newsClusters])
-
   return (
     <section className="stock-hero">
       <div className="stock-hero__overview">
@@ -85,10 +70,7 @@ export function StockHeader({ isRefreshing, issueBrief, marketData, marketDataSt
         </div>
       </div>
       <div className="stock-hero__issues">
-        <div className="stock-hero__issues-heading">
-          <div><span>오늘의 핵심 이슈</span><strong>AI가 오늘 뉴스를 묶어 핵심만 정리했어요</strong></div>
-          <time>30분마다 갱신</time>
-        </div>
+        <h2 className="stock-hero__issues-heading">오늘의 핵심</h2>
         <div className="stock-hero__issue-stack">
           {(['positive', 'negative'] as const).map((sentiment) => {
             const generated = issueBrief
@@ -103,10 +85,7 @@ export function StockHeader({ isRefreshing, issueBrief, marketData, marketDataSt
             }))
             return (
               <section className={`stock-hero__issue-group is-${sentiment}`} key={sentiment}>
-                <div className="stock-hero__issue-title">
-                  <h2><i />{sentiment === 'positive' ? '긍정 요인' : '부정 요인'}</h2>
-                  <span>관련 뉴스 {issues[sentiment].length}건</span>
-                </div>
+                <h3><i />{sentiment === 'positive' ? '좋아진 점' : '주의할 점'}</h3>
                 {entries.length > 0 ? (
                   <ul>
                     {entries.map((entry) => (
@@ -122,7 +101,7 @@ export function StockHeader({ isRefreshing, issueBrief, marketData, marketDataSt
                       </li>
                     ))}
                   </ul>
-                ) : <p>{issueBrief ? '뚜렷한 이슈가 없어요.' : '핵심 이슈를 정리하고 있어요.'}</p>}
+                ) : <p>{issueBrief ? '뚜렷한 변화가 없어요.' : '정리하고 있어요.'}</p>}
               </section>
             )
           })}
