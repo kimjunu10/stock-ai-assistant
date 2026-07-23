@@ -71,6 +71,20 @@ export interface StockMarketOverview {
   quotes: StockListQuote[]
 }
 
+export interface StockCompanyProfile {
+  stockCode: string
+  name: string
+  englishName: string | null
+  market: string
+  ceo: string | null
+  establishedDate: string | null
+  listDate: string | null
+  sharesOutstanding: number | null
+  homepage: string | null
+  industryCode: string | null
+  source: string
+}
+
 export type MarketDataStatus = 'loading' | 'ready' | 'error'
 
 export interface Term {

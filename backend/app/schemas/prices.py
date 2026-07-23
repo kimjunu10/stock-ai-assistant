@@ -67,3 +67,17 @@ class StockListQuote(CamelModel):
 class StockMarketOverview(CamelModel):
     source: str
     quotes: list[StockListQuote]
+
+
+class StockCompanyProfile(CamelModel):
+    stock_code: str
+    name: str
+    english_name: str | None = None
+    market: str
+    ceo: str | None = None
+    established_date: str | None = None
+    list_date: str | None = None
+    shares_outstanding: int | None = None
+    homepage: str | None = None
+    industry_code: str | None = None
+    source: str = "DART · 토스증권 Open API"

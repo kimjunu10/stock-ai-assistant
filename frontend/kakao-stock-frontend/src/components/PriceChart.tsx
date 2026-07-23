@@ -39,7 +39,8 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
       ? data.intradayCandles
       : data.candles
     const toChartTime = (value: string) => (
-      isIntraday ? Math.floor(new Date(value).getTime() / 1000) : value
+      // lightweight-charts는 Unix timestamp를 UTC 축으로 표시하므로 KST(+09:00)를 보정한다.
+      isIntraday ? Math.floor(new Date(value).getTime() / 1000) + 9 * 60 * 60 : value
     ) as Time
     const chart = createChart(container, {
       autoSize: true,

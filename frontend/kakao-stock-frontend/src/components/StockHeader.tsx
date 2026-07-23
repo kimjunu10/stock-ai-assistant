@@ -13,19 +13,9 @@ interface StockHeaderProps {
 
 const numberFormatter = new Intl.NumberFormat('ko-KR')
 
-function formatWon(value: number) {
-  return `${numberFormatter.format(value)}원`
-}
-
 function formatSignedWon(value: number) {
   const sign = value > 0 ? '+' : ''
   return `${sign}${numberFormatter.format(value)}원`
-}
-
-function formatVolume(value: number) {
-  if (value >= 100_000_000) return `${(value / 100_000_000).toFixed(1)}억주`
-  if (value >= 10_000) return `${numberFormatter.format(Math.round(value / 10_000))}만주`
-  return `${numberFormatter.format(value)}주`
 }
 
 function formatAsOf(value: string) {
@@ -41,12 +31,9 @@ function formatAsOf(value: string) {
 
 export function StockHeader({ isRefreshing, marketData, marketDataStatus, onAsk, stock }: StockHeaderProps) {
   const quote = marketData?.quote
-  const today = marketData?.candles.at(-1)
-  const bestAsk = marketData?.asks[0]
-  const bestBid = marketData?.bids[0]
   const direction = !quote || quote.change === 0 ? 'flat' : quote.change > 0 ? 'up' : 'down'
   const changeText = quote
-    ? `전일 대비 ${formatSignedWon(quote.change)} (${quote.changeRate > 0 ? '+' : ''}${quote.changeRate.toFixed(2)}%)`
+    ? `어제보다 ${formatSignedWon(quote.change)} (${quote.changeRate > 0 ? '+' : ''}${quote.changeRate.toFixed(2)}%)`
     : marketDataStatus === 'loading' ? '실제 시세를 확인하고 있어요' : '시세를 불러오지 못했어요'
 
   return (
@@ -79,14 +66,11 @@ export function StockHeader({ isRefreshing, marketData, marketDataStatus, onAsk,
           </div>
         </div>
       </div>
-      <div className="stock-hero__facts">
-        <div><span>오늘 시가</span><strong>{today ? formatWon(today.open) : '—'}</strong></div>
-        <div><span>오늘 고가</span><strong className="quote-up">{today ? formatWon(today.high) : '—'}</strong></div>
-        <div><span>오늘 저가</span><strong className="quote-down">{today ? formatWon(today.low) : '—'}</strong></div>
-        <div><span>거래량</span><strong>{quote ? formatVolume(quote.volume) : '—'}</strong></div>
-        <div><span>최우선 매도</span><strong className="quote-up">{bestAsk ? formatWon(bestAsk.price) : '—'}</strong></div>
-        <div><span>최우선 매수</span><strong className="quote-down">{bestBid ? formatWon(bestBid.price) : '—'}</strong></div>
-        <div className="price-limit"><span>가격 범위</span><strong>{marketData?.lowerLimitPrice ? formatWon(marketData.lowerLimitPrice) : '—'} ~ {marketData?.upperLimitPrice ? formatWon(marketData.upperLimitPrice) : '—'}</strong></div>
+      <div className="stock-hero__actions">
+        <p>
+          숫자만 보지 않아도 괜찮아요.
+          <strong> 오늘 움직임과 뉴스가 왜 연결되는지 AI에게 바로 물어보세요.</strong>
+        </p>
         <button
           className="primary-button"
           onClick={() =>
