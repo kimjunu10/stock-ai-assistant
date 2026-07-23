@@ -46,6 +46,21 @@ class FakeSession:
                     ]
                 }
             )
+        if url.endswith("/api/v1/stocks"):
+            return FakeResponse(
+                {
+                    "result": [
+                        {
+                            "symbol": "005930",
+                            "name": "삼성전자",
+                            "englishName": "SamsungElec",
+                            "market": "KOSPI",
+                            "listDate": "1975-06-11",
+                            "sharesOutstanding": "5846278608",
+                        }
+                    ]
+                }
+            )
         if url.endswith("/api/v1/orderbook"):
             return FakeResponse(
                 {
@@ -187,3 +202,29 @@ def test_auth_reports_ip_allowlist_failure() -> None:
 
     assert error.value.code == "ip_not_allowed"
     assert "서버 IP" in str(error.value)
+
+
+def test_stock_info_combines_toss_master_and_dart_profile() -> None:
+    session = FakeSession()
+    client = TossInvestClient(
+        "client-id",
+        "client-secret",
+        session=session,  # type: ignore[arg-type]
+    )
+
+    result = client.get_stock_info(
+        "005930",
+        dart_profile={
+            "stock_name": "삼성전자",
+            "corp_name_eng": "SAMSUNG ELECTRONICS CO., LTD.",
+            "ceo_nm": "전영현, 노태문",
+            "est_dt": "1969-01-13",
+            "hm_url": "www.samsung.com/sec",
+            "induty_code": "264",
+        },
+    )
+
+    assert result.list_date == "1975-06-11"
+    assert result.shares_outstanding == 5_846_278_608
+    assert result.ceo == "전영현, 노태문"
+    assert result.homepage == "https://www.samsung.com/sec"

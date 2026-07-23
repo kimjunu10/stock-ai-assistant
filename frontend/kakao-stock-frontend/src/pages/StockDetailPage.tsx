@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { getStock } from '../data/mockData'
 import type { AssistantContext, Theme } from '../types'
 import { DisclosureList, ReportList } from '../components/ResearchLists'
@@ -8,6 +9,7 @@ import { LoadingDots } from '../components/LoadingDots'
 import { SectionHeader } from '../components/SectionHeader'
 import { StockHeader } from '../components/StockHeader'
 import { PriceChart } from '../components/PriceChart'
+import { CompanySnapshot } from '../components/CompanySnapshot'
 import { useStockMarketData } from '../hooks/useStockMarketData'
 import { useStockFundamentals } from '../hooks/useStockFundamentals'
 import { useNewsClusters } from '../hooks/useNewsClusters'
@@ -24,10 +26,27 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
   const stock = getStock(stockCode)
   const marketData = useStockMarketData(stockCode)
   const fundamentals = useStockFundamentals(stockCode)
-  const news = useNewsClusters({ limit: 10, stockCode })
+  const news = useNewsClusters({ limit: 50, stockCode })
+  const [visibleNewsCount, setVisibleNewsCount] = useState(3)
+
+  useEffect(() => setVisibleNewsCount(3), [stockCode])
 
   if (!stock) {
     return <div className="not-found shell"><span>404</span><h1>분석 대상이 아닌 종목이에요.</h1><p>현재는 지정된 5개 종목만 제공하고 있어요.</p></div>
+  }
+
+  if (marketData.status === 'loading' || news.isLoading) {
+    return (
+      <main className="stock-page-loading shell">
+        <div className="stock-page-loading__mark">
+          <span />
+          <span />
+        </div>
+        <strong>{stock.name} 핵심 정보를 준비하고 있어요</strong>
+        <p>실시간 주가와 오늘의 뉴스 흐름을 함께 불러오는 중입니다.</p>
+        <LoadingDots label={`${stock.name} 종목 상세 불러오는 중`} />
+      </main>
+    )
   }
 
   return (
@@ -36,14 +55,18 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
         isRefreshing={marketData.isRefreshing}
         marketData={marketData.data}
         marketDataStatus={marketData.status}
+        newsClusters={news.clusters}
         onAsk={onAsk}
         stock={stock}
+        issueBrief={news.issueBrief}
       />
 
       <section className="stock-section chart-section">
         <PriceChart
+          clusters={news.clusters}
           data={marketData.data}
           error={marketData.error}
+          onAsk={onAsk}
           onRetry={marketData.retry}
           status={marketData.status}
           stockName={stock.name}
@@ -53,18 +76,32 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
 
       <section className="stock-section stock-news-section">
         <SectionHeader
-          action={<span className="section-meta">뉴스 마커는 후속 기능으로 제공</span>}
-          description="차트와 섞지 않고, 같은 종목의 주요 사건을 아래에서 확인하세요."
-          eyebrow="차트 아래 주요 뉴스"
+          action={<span className="section-meta">{news.total > 0 ? `전체 ${news.total}개 사건` : '뉴스 사건'}</span>}
+          description="여러 기사를 하나의 사건으로 묶어, 지금 알아야 할 소식부터 보여드려요."
+          eyebrow="중요한 소식"
           title={`${stock.name}에 지금 중요한 소식`}
         />
         <div className="stock-news-list">
           {news.isLoading && <div className="stock-news-loading"><LoadingDots label={`${stock.name} 뉴스 불러오는 중`} /></div>}
-          {news.clusters.map((cluster) => <NewsClusterListItem assistantOpen={assistantOpen} cluster={cluster} key={cluster.id} onAssistantClose={onAssistantClose} onAsk={onAsk} />)}
+          {news.clusters.slice(0, visibleNewsCount).map((cluster) => <NewsClusterListItem assistantOpen={assistantOpen} cluster={cluster} key={cluster.id} onAssistantClose={onAssistantClose} onAsk={onAsk} />)}
           {!news.isLoading && news.clusters.length === 0 && (
             <p className="data-notice">{news.error || '아직 생성된 뉴스 사건 정리가 없어요.'}</p>
           )}
         </div>
+        {(visibleNewsCount < news.clusters.length || news.hasMore) && (
+          <button
+            className="stock-news-more"
+            disabled={news.isLoadingMore}
+            onClick={() => {
+              if (visibleNewsCount + 5 > news.clusters.length && news.hasMore) news.loadMore()
+              setVisibleNewsCount((count) => count + 5)
+            }}
+            type="button"
+          >
+            {news.isLoadingMore ? '소식 불러오는 중' : '중요한 소식 더보기'}
+            <Icon name="arrow-right" size={16} />
+          </button>
+        )}
       </section>
 
       <section className="stock-section">
@@ -74,9 +111,15 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
           eyebrow="핵심 재무"
           title="숫자로 보는 회사"
         />
+        <CompanySnapshot
+          marketData={marketData.data}
+          profile={fundamentals.companyProfile}
+          stock={stock}
+        />
         <div className="financial-grid">
           {fundamentals.financials.map((item) => <FinancialCard item={item} key={item.account} />)}
         </div>
+        {fundamentals.companyProfileError && <p className="data-notice">{fundamentals.companyProfileError}</p>}
         {fundamentals.financialError && <p className="data-notice">{fundamentals.financialError}</p>}
       </section>
 

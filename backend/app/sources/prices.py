@@ -13,6 +13,7 @@ import requests
 from app.schemas.prices import (
     Candle,
     OrderbookLevel,
+    StockCompanyProfile,
     StockListQuote,
     StockMarketData,
     StockMarketOverview,
@@ -61,6 +62,13 @@ class TossInvestClient:
         self._market_data_cache: dict[str, tuple[float, StockMarketData]] = {}
         self._market_overview_cache: tuple[float, StockMarketOverview] | None = None
         self._previous_close_cache: dict[str, tuple[str, float]] = {}
+        self._stock_info_cache: dict[str, StockCompanyProfile] = {}
+        self._market_data_fetch_locks = {
+            stock_code: threading.Lock() for stock_code in SUPPORTED_STOCK_CODES
+        }
+        self._stock_info_fetch_locks = {
+            stock_code: threading.Lock() for stock_code in SUPPORTED_STOCK_CODES
+        }
 
     def get_stock_market_overview(self) -> StockMarketOverview:
         """지원 종목 전체의 현재가를 한 번에 조회해 목록 화면에 제공한다."""
@@ -149,58 +157,151 @@ class TossInvestClient:
         if not 2 <= candle_count <= 200:
             raise ValueError("candle_count는 2 이상 200 이하여야 합니다.")
 
-        now = self._clock()
-        with self._lock:
-            cached = self._market_data_cache.get(stock_code)
-            if cached and cached[0] > now:
-                return cached[1]
+        with self._market_data_fetch_locks[stock_code]:
+            now = self._clock()
+            with self._lock:
+                cached = self._market_data_cache.get(stock_code)
+                if cached and cached[0] > now:
+                    return cached[1]
 
-        price_payload = self._request_json(
-            "GET",
-            "/api/v1/prices",
-            params={"symbols": stock_code},
-        )
-        candle_payload = self._request_json(
-            "GET",
-            "/api/v1/candles",
-            params={
-                "symbol": stock_code,
-                "interval": "1d",
-                "count": candle_count,
-                "adjusted": "true",
-            },
-        )
-        intraday_payload = self._request_json(
-            "GET",
-            "/api/v1/candles",
-            params={
+            price_payload = self._request_json(
+                "GET",
+                "/api/v1/prices",
+                params={"symbols": stock_code},
+            )
+            candle_payload = self._request_json(
+                "GET",
+                "/api/v1/candles",
+                params={
+                    "symbol": stock_code,
+                    "interval": "1d",
+                    "count": candle_count,
+                    "adjusted": "true",
+                },
+            )
+            quote_date = self._quote_date(price_payload, stock_code)
+            intraday_payload = self._get_intraday_candles(stock_code, quote_date)
+            orderbook_payload = self._request_json(
+                "GET", "/api/v1/orderbook", params={"symbol": stock_code}
+            )
+            price_limit_payload = self._request_json(
+                "GET", "/api/v1/price-limits", params={"symbol": stock_code}
+            )
+            market_data = self._normalize_market_data(
+                stock_code,
+                price_payload,
+                candle_payload,
+                intraday_payload,
+                orderbook_payload,
+                price_limit_payload,
+            )
+
+            with self._lock:
+                self._market_data_cache[stock_code] = (
+                    self._clock() + self._market_data_cache_seconds,
+                    market_data,
+                )
+            return market_data
+
+    def get_stock_info(
+        self,
+        stock_code: str,
+        *,
+        dart_profile: dict[str, Any] | None = None,
+    ) -> StockCompanyProfile:
+        """토스 종목 마스터와 저장된 DART 기업개황을 합친다."""
+
+        if stock_code not in SUPPORTED_STOCK_CODES:
+            raise ValueError("지원하지 않는 종목 코드입니다.")
+        with self._stock_info_fetch_locks[stock_code]:
+            with self._lock:
+                cached = self._stock_info_cache.get(stock_code)
+            if cached:
+                return cached
+
+            payload = self._request_json(
+                "GET",
+                "/api/v1/stocks",
+                params={"symbols": stock_code},
+            )
+            try:
+                item = next(row for row in payload["result"] if row["symbol"] == stock_code)
+                profile = dart_profile or {}
+                homepage = self._website(profile.get("hm_url"))
+                result = StockCompanyProfile(
+                    stock_code=stock_code,
+                    name=str(profile.get("stock_name") or item["name"]),
+                    english_name=str(profile.get("corp_name_eng") or item.get("englishName") or "")
+                    or None,
+                    market=str(item["market"]),
+                    ceo=str(profile.get("ceo_nm") or "") or None,
+                    established_date=str(profile.get("est_dt") or "") or None,
+                    list_date=str(item.get("listDate") or "") or None,
+                    shares_outstanding=(
+                        int(item["sharesOutstanding"])
+                        if item.get("sharesOutstanding") is not None
+                        else None
+                    ),
+                    homepage=homepage,
+                    industry_code=str(profile.get("induty_code") or "") or None,
+                )
+            except (KeyError, StopIteration, TypeError, ValueError) as exc:
+                raise TossApiError("토스증권 종목 정보 응답을 변환하지 못했습니다.") from exc
+
+            with self._lock:
+                self._stock_info_cache[stock_code] = result
+            return result
+
+    def _get_intraday_candles(self, stock_code: str, quote_date: str) -> dict[str, Any]:
+        """공식 nextBefore 페이지네이션으로 당일 1분봉 전체를 수집한다."""
+
+        candles_by_time: dict[str, dict[str, Any]] = {}
+        before: str | None = None
+        # 국내 NXT 세션까지 포함해도 4 × 200봉이면 하루 전체를 덮는다.
+        for _ in range(4):
+            params: dict[str, Any] = {
                 "symbol": stock_code,
                 "interval": "1m",
-                "count": 120,
+                "count": 200,
                 "adjusted": "true",
-            },
-        )
-        orderbook_payload = self._request_json(
-            "GET", "/api/v1/orderbook", params={"symbol": stock_code}
-        )
-        price_limit_payload = self._request_json(
-            "GET", "/api/v1/price-limits", params={"symbol": stock_code}
-        )
-        market_data = self._normalize_market_data(
-            stock_code,
-            price_payload,
-            candle_payload,
-            intraday_payload,
-            orderbook_payload,
-            price_limit_payload,
-        )
+            }
+            if before:
+                params["before"] = before
+            payload = self._request_json("GET", "/api/v1/candles", params=params)
+            try:
+                page = payload["result"]
+                page_candles = page["candles"]
+            except (KeyError, TypeError) as exc:
+                raise TossApiError("토스증권 1분봉 응답을 변환하지 못했습니다.") from exc
 
-        with self._lock:
-            self._market_data_cache[stock_code] = (
-                self._clock() + self._market_data_cache_seconds,
-                market_data,
-            )
-        return market_data
+            reached_previous_day = False
+            for candle in page_candles:
+                timestamp = str(candle["timestamp"])
+                if datetime.fromisoformat(timestamp).date().isoformat() == quote_date:
+                    candles_by_time[timestamp] = candle
+                else:
+                    reached_previous_day = True
+            next_before = page.get("nextBefore")
+            if reached_previous_day or not next_before or not page_candles:
+                break
+            before = str(next_before)
+
+        return {"result": {"candles": list(candles_by_time.values()), "nextBefore": before}}
+
+    @staticmethod
+    def _quote_date(price_payload: dict[str, Any], stock_code: str) -> str:
+        try:
+            item = next(row for row in price_payload["result"] if row["symbol"] == stock_code)
+            return datetime.fromisoformat(item["timestamp"]).date().isoformat()
+        except (KeyError, StopIteration, TypeError, ValueError) as exc:
+            raise TossApiError("토스증권 현재가 시각을 변환하지 못했습니다.") from exc
+
+    @staticmethod
+    def _website(value: Any) -> str | None:
+        text = str(value or "").strip()
+        if not text:
+            return None
+        return text if text.startswith(("http://", "https://")) else f"https://{text}"
 
     def _get_access_token(self) -> str:
         now = self._clock()

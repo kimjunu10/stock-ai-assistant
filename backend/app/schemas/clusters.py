@@ -1,6 +1,6 @@
 """Public response models for summarized news clusters."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class NewsClusterSource(BaseModel):
@@ -30,12 +30,25 @@ class NewsClusterItem(BaseModel):
     sentimentNegativeScore: float | None = None
 
 
+class StockIssueBriefItem(BaseModel):
+    text: str
+    clusterIds: list[int] = Field(default_factory=list)
+
+
+class StockIssueBrief(BaseModel):
+    stockCode: str
+    positiveItems: list[StockIssueBriefItem] = Field(default_factory=list)
+    negativeItems: list[StockIssueBriefItem] = Field(default_factory=list)
+    generatedAt: str
+
+
 class NewsClusterList(BaseModel):
     items: list[NewsClusterItem]
     total: int
     offset: int
     limit: int
     hasMore: bool
+    issueBrief: StockIssueBrief | None = None
 
 
 class RelatedArticle(BaseModel):

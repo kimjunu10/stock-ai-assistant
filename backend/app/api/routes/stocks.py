@@ -4,9 +4,11 @@ from functools import lru_cache
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from supabase import Client
 
 from app.core.config import settings
-from app.schemas.prices import StockMarketData, StockMarketOverview
+from app.db.client import get_supabase_client
+from app.schemas.prices import StockCompanyProfile, StockMarketData, StockMarketOverview
 from app.sources.prices import SUPPORTED_STOCK_CODES, TossApiError, TossInvestClient
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
@@ -64,5 +66,29 @@ def get_stock_market_data(
 
     try:
         return client.get_stock_market_data(stock_code)
+    except TossApiError as exc:
+        raise _market_data_error(exc) from exc
+
+
+@router.get("/{stock_code}/company-profile", response_model=StockCompanyProfile)
+def get_stock_company_profile(
+    stock_code: str,
+    client: Annotated[TossInvestClient, Depends(get_toss_client)],
+    db: Annotated[Client, Depends(get_supabase_client)],
+) -> StockCompanyProfile:
+    """DART 기업개황과 토스 종목 마스터의 회사 기본 정보를 제공한다."""
+
+    if stock_code not in SUPPORTED_STOCK_CODES:
+        raise HTTPException(status_code=404, detail="현재는 지정된 5개 종목만 제공하고 있어요.")
+    response = (
+        db.table("company_profiles")
+        .select("stock_name,corp_name_eng,ceo_nm,est_dt,hm_url,induty_code")
+        .eq("stock_code", stock_code)
+        .limit(1)
+        .execute()
+    )
+    dart_profile = (response.data or [None])[0]
+    try:
+        return client.get_stock_info(stock_code, dart_profile=dart_profile)
     except TossApiError as exc:
         raise _market_data_error(exc) from exc

@@ -61,7 +61,8 @@ def test_call_solar_retries_invalid_json_with_compact_prompt(monkeypatch) -> Non
 
 def test_summary_prompt_requests_short_plain_core_explanation() -> None:
     assert "1~2문장, 140자 이내" in summarize.SYSTEM_PROMPT
-    assert "첫 문장은 반드시 '쉽게 말해, '" in summarize.SYSTEM_PROMPT
+    assert "'쉽게 말해', '쉽게 말하면'" in summarize.SYSTEM_PROMPT
+    assert "상투적인 서두를 쓰지 말고" in summarize.SYSTEM_PROMPT
     assert "배경과 수치를 나열하지 말고" in summarize.SYSTEM_PROMPT
     assert "호재·악재 판단이나 주가 예측은 넣지 않는다" in summarize.SYSTEM_PROMPT
 
@@ -92,4 +93,9 @@ def test_selection_explanation_is_requested_as_short_beginner_copy(monkeypatch) 
     assert "\\n\\n" not in parsed["explanation"]
     assert "\n\n" in parsed["explanation"]
     assert payloads[0]["max_tokens"] == 240
-    assert "최대 3문장, 180자 이내" in payloads[0]["messages"][0]["content"]
+    assert "최대 2문장, 120자 이내" in payloads[0]["messages"][0]["content"]
+    system_prompt = payloads[0]["messages"][0]["content"]
+    no_forced_prefix_rule = (
+        "'뜻:', '여기서는:' 같은 접두어나 글머리 기호를 습관적으로 붙이지 않는다"
+    )
+    assert no_forced_prefix_rule in system_prompt

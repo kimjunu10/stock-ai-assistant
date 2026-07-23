@@ -15,7 +15,11 @@ from app.jobs import scheduler as sched
 def _neutralize(monkeypatch):
     """뉴스 사이클의 외부 의존성을 전부 무해한 mock 으로 대체한다."""
 
-    cfg = Settings(rag_index_on_schedule=True, news_summary_enabled=False)
+    cfg = Settings(
+        rag_index_on_schedule=True,
+        news_issue_brief_enabled=False,
+        news_summary_enabled=False,
+    )
     # validate_news_collection 은 .env 자격증명으로 통과. 클래스 메서드를 무해화한다.
     monkeypatch.setattr(Settings, "validate_news_collection", lambda self: None)
 

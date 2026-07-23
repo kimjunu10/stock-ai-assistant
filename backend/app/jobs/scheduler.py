@@ -19,6 +19,7 @@ from app.jobs.rag_index_job import run_incremental_news_index
 from app.repositories.news import NewsRepository
 from app.repositories.news_clusters import NewsClusterRepository
 from app.repositories.news_v2 import V2_VERSION, NewsV2Repository
+from app.services.news_issue_briefs import refresh_stock_issue_briefs
 from app.sources.naver_news import NaverNewsClient
 from experiments.exp_b_factual_summaries.assign_llm_v2 import ASSIGN_V2_PROMPT_VERSION
 from scripts.run_full_news_v2 import phase_cluster, phase_roles, phase_summary, phase_verify
@@ -105,6 +106,10 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         "assign_llm_calls": 0,
         "summaries": 0,
         "summary_failed": 0,
+        "issue_brief_calls": 0,
+        "issue_briefs": 0,
+        "issue_brief_skipped": 0,
+        "issue_brief_failed": 0,
         "sentiment_analyzed": 0,
         "sentiment_skipped": 0,
         "sentiment_unknown": 0,
@@ -127,6 +132,18 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         else:
             logger.info("NEWS_SUMMARY_SKIPPED news_summary_enabled=false (비용 절감; 요약 지연)")
             v2_totals["summary_skipped"] = 1
+        if cfg.news_issue_brief_enabled:
+            try:
+                issue_brief_totals = _run_news_stage(
+                    "issue_brief",
+                    lambda: refresh_stock_issue_briefs(v2_repo, cfg.upstage_api_key),
+                )
+                v2_totals.update(issue_brief_totals)
+            except Exception:  # noqa: BLE001 - 핵심 이슈 실패가 뉴스 파이프라인을 막지 않게 격리
+                logger.exception("NEWS_ISSUE_BRIEF_FAILED")
+                v2_totals["issue_brief_failed"] += 1
+        else:
+            logger.info("NEWS_ISSUE_BRIEF_SKIPPED news_issue_brief_enabled=false")
         v2_ok, v2_problems = _run_news_stage(
             "verify",
             lambda: phase_verify(v2_repo, v2_totals, require_summaries=cfg.news_summary_enabled),
@@ -173,7 +190,8 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
     logger.info(
         "NEWS_V2 roles=%d role_pending=%d assigned_new=%d assigned_existing=%d "
         "cluster_pending=%d summaries=%d summary_failed=%d sentiment_analyzed=%d "
-        "sentiment_unknown=%d sentiment_failed=%d prompt_version=%s",
+        "sentiment_unknown=%d sentiment_failed=%d issue_brief_calls=%d "
+        "issue_briefs=%d issue_brief_failed=%d prompt_version=%s",
         v2_totals["role_classified"],
         v2_totals["role_pending"],
         v2_totals["assigned_new"],
@@ -184,6 +202,9 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         v2_totals["sentiment_analyzed"],
         v2_totals["sentiment_unknown"],
         v2_totals["sentiment_failed"],
+        v2_totals["issue_brief_calls"],
+        v2_totals["issue_briefs"],
+        v2_totals["issue_brief_failed"],
         ASSIGN_V2_PROMPT_VERSION,
     )
     return result

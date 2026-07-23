@@ -75,5 +75,6 @@ backend/migrations/*
 !backend/migrations/0018_rag_hybrid_lexical_exact_first.sql
 !backend/migrations/0019_rag_terms_extend.sql
 !backend/migrations/0020_news_cluster_sentiment.sql
+!backend/migrations/0021_stock_news_issue_briefs.sql
 !backend/migrations/rollback/
 !backend/migrations/rollback/*.sql

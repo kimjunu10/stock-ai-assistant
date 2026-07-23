@@ -79,7 +79,16 @@ function paragraphs(value: string) {
   return [sentences.slice(0, midpoint).join(' '), sentences.slice(midpoint).join(' ')]
 }
 
-function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: Props & { onClose: () => void }) {
+function easyPoints(value: string) {
+  return cleanMarkdown(value)
+    .replace(/^\s*(쉽게\s*말(?:해|하면)|이\s*기사는)\s*[:,]?\s*/u, '')
+    .split(/(?<=[.!?])\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 2)
+}
+
+export function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: Props & { onClose: () => void }) {
   const stock = getStock(cluster.stockCode)
   const articleRef = useRef<HTMLElement>(null)
   const [sourceCount, setSourceCount] = useState(INITIAL_SOURCE_COUNT)
@@ -118,7 +127,7 @@ function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: P
       ? range.commonAncestorContainer.parentElement
       : range.commonAncestorContainer as Element
     if (!ancestor || !article.contains(ancestor)) return
-    setSelectedText(createSelectionAnchor(range, text))
+    setSelectedText(createSelectionAnchor(range, text, { clientX: event.clientX, clientY: event.clientY }))
     setExplanation('')
     setExplanationError('')
   }
@@ -168,7 +177,9 @@ function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: P
           <section className="news-detail__easy">
             <div><Icon name="sparkles" size={17} /><strong>AI 쉬운 설명</strong></div>
             {cluster.sentiment && <SentimentSummary score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}
-            <p>{cluster.easySummary}</p>
+            <ul>
+              {easyPoints(cluster.easySummary).map((point) => <li key={point}>{point}</li>)}
+            </ul>
           </section>
           <button className={assistantOpen ? 'news-detail__ask is-active' : 'news-detail__ask'} onClick={() => onAsk({ stockCode: cluster.stockCode, sourceType: 'news_cluster', sourceId: String(cluster.id), title: cluster.title, presentation: 'news_detail' })} type="button">
             <Icon name="message" size={17} />
@@ -176,8 +187,10 @@ function NewsClusterDetail({ assistantOpen = false, cluster, onAsk, onClose }: P
             <Icon name="arrow-right" size={16} />
           </button>
           <section className="news-detail__body">
-            <h3>사건 정리</h3>
-            {paragraphs(cluster.factualBody ?? cluster.easySummary).map((paragraph, index) => <p key={`${cluster.id}:detail:${index}`}>{paragraph}</p>)}
+            <h3>뉴스 내용</h3>
+            {paragraphs(cluster.factualBody ?? cluster.easySummary).map((paragraph, index) => (
+              <p key={`${cluster.id}:detail:${index}`}>{paragraph}</p>
+            ))}
           </section>
           {heroImage && <img alt="" className="news-detail__hero-image" onError={(event) => { event.currentTarget.hidden = true }} src={heroImage} />}
           <section className="news-detail__sources">
@@ -220,7 +233,7 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
       <article className={[
         'news-list-item',
         easyOpen ? 'is-easy-open' : '',
-        cluster.sentiment ? `news-list-item--${cluster.sentiment}` : '',
+        cluster.sentiment ? `is-sentiment-${cluster.sentiment}` : '',
       ].filter(Boolean).join(' ')}>
         <div
           aria-label={`${cluster.title} 상세 보기`}
@@ -241,13 +254,13 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
           <span className="news-list-item__content">
             <span className="news-list-item__eyebrow">
               {stock && <span className="news-list-item__stock"><StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} size="sm" />{stock.name}</span>}
-              <span>기사 {cluster.sources?.length || cluster.articleCount}건</span>
+              <time>{formatRelativeTime(representative?.publishedAt ?? cluster.publishedAt)}</time>
+              {cluster.sentiment && (
+                <span className="news-list-item__sentiment">
+                  <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} variant="prominent" />
+                </span>
+              )}
             </span>
-            {cluster.sentiment && (
-              <span className="news-list-item__sentiment">
-                <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} variant="prominent" />
-              </span>
-            )}
             <strong className="news-list-item__title">{cluster.title}</strong>
             <span className="news-list-item__body-preview">{cleanMarkdown(cluster.factualBody ?? '')}</span>
             <span className="news-list-item__lower">
@@ -258,17 +271,16 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
                 type="button"
               ><Icon name="sparkles" size={13} /> AI 쉽게 보기 <Icon name="chevron-right" size={13} /></button>
               <PublisherLogos cluster={cluster} />
-              <time>{formatRelativeTime(representative?.publishedAt ?? cluster.publishedAt)}</time>
             </span>
           </span>
           <Icon className="news-list-item__arrow" name="chevron-right" size={19} />
         </div>
         {easyOpen && (
           <div className="news-list-item__easy-popover">
-            <div><span><Icon name="sparkles" size={14} /> AI 쉬운 설명</span><button aria-label="AI 쉬운 설명 닫기" onClick={() => setEasyOpen(false)} type="button"><Icon name="close" size={14} /></button></div>
-            {cluster.sentiment && <SentimentSummary score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}
-            <p className="news-list-item__easy-copy">{cluster.easySummary}</p>
-            <button onClick={() => { setEasyOpen(false); setOpen(true) }} type="button">상세 뉴스에서 이어 읽기 <Icon name="arrow-right" size={14} /></button>
+            <div><span>한눈 요약</span><button aria-label="한눈 요약 닫기" onClick={() => setEasyOpen(false)} type="button"><Icon name="close" size={14} /></button></div>
+            <ul className="news-list-item__easy-points">
+              {easyPoints(cluster.easySummary).map((point) => <li key={point}>{point}</li>)}
+            </ul>
           </div>
         )}
       </article>

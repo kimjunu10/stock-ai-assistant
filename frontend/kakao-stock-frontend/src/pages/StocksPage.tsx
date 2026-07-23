@@ -3,11 +3,24 @@ import { AppLink, type Navigate } from '../components/AppLink'
 import { Icon } from '../components/Icon'
 import { StockAvatar } from '../components/StockAvatar'
 import { AnimatedPrice } from '../components/AnimatedPrice'
+import { SentimentBadge } from '../components/SentimentBadge'
 import { useStockMarketOverview } from '../hooks/useStockMarketOverview'
 import { useNewsClusters } from '../hooks/useNewsClusters'
 
 interface StocksPageProps {
   onNavigate: Navigate
+}
+
+function formatRelativeTime(value: string) {
+  const timestamp = new Date(value).getTime()
+  if (Number.isNaN(timestamp)) return ''
+  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60_000))
+  if (minutes < 1) return '방금 전'
+  if (minutes < 60) return `${minutes}분 전`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}시간 전`
+  const date = new Date(timestamp)
+  return `${date.getMonth() + 1}월 ${date.getDate()}일`
 }
 
 export function StocksPage({ onNavigate }: StocksPageProps) {
@@ -16,16 +29,18 @@ export function StocksPage({ onNavigate }: StocksPageProps) {
 
   return (
     <main className="subpage shell">
-      <header className="page-title">
-        <span className="eyebrow">분석 종목</span>
-        <h1>다섯 기업을 깊게 봅니다</h1>
-        <p>너무 많은 종목보다, 뉴스·공시·리포트가 충분히 쌓이는 5개 기업에 집중해요.</p>
+      <header className="stocks-page__header">
+        <div>
+          <h1>종목 둘러보기</h1>
+          <p>현재 주가와 최근 핵심 뉴스를 한눈에 확인하세요.</p>
+        </div>
+        <span className="stocks-page__live">
+          <i className={`live-dot${marketOverview.isRefreshing ? ' live-dot--refreshing' : ''}`} />
+          실시간 시세 · 15초 갱신
+        </span>
       </header>
 
-      <div className="stock-table-card">
-        <div className="stock-table-card__head">
-          <span>종목</span><span>현재가</span><span>분류 예정</span><span>최근 뉴스</span><span />
-        </div>
+      <div className="stock-overview-grid">
         {STOCKS.map((stock) => {
           const latestNews = news.clusters.find((cluster) => cluster.stockCode === stock.code)
           const quote = marketOverview.quotes[stock.code]
@@ -34,30 +49,44 @@ export function StocksPage({ onNavigate }: StocksPageProps) {
             ? `${quote.changeRate > 0 ? '+' : ''}${quote.changeRate.toFixed(2)}%`
             : stock.changeRate
           return (
-            <AppLink className="stock-table-row" href={`/stocks/${stock.code}`} key={stock.code} onNavigate={onNavigate}>
-              <div className="stock-table-row__identity">
-                <StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} />
-                <div><strong>{stock.name}</strong><span>{stock.code} · {stock.sector}</span></div>
+            <AppLink className="stock-overview-card" href={`/stocks/${stock.code}`} key={stock.code} onNavigate={onNavigate}>
+              <div className="stock-overview-card__top">
+                <div className="stock-overview-card__identity">
+                  <StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} size="lg" />
+                  <div>
+                    <strong>{stock.name}</strong>
+                    <span>{stock.code} · {stock.sector}</span>
+                  </div>
+                </div>
+                <div className="stock-overview-card__quote">
+                  <AnimatedPrice fallback={stock.price} value={quote?.price ?? null} />
+                  <span className={`quote-change quote-change--${direction}`}>{changeRate}</span>
+                </div>
               </div>
-              <div className="stock-table-row__quote">
-                <AnimatedPrice fallback={stock.price} value={quote?.price ?? null} />
-                <span className={`quote-change quote-change--${direction}`}>{changeRate}</span>
+              <div className="stock-overview-card__news">
+                <div className="stock-overview-card__news-meta">
+                  <span>최근 핵심 뉴스</span>
+                  <span>
+                    {latestNews?.sentiment && (
+                      <SentimentBadge
+                        sentiment={latestNews.sentiment}
+                        variant="compact"
+                      />
+                    )}
+                    {latestNews && <time>{formatRelativeTime(latestNews.publishedAt)}</time>}
+                  </span>
+                </div>
+                <strong>{latestNews?.title ?? '새로운 주요 뉴스가 없어요.'}</strong>
               </div>
-              <div aria-label="호재 악재 분류 모델 연결 예정" />
-              <p>{latestNews?.title ?? '새로운 주요 뉴스가 없어요.'}</p>
-              <Icon name="chevron-right" size={18} />
+              <div className="stock-overview-card__footer">
+                <span>종목 상세 보기</span>
+                <Icon name="arrow-right" size={17} />
+              </div>
             </AppLink>
           )
         })}
       </div>
-
-      <aside className="data-note">
-        <Icon name="info" size={18} />
-        <div>
-          <strong><i className={`live-dot${marketOverview.isRefreshing ? ' live-dot--refreshing' : ''}`} /> 토스증권 실제 시세 · 15초 자동 갱신</strong>
-          <p>{marketOverview.error || '현재가와 전일 대비 등락률이 자동으로 업데이트됩니다.'}</p>
-        </div>
-      </aside>
+      {marketOverview.error && <p className="stocks-page__error">{marketOverview.error}</p>}
     </main>
   )
 }

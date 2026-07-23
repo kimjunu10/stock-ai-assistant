@@ -53,12 +53,14 @@ export function SentimentSummary({ score, sentiment }: Omit<SentimentBadgeProps,
   const copy = SUMMARY_COPY[sentiment]
   return (
     <div className={`sentiment-summary sentiment-summary--${sentiment}`}>
-      <div>
-        <span className="sentiment-summary__signal"><span />{PROMINENT_LABELS[sentiment]}</span>
-        {typeof score === 'number' && <span className="sentiment-summary__score">분석 확률 {Math.round(score * 100)}%</span>}
+      <div className="sentiment-summary__header">
+        <strong>{copy.headline}</strong>
+        {typeof score === 'number' && <span className="sentiment-summary__score">모델 확신도 {Math.round(score * 100)}%</span>}
       </div>
-      <strong>{copy.headline}</strong>
-      <p>{copy.description} <small>실제 주가의 상승·하락을 예측하는 뜻은 아니에요.</small></p>
+      <p>
+        {copy.description} 모델 분석은 완벽하지 않을 수 있으며,
+        실제 주가의 상승·하락을 예측하는 뜻은 아니에요.
+      </p>
     </div>
   )
 }
