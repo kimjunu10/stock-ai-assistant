@@ -24,8 +24,10 @@ MIGRATIONS = [
     "0016_rag_search_semantic.sql",
     "0017_rag_hybrid_rrf.sql",
     "0018_rag_hybrid_lexical_exact_first.sql",
+    "0019_rag_terms_extend.sql",
 ]
 ROLLBACKS = [
+    "0019_rag_terms_extend_down.sql",
     "0018_rag_hybrid_lexical_exact_first_down.sql",
     "0017_rag_hybrid_rrf_down.sql",
     "0016_rag_search_semantic_down.sql",

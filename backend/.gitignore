@@ -23,3 +23,10 @@ docs/*
 # docs/rag/** 화이트리스트가 하위 .DS_Store 까지 포함시키지 않도록 다시 무시.
 .DS_Store
 **/.DS_Store
+# 원본 PDF(한국은행 경제금융용어 800선 등)는 저작물이므로 Git에 포함하지 않는다.
+docs/rag/**/*.pdf
+docs/rag/*.pdf
+# 20개 검증 샘플 JSON은 정의 원문 전량을 담으므로 제외(검증 md만 추적).
+docs/rag/phase_4/bok_terms_sample20.json
+# 드라이런 전량 JSON(정의 원문 포함) 제외
+docs/rag/phase_4/bok_dryrun_full.json
