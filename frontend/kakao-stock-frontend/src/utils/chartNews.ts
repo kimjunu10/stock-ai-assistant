@@ -45,6 +45,16 @@ export function buildNewsMoments(candles: PriceCandle[], clusters: NewsCluster[]
   })
 
   return [...byMoment.values()]
-    .map((moment) => ({ ...moment, sentiment: dominantSentiment(moment.clusters) }))
+    .map((moment) => {
+      const sortedClusters = [...moment.clusters].sort((a, b) => (
+        b.articleCount - a.articleCount
+        || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      ))
+      return {
+        ...moment,
+        clusters: sortedClusters,
+        sentiment: dominantSentiment(sortedClusters),
+      }
+    })
     .sort((a, b) => a.time - b.time)
 }

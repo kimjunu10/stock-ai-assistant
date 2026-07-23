@@ -157,7 +157,7 @@ export function PriceChart({
       const width = container.clientWidth
       setMarkerPositions(Object.fromEntries(moments.map((moment) => {
         const coordinate = chart.timeScale().timeToCoordinate(intradayChartTime(moment.time))
-        const visible = coordinate !== null && coordinate >= 0 && coordinate <= width
+        const visible = coordinate !== null && coordinate >= 12 && coordinate <= width - 12
         return [moment.key, visible ? coordinate : null]
       })))
     }
@@ -165,7 +165,17 @@ export function PriceChart({
     const resizeObserver = new ResizeObserver(updateMarkerPositions)
     resizeObserver.observe(container)
     chart.timeScale().subscribeVisibleTimeRangeChange(updateMarkerPositions)
-    chart.timeScale().fitContent()
+    if (isIntraday && candles.length > 0) {
+      const latestTime = new Date(candles.at(-1)?.time ?? '').getTime()
+      const twoHours = 2 * 60 * 60 * 1000
+      const edgePadding = 5 * 60 * 1000
+      chart.timeScale().setVisibleRange({
+        from: intradayChartTime(latestTime - twoHours - edgePadding),
+        to: intradayChartTime(latestTime),
+      })
+    } else {
+      chart.timeScale().fitContent()
+    }
     const animationFrame = requestAnimationFrame(updateMarkerPositions)
 
     return () => {
@@ -206,15 +216,14 @@ export function PriceChart({
           ref={containerRef}
         />
         {range === 'intraday' && status === 'ready' && (
-          <>
-            <span className="price-chart__news-label">뉴스</span>
+          <div className="price-chart__news-track">
             <ChartNewsMarkers
               moments={moments}
               onSelect={setSelectedMomentKey}
               positions={markerPositions}
               selectedKey={selectedMomentKey}
             />
-          </>
+          </div>
         )}
         {status === 'loading' && (
           <div className="chart-state chart-state--loading" role="status">

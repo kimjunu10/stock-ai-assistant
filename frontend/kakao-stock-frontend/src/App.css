@@ -401,14 +401,14 @@
   .chart-legend > span { @apply size-[9px] rounded-sm border-2 border-brand; }
   .source-label { @apply rounded-lg bg-brand-soft px-2.5 py-1.5 font-bold text-brand-ink; }
 
-  .price-chart-frame { @apply relative h-[520px] overflow-hidden rounded-[20px] border border-line bg-surface; }
+  .price-chart-frame { @apply relative h-[560px] overflow-hidden rounded-[20px] border border-line bg-surface; }
   .price-chart__meta { @apply absolute inset-x-0 top-0 z-20 flex h-12 items-center justify-between border-b border-line bg-surface/95 px-5 text-[10px] text-faint backdrop-blur; }
   .price-chart__meta strong { @apply text-ink; }
   .price-chart__meta > span { @apply flex items-center gap-1.5; }
   .chart-range-tabs { @apply flex h-8 items-center rounded-[10px] bg-subtle p-0.5; }
   .chart-range-tabs button { @apply h-7 cursor-pointer rounded-lg border-0 bg-transparent px-3 text-[10px] font-bold text-faint; }
   .chart-range-tabs button.active { @apply bg-surface text-ink shadow-soft; }
-  .price-chart__canvas { @apply absolute inset-[48px_0_0]; }
+  .price-chart__canvas { @apply absolute inset-[48px_0_64px]; }
   .chart-state { @apply absolute inset-[48px_0_0] z-10 flex flex-col items-center justify-center bg-surface p-6 text-center text-muted; }
   .chart-state strong { @apply mt-3 text-sm text-ink; }
   .chart-state p { @apply mt-1.5 mb-0 text-[11px] leading-[1.8]; }
@@ -417,19 +417,18 @@
   .chart-state--error .secondary-button { @apply mt-4; }
 
   .price-chart-experience:has(.chart-news-panel) .price-chart-frame { @apply rounded-b-none; }
-  .price-chart__news-label { @apply pointer-events-none absolute bottom-[27px] left-4 z-30 rounded-full bg-ink px-2 py-1 text-[10px] font-extrabold text-surface; }
-  .price-chart__news-markers { @apply pointer-events-none absolute right-0 bottom-[30px] left-0 z-30 h-0; }
-  .price-chart__news-marker { @apply pointer-events-auto absolute top-0 -translate-x-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent p-0; }
-  .price-chart__news-marker i { @apply block size-[18px] rounded-full border-4 border-surface bg-[#aeb4bf] shadow-[0_0_0_2px_#aeb4bf]; }
+  .price-chart__news-track { @apply absolute inset-x-0 bottom-0 h-16 border-t border-line bg-surface; }
+  .price-chart__news-markers { @apply pointer-events-none absolute inset-0 z-30; }
+  .price-chart__news-marker { @apply pointer-events-auto absolute top-[27px] -translate-x-1/2 cursor-pointer border-0 bg-transparent p-0; }
+  .price-chart__news-marker::before { @apply absolute bottom-[9px] left-1/2 h-[19px] w-px -translate-x-1/2 bg-line content-['']; }
+  .price-chart__news-marker i { @apply relative block size-5 rounded-full border-4 border-surface bg-[#aeb4bf] shadow-[0_0_0_2px_#aeb4bf] transition-transform; }
+  .price-chart__news-marker:hover i,
+  .price-chart__news-marker:focus-visible i { @apply scale-110; }
   .price-chart__news-marker.is-positive i { @apply bg-[#16a36a] shadow-[0_0_0_2px_#16a36a]; }
   .price-chart__news-marker.is-negative i { @apply bg-[#e5484d] shadow-[0_0_0_2px_#e5484d]; }
   .price-chart__news-marker.is-neutral i { @apply bg-[#687386] shadow-[0_0_0_2px_#687386]; }
   .price-chart__news-marker.is-active i { @apply border-brand shadow-[0_0_0_5px_rgba(255,220,0,0.35)]; }
-  .price-chart__news-marker > span { @apply pointer-events-none absolute top-6 left-1/2 hidden -translate-x-1/2 rounded-md bg-ink px-2 py-1 text-[10px] font-extrabold text-surface whitespace-nowrap; }
-  .price-chart__news-marker:hover > span,
-  .price-chart__news-marker:focus-visible > span,
-  .price-chart__news-marker.is-active > span { @apply block; }
-  .price-chart__news-marker b { @apply absolute -top-3 -right-3 flex size-5 items-center justify-center rounded-full bg-ink text-[10px] font-extrabold text-surface; }
+  .price-chart__news-marker b { @apply absolute -top-2.5 -right-3 flex size-5 items-center justify-center rounded-full border-2 border-surface bg-ink text-[9px] font-extrabold text-surface; }
 
   .chart-news-panel { @apply rounded-b-[20px] border border-t-0 border-line bg-surface px-7 py-7; }
   .chart-news-panel__heading { @apply mb-5 flex items-end justify-between gap-8; }
@@ -734,12 +733,11 @@
     .stock-hero__price-line .quote-change { @apply text-xs; }
     .stock-hero__actions { @apply p-4; }
     .stock-section { @apply py-11; }
-    .price-chart-frame { @apply -mx-3.5 h-[390px] rounded-none border-x-0; }
+    .price-chart-frame { @apply -mx-3.5 h-[430px] rounded-none border-x-0; }
     .price-chart__meta { @apply px-3.5; }
     .price-chart__meta > span { @apply hidden; }
     .price-chart-experience { @apply -mx-3.5; }
     .price-chart-experience .price-chart-frame { @apply mx-0; }
-    .price-chart__news-label { @apply left-2.5; }
     .price-chart__news-marker b { @apply -top-2.5 -right-2.5 size-[18px] text-[9px]; }
     .chart-news-panel { @apply rounded-none border-x-0 px-4 py-5; }
     .chart-news-panel__heading { @apply mb-4 flex-col items-start gap-1; }

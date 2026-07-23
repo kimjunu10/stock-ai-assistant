@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from 'react'
+import { useEffect, useState, type SyntheticEvent } from 'react'
 import { getStock } from '../data/mockData'
 import type { AssistantContext, NewsCluster } from '../types'
 import type { NewsMoment } from '../utils/chartNews'
@@ -53,7 +53,6 @@ export function ChartNewsMarkers({
             type="button"
           >
             <i />
-            <span>{timeFormatter.format(moment.time)}</span>
             {moment.clusters.length > 1 && <b>{moment.clusters.length}</b>}
           </button>
         )
@@ -94,7 +93,10 @@ function TimelineStory({
           {cluster.sentiment
             ? <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} variant="prominent" />
             : <span className="chart-news-story__pending">분석 전</span>}
-          <span>{source?.press ?? `${cluster.articleCount}개 기사`}</span>
+          <span>
+            {source?.press ? `${source.press} · ` : ''}
+            기사 {cluster.articleCount}건
+          </span>
         </div>
         <strong>{cluster.title}</strong>
         <button
@@ -115,9 +117,15 @@ function TimelineStory({
 }
 
 export function ChartNewsPanel({ moment, onAsk }: ChartNewsPanelProps) {
-  const [expanded, setExpanded] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(3)
+
+  useEffect(() => {
+    setVisibleCount(3)
+  }, [moment?.key])
+
   if (!moment) return null
-  const visible = expanded ? moment.clusters : moment.clusters.slice(0, 3)
+  const visible = moment.clusters.slice(0, visibleCount)
+  const remainingCount = Math.max(0, moment.clusters.length - visibleCount)
 
   return (
     <section className="chart-news-panel" aria-live="polite">
@@ -134,10 +142,14 @@ export function ChartNewsPanel({ moment, onAsk }: ChartNewsPanelProps) {
       {moment.clusters.length > 3 && (
         <button
           className="chart-news-panel__more"
-          onClick={() => setExpanded((value) => !value)}
+          onClick={() => setVisibleCount((count) => (
+            remainingCount > 0 ? Math.min(moment.clusters.length, count + 6) : 3
+          ))}
           type="button"
         >
-          {expanded ? '접기' : `${moment.clusters.length - 3}개 뉴스 더보기`}
+          {remainingCount > 0
+            ? `뉴스 ${Math.min(6, remainingCount)}개 더보기`
+            : '접기'}
           <Icon name="arrow-right" size={16} />
         </button>
       )}
