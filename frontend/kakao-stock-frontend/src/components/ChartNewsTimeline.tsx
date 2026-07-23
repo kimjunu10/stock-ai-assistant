@@ -86,7 +86,9 @@ function TimelineStory({
     <article className="chart-news-story">
       <div className="chart-news-story__image">
         {image && <img alt="" onError={handleImageError} src={image} />}
-        <time>{timeFormatter.format(new Date(cluster.publishedAt))}</time>
+        <time dateTime={cluster.publishedAt}>
+          기사 발행 {timeFormatter.format(new Date(cluster.publishedAt))}
+        </time>
       </div>
       <div className="chart-news-story__content">
         <div>

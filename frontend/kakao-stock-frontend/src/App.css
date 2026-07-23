@@ -228,23 +228,29 @@
   .briefing-count span { @apply text-[11px] font-bold text-muted; }
   .briefing-count small { @apply col-span-2 text-[9px] text-faint; }
 
-  .stock-table-card { @apply overflow-hidden rounded-[20px] border border-line bg-surface; }
-  .stock-table-card__head,
-  .stock-table-row { @apply grid grid-cols-[1.5fr_0.68fr_0.55fr_1.5fr_24px] items-center gap-[18px]; }
-  .stock-table-card__head { @apply min-h-[45px] border-b border-line bg-subtle px-6 text-[10px] font-bold text-faint; }
-  .stock-table-row { @apply min-h-[94px] border-b border-line px-6 py-4 no-underline last:border-0 hover:bg-subtle; }
-  .stock-table-row__identity { @apply flex min-w-0 items-center gap-3; }
-  .stock-table-row__identity > div,
-  .stock-table-row__quote { @apply flex min-w-0 flex-col gap-1; }
-  .stock-table-row__identity strong,
-  .stock-table-row__quote strong { @apply text-[13px]; }
-  .stock-table-row__identity span { @apply overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-faint; }
-  .stock-table-row > p { @apply m-0 overflow-hidden text-[11px] text-ellipsis whitespace-nowrap text-muted; }
-  .stock-table-row > svg { @apply text-faint; }
-  .data-note { @apply mt-[18px] flex gap-2.5 rounded-[14px] bg-subtle p-4 text-muted; }
-  .data-note svg { @apply shrink-0 text-brand; }
-  .data-note strong { @apply mb-1 block text-[11px] text-ink; }
-  .data-note p { @apply m-0 text-[10px] leading-relaxed; }
+  .stocks-page__header { @apply mb-9 flex items-end justify-between gap-8; }
+  .stocks-page__header h1 { @apply m-0 text-[39px] leading-snug font-extrabold tracking-[-1.8px]; }
+  .stocks-page__header p { @apply mt-3 mb-0 text-[16px] leading-8 font-medium text-muted; }
+  .stocks-page__live { @apply mb-1 inline-flex shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-[11px] font-bold text-muted; }
+  .stock-overview-grid { @apply grid grid-cols-2 gap-4; }
+  .stock-overview-card { @apply relative flex min-h-[244px] flex-col rounded-[20px] border border-line bg-surface p-6 text-ink no-underline transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-soft; }
+  .stock-overview-card__top { @apply flex items-start justify-between gap-5; }
+  .stock-overview-card__identity { @apply flex min-w-0 items-center gap-3.5; }
+  .stock-overview-card__identity > div { @apply flex min-w-0 flex-col gap-1; }
+  .stock-overview-card__identity strong { @apply text-[18px] font-extrabold; }
+  .stock-overview-card__identity span { @apply overflow-hidden text-[11px] font-medium text-ellipsis whitespace-nowrap text-faint; }
+  .stock-overview-card__quote { @apply flex shrink-0 flex-col items-end gap-1; }
+  .stock-overview-card__quote strong { @apply text-[18px] font-extrabold; }
+  .stock-overview-card__quote .quote-change { @apply text-[12px] font-extrabold; }
+  .stock-overview-card__news { @apply mt-5 border-t border-line pt-4; }
+  .stock-overview-card__news-meta { @apply mb-2.5 flex min-h-6 items-center justify-between gap-3; }
+  .stock-overview-card__news-meta > span:first-child { @apply text-[11px] font-extrabold text-faint; }
+  .stock-overview-card__news-meta > span:last-child { @apply flex items-center gap-2; }
+  .stock-overview-card__news-meta time { @apply text-[10px] font-bold text-faint; }
+  .stock-overview-card__news > strong { @apply overflow-hidden text-[15px] leading-6 font-extrabold; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .stock-overview-card__footer { @apply mt-auto flex items-center justify-end gap-1 pt-4 text-[11px] font-extrabold text-muted; }
+  .stock-overview-card:hover .stock-overview-card__footer { @apply text-brand-ink; }
+  .stocks-page__error { @apply mt-4 text-[11px] font-medium text-negative-ink; }
 
   .filter-toolbar { @apply sticky top-[72px] z-30 -mx-2.5 mb-[30px] flex items-center justify-between gap-5 bg-canvas/90 px-2.5 py-3.5 backdrop-blur-lg; }
   .segmented-control,
@@ -633,10 +639,7 @@
     .news-detail__scroll { @apply px-6 py-6 pb-[100px]; }
     .assistant-panel--news { @apply top-auto right-0 bottom-0 h-[min(720px,91vh)] w-full translate-x-0 translate-y-[105%] scale-100 rounded-t-[22px] rounded-b-none border-t border-l-0 opacity-100 pointer-events-auto; }
     .assistant-panel--news.is-open { @apply translate-y-0; }
-    .stock-table-card__head { @apply hidden; }
-    .stock-table-row { @apply grid-cols-[1.4fr_0.65fr_auto]; }
-    .stock-table-row > div:nth-child(3),
-    .stock-table-row > p { @apply hidden; }
+    .stock-overview-grid { @apply grid-cols-1; }
     .filter-toolbar { @apply top-[62px] flex-col items-start gap-2; }
     .stock-filter { @apply w-full max-w-full; }
     .page-title--row { @apply items-start; }
@@ -709,9 +712,17 @@
     .page-title p { @apply text-[14px] leading-7; }
     .page-title--row { @apply flex-col; }
     .briefing-count { @apply w-full self-stretch; }
-    .stock-table-row { @apply min-h-[84px] grid-cols-[minmax(0,1fr)_auto_auto] gap-2.5 p-3.5; }
-    .stock-table-row__quote { @apply items-end; }
-    .stock-table-row__identity .stock-avatar { @apply size-[38px]; }
+    .stocks-page__header { @apply mb-7 flex-col items-start gap-4; }
+    .stocks-page__header h1 { @apply text-[32px]; }
+    .stocks-page__header p { @apply text-[14px] leading-7; }
+    .stocks-page__live { @apply m-0; }
+    .stock-overview-card { @apply min-h-[226px] p-5; }
+    .stock-overview-card__top { @apply gap-3; }
+    .stock-overview-card__identity { @apply gap-2.5; }
+    .stock-overview-card__identity .stock-avatar { @apply size-[46px] rounded-[15px]; }
+    .stock-overview-card__identity strong,
+    .stock-overview-card__quote strong { @apply text-[16px]; }
+    .stock-overview-card__news > strong { @apply text-[14px] leading-[1.6]; }
     .filter-toolbar { @apply mb-5; }
     .segmented-control { @apply grid w-full grid-cols-4; }
     .segmented-control button { @apply px-2; }
