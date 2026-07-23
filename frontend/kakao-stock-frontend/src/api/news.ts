@@ -35,6 +35,13 @@ function visibleSentiment(label: NewsClusterApiItem['sentimentLabel']) {
   return label === 'negative' || label === 'neutral' || label === 'positive' ? label : null
 }
 
+function cleanEasyExplanation(value: string) {
+  return value
+    .replace(/^\s*쉽게\s*말(?:해|하면)\s*[:,]?\s*/u, '')
+    .replace(/^\s*이\s*기사는\s*/u, '')
+    .trim()
+}
+
 export async function fetchNewsClusters(
   signal: AbortSignal,
   options: { limit?: number; offset?: number; stockCode?: string } = {},
@@ -55,7 +62,7 @@ export async function fetchNewsClusters(
     stockCode: item.stockCode,
     kind: item.kind,
     title: item.title,
-    easySummary: item.easyExplanation,
+    easySummary: cleanEasyExplanation(item.easyExplanation),
     factualBody: item.factualBody,
     articleCount: item.articleCount,
     pressList: uniquePresses(item),

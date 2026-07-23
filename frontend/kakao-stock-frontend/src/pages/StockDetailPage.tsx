@@ -9,7 +9,6 @@ import { LoadingDots } from '../components/LoadingDots'
 import { SectionHeader } from '../components/SectionHeader'
 import { StockHeader } from '../components/StockHeader'
 import { PriceChart } from '../components/PriceChart'
-import { ChartNewsTimeline } from '../components/ChartNewsTimeline'
 import { CompanySnapshot } from '../components/CompanySnapshot'
 import { useStockMarketData } from '../hooks/useStockMarketData'
 import { useStockFundamentals } from '../hooks/useStockFundamentals'
@@ -27,7 +26,7 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
   const stock = getStock(stockCode)
   const marketData = useStockMarketData(stockCode)
   const fundamentals = useStockFundamentals(stockCode)
-  const news = useNewsClusters({ limit: 30, stockCode })
+  const news = useNewsClusters({ limit: 50, stockCode })
   const [visibleNewsCount, setVisibleNewsCount] = useState(3)
 
   useEffect(() => setVisibleNewsCount(3), [stockCode])
@@ -48,18 +47,14 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
 
       <section className="stock-section chart-section">
         <PriceChart
+          clusters={news.clusters}
           data={marketData.data}
           error={marketData.error}
+          onAsk={onAsk}
           onRetry={marketData.retry}
           status={marketData.status}
           stockName={stock.name}
           theme={theme}
-        />
-        <ChartNewsTimeline
-          candles={marketData.data?.intradayCandles ?? []}
-          clusters={news.clusters}
-          onAsk={onAsk}
-          stockName={stock.name}
         />
       </section>
 

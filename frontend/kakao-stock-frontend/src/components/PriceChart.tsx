@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CandlestickSeries,
   ColorType,
@@ -6,13 +6,26 @@ import {
   createChart,
   type Time,
 } from 'lightweight-charts'
-import type { MarketDataStatus, StockMarketData, Theme } from '../types'
+import type {
+  AssistantContext,
+  MarketDataStatus,
+  NewsCluster,
+  StockMarketData,
+  Theme,
+} from '../types'
+import { buildNewsMoments } from '../utils/chartNews'
+import {
+  ChartNewsMarkers,
+  ChartNewsPanel,
+} from './ChartNewsTimeline'
 import { Icon } from './Icon'
 import { LoadingDots } from './LoadingDots'
 
 interface PriceChartProps {
+  clusters: NewsCluster[]
   data: StockMarketData | null
   error: string
+  onAsk: (context: AssistantContext) => void
   onRetry: () => void
   status: MarketDataStatus
   stockName: string
@@ -25,9 +38,40 @@ const wonFormatter = new Intl.NumberFormat('ko-KR', {
   style: 'currency',
 })
 
-export function PriceChart({ data, error, onRetry, status, stockName, theme }: PriceChartProps) {
+function intradayChartTime(value: string | number) {
+  const milliseconds = typeof value === 'number' ? value : new Date(value).getTime()
+  // lightweight-charts는 Unix timestamp를 UTC 축으로 표시하므로 KST(+09:00)를 보정한다.
+  return (Math.floor(milliseconds / 1000) + 9 * 60 * 60) as Time
+}
+
+export function PriceChart({
+  clusters,
+  data,
+  error,
+  onAsk,
+  onRetry,
+  status,
+  stockName,
+  theme,
+}: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [range, setRange] = useState<'intraday' | 'daily'>('intraday')
+  const moments = useMemo(
+    () => buildNewsMoments(data?.intradayCandles ?? [], clusters),
+    [clusters, data?.intradayCandles],
+  )
+  const [selectedMomentKey, setSelectedMomentKey] = useState('')
+  const [markerPositions, setMarkerPositions] = useState<Record<string, number | null>>({})
+
+  useEffect(() => {
+    if (moments.length === 0) {
+      setSelectedMomentKey('')
+      return
+    }
+    if (!moments.some((moment) => moment.key === selectedMomentKey)) {
+      setSelectedMomentKey(moments.at(-1)?.key ?? '')
+    }
+  }, [moments, selectedMomentKey])
 
   useEffect(() => {
     const container = containerRef.current
@@ -39,8 +83,7 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
       ? data.intradayCandles
       : data.candles
     const toChartTime = (value: string) => (
-      // lightweight-charts는 Unix timestamp를 UTC 축으로 표시하므로 KST(+09:00)를 보정한다.
-      isIntraday ? Math.floor(new Date(value).getTime() / 1000) + 9 * 60 * 60 : value
+      isIntraday ? intradayChartTime(value) : value
     ) as Time
     const chart = createChart(container, {
       autoSize: true,
@@ -55,9 +98,7 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
         horzLines: { color: isDark ? 'rgba(255,255,255,0.055)' : 'rgba(15,23,42,0.055)' },
         vertLines: { color: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(15,23,42,0.035)' },
       },
-      localization: {
-        locale: 'ko-KR',
-      },
+      localization: { locale: 'ko-KR' },
       rightPriceScale: {
         borderColor: isDark ? '#2b2f38' : '#edf0f3',
         scaleMargins: { bottom: 0.22, top: 0.08 },
@@ -88,15 +129,13 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
       wickDownColor: '#3182f6',
       wickUpColor: '#f04452',
     })
-    candleSeries.setData(
-      candles.map((candle) => ({
-        close: candle.close,
-        high: candle.high,
-        low: candle.low,
-        open: candle.open,
-        time: toChartTime(candle.time),
-      })),
-    )
+    candleSeries.setData(candles.map((candle) => ({
+      close: candle.close,
+      high: candle.high,
+      low: candle.low,
+      open: candle.open,
+      time: toChartTime(candle.time),
+    })))
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
       color: isDark ? 'rgba(151,161,176,0.28)' : 'rgba(151,161,176,0.34)',
@@ -104,60 +143,97 @@ export function PriceChart({ data, error, onRetry, status, stockName, theme }: P
       priceScaleId: '',
     })
     volumeSeries.priceScale().applyOptions({ scaleMargins: { bottom: 0, top: 0.82 } })
-    volumeSeries.setData(
-      candles.map((candle) => ({
-        color: isDark ? 'rgba(151,161,176,0.28)' : 'rgba(151,161,176,0.34)',
-        time: toChartTime(candle.time),
-        value: candle.volume,
-      })),
-    )
+    volumeSeries.setData(candles.map((candle) => ({
+      color: isDark ? 'rgba(151,161,176,0.28)' : 'rgba(151,161,176,0.34)',
+      time: toChartTime(candle.time),
+      value: candle.volume,
+    })))
 
+    const updateMarkerPositions = () => {
+      if (!isIntraday) {
+        setMarkerPositions({})
+        return
+      }
+      const width = container.clientWidth
+      setMarkerPositions(Object.fromEntries(moments.map((moment) => {
+        const coordinate = chart.timeScale().timeToCoordinate(intradayChartTime(moment.time))
+        const visible = coordinate !== null && coordinate >= 0 && coordinate <= width
+        return [moment.key, visible ? coordinate : null]
+      })))
+    }
+
+    const resizeObserver = new ResizeObserver(updateMarkerPositions)
+    resizeObserver.observe(container)
+    chart.timeScale().subscribeVisibleTimeRangeChange(updateMarkerPositions)
     chart.timeScale().fitContent()
-    return () => chart.remove()
-  }, [data, range, status, theme])
+    const animationFrame = requestAnimationFrame(updateMarkerPositions)
+
+    return () => {
+      cancelAnimationFrame(animationFrame)
+      resizeObserver.disconnect()
+      chart.timeScale().unsubscribeVisibleTimeRangeChange(updateMarkerPositions)
+      chart.remove()
+    }
+  }, [data, moments, range, status, theme])
+
+  const selectedMoment = moments.find((moment) => moment.key === selectedMomentKey)
 
   return (
-    <div className="price-chart-frame">
-      <div className="price-chart__meta">
-        <div className="chart-range-tabs" role="tablist" aria-label="차트 기간">
-          <button
-            aria-selected={range === 'intraday'}
-            className={range === 'intraday' ? 'active' : ''}
-            onClick={() => setRange('intraday')}
-            role="tab"
-            type="button"
-          >오늘 · 1분</button>
-          <button
-            aria-selected={range === 'daily'}
-            className={range === 'daily' ? 'active' : ''}
-            onClick={() => setRange('daily')}
-            role="tab"
-            type="button"
-          >6개월 · 일봉</button>
+    <div className="price-chart-experience">
+      <div className="price-chart-frame">
+        <div className="price-chart__meta">
+          <div className="chart-range-tabs" role="tablist" aria-label="차트 기간">
+            <button
+              aria-selected={range === 'intraday'}
+              className={range === 'intraday' ? 'active' : ''}
+              onClick={() => setRange('intraday')}
+              role="tab"
+              type="button"
+            >오늘 · 1분</button>
+            <button
+              aria-selected={range === 'daily'}
+              className={range === 'daily' ? 'active' : ''}
+              onClick={() => setRange('daily')}
+              role="tab"
+              type="button"
+            >6개월 · 일봉</button>
+          </div>
+          <span><i className="live-dot" /> {range === 'intraday' ? '15초마다 갱신' : '수정주가'} · {data?.source ?? '토스증권 Open API'}</span>
         </div>
-        <span><i className="live-dot" /> {range === 'intraday' ? '15초마다 갱신' : '수정주가'} · {data?.source ?? '토스증권 Open API'}</span>
+        <div
+          aria-label={`${stockName} 실제 원화 ${range === 'intraday' ? '오늘 1분봉' : '6개월 일봉'} 차트`}
+          className="price-chart__canvas"
+          ref={containerRef}
+        />
+        {range === 'intraday' && status === 'ready' && (
+          <>
+            <span className="price-chart__news-label">뉴스</span>
+            <ChartNewsMarkers
+              moments={moments}
+              onSelect={setSelectedMomentKey}
+              positions={markerPositions}
+              selectedKey={selectedMomentKey}
+            />
+          </>
+        )}
+        {status === 'loading' && (
+          <div className="chart-state chart-state--loading" role="status">
+            <LoadingDots label="주가 차트 불러오는 중" />
+          </div>
+        )}
+        {status === 'error' && (
+          <div className="chart-state chart-state--error" role="alert">
+            <span className="chart-state__icon"><Icon name="chart" size={22} /></span>
+            <strong>차트를 불러오지 못했어요</strong>
+            <p>{error}</p>
+            <button className="secondary-button" onClick={onRetry} type="button">
+              <Icon name="refresh" size={16} />
+              다시 불러오기
+            </button>
+          </div>
+        )}
       </div>
-      <div
-        aria-label={`${stockName} 실제 원화 ${range === 'intraday' ? '오늘 1분봉' : '6개월 일봉'} 차트`}
-        className="price-chart__canvas"
-        ref={containerRef}
-      />
-      {status === 'loading' && (
-        <div className="chart-state chart-state--loading" role="status">
-          <LoadingDots label="주가 차트 불러오는 중" />
-        </div>
-      )}
-      {status === 'error' && (
-        <div className="chart-state chart-state--error" role="alert">
-          <span className="chart-state__icon"><Icon name="chart" size={22} /></span>
-          <strong>차트를 불러오지 못했어요</strong>
-          <p>{error}</p>
-          <button className="secondary-button" onClick={onRetry} type="button">
-            <Icon name="refresh" size={16} />
-            다시 불러오기
-          </button>
-        </div>
-      )}
+      {range === 'intraday' && <ChartNewsPanel moment={selectedMoment} onAsk={onAsk} />}
     </div>
   )
 }
