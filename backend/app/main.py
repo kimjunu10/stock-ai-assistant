@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from app.api.router import api_router
 from app.core.config import settings
 from app.jobs.scheduler import NEWS_COLLECTION_JOB_ID, build_scheduler
+from app.services.news_sentiment import initialize_news_sentiment_service
 
 logger = logging.getLogger("uvicorn.error.news_scheduler")
 
@@ -17,6 +18,7 @@ logger = logging.getLogger("uvicorn.error.news_scheduler")
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Start one scheduler with the API process and stop it cleanly."""
 
+    app.state.news_sentiment = initialize_news_sentiment_service(settings)
     scheduler = build_scheduler(settings)
     app.state.scheduler = scheduler
     if settings.news_scheduler_enabled:

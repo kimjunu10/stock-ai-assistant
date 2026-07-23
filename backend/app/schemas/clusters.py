@@ -23,6 +23,11 @@ class NewsClusterItem(BaseModel):
     articleCount: int
     publishedAt: str
     sources: list[NewsClusterSource]
+    sentimentLabel: str | None = None
+    sentimentScore: float | None = None
+    sentimentPositiveScore: float | None = None
+    sentimentNeutralScore: float | None = None
+    sentimentNegativeScore: float | None = None
 
 
 class NewsClusterList(BaseModel):

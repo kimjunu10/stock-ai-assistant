@@ -6,6 +6,7 @@ import type { AssistantContext, NewsCluster } from '../types'
 import { Icon } from './Icon'
 import { SelectionExplainer } from './SelectionExplainer'
 import { createSelectionAnchor, type SelectionAnchor } from './selectionAnchor'
+import { SentimentBadge } from './SentimentBadge'
 import { StockAvatar } from './StockAvatar'
 
 const INITIAL_SOURCE_COUNT = 5
@@ -235,6 +236,7 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
           <span className="news-list-item__content">
             <span className="news-list-item__eyebrow">
               {stock && <span className="news-list-item__stock"><StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} size="sm" />{stock.name}</span>}
+              {cluster.sentiment && <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} />}
               <span>기사 {cluster.sources?.length || cluster.articleCount}건</span>
             </span>
             <strong className="news-list-item__title">{cluster.title}</strong>

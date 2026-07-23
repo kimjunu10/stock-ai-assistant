@@ -87,6 +87,9 @@ export interface NewsCluster {
   factualBody?: string
   sentiment?: Sentiment | null
   sentimentScore?: number | null
+  sentimentPositiveScore?: number | null
+  sentimentNeutralScore?: number | null
+  sentimentNegativeScore?: number | null
   sentimentReason?: string | null
   articleCount: number
   pressList: string[]

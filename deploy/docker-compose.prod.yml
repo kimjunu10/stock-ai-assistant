@@ -13,6 +13,11 @@ services:
       # .env explicitly opts in with NEWS_SCHEDULER_ENABLED=true after recovery.
       NEWS_SCHEDULER_ENABLED: "${NEWS_SCHEDULER_ENABLED:-false}"
       NEWS_EMBEDDING_DEVICE: cpu
+      SENTIMENT_ENABLED: "${SENTIMENT_ENABLED:-true}"
+      SENTIMENT_MODEL_ID: FISA-conclave/klue-roberta-news-sentiment
+      SENTIMENT_MODEL_REVISION: b1950b9499e5f24e1e36593c62720cc1b2326c6b
+      SENTIMENT_MODEL_CACHE_DIR: /root/.cache/huggingface
+      SENTIMENT_DEVICE: auto
       PORT: "8000"
     volumes:
       - dart-raw-documents:/app/data/dart/raw_documents

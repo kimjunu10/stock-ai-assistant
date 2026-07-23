@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     news_clustering_retry_minutes: int = 30
     news_embedding_device: str = "cpu"
     use_llm_assign: bool = True
+    sentiment_enabled: bool = True
+    sentiment_model_id: str = "FISA-conclave/klue-roberta-news-sentiment"
+    sentiment_model_revision: str = "b1950b9499e5f24e1e36593c62720cc1b2326c6b"
+    sentiment_model_cache_dir: str = ""
+    sentiment_device: str = "auto"
     # 스케줄러 사이클에서 사건 요약(title+easy_explanation+factual_body, Solar 1회 호출)을
     # 생성할지 여부. 서비스 미운영 중에는 False 로 두어 요약 LLM 비용을 아끼고,
     # 나중에 scripts/summarize_v2.py 로 원하는 날짜부터 일괄 요약한다.

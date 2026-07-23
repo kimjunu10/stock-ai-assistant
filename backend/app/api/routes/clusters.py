@@ -64,7 +64,8 @@ def get_clusters(
         client.table("news_clusters")
         .select(
             "id,stock_code,kind,summary_title,easy_explanation,factual_body,"
-            "article_count,last_active_at",
+            "article_count,last_active_at,sentiment_label,sentiment_score,"
+            "sentiment_positive_score,sentiment_neutral_score,sentiment_negative_score",
             count="exact",
         )
         .eq("summary_status", "success")
@@ -129,6 +130,11 @@ def get_clusters(
                 articleCount=int(row.get("article_count") or len(sources)),
                 publishedAt=str(row["last_active_at"]),
                 sources=sources,
+                sentimentLabel=row.get("sentiment_label"),
+                sentimentScore=row.get("sentiment_score"),
+                sentimentPositiveScore=row.get("sentiment_positive_score"),
+                sentimentNeutralScore=row.get("sentiment_neutral_score"),
+                sentimentNegativeScore=row.get("sentiment_negative_score"),
             )
         )
     return NewsClusterList(
