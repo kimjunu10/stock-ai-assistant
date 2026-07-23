@@ -220,7 +220,6 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
       <article className={[
         'news-list-item',
         easyOpen ? 'is-easy-open' : '',
-        cluster.sentiment ? `news-list-item--${cluster.sentiment}` : '',
       ].filter(Boolean).join(' ')}>
         <div
           aria-label={`${cluster.title} 상세 보기`}
@@ -242,12 +241,13 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
             <span className="news-list-item__eyebrow">
               {stock && <span className="news-list-item__stock"><StockAvatar imageSrc={stock.imageSrc} initials={stock.initials} size="sm" />{stock.name}</span>}
               <span>기사 {cluster.sources?.length || cluster.articleCount}건</span>
+              <time>{formatRelativeTime(representative?.publishedAt ?? cluster.publishedAt)}</time>
+              {cluster.sentiment && (
+                <span className="news-list-item__sentiment">
+                  <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} variant="prominent" />
+                </span>
+              )}
             </span>
-            {cluster.sentiment && (
-              <span className="news-list-item__sentiment">
-                <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} variant="prominent" />
-              </span>
-            )}
             <strong className="news-list-item__title">{cluster.title}</strong>
             <span className="news-list-item__body-preview">{cleanMarkdown(cluster.factualBody ?? '')}</span>
             <span className="news-list-item__lower">
@@ -258,7 +258,6 @@ export function NewsClusterListItem({ assistantOpen = false, cluster, onAssistan
                 type="button"
               ><Icon name="sparkles" size={13} /> AI 쉽게 보기 <Icon name="chevron-right" size={13} /></button>
               <PublisherLogos cluster={cluster} />
-              <time>{formatRelativeTime(representative?.publishedAt ?? cluster.publishedAt)}</time>
             </span>
           </span>
           <Icon className="news-list-item__arrow" name="chevron-right" size={19} />
