@@ -39,8 +39,8 @@ export function NewsPage({ assistantOpen, onAssistantClose, onAsk }: NewsPagePro
     <main className="subpage shell news-page">
       <header className="page-title page-title--row">
         <div>
-          <span className="eyebrow">AI 뉴스</span>
-          <h1>같은 사건은 한 번만 읽으세요</h1>
+          <span className="eyebrow">뉴스 브리핑</span>
+          <h1>오늘 나온 뉴스를 사건별로 정리했어요</h1>
           <p>여러 언론사의 기사를 사건별로 묶고, 확인된 사실과 원문을 함께 보여드려요.</p>
         </div>
       </header>
