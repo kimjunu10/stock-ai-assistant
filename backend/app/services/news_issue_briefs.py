@@ -110,9 +110,8 @@ def build_issue_brief_prompt(inputs: dict[str, dict[str, Any]]) -> str:
             "positive": value["positive"],
             "negative": value["negative"],
         }
-    return (
-        "다음 종목들의 오늘 뉴스 쉬운 설명을 중복 제거해 핵심 글머리로 정리해라.\n"
-        + json.dumps({"stocks": stocks}, ensure_ascii=False, separators=(",", ":"))
+    return "다음 종목들의 오늘 뉴스 쉬운 설명을 중복 제거해 핵심 글머리로 정리해라.\n" + json.dumps(
+        {"stocks": stocks}, ensure_ascii=False, separators=(",", ":")
     )
 
 
@@ -263,9 +262,7 @@ def refresh_stock_issue_briefs(
         return totals
 
     nonempty = {
-        code: value
-        for code, value in changed.items()
-        if value["positive"] or value["negative"]
+        code: value for code, value in changed.items() if value["positive"] or value["negative"]
     }
     generated: dict[str, dict[str, list[dict[str, Any]]]] = {}
     if nonempty:

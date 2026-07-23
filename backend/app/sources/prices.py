@@ -231,9 +231,7 @@ class TossInvestClient:
                 result = StockCompanyProfile(
                     stock_code=stock_code,
                     name=str(profile.get("stock_name") or item["name"]),
-                    english_name=str(
-                        profile.get("corp_name_eng") or item.get("englishName") or ""
-                    )
+                    english_name=str(profile.get("corp_name_eng") or item.get("englishName") or "")
                     or None,
                     market=str(item["market"]),
                     ceo=str(profile.get("ceo_nm") or "") or None,
