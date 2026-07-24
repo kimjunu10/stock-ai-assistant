@@ -14,7 +14,9 @@ INPUT_TYPE = "B_title_desc"  # title + " " + description
 PREPROCESS_VERSION = "v1"  # exp_a clustering_lib.PREPROCESS_VERSION과 동일해야 함
 CLUSTERING_METHOD = "online_centroid"
 COSINE_THRESHOLD = 0.74
-ACTIVE_WINDOW_HOURS = 72
+# 같은 종목의 오래된 유사 사건이 새 기사에 다시 붙는 범위를 제한한다.
+# 이 값은 동일 사건 판정 자체가 아니라 LLM에 전달할 후보의 최근성 제한이다.
+ACTIVE_WINDOW_HOURS = 24
 CLUSTERING_VERSION = "bge_m3_title_desc_centroid_v1"
 
 # --- over-merge 보호 (시장 뉴스 + 비사건형 투자정보 브리지 차단) ---

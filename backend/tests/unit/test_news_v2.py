@@ -127,6 +127,86 @@ def test_v2_assigner_signature_conflict_new():
     assert r1.cluster_id != r2.cluster_id
 
 
+def test_v2_assigner_defaults_to_24_hour_candidate_window():
+    a = assign_llm_v2.LLMAssignerV2(
+        call_fn=lambda _p: (
+            {"decision": "existing", "matched_cluster_id": 1},
+            {"ok": True, "parse_success": True, "usage": {}},
+        )
+    )
+    vec = np.array([1.0, 0.0], dtype=np.float32)
+    first = a.assign(
+        {
+            "article_id": "005930:roundtable",
+            "stock_code": "005930",
+            "title": "기업 총수들, 젠슨 황과 AI 비공개 간담회",
+            "description": "실리콘밸리 기업인 라운드테이블",
+            "event_signature": {
+                "subject": "이재용·최태원·이해진·젠슨 황",
+                "action": "기업인 비공개 라운드테이블",
+            },
+        },
+        vec,
+        100.0,
+    )
+    after_window = a.assign(
+        {
+            "article_id": "005930:summit",
+            "stock_code": "005930",
+            "title": "대통령, 샌프란시스코 AI 정상회의 참석",
+            "description": "정부 공식 AI 선언",
+            "event_signature": {
+                "subject": "대통령·기업인",
+                "action": "공식 AI 정상회의 참석",
+            },
+        },
+        vec,
+        124.01,
+    )
+
+    assert a.window_h == 24
+    assert first.status == "assigned_new"
+    assert after_window.status == "assigned_new"
+    assert after_window.llm_called is False
+    assert first.cluster_id != after_window.cluster_id
+
+
+def test_v2_prompt_treats_same_participants_but_different_event_as_new():
+    prompt = assign_llm_v2.build_user_prompt_v2(
+        {
+            "title": "대통령, 샌프란시스코 AI 정상회의 참석",
+            "description": "정부 공식 AI 선언과 해외 순방 일정",
+            "event_signature": {
+                "subject": "대통령·이재용·젠슨 황",
+                "action": "공식 AI 정상회의 참석",
+                "product_or_project": "샌프란시스코 AI 선언",
+                "event_date": "2026-07-24",
+            },
+        },
+        [
+            {
+                "cluster_id": 6787,
+                "event_signature": {
+                    "subject": "이재용·최태원·이해진·젠슨 황",
+                    "action": "기업인 비공개 라운드테이블",
+                    "product_or_project": "AI 팩토리·HBM4",
+                    "event_date": "2026-07-24",
+                },
+                "anchor_title": "기업 총수들, 젠슨 황과 AI 비공개 간담회",
+                "anchor_description": "글로벌 AI 협력 논의",
+                "rep_title": "",
+                "rep_description": "",
+                "recent": [],
+            }
+        ],
+    )
+
+    assert "행사명, 주최·초청 주체, 행사 형태와 목적" in prompt
+    assert "기업인 간담회와 대통령 순방" in prompt
+    assert "사건 정체성이 다르면 new" in prompt
+    assert assign_llm_v2.ASSIGN_V2_PROMPT_VERSION == "same_event_sig_v4_event_identity"
+
+
 def test_v2_assigner_existing_merge():
     responses = iter(
         [
@@ -253,7 +333,7 @@ def test_incremental_cluster_phase_can_merge_into_persisted_cluster(monkeypatch)
             self.saved = []
 
         def get_v2_assignment_clusters(self, _stock_code, *, active_since=None):
-            assert active_since == "2026-07-18T01:00:00+00:00"
+            assert active_since == "2026-07-20T01:00:00+00:00"
             return [persisted]
 
         def update_v2_cluster(self, cluster_id, **values):
