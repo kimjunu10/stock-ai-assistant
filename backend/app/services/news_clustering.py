@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections import OrderedDict
 from collections.abc import Callable
 from datetime import datetime
 from functools import lru_cache
@@ -17,6 +18,9 @@ from experiments.exp_b_factual_summaries import market_rules, summarize
 from experiments.exp_b_factual_summaries.assign_llm import Cluster, LLMAssigner
 
 logger = logging.getLogger(__name__)
+_EMBEDDING_CACHE_MAX_ITEMS = 4096
+_embedding_cache: OrderedDict[str, np.ndarray] = OrderedDict()
+_embedding_cache_lock = threading.Lock()
 
 STOCK_NAMES = {
     "005930": "삼성전자",
@@ -57,25 +61,63 @@ class BgeM3Embedder:
 
         if not articles:
             return np.empty((0, cluster_cfg.EMBEDDING_DIM), dtype=np.float32)
-        texts = []
+        texts: list[str] = []
         for article in articles:
             title = (article.get("title") or "").strip()
             description = (article.get("description") or "").strip()
             texts.append(" ".join(part for part in (title, description) if part))
-        with self._encode_lock:
-            model = _load_embedding_model(
-                cluster_cfg.EMBEDDING_MODEL,
-                cluster_cfg.EMBEDDING_REVISION,
-                self.device,
+
+        cache_keys = [
+            "\x1f".join(
+                (
+                    cluster_cfg.EMBEDDING_MODEL,
+                    cluster_cfg.EMBEDDING_REVISION,
+                    self.device,
+                    text,
+                )
             )
-            vectors = model.encode(
-                texts,
-                batch_size=batch_size,
-                convert_to_numpy=True,
-                normalize_embeddings=True,
-                show_progress_bar=False,
-            )
-        return np.asarray(vectors, dtype=np.float32)
+            for text in texts
+        ]
+        vectors: list[np.ndarray | None] = [None] * len(texts)
+        missing: dict[str, str] = {}
+        with _embedding_cache_lock:
+            for index, (key, text) in enumerate(zip(cache_keys, texts, strict=True)):
+                cached = _embedding_cache.get(key)
+                if cached is None:
+                    missing.setdefault(key, text)
+                    continue
+                _embedding_cache.move_to_end(key)
+                vectors[index] = cached
+
+        if missing:
+            missing_keys = list(missing)
+            missing_texts = [missing[key] for key in missing_keys]
+            with self._encode_lock:
+                model = _load_embedding_model(
+                    cluster_cfg.EMBEDDING_MODEL,
+                    cluster_cfg.EMBEDDING_REVISION,
+                    self.device,
+                )
+                encoded = model.encode(
+                    missing_texts,
+                    batch_size=batch_size,
+                    convert_to_numpy=True,
+                    normalize_embeddings=True,
+                    show_progress_bar=False,
+                )
+            encoded = np.asarray(encoded, dtype=np.float32)
+            with _embedding_cache_lock:
+                for key, vector in zip(missing_keys, encoded, strict=True):
+                    _embedding_cache[key] = vector
+                    _embedding_cache.move_to_end(key)
+                while len(_embedding_cache) > _EMBEDDING_CACHE_MAX_ITEMS:
+                    _embedding_cache.popitem(last=False)
+
+        with _embedding_cache_lock:
+            for index, key in enumerate(cache_keys):
+                if vectors[index] is None:
+                    vectors[index] = _embedding_cache[key]
+        return np.stack([np.asarray(vector, dtype=np.float32) for vector in vectors])
 
 
 def _hours(value: str) -> float:

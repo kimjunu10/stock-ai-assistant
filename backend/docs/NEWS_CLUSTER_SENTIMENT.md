@@ -2,20 +2,22 @@
 
 ## 기준
 
-- 입력: Solar가 사건 단위로 확정한 `news_clusters.summary_title`만 사용
+- 입력: Solar가 사건 단위로 확정한 `summary_title + easy_explanation`
 - 모델: `FISA-conclave/klue-roberta-news-sentiment`
 - revision: `b1950b9499e5f24e1e36593c62720cc1b2326c6b`
-- 입력 버전: `cluster_summary_title_v2`
+- 입력 버전: `cluster_summary_title_easy_v3`
 - 라벨: `0=negative`, `1=neutral`, `2=positive`
 - 최대 길이: 128 tokens
 
-처리 순서는 `기사 클러스터링 → 사건 요약 저장 → summary_title 감성분류 → DB 저장`이다.
-대표 기사 제목, 쉬운 설명, 사실 본문, 기업명은 감성 모델 입력에 사용하지 않는다.
-요약이 성공하지 않았거나 `summary_title`이 비어 있으면 분류하지 않는다.
+처리 순서는 `기사 클러스터링 → 사건 요약 저장 → 제목+핵심 정리 감성분류 → DB 저장`이다.
+두 입력의 Markdown을 제거하고 공백을 정규화해 하나의 문자열로 결합한다. 별도 요약
+API는 호출하지 않으며 tokenizer에서 최대 128 tokens로 자른다. 제목이나 핵심 정리 중
+하나만 있어도 분류하고, 둘 다 비어 있으면 `unknown`으로 처리한다. 사실 본문과 기업명은
+감성 모델 입력에 사용하지 않는다.
 
 `representative_article_id`는 대표 원문을 연결하기 위한 값이며 감성분류 입력의 기준이
 아니다. 한 기사에 등장하는 경쟁사나 부정적인 표현이 클러스터 전체 감성으로 오인되는
-문제를 줄이기 위해, 사건 전체를 반영한 클러스터 제목을 사용한다.
+문제를 줄이기 위해, 사건 전체를 반영한 클러스터 제목과 핵심 정리를 함께 사용한다.
 
 저장되는 값은 모델의 원래 `positive`, `neutral`, `negative` 확률이다. 감성은 해당
 뉴스 사건의 내용 방향을 보조적으로 보여주는 값이며, 중요도나 실제 주가의 상승·하락
@@ -27,7 +29,7 @@
 
 1. 클러스터에 배정된 기사들을 Solar로 통합 요약한다.
 2. `summary_title`, `easy_explanation`, `factual_body`, `summary_status=success`를 저장한다.
-3. 저장된 `summary_title`을 감성 서비스에 전달한다.
+3. 저장된 `summary_title + easy_explanation`을 감성 서비스에 전달한다.
 4. 라벨·세 확률·모델 ID·revision·입력 버전·입력 hash·분석 시각을 저장한다.
 
 요약 또는 감성 모델 호출이 실패해도 뉴스 수집·클러스터링 전체 작업은 중단하지 않는다.
@@ -62,9 +64,9 @@ SENTIMENT_DEVICE=auto
 
 ## 기존 데이터 backfill
 
-대상은 현재 클러스터링 버전이면서 `summary_status=success`이고 `summary_title`이 있는
-클러스터로 제한한다. 그중 미분류, `unknown`, 모델/revision/input version 불일치,
-클러스터 요약 제목 hash 변경 대상만 처리한다.
+대상은 현재 클러스터링 버전이면서 `summary_status=success`인 클러스터로 제한한다.
+그중 미분류, `unknown`, 모델/revision/input version 불일치, 제목과 핵심 정리를 합친
+입력 hash가 변경된 대상만 처리한다.
 
 ```bash
 cd backend
@@ -78,13 +80,21 @@ cd backend
 uv run python -m scripts.backfill_news_sentiment --batch-size 32 --force
 ```
 
+서울 기준 특정 날짜만 강제 재분류:
+
+```bash
+cd backend
+uv run python -m scripts.backfill_news_sentiment \
+  --date 2026-07-24 --batch-size 32 --force
+```
+
 클러스터를 id 순으로 page 처리하므로 전체 데이터를 메모리에 올리지 않는다. 성공한
 클러스터는 다음 실행에서 건너뛰며, `unknown` 또는 저장 실패는 다음 실행에서 다시
 시도할 수 있다.
 
-이전 `cluster_title_v1` 결과는 현재 입력 버전과 다르므로 backfill 대상이 된다. 배포만
-으로 기존 행이 자동 재분류되지는 않으며, 기존 배지를 갱신하려면 위 명령을 별도로
-실행해야 한다.
+이전 `cluster_summary_title_v2` 결과는 현재 입력 버전과 다르므로 backfill 대상이 된다.
+배포만으로 기존 행이 자동 재분류되지는 않으며, 기존 배지를 갱신하려면 위 명령을
+별도로 실행해야 한다.
 
 ## Docker 모델 캐시
 

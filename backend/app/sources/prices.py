@@ -105,15 +105,16 @@ class TossInvestClient:
                     "symbol": stock_code,
                     "interval": "1d",
                     "count": 2,
-                    "adjusted": "true",
+                    # 실시간 현재가는 비수정 가격이므로 전일 대비 계산도
+                    # 동일한 기준의 비수정 종가를 사용한다.
+                    "adjusted": "false",
                 },
             )
             try:
-                candles = sorted(
+                previous_close = self._previous_close_from_raw_candles(
                     candle_payload["result"]["candles"],
-                    key=lambda item: item["timestamp"],
+                    quote_date,
                 )
-                previous_close = self._number(candles[-2]["closePrice"])
             except (IndexError, KeyError, TypeError, ValueError) as exc:
                 raise TossApiError("토스증권 전일 종가 응답을 변환하지 못했습니다.") from exc
             with self._lock:
@@ -179,6 +180,18 @@ class TossInvestClient:
                     "adjusted": "true",
                 },
             )
+            reference_candle_payload = self._request_json(
+                "GET",
+                "/api/v1/candles",
+                params={
+                    "symbol": stock_code,
+                    "interval": "1d",
+                    "count": 2,
+                    # 장기 차트는 수정주가를 유지하되 전일 대비 계산만
+                    # 실제 직전 거래일 종가를 기준으로 한다.
+                    "adjusted": "false",
+                },
+            )
             quote_date = self._quote_date(price_payload, stock_code)
             intraday_payload = self._get_intraday_candles(stock_code, quote_date)
             orderbook_payload = self._request_json(
@@ -191,6 +204,7 @@ class TossInvestClient:
                 stock_code,
                 price_payload,
                 candle_payload,
+                reference_candle_payload,
                 intraday_payload,
                 orderbook_payload,
                 price_limit_payload,
@@ -391,6 +405,7 @@ class TossInvestClient:
         stock_code: str,
         price_payload: dict[str, Any],
         candle_payload: dict[str, Any],
+        reference_candle_payload: dict[str, Any],
         intraday_payload: dict[str, Any],
         orderbook_payload: dict[str, Any],
         price_limit_payload: dict[str, Any],
@@ -442,7 +457,11 @@ class TossInvestClient:
             raw_limits = price_limit_payload["result"]
 
             last_price = self._number(raw_price["lastPrice"])
-            previous_close = candles[-2].close
+            quote_date = datetime.fromisoformat(raw_price["timestamp"]).date().isoformat()
+            previous_close = self._previous_close_from_raw_candles(
+                reference_candle_payload["result"]["candles"],
+                quote_date,
+            )
             change = last_price - previous_close
             change_rate = change / previous_close * 100 if previous_close else 0.0
             quote = StockQuote(
@@ -488,3 +507,27 @@ class TossInvestClient:
     @staticmethod
     def _number(value: Any) -> float:
         return float(value)
+
+    @classmethod
+    def _previous_close_from_raw_candles(
+        cls,
+        raw_candles: list[dict[str, Any]],
+        quote_date: str,
+    ) -> float:
+        """Return the latest completed daily close before the quote date.
+
+        Toss may omit the still-open current daily candle during market hours.
+        Selecting candles[-2] would then use the close from two sessions ago.
+        """
+
+        completed = [
+            (
+                datetime.fromisoformat(item["timestamp"]).date().isoformat(),
+                cls._number(item["closePrice"]),
+            )
+            for item in raw_candles
+            if datetime.fromisoformat(item["timestamp"]).date().isoformat() < quote_date
+        ]
+        if not completed:
+            raise ValueError("전일 종가로 사용할 완료 일봉이 없습니다.")
+        return max(completed, key=lambda item: item[0])[1]

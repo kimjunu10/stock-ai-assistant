@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, TypeVar
 from zoneinfo import ZoneInfo
 
@@ -27,6 +27,7 @@ from scripts.run_full_news_v2 import phase_cluster, phase_roles, phase_summary, 
 logger = logging.getLogger("uvicorn.error.news_scheduler")
 
 NEWS_COLLECTION_JOB_ID = "news-collection"
+NEWS_CLUSTER_RECOVERY_LOOKBACK_HOURS = 48
 SEOUL_TIMEZONE = ZoneInfo("Asia/Seoul")
 T = TypeVar("T")
 
@@ -123,9 +124,33 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         new_event_pairs = _run_news_stage(
             "roles", lambda: phase_roles(v2_repo, v2_totals, workers=1)
         )
+        recovery_since = (
+            datetime.now(UTC) - timedelta(hours=NEWS_CLUSTER_RECOVERY_LOOKBACK_HOURS)
+        ).isoformat()
+        recovery_pairs = _run_news_stage(
+            "cluster_recovery",
+            lambda: v2_repo.get_unassigned_recent_v2_event_pairs(published_since=recovery_since),
+        )
+        candidates = {
+            (int(pair["article_id"]), pair["stock_code"]): pair for pair in new_event_pairs
+        }
+        recovered_unassigned = 0
+        for pair in recovery_pairs:
+            key = (int(pair["article_id"]), pair["stock_code"])
+            if key not in candidates:
+                recovered_unassigned += 1
+                candidates[key] = pair
+        logger.info(
+            "NEWS_CLUSTER_RECOVERY newly_classified=%d recovered_unassigned=%d "
+            "deduplicated_candidates=%d lookback_hours=%d",
+            len(new_event_pairs),
+            recovered_unassigned,
+            len(candidates),
+            NEWS_CLUSTER_RECOVERY_LOOKBACK_HOURS,
+        )
         _run_news_stage(
             "cluster",
-            lambda: phase_cluster(v2_repo, v2_totals, candidates=new_event_pairs),
+            lambda: phase_cluster(v2_repo, v2_totals, candidates=list(candidates.values())),
         )
         if cfg.news_summary_enabled:
             _run_news_stage("summary", lambda: phase_summary(v2_repo, v2_totals))
@@ -227,6 +252,10 @@ def build_scheduler(cfg: Settings = settings) -> AsyncIOScheduler:
         args=(cfg,),
         id=NEWS_COLLECTION_JOB_ID,
         name="Collect latest Naver news",
+        # A deployment can interrupt an in-flight cycle. Run once immediately
+        # after startup so queued/recent unassigned news is resumed without
+        # waiting for the next 30-minute interval.
+        next_run_time=datetime.now(SEOUL_TIMEZONE),
         replace_existing=True,
         coalesce=True,
         max_instances=1,
