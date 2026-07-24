@@ -652,6 +652,29 @@ A/E/F 토큰 단위 value_kind 합계 = aef_value_total 일치 확인(정의상 
 QA 연결·Agentic·MCP 미진행(지시).
 ```
 
+### 검증 기록 — QA 연결 전 확인 (2026-07-24)
+
+```text
+1) partial 리포트 1건: reports/pages/tables 에는 저장하되 본문 임베딩·검색에서 제외.
+   최초 적재 시 차트 축 텍스트 조각 1청크가 임베딩됐던 것을 발견 → 해당 문서/청크를
+   is_active=false·is_current=false 로 비활성화(활성 report 청크 4351→4350).
+   재발 방지: 적재 스크립트가 parse_status='success' 인 리포트만 본문 임베딩하도록 수정.
+2) report rag_chunks NULL embedding = 0.
+3) Storage 객체 = 244 (research-reports-private, 모든 stock_code 폴더 합).
+4) research_report_tables 총 count = 1937. "1000" 은 PostgREST 기본 조회 limit 때문에
+   select() 가 1000행만 반환한 것(데이터 차이 아님). range 로 전량 집계 시
+   unknown 1112 / forecast 469 / mixed 344 / actual 12 = 합 1937 로 일치.
+
+A/E/F 6063 과 표 단위 value_kind 집계의 기준 차이:
+- aef_value_total(6063) = 본문+표 텍스트에서 A/E/F '토큰 출현 횟수'(2025A·2026E·2027F …
+  개별 등장 수). 한 표의 한 열에 같은 A/E/F 가 여러 행에서 반복 출현하므로 수가 크다.
+- research_report_tables.value_kind(합 1937) = '표 1개당 1건'의 표 단위 분류
+  (열들의 kind 를 actual/forecast/mixed/unknown 으로 요약). 집계 대상 단위가 다르다
+  (토큰 vs 표). 따라서 두 수는 정의상 일치할 수 없으며 비교 대상이 아니다.
+- 토큰 단위 value_kind 합(actual/estimate/forecast) 은 aef_value_total 과 일치함을
+  파서 회귀(phase5_verify_parser.py)에서 별도 확인.
+```
+
 ---
 
 # Phase 6. 주가 질문

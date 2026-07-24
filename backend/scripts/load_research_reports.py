@@ -185,7 +185,9 @@ def process(
         )
 
         # 4. 본문 임베딩 (content_hash 재실행 skip)
-        if body_chunks:
+        # partial/failed 리포트(스캔·이미지형)는 본문이 차트 라벨 조각뿐이라
+        # 검색 품질을 해치므로 임베딩·검색 대상에서 제외한다(발표 제외 정책과 일치).
+        if body_chunks and rep.parse_status == "success":
             doc_hash = content_hash("\n---\n".join(c for _, c in body_chunks))
             current = repo.find_current_document(SOURCE_TYPE, file_hash)
             if current and current.get("content_hash") == doc_hash:
