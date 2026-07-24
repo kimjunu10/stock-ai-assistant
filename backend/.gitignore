@@ -31,3 +31,7 @@ docs/rag/*.pdf
 docs/rag/phase_4/bok_terms_sample20.json
 # 드라이런 전량 JSON(정의 원문 포함) 제외
 docs/rag/phase_4/bok_dryrun_full.json
+# Phase 5: 리포트 본문·표 원문 텍스트가 담긴 JSON은 저작물이므로 제외.
+# 보고서(.md)·요약·타깃목록·스크립트만 추적한다.
+docs/rag/phase_5/inventory.json
+docs/rag/phase_5/dryrun_parse.json
