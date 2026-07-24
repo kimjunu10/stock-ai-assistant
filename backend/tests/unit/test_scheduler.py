@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -21,6 +22,8 @@ def test_build_scheduler_registers_one_minute_news_job() -> None:
     assert job.max_instances == 1
     assert job.coalesce is True
     assert job.args == (cfg,)
+    assert job.next_run_time is not None
+    assert job.next_run_time <= datetime.now(job.next_run_time.tzinfo) + timedelta(seconds=1)
 
 
 def test_build_scheduler_can_be_disabled() -> None:

@@ -252,6 +252,10 @@ def build_scheduler(cfg: Settings = settings) -> AsyncIOScheduler:
         args=(cfg,),
         id=NEWS_COLLECTION_JOB_ID,
         name="Collect latest Naver news",
+        # A deployment can interrupt an in-flight cycle. Run once immediately
+        # after startup so queued/recent unassigned news is resumed without
+        # waiting for the next 30-minute interval.
+        next_run_time=datetime.now(SEOUL_TIMEZONE),
         replace_existing=True,
         coalesce=True,
         max_instances=1,
