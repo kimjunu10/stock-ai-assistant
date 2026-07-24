@@ -15,6 +15,9 @@ BGE-M3 후보검색·centroid 갱신은 검증된 assign_llm 과 동일하게 �
 
 from __future__ import annotations
 
+import json
+import logging
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
@@ -23,7 +26,9 @@ import numpy as np
 from . import config as CFG
 from .assign_llm import call_solar_assign
 
-ASSIGN_V2_PROMPT_VERSION = "same_event_sig_v4_event_identity"
+logger = logging.getLogger(__name__)
+
+ASSIGN_V2_PROMPT_VERSION = "same_event_sig_v5_multiprototype"
 
 SYSTEM_PROMPT_V2 = (
     "너는 한국어 금융 뉴스의 '동일 사건' 판정기다. 새 기사가 후보 클러스터들 중 "
@@ -45,9 +50,11 @@ SYSTEM_PROMPT_V2 = (
     "예: 같은 회사의 '실적 발표'와 '공장 증설 발표'는 다른 사건이다.\n"
     "4. 서로 다른 시점의 명백히 별개인 사건은 new 다. 단, 같은 사건에 대한 후속·"
     "반응 보도(같은 발언의 추가 보도, 같은 발표에 대한 시장 반응)는 existing 으로 본다.\n"
-    "5. '기업인 비공개 간담회·라운드테이블'과 '대통령 해외 순방·공식 AI 정상회의·"
-    "정부 선언'은 같은 인물과 지역이 등장하더라도 서로 다른 사건이다.\n"
-    "6. 핵심 요소와 사건 정체성이 같은데 세부만 다를 때는 existing 을 우선한다. "
+    "5. 같은 일정이나 연속 행사에 포함돼도 실제 발생 행위가 다르면 별도 사건일 수 있다. "
+    "반대로 하나의 발표·출발·계약·실적발표를 기사마다 다른 의제나 참석자 중심으로 "
+    "강조한 것이라면 같은 사건이다.\n"
+    "6. 핵심 요소와 사건 정체성이 같은데 기사별 강조점과 세부만 다를 때는 existing 을 "
+    "우선한다. "
     "후보 중 같은 사건이 하나도 없을 때만 new 로 판정한다.\n"
     '출력은 반드시 {"decision":"existing"|"new","matched_cluster_id":<cluster_id 또는 null>} '
     "형태의 JSON 하나만. 설명을 덧붙이지 않는다."
@@ -94,11 +101,69 @@ def build_user_prompt_v2(article: dict, candidates: list[dict]) -> str:
     lines.append("")
     lines.append(
         "새 기사의 주체·행동·대상뿐 아니라 행사명, 주최·초청 주체, 행사 형태와 목적까지 "
-        "후보와 비교하라. 제목 표현이나 세부 수치·금액만 다르고 동일한 발표·발언·행사라면 "
-        "existing 이다. 인물·날짜·장소·AI라는 주제가 겹쳐도 기업인 간담회와 대통령 순방·"
-        "공식 정상회의처럼 사건 정체성이 다르면 new 다. 같은 사건이 후보에 없을 때도 new 다."
+        "후보와 비교하라. 제목 표현이나 기사별 강조 의제, 세부 수치·금액만 다르고 동일한 "
+        "발표·발언·행사라면 existing 이다. 인물·날짜·장소·산업만 겹치고 실제 행위와 행사 "
+        "정체성이 다르면 new 다. 같은 사건이 후보에 없을 때도 new 다."
     )
     return "\n".join(lines)
+
+
+_SIGNATURE_FIELDS = (
+    ("subject", 0.25),
+    ("action", 0.25),
+    ("object", 0.15),
+    ("product_or_project", 0.20),
+    ("event_date", 0.10),
+    ("identifiers", 0.05),
+)
+_TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣]+")
+
+
+def _normalise_signature_value(value: object) -> str:
+    if isinstance(value, list):
+        value = " ".join(str(item) for item in value)
+    return " ".join(_TOKEN_RE.findall(str(value or "").lower()))
+
+
+def _value_similarity(left: object, right: object) -> float:
+    a = _normalise_signature_value(left)
+    b = _normalise_signature_value(right)
+    if not a or not b:
+        return 0.0
+    if a == b:
+        return 1.0
+    if min(len(a), len(b)) >= 4 and (a in b or b in a):
+        return 0.9
+    a_tokens = set(a.split())
+    b_tokens = set(b.split())
+    return len(a_tokens & b_tokens) / max(1, len(a_tokens | b_tokens))
+
+
+def signature_similarity(left: dict | None, right: dict | None) -> tuple[float, int]:
+    """Return comparable-field weighted similarity and meaningful match count.
+
+    The score is used only to recover candidate recall. Solar remains the final
+    same-event judge, so a structured match never forces an automatic merge.
+    """
+
+    if not left or not right:
+        return 0.0, 0
+    weighted = 0.0
+    denominator = 0.0
+    matches = 0
+    for field_name, weight in _SIGNATURE_FIELDS:
+        left_value = left.get(field_name)
+        right_value = right.get(field_name)
+        if not left_value or not right_value:
+            continue
+        similarity = _value_similarity(left_value, right_value)
+        weighted += similarity * weight
+        denominator += weight
+        if similarity >= 0.5:
+            matches += 1
+    if not denominator:
+        return 0.0, 0
+    return weighted / denominator, matches
 
 
 @dataclass
@@ -112,8 +177,39 @@ class ClusterV2:
     rep_description: str
     event_signature: dict | None = None
     recent: list[dict] = field(default_factory=list)  # 최근 기사 [{title, description}]
+    # 후보 검색용 실제 기사 벡터. centroid 하나의 평균화 손실을 보완한다.
+    prototype_vectors: list[np.ndarray] = field(default_factory=list)
     member_article_ids: list[str] = field(default_factory=list)
     last_active_h: float = 0.0
+
+
+@dataclass(frozen=True)
+class CandidateV2:
+    cluster: ClusterV2
+    centroid_similarity: float
+    prototype_similarity: float
+    signature_similarity: float
+    signature_matches: int
+
+    @property
+    def dense_similarity(self) -> float:
+        return max(self.centroid_similarity, self.prototype_similarity)
+
+    @property
+    def rank_score(self) -> float:
+        # Structured identity can recover a semantically shifted article, but it
+        # does not itself merge anything. The LLM receives and judges the candidate.
+        return max(self.dense_similarity, self.signature_similarity * 0.92)
+
+    def debug_payload(self) -> dict:
+        return {
+            "cluster_id": self.cluster.cluster_id,
+            "centroid": round(self.centroid_similarity, 4),
+            "prototype": round(self.prototype_similarity, 4),
+            "signature": round(self.signature_similarity, 4),
+            "signature_matches": self.signature_matches,
+            "rank": round(self.rank_score, 4),
+        }
 
 
 @dataclass
@@ -125,6 +221,7 @@ class AssignResultV2:
     llm_called: bool = False
     reason: str = ""
     error: str | None = None
+    candidates: tuple[dict, ...] = ()
 
 
 class LLMAssignerV2:
@@ -152,19 +249,62 @@ class LLMAssignerV2:
         self.token_usage = {"prompt": 0, "completion": 0}
 
     def _find_candidates(
-        self, stock_code: str, vec: np.ndarray, t_h: float
-    ) -> list[tuple[float, ClusterV2]]:
-        out = []
+        self,
+        stock_code: str,
+        vec: np.ndarray,
+        t_h: float,
+        event_signature: dict | None,
+    ) -> list[CandidateV2]:
+        dense_candidates: list[CandidateV2] = []
+        signature_candidates: list[CandidateV2] = []
         for cl in self.clusters.values():
             if cl.stock_code != stock_code:
                 continue
             if t_h - cl.last_active_h > self.window_h:
                 continue
-            sim = float(np.dot(vec, cl.centroid))
-            if sim >= self.min_sim:
-                out.append((sim, cl))
-        out.sort(key=lambda x: -x[0])
-        return out[: self.max_cand]
+            centroid_sim = float(np.dot(vec, cl.centroid))
+            prototype_sim = max(
+                (float(np.dot(vec, prototype)) for prototype in cl.prototype_vectors),
+                default=-1.0,
+            )
+            signature_sim, signature_matches = signature_similarity(
+                event_signature, cl.event_signature
+            )
+            candidate = CandidateV2(
+                cluster=cl,
+                centroid_similarity=centroid_sim,
+                prototype_similarity=prototype_sim,
+                signature_similarity=signature_sim,
+                signature_matches=signature_matches,
+            )
+            if candidate.dense_similarity >= self.min_sim:
+                dense_candidates.append(candidate)
+            if signature_sim >= 0.55 and signature_matches >= 2:
+                signature_candidates.append(candidate)
+
+        dense_candidates.sort(key=lambda item: -item.dense_similarity)
+        signature_candidates.sort(key=lambda item: -item.signature_similarity)
+
+        # Preserve three semantic-retrieval slots and reserve up to two slots for
+        # structured event identity. This avoids one signal crowding out the other.
+        selected: dict[int, CandidateV2] = {}
+        dense_slots = max(1, self.max_cand - min(2, self.max_cand))
+        for candidate in dense_candidates[:dense_slots]:
+            selected[candidate.cluster.cluster_id] = candidate
+        for candidate in signature_candidates[: min(2, self.max_cand)]:
+            if len(selected) >= self.max_cand:
+                break
+            selected[candidate.cluster.cluster_id] = candidate
+
+        remaining = sorted(
+            [*dense_candidates, *signature_candidates],
+            key=lambda item: -item.rank_score,
+        )
+        for candidate in remaining:
+            if len(selected) >= self.max_cand:
+                break
+            selected.setdefault(candidate.cluster.cluster_id, candidate)
+        return sorted(selected.values(), key=lambda item: -item.rank_score)
 
     def _new_cluster(self, stock_code: str, vec: np.ndarray, art: dict, t_h: float) -> int:
         cid = self._next_id
@@ -181,6 +321,7 @@ class LLMAssignerV2:
             rep_description=desc,
             event_signature=art.get("event_signature"),
             recent=[{"title": title, "description": desc}],
+            prototype_vectors=[vec.copy()],
             member_article_ids=[art["article_id"]],
             last_active_h=t_h,
         )
@@ -199,6 +340,10 @@ class LLMAssignerV2:
         cl.rep_description = art.get("description", "")
         cl.recent.append({"title": art.get("title", ""), "description": art.get("description", "")})
         cl.recent = cl.recent[-2:]
+        cl.prototype_vectors.append(vec.copy())
+        # Keep the immutable anchor plus the three most recent article vectors.
+        if len(cl.prototype_vectors) > 4:
+            cl.prototype_vectors = [cl.prototype_vectors[0], *cl.prototype_vectors[-3:]]
 
     def assign(self, art: dict, vec: np.ndarray, t_h: float) -> AssignResultV2:
         aid = art["article_id"]
@@ -206,11 +351,32 @@ class LLMAssignerV2:
             return AssignResultV2(aid, self._seen[aid], "duplicate", reason="already processed")
         stock = art["stock_code"]
 
-        cands = self._find_candidates(stock, vec, t_h)
+        cands = self._find_candidates(stock, vec, t_h, art.get("event_signature"))
+        candidate_debug = tuple(candidate.debug_payload() for candidate in cands)
+        logger.info(
+            "NEWS_CLUSTER_CANDIDATES article_id=%s stock_code=%s candidates=%s",
+            aid,
+            stock,
+            json.dumps(candidate_debug, ensure_ascii=False, separators=(",", ":")),
+        )
         if not cands:
             cid = self._new_cluster(stock, vec, art, t_h)
             self._seen[aid] = cid
-            return AssignResultV2(aid, cid, "assigned_new", 0, False, "no candidates")
+            logger.info(
+                "NEWS_CLUSTER_DECISION article_id=%s stock_code=%s decision=new "
+                "matched_cluster_id=null candidate_count=0 reason=no_candidates",
+                aid,
+                stock,
+            )
+            return AssignResultV2(
+                aid,
+                cid,
+                "assigned_new",
+                0,
+                False,
+                "no candidates",
+                candidates=candidate_debug,
+            )
 
         cand_payload = [
             {
@@ -222,7 +388,8 @@ class LLMAssignerV2:
                 "rep_description": cl.rep_description,
                 "recent": cl.recent,
             }
-            for _sim, cl in cands
+            for candidate in cands
+            for cl in [candidate.cluster]
         ]
         valid_ids = {c["cluster_id"] for c in cand_payload}
         prompt = build_user_prompt_v2(art, cand_payload)
@@ -242,6 +409,7 @@ class LLMAssignerV2:
                 True,
                 reason="llm transport fail",
                 error="transport_error",
+                candidates=candidate_debug,
             )
 
         decision = parsed.get("decision")
@@ -249,7 +417,14 @@ class LLMAssignerV2:
 
         def _invalid(why: str) -> AssignResultV2:
             return AssignResultV2(
-                aid, None, "pending_retry", len(cands), True, reason=why, error="invalid_response"
+                aid,
+                None,
+                "pending_retry",
+                len(cands),
+                True,
+                reason=why,
+                error="invalid_response",
+                candidates=candidate_debug,
             )
 
         if not meta.get("parse_success"):
@@ -264,14 +439,43 @@ class LLMAssignerV2:
                 return _invalid(f"matched_cluster_id not in candidates: {mcid_int}")
             self._add_to_cluster(mcid_int, vec, art, t_h)
             self._seen[aid] = mcid_int
+            logger.info(
+                "NEWS_CLUSTER_DECISION article_id=%s stock_code=%s decision=existing "
+                "matched_cluster_id=%s candidate_count=%d",
+                aid,
+                stock,
+                mcid_int,
+                len(cands),
+            )
             return AssignResultV2(
-                aid, mcid_int, "assigned_existing", len(cands), True, "llm existing"
+                aid,
+                mcid_int,
+                "assigned_existing",
+                len(cands),
+                True,
+                "llm existing",
+                candidates=candidate_debug,
             )
 
         if decision == "new":
             cid = self._new_cluster(stock, vec, art, t_h)
             self._seen[aid] = cid
-            return AssignResultV2(aid, cid, "assigned_new", len(cands), True, "llm new")
+            logger.info(
+                "NEWS_CLUSTER_DECISION article_id=%s stock_code=%s decision=new "
+                "matched_cluster_id=null candidate_count=%d",
+                aid,
+                stock,
+                len(cands),
+            )
+            return AssignResultV2(
+                aid,
+                cid,
+                "assigned_new",
+                len(cands),
+                True,
+                "llm new",
+                candidates=candidate_debug,
+            )
 
         return _invalid(f"decision invalid: {decision!r}")
 
@@ -283,4 +487,5 @@ __all__ = [
     "build_user_prompt_v2",
     "SYSTEM_PROMPT_V2",
     "ASSIGN_V2_PROMPT_VERSION",
+    "signature_similarity",
 ]

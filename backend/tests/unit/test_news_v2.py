@@ -202,9 +202,115 @@ def test_v2_prompt_treats_same_participants_but_different_event_as_new():
     )
 
     assert "행사명, 주최·초청 주체, 행사 형태와 목적" in prompt
-    assert "기업인 간담회와 대통령 순방" in prompt
-    assert "사건 정체성이 다르면 new" in prompt
-    assert assign_llm_v2.ASSIGN_V2_PROMPT_VERSION == "same_event_sig_v4_event_identity"
+    assert "실제 행위와 행사 정체성이 다르면 new" in prompt
+    assert "기사별 강조 의제" in prompt
+    assert assign_llm_v2.ASSIGN_V2_PROMPT_VERSION == "same_event_sig_v5_multiprototype"
+
+
+def test_v2_assigner_recovers_candidate_from_prototype_when_centroid_drifted():
+    calls = []
+
+    def fake(prompt):
+        calls.append(prompt)
+        return (
+            {"decision": "existing", "matched_cluster_id": 41},
+            {"ok": True, "parse_success": True, "usage": {}},
+        )
+
+    assigner = assign_llm_v2.LLMAssignerV2(call_fn=fake)
+    assigner.clusters[41] = assign_llm_v2.ClusterV2(
+        cluster_id=41,
+        stock_code="005930",
+        centroid=np.array([0.0, 1.0], dtype=np.float32),
+        anchor_title="대통령 미국 순방 출국",
+        anchor_description="AI 서밋 참석 일정",
+        rep_title="빅테크 CEO 회동 예정",
+        rep_description="같은 순방 일정",
+        event_signature=None,
+        prototype_vectors=[np.array([1.0, 0.0], dtype=np.float32)],
+        member_article_ids=["persisted:41:0"],
+        last_active_h=100.0,
+    )
+
+    result = assigner.assign(
+        {
+            "article_id": "005930:99",
+            "stock_code": "005930",
+            "title": "샌프란시스코 AI 서밋 참석",
+            "description": "같은 순방의 다른 보도 각도",
+            "event_signature": None,
+        },
+        np.array([1.0, 0.0], dtype=np.float32),
+        101.0,
+    )
+
+    assert result.status == "assigned_existing"
+    assert result.cluster_id == 41
+    assert result.candidates[0]["centroid"] == 0.0
+    assert result.candidates[0]["prototype"] == 1.0
+    assert calls and "cluster_id=41" in calls[0]
+
+
+def test_v2_assigner_reserves_candidate_slots_for_structured_event_identity():
+    assigner = assign_llm_v2.LLMAssignerV2(
+        call_fn=lambda _prompt: (
+            {"decision": "existing", "matched_cluster_id": 77},
+            {"ok": True, "parse_success": True, "usage": {}},
+        ),
+        max_candidates=5,
+    )
+    for cluster_id, dense_score in enumerate((0.99, 0.95, 0.91, 0.88, 0.84), 1):
+        assigner.clusters[cluster_id] = assign_llm_v2.ClusterV2(
+            cluster_id=cluster_id,
+            stock_code="005930",
+            centroid=np.array([dense_score, (1 - dense_score**2) ** 0.5], dtype=np.float32),
+            anchor_title=f"무관한 삼성전자 사건 {cluster_id}",
+            anchor_description="서로 다른 발표",
+            rep_title="",
+            rep_description="",
+            event_signature={"subject": "삼성전자", "action": f"별도 발표 {cluster_id}"},
+            member_article_ids=[f"persisted:{cluster_id}:0"],
+            last_active_h=100.0,
+        )
+    assigner.clusters[77] = assign_llm_v2.ClusterV2(
+        cluster_id=77,
+        stock_code="005930",
+        centroid=np.array([0.2, 0.98], dtype=np.float32),
+        anchor_title="미국 순방 AI 서밋",
+        anchor_description="7박 11일 일정",
+        rep_title="",
+        rep_description="",
+        event_signature={
+            "subject": "이재명 대통령",
+            "action": "미국 순방",
+            "product_or_project": "샌프란시스코 AI 서밋",
+            "event_date": "2026-07-24",
+        },
+        member_article_ids=["persisted:77:0"],
+        last_active_h=100.0,
+    )
+
+    result = assigner.assign(
+        {
+            "article_id": "005930:100",
+            "stock_code": "005930",
+            "title": "대통령 AI 서밋 참석",
+            "description": "같은 미국 순방 일정",
+            "event_signature": {
+                "subject": "이재명 대통령",
+                "action": "미국 순방",
+                "product_or_project": "샌프란시스코 AI 서밋",
+                "event_date": "2026-07-24",
+            },
+        },
+        np.array([1.0, 0.0], dtype=np.float32),
+        101.0,
+    )
+
+    assert result.status == "assigned_existing"
+    assert result.cluster_id == 77
+    assert len(result.candidates) <= 5
+    assert 77 in {candidate["cluster_id"] for candidate in result.candidates}
 
 
 def test_v2_assigner_existing_merge():
