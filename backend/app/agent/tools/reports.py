@@ -27,7 +27,7 @@ class SearchResearchReportsInput(BaseModel):
     broker: str | None = None
     date_from: str | None = None
     date_to: str | None = None
-    limit: int = Field(default=8, ge=1, le=12)
+    limit: int = Field(default=5, ge=1, le=12)
 
 
 def run_search_research_reports(

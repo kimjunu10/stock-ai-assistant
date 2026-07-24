@@ -191,6 +191,9 @@ def build_agent(cfg: Settings, *, api_key: str, base_url: str):
         api_key=api_key,
         base_url=base_url,
         temperature=0,
+        # 개별 호출 HTTP timeout + 무재시도: API hang 이 전체 응답을 매달리지 않게 한다.
+        timeout=cfg.agent_model_timeout_seconds,
+        max_retries=0,
     )
     middleware = [
         ModelCallLimitMiddleware(run_limit=cfg.agent_max_model_calls, exit_behavior="end"),

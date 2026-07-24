@@ -29,7 +29,7 @@ class SearchDisclosuresInput(BaseModel):
     query: str = ""
     latest_only: bool = True
     only_corrections: bool = False
-    limit: int = Field(default=8, ge=1, le=12)
+    limit: int = Field(default=5, ge=1, le=12)
 
 
 def run_search_disclosures(facts: FactsService, inp: SearchDisclosuresInput) -> ToolResult:
@@ -70,7 +70,7 @@ def run_search_disclosures(facts: FactsService, inp: SearchDisclosuresInput) -> 
 class DisclosureValuesInput(BaseModel):
     stock_code: str = Field(pattern=r"^[0-9]{6}$")
     event_types: list[str] = Field(default_factory=list)
-    limit: int = Field(default=8, ge=1, le=12)
+    limit: int = Field(default=5, ge=1, le=12)
 
 
 def run_get_disclosure_values(facts: FactsService, inp: DisclosureValuesInput) -> ToolResult:

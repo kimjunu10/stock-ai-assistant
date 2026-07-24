@@ -31,7 +31,7 @@ class SearchNewsInput(BaseModel):
     include_topics: list[str] = Field(default_factory=list)
     exclude_topics: list[str] = Field(default_factory=list)
     current_event_id: str | None = None
-    limit: int = Field(default=8, ge=1, le=12)
+    limit: int = Field(default=5, ge=1, le=12)
 
 
 def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolResult:

@@ -116,10 +116,11 @@
       "type": "답변불가",
       "question": "삼성전자 2099년 영업이익 확정값을 알려줘.",
       "stock_code": "005930",
-      "required_tools": ["get_financial_facts"],
+      "required_tools": [],
       "forbidden_tools": [],
       "expected_args": {},
-      "is_answerable": false
+      "is_answerable": false,
+      "_note": "존재 불가한 미래값. Tool 호출 없이 없음을 밝혀도 정답(재무 Tool 강제 아님)."
     }
   ]
 }

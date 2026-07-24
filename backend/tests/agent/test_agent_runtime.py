@@ -85,7 +85,7 @@ class _FakeAgent:
         self._raise = raise_exc
         self._hang = hang
 
-    def invoke(self, payload, context=None):
+    def invoke(self, payload, context=None, config=None):
         if self._raise:
             raise self._raise
         if self._hang:

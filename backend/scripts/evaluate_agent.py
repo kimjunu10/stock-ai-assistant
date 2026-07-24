@@ -68,10 +68,14 @@ def main() -> int:
     # Agent 의 실제 Tool 선택 능력을 측정하기 위해 평가 timeout 을 상향한다(설정값 조정).
     eval_timeout = float(os.environ.get("AGENT_TIMEOUT_SECONDS", "35"))
     cfg = Settings(agent_enabled=True, agent_timeout_seconds=eval_timeout)
-    if not cfg.upstage_api_key:
-        print("UPSTAGE_API_KEY 없음 — 평가 불가")
+    api_key, base_url = cfg.agent_model_credentials()
+    if not api_key:
+        print(f"{cfg.agent_chat_provider} API 키 없음 — 평가 불가")
         return 2
-    print(f"평가 timeout={eval_timeout}s")
+    print(
+        f"평가 provider={cfg.agent_chat_provider} model={cfg.agent_chat_model} "
+        f"timeout={eval_timeout}s"
+    )
 
     client = get_supabase_client()
     embedder = UpstageEmbedder(cfg)
@@ -83,9 +87,7 @@ def main() -> int:
         retriever=retriever,
         reports=ResearchReportSearch(client, cfg, retriever),
     )
-    agent = AgentQaService(
-        cfg, services, api_key=cfg.upstage_api_key, base_url=cfg.upstage_base_url
-    )
+    agent = AgentQaService(cfg, services, api_key=api_key, base_url=base_url)
 
     cases = json.loads(DEVSET.read_text(encoding="utf-8"))["cases"]
     rows = []
@@ -113,8 +115,12 @@ def main() -> int:
         viol = forb & used_set
         if viol:
             forbidden_viol += 1
-        # 동일 호출 반복(같은 tool 2회 이상)
-        if len(used) != len(used_set):
+        # 동일 호출 반복: 같은 Tool 을 3회 이상 부른 경우만 과다 반복으로 집계.
+        # (비교 질문에서 인자가 다른 2회 호출은 정상 — DuplicateToolCallMiddleware 가
+        #  동일 인자 반복을 이미 차단하므로 여기서는 과다 호출만 본다.)
+        from collections import Counter
+
+        if any(cnt >= 3 for cnt in Counter(used).values()):
             dup_calls += 1
         # no_data 처리
         if not c.get("is_answerable", True):

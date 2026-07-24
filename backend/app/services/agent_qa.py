@@ -125,9 +125,13 @@ class AgentQaService:
             stock_code, source_type, source_id, document_id, report_page, conversation_id
         )
         payload = {"messages": [{"role": "user", "content": question}]}
+        # LangGraph 스텝 하드 상한: 모델·Tool loop 폭주를 그래프 레벨에서 차단(GraphRecursionError).
+        # (모델호출 + Tool 호출) 여유분. ThreadPoolExecutor timeout 이 못 끊는 무한 loop 방지.
+        recursion_limit = 2 * (self._cfg.agent_max_model_calls + self._cfg.agent_max_tool_calls) + 2
+        config = {"recursion_limit": recursion_limit}
 
         def _invoke() -> dict:
-            return self._agent.invoke(payload, context=ctx)
+            return self._agent.invoke(payload, context=ctx, config=config)
 
         t0 = time.perf_counter()
         try:
@@ -137,6 +141,14 @@ class AgentQaService:
         except concurrent.futures.TimeoutError:
             return self._failed(request_id, "timeout", "응답 시간이 초과되었습니다.", t0)
         except Exception as e:  # noqa: BLE001 - 내부 예외 비노출
+            # LangGraph 스텝 상한 초과는 Tool loop 폭주 → 명확한 stop_reason 으로 구분.
+            if type(e).__name__ == "GraphRecursionError":
+                return self._failed(
+                    request_id,
+                    "step_limit",
+                    "조회 단계 한도를 초과해 답변을 마치지 못했습니다.",
+                    t0,
+                )
             return self._failed(
                 request_id, "error", f"일시적 오류({type(e).__name__})로 답변하지 못했습니다.", t0
             )
@@ -187,7 +199,8 @@ def get_agent_qa_service() -> AgentQaService | None:
     cfg = settings
     if not cfg.agent_enabled:
         return None
-    if not cfg.upstage_api_key:
+    api_key, base_url = cfg.agent_model_credentials()
+    if not api_key:
         return None
     from app.db.client import get_supabase_client
     from app.ml.embeddings import UpstageEmbedder
@@ -196,11 +209,11 @@ def get_agent_qa_service() -> AgentQaService | None:
     from app.services.research_reports import ResearchReportSearch
 
     client = get_supabase_client()
-    embedder = UpstageEmbedder(cfg)
+    embedder = UpstageEmbedder(cfg)  # 임베딩은 Upstage 유지(Agent 모델과 별개)
     retriever = HybridRetriever(client, cfg, embedder)
     services = ToolServices(
         facts=FactsService(client),
         retriever=retriever,
         reports=ResearchReportSearch(client, cfg, retriever),
     )
-    return AgentQaService(cfg, services, api_key=cfg.upstage_api_key, base_url=cfg.upstage_base_url)
+    return AgentQaService(cfg, services, api_key=api_key, base_url=base_url)

@@ -27,9 +27,10 @@ SourceType = Literal[
     "price",
 ]
 
-# 1회 Tool 응답 크기 상한(모델 컨텍스트·비용 보호).
-MAX_RESULT_ITEMS = 12
-MAX_TEXT_CHARS = 1200
+# 1회 Tool 응답 크기 상한(모델 컨텍스트·비용·지연 보호).
+# snippet 을 짧게 유지해 모델 왕복 토큰·지연을 낮춘다(5.5-F 지연 결함 대응).
+MAX_RESULT_ITEMS = 8
+MAX_TEXT_CHARS = 500
 
 
 class SourceRef(BaseModel):

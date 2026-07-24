@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~E 완료, F 미달·재평가 필요, G 차단) | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~F 통과, 세부채점·G 대기) | [ ] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -352,44 +352,49 @@ trace: request_id·model/tool count·latency·stop_reason·validation_errors·so
 
 ---
 
-## 5.5-F. 평가  ⚠️ 수행 완료, 승인 기준 미달 (2026-07-24)
+## 5.5-F. 평가  ✅ 핵심 게이트 통과, 세부 채점 잔여 (2026-07-24)
+
+Agent 모델: **gpt-4.1-mini-2025-04-14** (provider-agnostic 교체; solar-pro3 는 지연·hang 으로 미달).
 
 - [x] 개발셋 작성 (`eval/devset.json`, 12개 유형별)
 - [ ] 홀드아웃 작성 (미작성 — devset 우선 실행)
 - [x] 금융용어 / 재무 연간·분기·누적 / 뉴스 / 공시 / 리포트 / 복합 / 부정·제외 / no_data (유형 포함)
 - [ ] 현재 문맥 (devset 미포함)
-- [x] no_data (1/1 정직 처리)
+- [x] no_data (1/1 정직 처리 — 미래값을 상식으로 없음 판단)
 - [x] legacy QueryPlan 비교 (각 케이스 legacy_route 대비 기록 — Agent 가 규칙과 다르게 선택 증명)
-- [x] Tool Recall (0.833, 기준 0.95 미달)
-- [x] forbidden Tool violation (8.3%, 기준 3% 미달)
-- [ ] Tool arg accuracy (세부 채점 미구현)
-- [ ] 숫자 Exact Match (세부 채점 미구현)
-- [ ] Citation Precision (세부 채점 미구현)
-- [x] 지연·비용 (P50 8.5s / P95 106s — 복합 10s 기준 미달)
-- [x] 동일 호출 반복 (1건, 기준 0 미달)
+- [x] Tool Recall (**1.0**, 기준 0.95 통과)
+- [x] forbidden Tool violation (**0%**, 기준 3% 통과)
+- [ ] Tool arg accuracy (세부 채점 미구현 — 잔여)
+- [ ] 숫자 Exact Match (세부 채점 미구현 — 잔여)
+- [ ] Citation Precision (세부 채점 미구현 — 잔여)
+- [x] 지연·비용 (P50 4.5s / **P95 7.1s**, 복합 10s 통과)
+- [x] 동일 호출 반복 (**0건**, 기준 0 통과)
 
 ### 하드코딩 감사 + Tool 선택 증명 (추가 지시)
 
 - [x] 질문별·종목별 Tool 선택 하드코딩 없음 (Agent 경로 grep 감사 — 질문비교·종목·회사명·
-      Tool 강제·프롬프트 few-shot 라우팅 전부 없음)
-- [x] Tool trace 로 모델이 직접 Tool 선택 증명 (질문마다 다른 tool_calls, legacy 규칙과 불일치)
+      Tool 강제·프롬프트 few-shot 라우팅 전부 없음). 모델 교체는 provider 설정 변경일 뿐.
+- [x] Tool trace 로 모델이 직접 Tool 선택 증명 (질문마다 다른 tool_calls, legacy 규칙과 불일치,
+      부정·제외 질문에서 금지 Tool 미호출)
 
-### 평가 결과 요약
+### 평가 결과 요약 (gpt-4.1-mini)
 
 ```text
-Required Tool Recall: 0.833 (10/12)   기준 0.95  → 미달
-Forbidden Violation:  8.3% (1/12)     기준 3%    → 미달 (fin-annual 이 search_news 추가 호출)
+Required Tool Recall: 1.0 (12/12)     기준 0.95  → 통과
+Forbidden Violation:  0% (0/12)       기준 3%    → 통과
+부정·제외 치명 위반:  0                          → 통과
 no_data 처리:         1/1                          → 통과
-동일 호출 반복:       1건 (compare 4회) 기준 0    → 미달
-지연 P50/P95:         8.5s / 106s      복합 10s   → 미달
+동일 호출 반복:       0건               기준 0    → 통과
+지연 P50/P95:         4.5s / 7.1s      복합 10s   → 통과
 하드코딩:             없음                         → 통과
 모델 자율 Tool 선택:  증명됨                       → 통과
 ```
 
-주요 결함(평가가 드러냄):
-- timeout 이 Tool 내부 LLM 왕복을 중단 못 해 report-1 106s·exclude-1 609s 폭주(실동작 결함).
-- 순수 재무 질문에 불필요한 search_news 호출(프롬프트 튜닝 필요).
-- 비교 질문 재무 Tool 과다 반복.
+### 잔여(미측정) — 5.5-G 전 완료 필요
+
+- 재무 숫자 Exact Match / 기간·단위 정확도 / actual·forecast 혼동 / Citation Precision 의
+  **평가셋 정답값 대비 자동 채점 로직 미구현.** Tool·검증기 코드가 이미 강제하나(5.5-B/E),
+  명시적 자동 채점으로 승인 기준 전체를 검증한 뒤 5.5-G 로 진행한다.
 
 상세: `docs/rag/phase_5_5/eval/EVAL_REPORT.md`.
 산출물: `scripts/evaluate_agent.py`, `eval/devset.json`, `EVAL_REPORT.md`
@@ -430,9 +435,10 @@ actual/forecast 혼동 0
 
 ## 5.5-G. 라이브 전환
 
-> ⛔ **진입 차단**: 5.5-F 승인 기준 미달(Recall 0.83<0.95, Forbidden 8.3%>3%, 반복 1건,
-> 복합 P95 106s≫10s, timeout 미작동 결함). 승인 기준 통과 전까지 라이브 전환하지 않는다.
-> `agent_enabled=false` 유지(라이브는 결정론적 경로). 5.5-F 개선 후 재평가 필요.
+> ⚠️ **조건부 대기**: 5.5-F 핵심 게이트(Recall 1.0, Forbidden 0%, 부정·제외 0, 반복 0,
+> 복합 P95 7.1s)는 gpt-4.1-mini 로 **통과**. 그러나 재무 Exact Match·기간·단위·Citation
+> **자동 채점이 미구현**이라, 이를 완료해 승인 기준 전체를 명시 검증한 뒤 라이브 전환한다.
+> 현재 `agent_enabled=false` 유지(라이브는 결정론적 경로).
 
 - [ ] 승인 기준 통과
 - [ ] `AGENT_ENABLED=true` 스테이징

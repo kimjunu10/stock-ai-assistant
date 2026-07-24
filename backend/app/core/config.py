@@ -88,17 +88,32 @@ class Settings(BaseSettings):
     rag_current_doc_candidates: int = 4
     rag_global_candidates: int = 12
 
+    # OpenAI (Agent 모델 provider 로 선택 가능). 값은 .env 로만 주입, 코드/로그에 출력 금지.
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+
     # --- Phase 5.5 Agentic RAG (SPEC §18) ---
     # Agent 경로는 평가 통과 전까지 기본 비활성(라이브 QA 는 기존 결정론적 경로 유지).
     agent_enabled: bool = False
-    # Upstage 는 OpenAI 호환 API → langchain-openai ChatOpenAI(base_url) 사용(5.5-A 확정).
-    agent_chat_provider: str = "upstage"
-    agent_chat_model: str = "solar-pro3-260323"
+    # Agent 모델 provider 는 코드에 고정하지 않는다(provider-agnostic). openai | upstage.
+    # openai: OPENAI_API_KEY + openai base_url / upstage: OpenAI 호환 엔드포인트(5.5-A).
+    agent_chat_provider: str = "openai"
+    agent_chat_model: str = "gpt-4.1-mini-2025-04-14"
     agent_max_model_calls: int = 4
     agent_max_tool_calls: int = 5
     agent_max_same_tool_args: int = 1
     agent_tool_retry: int = 1
     agent_timeout_seconds: float = 8.0
+    # 개별 LLM 호출 HTTP timeout. API hang 이 전체 응답을 무한정 매달리게 하는 것을
+    # 막는다(5.5-F 지연 결함 대응). 모델 왕복이 이 시간을 넘으면 그 호출만 끊는다.
+    agent_model_timeout_seconds: float = 20.0
+
+    def agent_model_credentials(self) -> tuple[str, str]:
+        """agent_chat_provider 에 맞는 (api_key, base_url) 반환. 값은 노출하지 않는다."""
+        if self.agent_chat_provider == "openai":
+            return self.openai_api_key, self.openai_base_url
+        # upstage(OpenAI 호환 엔드포인트)
+        return self.upstage_api_key, self.upstage_base_url
 
     # --- DART 수집 튜닝 (SPEC §4-5) ---
     dart_request_delay_seconds: float = 0.25  # 호출 사이 기본 sleep
