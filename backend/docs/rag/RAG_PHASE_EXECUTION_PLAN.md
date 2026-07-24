@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] (A 완료, B~G 대기) | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] (A·B 완료, C~G 대기) | [ ] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -163,41 +163,48 @@ langchain-upstage: 미채택(tokenizers<0.21 충돌) → langchain-openai 대체
 
 ---
 
-## 5.5-B. Tool 계약
+## 5.5-B. Tool 계약  ✅ 완료 (2026-07-24)
 
-- [ ] 공통 `ToolResult` 구현
-- [ ] 공통 `SourceRef` 구현
-- [ ] `QaRuntimeContext` 구현
-- [ ] Tool error sanitize
-- [ ] Tool 결과 크기 제한
-- [ ] 읽기 전용 확인
+- [x] 공통 `ToolResult` 구현 (`app/agent/tools/common.py`)
+- [x] 공통 `SourceRef` 구현
+- [x] `QaRuntimeContext` 구현 (`app/agent/context.py`)
+- [x] Tool error sanitize (`sanitize_exception` — 내부 예외 비노출)
+- [x] Tool 결과 크기 제한 (`clamp_text`/`clamp_items`, MAX_RESULT_ITEMS/MAX_TEXT_CHARS)
+- [x] 읽기 전용 확인 (전 Tool 이 기존 read-only Service 만 호출, 쓰기 없음)
 
 ### Tools
 
-- [ ] `get_financial_facts`
-- [ ] `lookup_financial_term`
-- [ ] `search_news`
-- [ ] `search_disclosures`
-- [ ] `get_disclosure_values`
-- [ ] `search_research_reports`
+- [x] `get_financial_facts` (`tools/financials.py`)
+- [x] `lookup_financial_term` (`tools/terms.py`)
+- [x] `search_news` (`tools/news.py`)
+- [x] `search_disclosures` (`tools/disclosures.py`)
+- [x] `get_disclosure_values` (`tools/disclosures.py`)
+- [x] `search_research_reports` (`tools/reports.py`)
 
 ### 검증
 
-- [ ] 기존 Service 재사용
-- [ ] Agent가 SQL 문자열을 전달할 수 없음
-- [ ] `get_financial_facts` 기간·amount_type 엄격 검증
-- [ ] 다른 기간 fallback 없음
-- [ ] latest disclosure 기본값
-- [ ] partial report 제외
-- [ ] 모든 결과에 source metadata
+- [x] 기존 Service 재사용 (FactsService·HybridRetriever·ResearchReportSearch)
+- [x] Agent가 SQL 문자열을 전달할 수 없음 (입력 스키마에 sql/query-SQL 필드 없음, Literal 계정)
+- [x] `get_financial_facts` 기간·amount_type 엄격 검증 (report_period→공식 reprt_code 매핑)
+- [x] 다른 기간 fallback 없음 (미일치 시 no_data)
+- [x] latest disclosure 기본값 (`SearchDisclosuresInput.latest_only=True`)
+- [x] partial report 제외 (검색 계층이 active/current 강제)
+- [x] 모든 결과에 source metadata (`SourceRef`)
+
+> 참고: DART reprt_code 매핑은 Tool 계층에서 공식값(11013=q1 … 11011=annual)을 사용한다.
+> (기존 `FactsService.REPRT_LABEL` 오매핑과 무관하게 Tool 이 올바른 코드로 조회.)
+> Agent 등록(create_agent)·LLM 실호출은 5.5-C 이후. 이 단계는 Tool 계약·구현·단위검증만.
 
 ### 산출물
 
 ```text
-backend/app/agent/context.py
-backend/app/agent/tools/
-backend/tests/agent/test_tool_*.py
+backend/app/agent/context.py                    (완료)
+backend/app/agent/tools/common.py               (완료)
+backend/app/agent/tools/{financials,terms,news,disclosures,reports}.py  (완료)
+backend/tests/agent/test_tool_contracts.py      (완료, 14 테스트 통과)
 ```
+
+전체 테스트 170 passed(기존 156 + 5.5-B 14), ruff·format 통과.
 
 ---
 
