@@ -127,7 +127,7 @@ Claude Code는 작업하면서 직접 체크박스를 수정한다.
 | 2 | 뉴스 기반 최소 RAG | [x] | [x] |
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 숫자·용어·혼합 질문 (결정론적 QA 라이브 경로 완료) | [x] | [x] |
-| 5 | 증권사 리포트 | [x] 적재 완료(QA 연결 미진행) | [ ] |
+| 5 | 증권사 리포트 | [x] 적재+검색+QA 연결 완료 | [ ] |
 | 6 | 주가 질문 | [ ] | [ ] |
 | 7 | 프런트엔드 연결 | [ ] | [ ] |
 | 8 | 평가·튜닝 | [ ] | [ ] |
@@ -673,6 +673,21 @@ A/E/F 6063 과 표 단위 value_kind 집계의 기준 차이:
   (토큰 vs 표). 따라서 두 수는 정의상 일치할 수 없으며 비교 대상이 아니다.
 - 토큰 단위 value_kind 합(actual/estimate/forecast) 은 aef_value_total 과 일치함을
   파서 회귀(phase5_verify_parser.py)에서 별도 확인.
+```
+
+### 완료 기록 — 검색·QA 연결 (2026-07-24)
+
+```text
+search_research_reports(app/services/research_reports.py): HybridRetriever 재사용
+  (source_type=research_report). RPC 가 is_active·is_current 강제 → partial·NULL emb 제외.
+  stock_code·발행일 필터(RPC), 증권사 필터(후처리). 제목·증권사·발행일·투자의견·
+  page_number·pdf_page·source_page·표 value_kind 반환. 전망값을 실적으로 표현 안 함.
+검색 품질: 5개 유형(정확명칭·자연어·전망·목표주가·실적원인) Recall@8=100%(25/25),
+  타종목 혼입 0, 출처페이지 유효 40/40.
+QA 연결: QueryPlan need_reports 추가(report intent 독립 판정). FactsQaService 병렬
+  조회에 리포트 추가. QaResponse.report_sources 비파괴 확장. 세 의도(financial/news/
+  report) 독립 판정으로 과호출 제거('목표주가' 만으로 SQL·뉴스 자동 안 켜짐).
+QA 응답 계약: 비파괴(선택 필드만 추가). Agentic·Tool Registry·MCP 미진행.
 ```
 
 ---
