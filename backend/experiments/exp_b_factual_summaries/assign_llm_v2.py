@@ -2,12 +2,13 @@
 
 기존 assign_llm.LLMAssigner 를 건드리지 않고 v2 정책을 별도 구현한다.
 정책(prompt.md v2):
-  - BGE-M3 로 같은 종목·시간창 후보를 찾고, 최종 existing/new 는 Solar 가 판정.
-  - 같은 회사·산업·키워드만으로 병합하지 않는다. 실제 같은 발표/발생 사건만 병합.
+  - BGE-M3 로 같은 종목·시간창 후보를 찾는다.
+  - dense cosine 유사도가 0.85를 초과하면 가장 유사한 후보에 즉시 병합한다.
+  - 0.85 이하의 애매한 후보만 최종 existing/new 를 Solar 가 판정한다.
+  - 같은 회사·산업·키워드만으로 병합하지 않는다. 제목상 같은 이슈 흐름과 직접
+    후속 보도만 병합한다.
   - 후보에는 최초 기사만이 아니라 다음을 전달한다:
-      클러스터 event_signature / 최초 기사 / 대표 기사 / 최근 기사 최대 2개.
-  - 새 기사와 후보의 event_signature(주체·행동·대상·제품·시점·금액·식별자)가
-    충돌하면 새 클러스터를 만든다.
+      단순 event_signature / 최초 제목 / 대표 제목 / 최근 제목 최대 2개.
   - 실패·환각·후보밖 id → pending_retry (임의 배정·신규 생성 금지).
 
 BGE-M3 후보검색·centroid 갱신은 검증된 assign_llm 과 동일하게 유지한다.
@@ -25,36 +26,30 @@ import numpy as np
 
 from . import config as CFG
 from .assign_llm import call_solar_assign
+from .classify_role import normalize_event_signature
 
 logger = logging.getLogger(__name__)
 
-ASSIGN_V2_PROMPT_VERSION = "same_event_sig_v5_multiprototype"
+ASSIGN_V2_PROMPT_VERSION = "same_story_title_v6_multiprototype"
 
 SYSTEM_PROMPT_V2 = (
-    "너는 한국어 금융 뉴스의 '동일 사건' 판정기다. 새 기사가 후보 클러스터들 중 "
-    "'같은 하나의 사건'을 보도한 것과 같은지 판단한다. 여러 언론사가 같은 사건을 "
-    "서로 다른 제목·강조점·수치 표현으로 보도하는 것이 정상임을 전제로 한다.\n"
-    "핵심 판단 기준 — 아래 요소를 모두 비교한다:\n"
-    "  · 주체(누가): 발표·발언·결정을 한 사람/기관/회사\n"
-    "  · 행동(무엇을 했나): 발표·지시·투자·계약·실적발표 등 사건의 행위\n"
-    "  · 대상(무엇에 대해): 그 행동이 향한 제품·프로젝트·정책·상대방\n"
-    "  · 사건 정체성: 행사명, 주최·초청 주체, 행사 형태, 개최 목적\n"
+    "너는 한국어 금융 뉴스의 '같은 이슈 흐름' 판정기다. 새 기사 제목이 후보 "
+    "클러스터의 제목들과 같은 핵심 사건 또는 그 사건의 직접 후속 보도인지 판단한다. "
+    "검색 결과 요약과 본문은 신뢰하지 않고 제목과 단순 사건 정보만 사용한다.\n"
+    "핵심 판단 기준:\n"
+    "  · 핵심 주체: 사건의 중심 인물·기관·회사\n"
+    "  · 핵심 사건 주제: 무엇에 관한 이슈인지\n"
+    "  · 고유 식별어: 금액·계약명·제품명·행사명 등\n"
+    "  · 이슈 관계: 최초 사건, 그 사건의 후속 조치, 반응·영향 보도\n"
     "규칙:\n"
-    "1. 주체·행동·대상과 사건 정체성이 실질적으로 일치하면 existing 으로 판정한다. "
-    "같은 발표·발언·사건을 다룬 기사면 제목 표현, 강조하는 세부 수치, 금액·인용문 "
-    "차이는 무시한다(같은 사건의 다른 보도 각도일 뿐이다).\n"
-    "2. 같은 회사·인물·산업·키워드·날짜·도시가 겹쳐도 행사명, 주최 주체, 행사 형태나 "
-    "개최 목적이 다르면 반드시 new 로 판정한다. 참석자 일부가 같다는 사실만으로는 "
-    "동일 사건의 증거가 아니다.\n"
-    "3. 같은 회사·같은 산업·같은 키워드일 뿐 서로 다른 발표/사건이면 new 로 판정한다. "
-    "예: 같은 회사의 '실적 발표'와 '공장 증설 발표'는 다른 사건이다.\n"
-    "4. 서로 다른 시점의 명백히 별개인 사건은 new 다. 단, 같은 사건에 대한 후속·"
-    "반응 보도(같은 발언의 추가 보도, 같은 발표에 대한 시장 반응)는 existing 으로 본다.\n"
-    "5. 같은 일정이나 연속 행사에 포함돼도 실제 발생 행위가 다르면 별도 사건일 수 있다. "
-    "반대로 하나의 발표·출발·계약·실적발표를 기사마다 다른 의제나 참석자 중심으로 "
-    "강조한 것이라면 같은 사건이다.\n"
-    "6. 핵심 요소와 사건 정체성이 같은데 기사별 강조점과 세부만 다를 때는 existing 을 "
-    "우선한다. "
+    "1. 핵심 주제와 고유 식별어가 같으면 기사별 표현과 강조점이 달라도 existing 이다.\n"
+    "2. 최초 사건에서 직접 이어진 후속 조치·자금 마련·공식 반응·시장 영향은 같은 "
+    "이슈의 연속 보도이므로 existing 이다. 예: '9440억원 재산분할 판결'과 "
+    "'9440억원 마련을 위한 지분 활용 검토'.\n"
+    "3. 같은 회사·인물·산업·날짜만 겹치고 핵심 주제나 고유 식별어가 다르면 new 다.\n"
+    "4. 같은 순방이나 행사 일정이어도 별개의 회동·발표라면 new 다. 반대로 같은 출발·"
+    "회동·발표를 참석자나 의제만 달리 강조한 제목은 existing 이다.\n"
+    "5. 제목만으로 직접 연결을 확인할 수 없으면 억지로 합치지 말고 new 로 판정한다. "
     "후보 중 같은 사건이 하나도 없을 때만 new 로 판정한다.\n"
     '출력은 반드시 {"decision":"existing"|"new","matched_cluster_id":<cluster_id 또는 null>} '
     "형태의 JSON 하나만. 설명을 덧붙이지 않는다."
@@ -62,26 +57,28 @@ SYSTEM_PROMPT_V2 = (
 
 
 def _sig_line(sig: dict | None) -> str:
-    if not sig:
+    normalized = normalize_event_signature(sig)
+    if not normalized.get("core_subjects") and not normalized.get("core_topic"):
         return "  event_signature: (없음)"
     parts = []
-    for k in ("subject", "action", "object", "product_or_project", "amount", "event_date"):
-        v = sig.get(k)
-        if v:
-            parts.append(f"{k}={v}")
-    ids = sig.get("identifiers") or []
-    if ids:
-        parts.append(f"identifiers={','.join(map(str, ids))}")
+    subjects = normalized.get("core_subjects") or []
+    if subjects:
+        parts.append(f"core_subjects={','.join(map(str, subjects))}")
+    if normalized.get("core_topic"):
+        parts.append(f"core_topic={normalized['core_topic']}")
+    anchors = normalized.get("unique_anchors") or []
+    if anchors:
+        parts.append(f"unique_anchors={','.join(map(str, anchors))}")
+    parts.append(f"story_relation={normalized.get('story_relation', 'unknown')}")
     return "  event_signature: " + ("; ".join(parts) if parts else "(비어있음)")
 
 
 def build_user_prompt_v2(article: dict, candidates: list[dict]) -> str:
-    """새 기사(제목·요약·event_signature) + 후보별 상세(시그니처/최초/대표/최근2)."""
+    """새 제목과 후보 클러스터 제목들만으로 동일 이슈를 판정한다."""
 
     lines = [
         "[새 기사]",
         f"제목: {article.get('title', '')}",
-        f"요약: {article.get('description', '')}",
         _sig_line(article.get("event_signature")),
         "",
         "[후보 클러스터]",
@@ -89,32 +86,23 @@ def build_user_prompt_v2(article: dict, candidates: list[dict]) -> str:
     for c in candidates:
         lines.append(f"- cluster_id={c['cluster_id']}")
         lines.append(_sig_line(c.get("event_signature")))
-        lines.append(
-            f"  최초 기사: {c.get('anchor_title', '')} / {c.get('anchor_description', '')}"
-        )
+        lines.append(f"  최초 제목: {c.get('anchor_title', '')}")
         if c.get("rep_title"):
-            lines.append(f"  대표 기사: {c.get('rep_title', '')} / {c.get('rep_description', '')}")
+            lines.append(f"  대표 제목: {c.get('rep_title', '')}")
         for i, recent in enumerate(c.get("recent", [])[:2], 1):
-            lines.append(
-                f"  최근 기사{i}: {recent.get('title', '')} / {recent.get('description', '')}"
-            )
+            lines.append(f"  최근 제목{i}: {recent.get('title', '')}")
     lines.append("")
     lines.append(
-        "새 기사의 주체·행동·대상뿐 아니라 행사명, 주최·초청 주체, 행사 형태와 목적까지 "
-        "후보와 비교하라. 제목 표현이나 기사별 강조 의제, 세부 수치·금액만 다르고 동일한 "
-        "발표·발언·행사라면 existing 이다. 인물·날짜·장소·산업만 겹치고 실제 행위와 행사 "
-        "정체성이 다르면 new 다. 같은 사건이 후보에 없을 때도 new 다."
+        "제목의 핵심 주체·핵심 사건 주제·고유 식별어를 후보 제목들과 비교하라. 같은 "
+        "사건의 후속 조치나 반응이면 existing, 단순히 인물·회사·산업만 같으면 new 다."
     )
     return "\n".join(lines)
 
 
 _SIGNATURE_FIELDS = (
-    ("subject", 0.25),
-    ("action", 0.25),
-    ("object", 0.15),
-    ("product_or_project", 0.20),
-    ("event_date", 0.10),
-    ("identifiers", 0.05),
+    ("core_subjects", 0.30),
+    ("core_topic", 0.35),
+    ("unique_anchors", 0.35),
 )
 _TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣]+")
 
@@ -146,6 +134,8 @@ def signature_similarity(left: dict | None, right: dict | None) -> tuple[float, 
     same-event judge, so a structured match never forces an automatic merge.
     """
 
+    left = normalize_event_signature(left)
+    right = normalize_event_signature(right)
     if not left or not right:
         return 0.0, 0
     weighted = 0.0
@@ -375,6 +365,39 @@ class LLMAssignerV2:
                 0,
                 False,
                 "no candidates",
+                candidates=candidate_debug,
+            )
+
+        # 명확히 가까운 후보는 LLM의 보수적인 new 판정으로 쪼개지지 않도록 즉시
+        # 병합한다. centroid와 prototype 중 더 높은 BGE-M3 cosine을 사용하되,
+        # 여러 후보가 기준을 넘으면 dense cosine이 가장 높은 하나를 선택한다.
+        auto_candidate = max(cands, key=lambda candidate: candidate.dense_similarity)
+        auto_similarity = auto_candidate.dense_similarity
+        if auto_similarity > CFG.LLM_ASSIGN_AUTO_MERGE_MIN_SIM:
+            cid = auto_candidate.cluster.cluster_id
+            self._add_to_cluster(cid, vec, art, t_h)
+            self._seen[aid] = cid
+            logger.info(
+                "NEWS_CLUSTER_DECISION article_id=%s stock_code=%s decision=existing "
+                "matched_cluster_id=%s candidate_count=%d reason=auto_dense_similarity "
+                "dense_similarity=%.4f threshold=%.2f",
+                aid,
+                stock,
+                cid,
+                len(cands),
+                auto_similarity,
+                CFG.LLM_ASSIGN_AUTO_MERGE_MIN_SIM,
+            )
+            return AssignResultV2(
+                aid,
+                cid,
+                "assigned_existing",
+                len(cands),
+                False,
+                (
+                    f"auto dense similarity {auto_similarity:.4f} > "
+                    f"{CFG.LLM_ASSIGN_AUTO_MERGE_MIN_SIM:.2f}"
+                ),
                 candidates=candidate_debug,
             )
 

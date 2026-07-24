@@ -8,6 +8,8 @@ import numpy as np
 import pytest
 
 from app.repositories.news_v2 import NewsV2Repository
+from app.services import news_clustering
+from app.services.news_clustering import BgeM3Embedder
 from app.services.news_sentiment import SentimentResult
 from experiments.exp_b_factual_summaries import assign_llm_v2, classify_role
 from scripts import run_full_news_v2
@@ -54,6 +56,41 @@ def test_role_classifier_uses_llm_when_not_gated():
     assert calls["n"] == 1
 
 
+def test_role_classifier_does_not_gate_from_noisy_description():
+    called = []
+
+    def fake(prompt):
+        called.append(prompt)
+        return (
+            {
+                "article_role": "company_event",
+                "event_eligible": True,
+                "reason": "제품 공개",
+                "event_signature": {
+                    "core_subjects": ["삼성전자"],
+                    "core_topic": "폴더블폰 공개",
+                    "unique_anchors": ["갤럭시 언팩"],
+                    "story_relation": "initial",
+                },
+            },
+            {"ok": True, "parse_success": True, "usage": {}},
+        )
+
+    classifier = classify_role.RoleClassifier(call_fn=fake)
+    result, status = classifier.classify(
+        "삼성전자",
+        "005930",
+        {
+            "title": "삼성전자, 런던 언팩서 폴더블폰 공개",
+            "description": "[기자수첩] 검색 스니펫에 섞인 배경 문구",
+        },
+    )
+
+    assert status == "llm"
+    assert result["article_role"] == "company_event"
+    assert called
+
+
 def test_role_classifier_pending_on_llm_failure():
     fail = ({}, {"ok": False, "parse_success": False})
     clf = classify_role.RoleClassifier(call_fn=lambda _p: fail)
@@ -69,6 +106,91 @@ def test_parse_role_forces_eligible_consistency():
     )
     assert ok is True
     assert parsed["event_eligible"] is False
+
+
+def test_role_prompt_uses_title_only_and_ignores_noisy_search_snippet():
+    prompt = classify_role.build_user_prompt(
+        "SK하이닉스",
+        "000660",
+        {
+            "title": "최태원, 9440억원 마련 위해 SK실트론 지분 활용 검토",
+            "description": "AI 인프라 확대와 웨이퍼 생산능력 두 배 계획",
+            "body": "본문에도 다른 배경 설명이 길게 포함돼 있다.",
+            "published_at": "2026-07-24T01:00:00+00:00",
+        },
+    )
+
+    assert "9440억원 마련" in prompt
+    assert "AI 인프라 확대" not in prompt
+    assert "다른 배경 설명" not in prompt
+    assert "제목만 근거" in prompt
+
+
+def test_parse_role_normalizes_simplified_title_event_signature():
+    parsed, ok = classify_role.parse_role(
+        """
+        {
+          "article_role": "company_event",
+          "event_eligible": true,
+          "reason": "제목에 구체적 후속 조치가 있음",
+          "event_signature": {
+            "core_subjects": ["최태원"],
+            "core_topic": "재산분할금 마련",
+            "unique_anchors": ["9440억원", "SK실트론"],
+            "story_relation": "follow_up"
+          }
+        }
+        """
+    )
+
+    assert ok is True
+    assert parsed["event_signature"] == {
+        "core_subjects": ["최태원"],
+        "core_topic": "재산분할금 마련",
+        "unique_anchors": ["9440억원", "SK실트론"],
+        "story_relation": "follow_up",
+    }
+
+
+def test_legacy_event_signature_is_compatible_with_simplified_schema():
+    normalized = classify_role.normalize_event_signature(
+        {
+            "subject": "최태원",
+            "action": "재산분할 판결",
+            "object": "노소영",
+            "amount": "9440억원",
+            "identifiers": ["재산분할"],
+        }
+    )
+
+    assert normalized["core_subjects"] == ["최태원"]
+    assert normalized["core_topic"] == "재산분할 판결 노소영"
+    assert normalized["unique_anchors"] == ["9440억원", "재산분할"]
+    assert normalized["story_relation"] == "unknown"
+
+
+def test_bge_m3_embedding_uses_title_only(monkeypatch):
+    captured = []
+
+    class Model:
+        def encode(self, texts, **_kwargs):
+            captured.extend(texts)
+            return np.array([[1.0, 0.0] for _ in texts], dtype=np.float32)
+
+    with news_clustering._embedding_cache_lock:
+        news_clustering._embedding_cache.clear()
+    monkeypatch.setattr(news_clustering, "_load_embedding_model", lambda *_args: Model())
+
+    BgeM3Embedder("cpu").encode_many(
+        [
+            {
+                "title": "최태원, 9440억원 마련 위해 SK실트론 지분 활용 검토",
+                "description": "AI 인프라 확대와 웨이퍼 생산능력 두 배 계획",
+            }
+        ]
+    )
+
+    assert captured == ["최태원, 9440억원 마련 위해 SK실트론 지분 활용 검토"]
 
 
 def test_v2_assigner_new_when_no_candidates():
@@ -90,7 +212,7 @@ def test_v2_assigner_new_when_no_candidates():
 
 
 def test_v2_assigner_signature_conflict_new():
-    # 유사 임베딩이지만 Solar 가 event_signature 충돌로 new 판정 → 별도 클러스터.
+    # 0.85 미만의 유사 임베딩은 Solar가 event_signature 충돌로 new 판정한다.
     # (첫 기사는 후보 0개라 LLM 미호출이므로, LLM 은 항상 new 를 반환하도록 둔다.)
     def fake(_prompt):
         return (
@@ -99,7 +221,8 @@ def test_v2_assigner_signature_conflict_new():
         )
 
     a = assign_llm_v2.LLMAssignerV2(call_fn=fake)
-    vec = np.array([1.0, 0.0], dtype=np.float32)
+    first_vec = np.array([1.0, 0.0], dtype=np.float32)
+    ambiguous_vec = np.array([0.84, (1 - 0.84**2) ** 0.5], dtype=np.float32)
     r1 = a.assign(
         {
             "article_id": "005380:1",
@@ -108,7 +231,7 @@ def test_v2_assigner_signature_conflict_new():
             "description": "A",
             "event_signature": {"action": "착공"},
         },
-        vec,
+        first_vec,
         100.0,
     )
     r2 = a.assign(
@@ -119,12 +242,94 @@ def test_v2_assigner_signature_conflict_new():
             "description": "B",
             "event_signature": {"action": "실적발표"},
         },
-        vec,
+        ambiguous_vec,
         101.0,
     )
     assert r1.status == "assigned_new"
     assert r2.status == "assigned_new"  # 충돌 → 별도 클러스터
     assert r1.cluster_id != r2.cluster_id
+
+
+def test_v2_assigner_auto_merges_high_dense_similarity_without_llm():
+    calls = []
+
+    def fake(_prompt):
+        calls.append(_prompt)
+        raise AssertionError("0.85 이상 후보는 LLM을 호출하면 안 됨")
+
+    assigner = assign_llm_v2.LLMAssignerV2(call_fn=fake)
+    first_vec = np.array([1.0, 0.0], dtype=np.float32)
+    high_sim_vec = np.array([0.86, (1 - 0.86**2) ** 0.5], dtype=np.float32)
+    first = assigner.assign(
+        {
+            "article_id": "005930:auto-1",
+            "stock_code": "005930",
+            "title": "삼성전자 미국 반도체 투자 확대",
+            "description": "미국 AI 공급망 투자 계획",
+            "event_signature": None,
+        },
+        first_vec,
+        100.0,
+    )
+    merged = assigner.assign(
+        {
+            "article_id": "005930:auto-2",
+            "stock_code": "005930",
+            "title": "삼성, AI 호황 현금으로 미국 기업 인수 확대",
+            "description": "같은 미국 투자 확대 보도",
+            "event_signature": None,
+        },
+        high_sim_vec,
+        101.0,
+    )
+
+    assert merged.status == "assigned_existing"
+    assert merged.cluster_id == first.cluster_id
+    assert merged.llm_called is False
+    assert merged.reason == "auto dense similarity 0.8600 > 0.85"
+    assert calls == []
+
+
+def test_v2_assigner_sends_below_auto_merge_threshold_to_llm():
+    calls = []
+
+    def fake(prompt):
+        calls.append(prompt)
+        return (
+            {"decision": "existing", "matched_cluster_id": 1},
+            {"ok": True, "parse_success": True, "usage": {}},
+        )
+
+    assigner = assign_llm_v2.LLMAssignerV2(call_fn=fake)
+    first_vec = np.array([1.0, 0.0], dtype=np.float32)
+    ambiguous_vec = np.array([0.84, (1 - 0.84**2) ** 0.5], dtype=np.float32)
+    first = assigner.assign(
+        {
+            "article_id": "005930:llm-1",
+            "stock_code": "005930",
+            "title": "삼성전자 미국 투자",
+            "description": "첫 보도",
+            "event_signature": None,
+        },
+        first_vec,
+        100.0,
+    )
+    merged = assigner.assign(
+        {
+            "article_id": "005930:llm-2",
+            "stock_code": "005930",
+            "title": "삼성전자 미국 공급망 확대",
+            "description": "판단이 필요한 보도",
+            "event_signature": None,
+        },
+        ambiguous_vec,
+        101.0,
+    )
+
+    assert merged.status == "assigned_existing"
+    assert merged.cluster_id == first.cluster_id
+    assert merged.llm_called is True
+    assert calls and "cluster_id=1" in calls[0]
 
 
 def test_v2_assigner_defaults_to_24_hour_candidate_window():
@@ -201,10 +406,69 @@ def test_v2_prompt_treats_same_participants_but_different_event_as_new():
         ],
     )
 
-    assert "행사명, 주최·초청 주체, 행사 형태와 목적" in prompt
-    assert "실제 행위와 행사 정체성이 다르면 new" in prompt
-    assert "기사별 강조 의제" in prompt
-    assert assign_llm_v2.ASSIGN_V2_PROMPT_VERSION == "same_event_sig_v5_multiprototype"
+    assert "핵심 주체·핵심 사건 주제·고유 식별어" in prompt
+    assert "단순히 인물·회사·산업만 같으면 new" in prompt
+    assert "정부 공식 AI 선언과 해외 순방 일정" not in prompt
+    assert "글로벌 AI 협력 논의" not in prompt
+    assert assign_llm_v2.ASSIGN_V2_PROMPT_VERSION == "same_story_title_v6_multiprototype"
+
+
+def test_simplified_signature_recovers_direct_follow_up_story():
+    ruling = {
+        "core_subjects": ["최태원"],
+        "core_topic": "노소영 재산분할 판결",
+        "unique_anchors": ["9440억원"],
+        "story_relation": "initial",
+    }
+    funding = {
+        "core_subjects": ["최태원"],
+        "core_topic": "재산분할금 마련",
+        "unique_anchors": ["9440억원", "SK실트론"],
+        "story_relation": "follow_up",
+    }
+
+    score, matches = assign_llm_v2.signature_similarity(ruling, funding)
+
+    assert score >= 0.55
+    assert matches >= 2
+
+
+def test_assignment_prompt_never_includes_candidate_descriptions():
+    prompt = assign_llm_v2.build_user_prompt_v2(
+        {
+            "title": "최태원, 9440억원 마련 위해 SK실트론 지분 활용 검토",
+            "description": "새 기사 오염 문구: 웨이퍼 생산능력 확대",
+            "event_signature": {
+                "core_subjects": ["최태원"],
+                "core_topic": "재산분할금 마련",
+                "unique_anchors": ["9440억원", "SK실트론"],
+                "story_relation": "follow_up",
+            },
+        },
+        [
+            {
+                "cluster_id": 7043,
+                "event_signature": {
+                    "core_subjects": ["최태원"],
+                    "core_topic": "노소영 재산분할 판결",
+                    "unique_anchors": ["9440억원"],
+                    "story_relation": "initial",
+                },
+                "anchor_title": "최태원 회장, 노소영에 9440억원 재산분할 판결",
+                "anchor_description": "후보 오염 문구: AI 인프라 투자",
+                "rep_title": "최태원·노소영 재산분할 판결",
+                "rep_description": "후보 대표 오염 문구",
+                "recent": [{"title": "9440억원 재산분할", "description": "최근 오염 문구"}],
+            }
+        ],
+    )
+
+    assert "SK실트론 지분 활용" in prompt
+    assert "노소영에 9440억원 재산분할 판결" in prompt
+    assert "웨이퍼 생산능력 확대" not in prompt
+    assert "AI 인프라 투자" not in prompt
+    assert "대표 오염 문구" not in prompt
+    assert "최근 오염 문구" not in prompt
 
 
 def test_v2_assigner_recovers_candidate_from_prototype_when_centroid_drifted():
@@ -248,7 +512,8 @@ def test_v2_assigner_recovers_candidate_from_prototype_when_centroid_drifted():
     assert result.cluster_id == 41
     assert result.candidates[0]["centroid"] == 0.0
     assert result.candidates[0]["prototype"] == 1.0
-    assert calls and "cluster_id=41" in calls[0]
+    assert result.llm_called is False
+    assert calls == []
 
 
 def test_v2_assigner_reserves_candidate_slots_for_structured_event_identity():
@@ -259,7 +524,7 @@ def test_v2_assigner_reserves_candidate_slots_for_structured_event_identity():
         ),
         max_candidates=5,
     )
-    for cluster_id, dense_score in enumerate((0.99, 0.95, 0.91, 0.88, 0.84), 1):
+    for cluster_id, dense_score in enumerate((0.84, 0.81, 0.78, 0.75, 0.72), 1):
         assigner.clusters[cluster_id] = assign_llm_v2.ClusterV2(
             cluster_id=cluster_id,
             stock_code="005930",
@@ -343,7 +608,7 @@ def test_v2_assigner_existing_merge():
             "description": "A2",
             "event_signature": {"action": "착공"},
         },
-        vec,
+        np.array([0.84, (1 - 0.84**2) ** 0.5], dtype=np.float32),
         101.0,
     )
     assert r2.status == "assigned_existing"
@@ -378,7 +643,7 @@ def test_v2_assigner_invalid_response_pending():
             "description": "d",
             "event_signature": None,
         },
-        vec,
+        np.array([0.84, (1 - 0.84**2) ** 0.5], dtype=np.float32),
         101.0,
     )
     assert r2.status == "pending_retry"

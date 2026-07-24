@@ -23,7 +23,7 @@ import requests
 from . import config as CFG
 from . import market_rules
 
-ROLE_VERSION = "role_v1"
+ROLE_VERSION = "role_title_event_v2"
 
 VALID_ROLES = {
     "company_event",
@@ -39,14 +39,13 @@ VALID_ROLES = {
 RULE_ROLE_OPINION = "opinion"
 
 _EMPTY_SIGNATURE = {
-    "subject": None,
-    "action": None,
-    "object": None,
-    "product_or_project": None,
-    "amount": None,
-    "event_date": None,
-    "identifiers": [],
+    "core_subjects": [],
+    "core_topic": None,
+    "unique_anchors": [],
+    "story_relation": "unknown",
 }
+
+_STORY_RELATIONS = {"initial", "follow_up", "reaction", "unknown"}
 
 SYSTEM_PROMPT = (
     "너는 한국어 금융 뉴스의 '역할' 분류기다. 주어진 종목 관점에서 이 기사가 어떤 "
@@ -63,12 +62,15 @@ SYSTEM_PROMPT = (
     "규칙:\n"
     "- 하나의 구체적 회사 사건을 식별할 수 없으면 company_event 가 아니다.\n"
     "- 애매하면 company_event 로 두지 말고 background/incidental 로 판정한다.\n"
-    "- company_event 일 때만 event_signature 의 각 항목(subject 주체, action 행동, "
-    "object 대상, product_or_project 제품·프로젝트, amount 금액·계약명, event_date 발생·발표일, "
-    "identifiers 식별정보 배열)을 기사에서 근거해 채운다. 없으면 null.\n"
+    "- 역할과 event_signature는 반드시 제목만 근거로 판단한다. 검색 결과의 description이나 "
+    "본문 배경정보를 사건 정보로 사용하지 않는다.\n"
+    "- company_event 일 때만 event_signature를 채운다: core_subjects(핵심 인물·기관 배열), "
+    "core_topic(기사가 다루는 핵심 사건 주제), unique_anchors(금액·계약명·제품명·행사명처럼 "
+    "같은 이슈를 식별하는 고유 표현 배열), story_relation(최초 사건이면 initial, 기존 사건의 "
+    "후속 조치면 follow_up, 반응·영향 보도면 reaction, 제목만으로 불명확하면 unknown).\n"
     '출력은 반드시 다음 JSON 하나만: {"article_role":"...","event_eligible":true/false,'
-    '"reason":"...","event_signature":{"subject":null,"action":null,"object":null,'
-    '"product_or_project":null,"amount":null,"event_date":null,"identifiers":[]}}. '
+    '"reason":"...","event_signature":{"core_subjects":[],"core_topic":null,'
+    '"unique_anchors":[],"story_relation":"unknown"}}. '
     "설명을 덧붙이지 않는다."
 )
 
@@ -92,22 +94,63 @@ def rule_gate(title: str, description: str = "") -> dict | None:
 
 
 def build_user_prompt(stock_name: str, stock_code: str, article: dict) -> str:
-    """LLM 입력: 종목명·코드 + 제목 + description + 본문 + 발행 시각."""
+    """LLM 입력: 종목명·코드 + 발행 시각 + 제목만."""
 
-    body = (article.get("body") or "").strip()
-    if len(body) > CFG.MAX_BODY_CHARS:
-        body = body[: CFG.MAX_BODY_CHARS]
     lines = [
         f"[대상 종목] {stock_name} ({stock_code})",
         f"[발행 시각] {article.get('published_at', '')}",
         f"[제목] {article.get('title', '')}",
-        f"[요약] {article.get('description', '')}",
-        "[본문]",
-        body,
         "",
-        "이 기사가 위 대상 종목 관점에서 어떤 역할인지 판정하라.",
+        "제목만 근거로 이 기사가 위 대상 종목 관점에서 어떤 역할인지 판정하고, "
+        "company_event라면 단순화된 사건 정보를 추출하라.",
     ]
     return "\n".join(lines)
+
+
+def _string_list(value: object) -> list[str]:
+    values = value if isinstance(value, list) else [value]
+    result: list[str] = []
+    for item in values:
+        text = str(item or "").strip()
+        if text and text not in result:
+            result.append(text)
+    return result
+
+
+def normalize_event_signature(value: object) -> dict:
+    """단순 사건 스키마로 정규화하며, DB의 기존 상세 스키마도 읽는다."""
+
+    if not isinstance(value, dict):
+        return dict(_EMPTY_SIGNATURE)
+
+    if any(key in value for key in _EMPTY_SIGNATURE):
+        relation = str(value.get("story_relation") or "unknown").strip()
+        if relation not in _STORY_RELATIONS:
+            relation = "unknown"
+        return {
+            "core_subjects": _string_list(value.get("core_subjects")),
+            "core_topic": str(value.get("core_topic") or "").strip() or None,
+            "unique_anchors": _string_list(value.get("unique_anchors")),
+            "story_relation": relation,
+        }
+
+    # 전환 전에 저장된 subject/action/object 스키마와의 호환성.
+    topic_parts = [
+        str(value.get(key) or "").strip()
+        for key in ("action", "object", "product_or_project")
+        if value.get(key)
+    ]
+    anchors: list[str] = []
+    for key in ("amount", "event_date", "identifiers", "product_or_project"):
+        for item in _string_list(value.get(key)):
+            if item not in anchors:
+                anchors.append(item)
+    return {
+        "core_subjects": _string_list(value.get("subject")),
+        "core_topic": " ".join(topic_parts) or None,
+        "unique_anchors": anchors,
+        "story_relation": "unknown",
+    }
 
 
 def parse_role(raw: str) -> tuple[dict, bool]:
@@ -133,8 +176,8 @@ def parse_role(raw: str) -> tuple[dict, bool]:
         eligible = role == "company_event"
     # 일관성 강제: company_event 만 eligible=true.
     eligible = role == "company_event"
-    sig = obj.get("event_signature")
-    if not isinstance(sig, dict):
+    sig = normalize_event_signature(obj.get("event_signature"))
+    if role != "company_event":
         sig = dict(_EMPTY_SIGNATURE)
     return {
         "article_role": role,
@@ -223,7 +266,8 @@ class RoleClassifier:
 
         None 은 LLM 실패로 재시도 필요(pending_retry)."""
 
-        gated = rule_gate(article.get("title", ""), article.get("description", ""))
+        # Search-result descriptions can quote an unrelated body paragraph.
+        gated = rule_gate(article.get("title", ""))
         if gated is not None:
             return gated, "rule"
 

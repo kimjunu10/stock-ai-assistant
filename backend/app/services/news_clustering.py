@@ -47,7 +47,12 @@ def _load_embedding_model(model_name: str, revision: str, device: str):
 
 
 class BgeM3Embedder:
-    """Lazy, process-cached BGE-M3 encoder using the experiment's exact input format."""
+    """Lazy, process-cached BGE-M3 encoder using article titles only.
+
+    Naver's ``description`` is a search-result snippet, not a publisher-authored
+    summary. It can point at an unrelated background paragraph, so it must not
+    influence same-event candidate retrieval.
+    """
 
     def __init__(self, device: str):
         self.device = device
@@ -64,8 +69,7 @@ class BgeM3Embedder:
         texts: list[str] = []
         for article in articles:
             title = (article.get("title") or "").strip()
-            description = (article.get("description") or "").strip()
-            texts.append(" ".join(part for part in (title, description) if part))
+            texts.append(title)
 
         cache_keys = [
             "\x1f".join(
