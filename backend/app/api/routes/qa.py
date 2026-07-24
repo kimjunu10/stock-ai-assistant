@@ -18,6 +18,7 @@ from app.schemas.qa import QaRequest, QaResponse
 from app.services.facts import FactsService
 from app.services.rag_qa import validate_citations
 from app.services.rag_qa_facts import FactsQaService
+from app.services.research_reports import ResearchReportSearch
 
 router = APIRouter(prefix="/qa", tags=["qa"])
 
@@ -30,14 +31,16 @@ def get_qa_service() -> FactsQaService:
     - 순수 뉴스 질문 → 기존 HybridRetriever 뉴스 검색만 사용(회귀 없음)
     - 숫자 질문 → FactsService SQL 결과(실제값, 단위·기간·출처 보존)
     - 용어 질문 → lookup_term 결과
-    - 혼합 질문 → 위를 결합
+    - 전망·목표주가·투자의견·증권사 질문 → search_research_reports(리포트 검색)
+    - 혼합 질문 → 위를 병렬 결합
     """
     client = get_supabase_client()
     embedder = UpstageEmbedder(settings)
     retriever = HybridRetriever(client, settings, embedder)
     facts = FactsService(client)
     generator = SolarGenerator(settings)
-    return FactsQaService(retriever, facts, generator, settings)
+    reports = ResearchReportSearch(client, settings, retriever)
+    return FactsQaService(retriever, facts, generator, settings, reports=reports)
 
 
 def _sse(event: str, data: dict | str) -> str:
@@ -59,6 +62,7 @@ def ask(req: QaRequest) -> QaResponse:
         answer=result.answer,
         sources=result.sources,
         numeric_sources=result.numeric_sources,
+        report_sources=result.report_sources,
         term=result.term,
         invalid_citations=result.invalid_citations,
         latency_ms=result.latency_ms,
@@ -70,7 +74,7 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
     """SSE 스트리밍 QA. 첫 이벤트로 sources, 이후 token, 마지막에 done."""
 
     service = get_qa_service()
-    sources, numeric_sources, term, token_iter = service.stream(
+    sources, numeric_sources, report_sources, term, token_iter = service.stream(
         req.question,
         stock_code=req.stock_code,
         context_source_id=req.context_source_id,
@@ -78,7 +82,13 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
 
     def gen() -> Iterator[str]:
         yield _sse(
-            "sources", {"sources": sources, "numeric_sources": numeric_sources, "term": term}
+            "sources",
+            {
+                "sources": sources,
+                "numeric_sources": numeric_sources,
+                "report_sources": report_sources,
+                "term": term,
+            },
         )
         buffer: list[str] = []
         for token in token_iter:

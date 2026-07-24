@@ -169,8 +169,66 @@ def test_response_schema_regression():
 
 def test_stream_returns_sources_and_tokens():
     svc, retr, facts, gen = _service()
-    sources, numeric_sources, term, token_iter = svc.stream(
+    sources, numeric_sources, report_sources, term, token_iter = svc.stream(
         "삼성전자 2025년 영업이익은 얼마야?", stock_code="005930"
     )
     assert numeric_sources and numeric_sources[0]["unit"] == "원"
+    assert report_sources == []  # 순수 숫자 질문 → 리포트 없음
     assert "".join(token_iter) == "답변 [1]"
+
+
+def test_pure_numeric_question_does_not_call_reports():
+    """순수 숫자 질문: 리포트 검색 서비스가 주입돼도 호출되지 않는다."""
+
+    class _FakeReports:
+        def __init__(self):
+            self.calls = 0
+
+        def search(self, q, **k):
+            self.calls += 1
+            return []
+
+    retr, facts, gen = _FakeRetriever(), _FakeFacts(), _FakeGenerator()
+    reports = _FakeReports()
+    svc = FactsQaService(retr, facts, gen, Settings(), reports=reports)
+    svc.answer("삼성전자 2025년 영업이익 얼마?", stock_code="005930")
+    assert reports.calls == 0
+
+
+def test_report_question_calls_reports_and_returns_sources():
+    class _FakeReports:
+        def __init__(self):
+            self.calls = 0
+
+        def search(self, q, *, stock_code=None, **k):
+            self.calls += 1
+            from app.services.research_reports import ReportHit
+
+            return [
+                ReportHit(
+                    chunk_id="c1",
+                    content="목표주가 상향 전망",
+                    stock_code=stock_code,
+                    report_id="r1",
+                    title="메모리 천하",
+                    broker="IBK투자증권",
+                    report_date="2026-05-04",
+                    investment_opinion="매수",
+                    page_number=2,
+                    pdf_page=1,
+                    source_page=2,
+                    table_value_kinds={"forecast": 3},
+                    similarity=0.8,
+                )
+            ]
+
+    retr, facts, gen = _FakeRetriever(), _FakeFacts(), _FakeGenerator()
+    reports = _FakeReports()
+    svc = FactsQaService(retr, facts, gen, Settings(), reports=reports)
+    result = svc.answer("삼성전자 목표주가 전망 어때?", stock_code="005930")
+    assert reports.calls == 1
+    assert result.report_sources and result.report_sources[0]["broker"] == "IBK투자증권"
+    assert result.report_sources[0]["source_page"] == 2
+    assert result.report_sources[0]["table_value_kinds"] == {"forecast": 3}
+    # 전망값이 프롬프트에 '예측치' 문구와 함께 들어감
+    assert "예측치" in gen.prompts[0] or "전망" in gen.prompts[0]

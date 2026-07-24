@@ -56,6 +56,24 @@ def test_pure_news_question_sets_documents():
     assert p.need_documents is True
 
 
+def test_report_signals_set_reports():
+    """전망·목표주가·투자의견·증권사·리포트 신호는 리포트 검색을 켠다."""
+    for q in (
+        "삼성전자 목표주가 전망",
+        "투자의견 알려줘",
+        "증권사 리포트 정리",
+        "애널리스트 컨센서스",
+    ):
+        assert build_query_plan(q, stock_code="005930").need_reports is True, q
+
+
+def test_non_report_questions_skip_reports():
+    """순수 숫자·뉴스·용어 질문은 리포트 검색을 켜지 않는다."""
+    assert build_query_plan("영업이익 얼마?", stock_code="005930").need_reports is False
+    assert build_query_plan("삼성전자 최근 뉴스", stock_code="005930").need_reports is False
+    assert build_query_plan("PER이 뭐야?").need_reports is False
+
+
 def test_term_question_sets_terms():
     p = build_query_plan("ADR이 뭐야?")
     assert p.need_terms is True
