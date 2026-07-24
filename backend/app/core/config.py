@@ -88,6 +88,18 @@ class Settings(BaseSettings):
     rag_current_doc_candidates: int = 4
     rag_global_candidates: int = 12
 
+    # --- Phase 5.5 Agentic RAG (SPEC §18) ---
+    # Agent 경로는 평가 통과 전까지 기본 비활성(라이브 QA 는 기존 결정론적 경로 유지).
+    agent_enabled: bool = False
+    # Upstage 는 OpenAI 호환 API → langchain-openai ChatOpenAI(base_url) 사용(5.5-A 확정).
+    agent_chat_provider: str = "upstage"
+    agent_chat_model: str = "solar-pro3-260323"
+    agent_max_model_calls: int = 4
+    agent_max_tool_calls: int = 5
+    agent_max_same_tool_args: int = 1
+    agent_tool_retry: int = 1
+    agent_timeout_seconds: float = 8.0
+
     # --- DART 수집 튜닝 (SPEC §4-5) ---
     dart_request_delay_seconds: float = 0.25  # 호출 사이 기본 sleep
     dart_max_backoff_seconds: float = 8.0  # status=020 지수 백오프 상한

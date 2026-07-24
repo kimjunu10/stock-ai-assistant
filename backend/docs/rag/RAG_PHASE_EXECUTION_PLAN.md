@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] (A·B 완료, C~G 대기) | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] (A·B·C 완료, D~G 대기) | [ ] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -208,22 +208,22 @@ backend/tests/agent/test_tool_contracts.py      (완료, 14 테스트 통과)
 
 ---
 
-## 5.5-C. Agent 구현
+## 5.5-C. Agent 구현  ✅ 완료 (2026-07-24)
 
-- [ ] Agent model 초기화 (ChatOpenAI + Upstage base_url; 5.5-A 확정)
-- [ ] `create_agent` 사용
-- [ ] 시스템 프롬프트 작성
-- [ ] Tool 목록 연결
-- [ ] Runtime Context 연결
-- [ ] `ModelCallLimitMiddleware`
-- [ ] `ToolCallLimitMiddleware`
-- [ ] `ToolRetryMiddleware`
-- [ ] `ModelRetryMiddleware`
-- [ ] `ToolErrorMiddleware`
-- [ ] 동일 Tool·동일 인자 반복 검사
-- [ ] 전체 timeout
-- [ ] 내부 추론 전문 비로그
-- [ ] Agent feature flag
+- [x] Agent model 초기화 (ChatOpenAI + Upstage base_url; 5.5-A 확정)
+- [x] `create_agent` 사용 (CompiledStateGraph 자동 생성; 직접 StateGraph 미작성)
+- [x] 시스템 프롬프트 작성 (`app/agent/prompts.py`, 라우팅 few-shot 고정 없음)
+- [x] Tool 목록 연결 (5.5-B Tool 6종을 @tool 래핑, ToolRuntime.context 로 Service 접근)
+- [x] Runtime Context 연결 (`QaRuntimeContext` + `context_schema`)
+- [x] `ModelCallLimitMiddleware` (run_limit=4)
+- [x] `ToolCallLimitMiddleware` (run_limit=5)
+- [x] `ToolRetryMiddleware` (검색 Tool, max_retries=1)
+- [x] `ModelRetryMiddleware` (max_retries=1)
+- [x] `ToolErrorMiddleware` (sanitize_tool_error)
+- [x] 동일 Tool·동일 인자 반복 검사 (`DuplicateToolCallMiddleware` 커스텀)
+- [x] 전체 timeout (실행 계층 AgentQaService 에서 벽시계 8초)
+- [x] 내부 추론 전문 비로그 (최종 답변·Tool 이름만 추출, chain-of-thought 미저장)
+- [x] Agent feature flag (`agent_enabled`, 기본 false)
 
 초기 제한:
 
@@ -235,21 +235,33 @@ Tool 최대 5회
 전체 8초
 ```
 
-### 금지
+### 금지 (준수 확인)
 
-- [ ] custom planner node를 만들지 않음
-- [ ] keyword router를 만들지 않음
-- [ ] simple/complex classifier를 만들지 않음
-- [ ] custom StateGraph를 만들지 않음
-- [ ] legacy QueryPlan fallback을 만들지 않음
+- [x] custom planner node를 만들지 않음
+- [x] keyword router를 만들지 않음
+- [x] simple/complex classifier를 만들지 않음
+- [x] custom StateGraph를 만들지 않음 (create_agent 내부 그래프만 사용)
+- [x] legacy QueryPlan fallback을 만들지 않음 (실패 시 안전 오류/근거부족)
 
 ### 산출물
 
 ```text
-backend/app/agent/runtime.py
-backend/app/agent/prompts.py
-backend/app/agent/middleware.py
-backend/app/services/agent_qa.py
+backend/app/agent/runtime.py       (완료: build_tools + build_agent)
+backend/app/agent/prompts.py       (완료)
+backend/app/agent/middleware.py    (완료: DuplicateToolCall + sanitize)
+backend/app/services/agent_qa.py   (완료: AgentQaService + feature flag)
+backend/tests/agent/test_agent_runtime.py  (완료, 9 테스트)
+```
+
+### 5.5-C 종료 기록
+
+```text
+상태: 완료(구현·단위검증). API 라우트 연결은 5.5-D.
+완료일: 2026-07-24
+Agent: create_agent(ChatOpenAI+Upstage), Tool 6종, 시스템 프롬프트, context_schema
+안전장치: 모델4/Tool5/동일인자1/재시도1/timeout8s, ToolError sanitize, 내부추론 미저장
+feature flag: agent_enabled 기본 false → 라이브 QA 경로 무변경
+테스트: 전체 179 passed (5.5-C 9 포함), ruff·format OK
 ```
 
 ---
