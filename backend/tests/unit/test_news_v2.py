@@ -587,7 +587,7 @@ def test_summary_title_is_saved_before_sentiment_classification(monkeypatch):
 
     run_full_news_v2.phase_summary(Repo(), totals)
 
-    assert service.titles == [summary_title]
+    assert service.titles == [f"{summary_title} 신제품 공개"]
     assert events[0] == ("summary", 77, summary_title)
     assert events[1][0:3] == ("sentiment", 77, "positive")
     assert totals["summaries"] == 1

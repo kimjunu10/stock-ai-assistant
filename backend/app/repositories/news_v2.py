@@ -419,25 +419,27 @@ class NewsV2Repository:
         *,
         after_id: int,
         batch_size: int,
+        published_since: str | None = None,
+        published_before: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Page finalized cluster summary titles without loading the full table."""
+        """Page finalized cluster summaries without loading the full table."""
 
-        return list(
-            (
-                self.client.table("news_clusters")
-                .select(
-                    "id,sentiment_label,sentiment_model,sentiment_model_revision,"
-                    "sentiment_input_version,sentiment_input_hash,summary_title,summary_status"
-                )
-                .eq("clustering_version", self.version)
-                .eq("summary_status", "success")
-                .gt("id", after_id)
-                .order("id")
-                .limit(batch_size)
-                .execute()
-            ).data
-            or []
+        query = (
+            self.client.table("news_clusters")
+            .select(
+                "id,sentiment_label,sentiment_model,sentiment_model_revision,"
+                "sentiment_input_version,sentiment_input_hash,summary_title,"
+                "easy_explanation,summary_status,first_published_at"
+            )
+            .eq("clustering_version", self.version)
+            .eq("summary_status", "success")
+            .gt("id", after_id)
         )
+        if published_since:
+            query = query.gte("first_published_at", published_since)
+        if published_before:
+            query = query.lt("first_published_at", published_before)
+        return list((query.order("id").limit(batch_size).execute()).data or [])
 
     def save_v2_assignment(
         self,

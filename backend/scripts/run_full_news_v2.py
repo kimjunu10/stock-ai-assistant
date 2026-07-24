@@ -33,8 +33,8 @@ from app.repositories.news_v2 import V2_VERSION, NewsV2Repository
 from app.services.news_clustering import BgeM3Embedder
 from app.services.news_sentiment import (
     NewsSentimentService,
+    build_sentiment_input,
     get_news_sentiment_service,
-    normalize_sentiment_title,
     sentiment_input_hash,
     sentiment_state_is_current,
 )
@@ -55,21 +55,27 @@ def classify_and_save_cluster_sentiment(
     repo: NewsV2Repository,
     cluster_id: int,
     summary_title: str | None,
+    easy_explanation: str | None,
     service: NewsSentimentService,
     *,
     force: bool = False,
 ) -> str:
-    """Classify one finalized cluster summary title without escaping failures."""
+    """Classify one finalized cluster summary without escaping failures."""
 
-    normalized = normalize_sentiment_title(summary_title)
-    input_hash = sentiment_input_hash(normalized)
+    model_input = build_sentiment_input(summary_title, easy_explanation)
+    input_hash = sentiment_input_hash(summary_title, easy_explanation)
     try:
         state = repo.get_cluster_sentiment_state(cluster_id) or {}
-        is_current = sentiment_state_is_current(state, normalized, service)
+        is_current = sentiment_state_is_current(
+            state,
+            summary_title,
+            easy_explanation,
+            service,
+        )
         if is_current and not force:
             return "skipped"
 
-        result = service.analyze(normalized)
+        result = service.analyze(model_input)
         repo.save_cluster_sentiment(cluster_id, result, input_hash=input_hash)
         if result.label == "unknown":
             logger.warning(
@@ -420,7 +426,7 @@ def _hydrate_v2_assigner(
 
 
 def phase_summary(repo: NewsV2Repository, totals: dict) -> None:
-    """5) v2 사건 요약을 확정한 뒤 그 summary_title로 감성을 분류한다."""
+    """5) v2 사건 요약을 확정한 뒤 제목과 핵심 정리로 감성을 분류한다."""
     stock_names = repo.get_stock_names()
     clusters = repo.get_v2_clusters(only_unsummarized=True)
     logger.info("SUMMARY_PHASE start: %d clusters to summarize", len(clusters))
@@ -448,6 +454,7 @@ def phase_summary(repo: NewsV2Repository, totals: dict) -> None:
                     repo,
                     cid,
                     parsed.get("title"),
+                    parsed.get("easy_explanation"),
                     sentiment_service,
                 )
                 metric = f"sentiment_{sentiment_outcome}"
