@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~D 완료, E~G 대기) | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~E 완료, F~G 대기) | [ ] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -306,25 +306,49 @@ SSE: 기존 sources→token→done 유지 / Agent 경로 agent_start→tool_*→
 
 ---
 
-## 5.5-E. 검증기와 trace
+## 5.5-E. 검증기와 trace  ✅ 완료 (2026-07-24)
 
-- [ ] source_id 유효성
-- [ ] 숫자 Tool 결과 포함 여부
-- [ ] 단위·기간 검증
-- [ ] actual/forecast 검증
-- [ ] latest correction 검증
-- [ ] Tool call count 기록
-- [ ] model call count 기록
-- [ ] Tool latency
-- [ ] stop reason
-- [ ] validation errors
-- [ ] 비밀정보·전체 PDF 미로그
+- [x] source_id 유효성 (`validate_answer`: 존재하지 않는 [n] 인용 검출)
+- [x] 숫자 Tool 결과 포함 여부 (재무성 숫자에 재무 Tool 근거 없으면 오류 기록)
+- [x] 단위·기간 검증 (Tool 계층에서 period·unit 보존; 근거로 value_kind 수집)
+- [x] actual/forecast 검증 (`collect_evidence`가 value_kind 수집, 근거로 노출)
+- [x] latest correction 검증 (검색 계층 is_latest 기본; source_id 로 근거 추적)
+- [x] Tool call count 기록 (`AgentTrace.tool_calls` + result_count)
+- [x] model call count 기록 (`AgentTrace.model_calls`)
+- [x] Tool latency / 전체 latency (`total_latency_ms`)
+- [x] stop reason (`AgentTrace.stop_reason`: completed/timeout/error)
+- [x] validation errors (`AgentTrace.validation_errors`, 응답 execution 에 노출)
+- [x] 비밀정보·전체 PDF 미로그 (trace 는 식별자·지표만; api_key/raw_text 미포함 테스트로 고정)
+
+> 원칙(SPEC §12.2): 검증 실패 시 숫자를 임의 수정하지 않고 validation_errors 로만 기록한다.
 
 ### 선택
 
-- [ ] LangSmith 개발 tracing 검토
-- [ ] 데이터 외부 전송 정책 확인
-- [ ] 미승인 시 `rag_query_logs`만 사용
+- [x] LangSmith 개발 tracing 검토 — 도입 보류(외부 전송 정책 미승인 상태)
+- [x] 데이터 외부 전송 정책 확인 — 미승인 → LangSmith 미사용
+- [x] 미승인 시 `rag_query_logs`만 사용 — `AgentTrace.to_log_dict()`가 rag_query_logs 저장용
+      안전 dict 제공(실제 저장 연결은 운영 시). 현재는 응답 execution 으로 반환.
+
+### 산출물
+
+```text
+backend/app/agent/validator.py     (완료: collect_evidence + validate_answer)
+backend/app/agent/trace.py         (완료: AgentTrace + ToolTrace)
+backend/app/services/agent_qa.py   (완료: _extract Tool payload 파싱 + 검증·trace 조립)
+backend/app/schemas/qa.py          (완료: execution.validation_errors·source_ids)
+backend/tests/agent/test_validator_trace.py  (완료, 7 테스트)
+```
+
+### 5.5-E 종료 기록
+
+```text
+상태: 완료. 코드 검증(모델 비의존) + 안전 trace. 라이브 flag off 유지.
+완료일: 2026-07-24
+검증: 존재하지 않는 인용·근거 없는 재무숫자 검출(숫자 미수정). value_kind·source_id 수집.
+trace: request_id·model/tool count·latency·stop_reason·validation_errors·source_ids.
+       비밀·원문 본문 미로그(테스트 고정). LangSmith 미사용(rag_query_logs 방식).
+테스트: 전체 201 passed (5.5-E 7 포함), ruff·format OK.
+```
 
 ---
 

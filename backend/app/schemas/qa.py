@@ -51,6 +51,9 @@ class AgentExecution(BaseModel):
     tool_calls: list[AgentToolCallInfo] = []
     model_calls: int = 0
     stop_reason: str | None = None
+    # 5.5-E: 코드 검증 결과·근거 출처 식별자(내부추론·원문 본문 미포함).
+    validation_errors: list[str] = []
+    source_ids: list[str] = []
 
 
 class QaResponse(BaseModel):

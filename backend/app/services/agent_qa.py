@@ -12,11 +12,15 @@ feature flag(agent_enabled)가 꺼져 있으면 Agent 를 구성하지 않는다
 from __future__ import annotations
 
 import concurrent.futures
+import json
+import time
 from dataclasses import dataclass, field
 from functools import lru_cache
 
 from app.agent.context import QaRuntimeContext, ToolServices
 from app.agent.runtime import build_agent
+from app.agent.trace import AgentTrace, ToolTrace
+from app.agent.validator import collect_evidence, validate_answer
 from app.core.config import Settings, settings
 
 
@@ -34,6 +38,9 @@ class AgentQaResult:
     model_calls: int = 0
     stop_reason: str = "completed"
     error: str | None = None
+    source_ids: list[str] = field(default_factory=list)
+    validation_errors: list[str] = field(default_factory=list)
+    trace: dict = field(default_factory=dict)
 
 
 class AgentQaService:
@@ -58,11 +65,16 @@ class AgentQaService:
         )
 
     @staticmethod
-    def _extract(out: dict) -> AgentQaResult:
-        """Agent 결과에서 최종 답변·Tool 호출 요약만 뽑는다. 내부 추론은 저장하지 않는다."""
+    def _extract(out: dict) -> tuple[str, list[AgentToolCall], int, list[dict]]:
+        """Agent 결과에서 최종 답변·Tool 호출 요약·Tool payload 를 뽑는다.
+
+        내부 추론(chain-of-thought)은 저장하지 않는다. Tool payload 는 검증·trace 용
+        메타/근거 dict 만 수집(원문 본문 아님).
+        """
         msgs = out.get("messages", []) if isinstance(out, dict) else []
         answer = ""
         tool_calls: list[AgentToolCall] = []
+        tool_payloads: list[dict] = []
         model_calls = 0
         for m in msgs:
             mtype = getattr(m, "type", "")
@@ -73,12 +85,29 @@ class AgentQaService:
                 content = getattr(m, "content", "")
                 if isinstance(content, str) and content.strip():
                     answer = content  # 마지막 ai 텍스트가 최종 답변
-        return AgentQaResult(
-            answer=answer,
-            tool_calls=tool_calls,
-            model_calls=model_calls,
-            stop_reason="completed",
-        )
+            elif mtype == "tool":
+                content = getattr(m, "content", "")
+                payload = None
+                if isinstance(content, str):
+                    try:
+                        payload = json.loads(content)
+                    except (ValueError, TypeError):
+                        payload = None
+                if isinstance(payload, dict):
+                    tool_payloads.append(payload)
+                    # Tool 결과 status·result_count 를 마지막 동일이름 호출에 반영
+                    name = getattr(m, "name", None)
+                    for c in reversed(tool_calls):
+                        if c.name == name and c.status is None:
+                            c.status = payload.get("status")
+                            data = payload.get("data")
+                            if isinstance(data, dict):
+                                for key in ("facts", "reports", "values", "news", "disclosures"):
+                                    if isinstance(data.get(key), list):
+                                        c.result_count = len(data[key])
+                                        break
+                            break
+        return answer, tool_calls, model_calls, tool_payloads
 
     def answer(
         self,
@@ -90,6 +119,7 @@ class AgentQaService:
         document_id: str | None = None,
         report_page: int | None = None,
         conversation_id: str | None = None,
+        request_id: str = "",
     ) -> AgentQaResult:
         ctx = self._context(
             stock_code, source_type, source_id, document_id, report_page, conversation_id
@@ -99,23 +129,53 @@ class AgentQaService:
         def _invoke() -> dict:
             return self._agent.invoke(payload, context=ctx)
 
+        t0 = time.perf_counter()
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
                 fut = ex.submit(_invoke)
                 out = fut.result(timeout=self._cfg.agent_timeout_seconds)
         except concurrent.futures.TimeoutError:
-            return AgentQaResult(
-                answer="",
-                stop_reason="timeout",
-                error="응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.",
-            )
+            return self._failed(request_id, "timeout", "응답 시간이 초과되었습니다.", t0)
         except Exception as e:  # noqa: BLE001 - 내부 예외 비노출
-            return AgentQaResult(
-                answer="",
-                stop_reason="error",
-                error=f"일시적 오류({type(e).__name__})로 답변을 완료하지 못했습니다.",
+            return self._failed(
+                request_id, "error", f"일시적 오류({type(e).__name__})로 답변하지 못했습니다.", t0
             )
-        return self._extract(out)
+
+        answer, tool_calls, model_calls, tool_payloads = self._extract(out)
+
+        # ── 코드 검증(SPEC §12.2): 숫자를 고치지 않고 오류만 기록 ──
+        evidence = collect_evidence(tool_payloads)
+        validation = validate_answer(answer, evidence)
+
+        total_ms = int((time.perf_counter() - t0) * 1000)
+        trace = AgentTrace(
+            request_id=request_id,
+            model_calls=model_calls,
+            tool_calls=[
+                ToolTrace(name=c.name, status=c.status, result_count=c.result_count)
+                for c in tool_calls
+            ],
+            source_ids=sorted(evidence.source_ids),
+            stop_reason="completed",
+            validation_errors=validation.errors,
+            total_latency_ms=total_ms,
+        )
+        return AgentQaResult(
+            answer=answer,
+            tool_calls=tool_calls,
+            model_calls=model_calls,
+            stop_reason="completed",
+            source_ids=sorted(evidence.source_ids),
+            validation_errors=validation.errors,
+            trace=trace.to_log_dict(),
+        )
+
+    def _failed(self, request_id: str, reason: str, message: str, t0: float) -> AgentQaResult:
+        total_ms = int((time.perf_counter() - t0) * 1000)
+        trace = AgentTrace(request_id=request_id, stop_reason=reason, total_latency_ms=total_ms)
+        return AgentQaResult(
+            answer="", stop_reason=reason, error=message, trace=trace.to_log_dict()
+        )
 
 
 @lru_cache(maxsize=1)

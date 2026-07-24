@@ -37,6 +37,8 @@ class _FakeAgentResult:
         self.model_calls = 2
         self.stop_reason = "completed"
         self.error = None
+        self.validation_errors = []
+        self.source_ids = ["005930/2025/11011"]
 
 
 class _FakeAgentService:
@@ -77,6 +79,8 @@ def test_flag_on_uses_agent_path(monkeypatch):
     assert body["execution"]["agent"] is True
     assert body["execution"]["tool_calls"][0]["name"] == "get_financial_facts"
     assert body["execution"]["model_calls"] == 2
+    assert body["execution"]["source_ids"] == ["005930/2025/11011"]
+    assert body["execution"]["validation_errors"] == []
     assert body["sources"] == []  # Agent 경로는 sources 별도 처리
 
 

@@ -72,6 +72,8 @@ def _answer_agent(req: QaRequest) -> QaResponse | None:
         ],
         model_calls=r.model_calls,
         stop_reason=r.stop_reason,
+        validation_errors=r.validation_errors,
+        source_ids=r.source_ids,
     )
     return QaResponse(
         answer=r.answer,
