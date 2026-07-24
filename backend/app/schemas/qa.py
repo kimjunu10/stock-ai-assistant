@@ -36,6 +36,23 @@ class NumericSource(BaseModel):
     source_key: str | None = None
 
 
+class AgentToolCallInfo(BaseModel):
+    """Agent 경로에서 호출한 Tool 요약(SPEC §13 execution.toolCalls)."""
+
+    name: str
+    status: str | None = None
+    result_count: int | None = None
+
+
+class AgentExecution(BaseModel):
+    """Agent 실행 메타(Phase 5.5). Agent 경로에서만 채워진다."""
+
+    agent: bool = True
+    tool_calls: list[AgentToolCallInfo] = []
+    model_calls: int = 0
+    stop_reason: str | None = None
+
+
 class QaResponse(BaseModel):
     answer: str
     sources: list[Source]
@@ -47,3 +64,7 @@ class QaResponse(BaseModel):
     term: dict | None = None
     invalid_citations: list[int] = []
     latency_ms: dict = {}
+    # Phase 5.5-D: Agent 경로 실행 메타. 결정론적 경로에서는 None(기존 계약 유지).
+    execution: AgentExecution | None = None
+    # deprecated: 결정론적 QueryPlan 판정. Agent 전환 완료 후 제거 예정(한 릴리스 유지).
+    query_plan: dict | None = None

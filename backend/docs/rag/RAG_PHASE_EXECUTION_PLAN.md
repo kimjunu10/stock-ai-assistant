@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] (A·B·C 완료, D~G 대기) | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~D 완료, E~G 대기) | [ ] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -266,28 +266,43 @@ feature flag: agent_enabled 기본 false → 라이브 QA 경로 무변경
 
 ---
 
-## 5.5-D. API 연결
+## 5.5-D. API 연결  ✅ 완료 (2026-07-24)
 
-- [ ] `/qa` Agent 경로
-- [ ] `/qa/stream` Agent 경로
-- [ ] 기존 요청 계약 유지
-- [ ] `execution.toolCalls` 응답 추가
-- [ ] `queryPlan` deprecated optional
-- [ ] SSE `tool_start`
-- [ ] SSE `tool_end`
-- [ ] SSE `sources`
-- [ ] SSE `delta`
-- [ ] SSE `done`
-- [ ] 오류 응답
-- [ ] feature flag로 legacy/agent A-B 실행
-- [ ] 운영 전 기본 flag false
+- [x] `/qa` Agent 경로 (feature flag 분기; flag off 면 기존 결정론적 경로)
+- [x] `/qa/stream` Agent 경로
+- [x] 기존 요청 계약 유지 (QaRequest 무변경; question/stock_code/context_source_id/type)
+- [x] `execution.toolCalls` 응답 추가 (`AgentExecution` — Agent 경로에서만 채워짐)
+- [x] `queryPlan` deprecated optional (`query_plan` — 결정론적 경로에서 노출, 이후 제거)
+- [x] SSE `tool_start` / `tool_end`
+- [x] SSE `sources`
+- [x] SSE `delta`
+- [x] SSE `done`
+- [x] 오류 응답 (SSE `error` + 비스트리밍 execution.stop_reason)
+- [x] feature flag 로 legacy/agent 분기 (`agent_enabled`)
+- [x] 운영 전 기본 flag false (기본 결정론적 경로, `get_agent_qa_service()`가 None 반환)
 
 ### 산출물
 
 ```text
-backend/app/api/routes/qa.py
-backend/app/schemas/qa.py
+backend/app/api/routes/qa.py     (완료: flag 분기 + Agent SSE)
+backend/app/schemas/qa.py        (완료: AgentExecution·execution·query_plan 비파괴 추가)
+backend/.env.example             (완료: AGENT_* 항목)
+backend/tests/agent/test_qa_agent_route.py  (완료, 4 테스트)
 ```
+
+### 5.5-D 종료 기록
+
+```text
+상태: 완료. flag off 기본 → 라이브 QA 는 여전히 결정론적 경로(회귀 없음).
+완료일: 2026-07-24
+분기: agent_enabled=true 이고 자격증명 있으면 Agent 경로, 아니면 기존 FactsQaService.
+응답 계약: QaResponse 에 execution(Agent 전용)·query_plan(deprecated) 비파괴 추가.
+SSE: 기존 sources→token→done 유지 / Agent 경로 agent_start→tool_*→delta→done.
+테스트: 전체 183 passed (5.5-D 4 포함), ruff·format OK.
+남은 작업: 실제 토큰 스트리밍·tool_start/end 세분화는 5.5-E/G. 실전 평가는 5.5-F.
+```
+
+> 참고: 5.5-D 는 배선(wiring)만 완료. flag on 시 실제 LLM 호출 품질·지연·비용은 5.5-F 평가에서 확정.
 
 ---
 
