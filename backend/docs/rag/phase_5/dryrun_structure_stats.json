@@ -1,0 +1,74 @@
+{
+  "reports": 14,
+  "parse_ok": 14,
+  "page_total": 156,
+  "body_block_total": 3971,
+  "table_total": 277,
+  "aef_value_total": 329,
+  "value_kind_counts": {
+    "actual": 41,
+    "estimate": 30,
+    "forecast": 96,
+    "guidance": 1
+  },
+  "failed_pages_total": 0,
+  "numbers_checked_total": 2925,
+  "number_mismatch_total": 69,
+  "scanned_suspect": 1,
+  "broker_quality": {
+    "IBK투자증권": {
+      "n": 3,
+      "tables": 49,
+      "mismatch": 0,
+      "checked": 581
+    },
+    "미래에셋증권": {
+      "n": 4,
+      "tables": 77,
+      "mismatch": 15,
+      "checked": 540
+    },
+    "대신증권": {
+      "n": 1,
+      "tables": 24,
+      "mismatch": 0,
+      "checked": 196
+    },
+    "교보증권": {
+      "n": 1,
+      "tables": 48,
+      "mismatch": 0,
+      "checked": 339
+    },
+    "SK증권": {
+      "n": 1,
+      "tables": 1,
+      "mismatch": 0,
+      "checked": 6
+    },
+    "유진투자증권": {
+      "n": 1,
+      "tables": 26,
+      "mismatch": 0,
+      "checked": 383
+    },
+    "한화투자증권": {
+      "n": 1,
+      "tables": 18,
+      "mismatch": 0,
+      "checked": 311
+    },
+    "iM증권": {
+      "n": 1,
+      "tables": 17,
+      "mismatch": 0,
+      "checked": 206
+    },
+    "키움증권": {
+      "n": 1,
+      "tables": 17,
+      "mismatch": 54,
+      "checked": 363
+    }
+  }
+}

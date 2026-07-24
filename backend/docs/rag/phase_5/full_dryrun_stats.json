@@ -1,0 +1,134 @@
+{
+  "reports": 244,
+  "by_status": {
+    "success": 243,
+    "partial": 1
+  },
+  "page_total": 1877,
+  "body_block_total": 54595,
+  "table_total": 1936,
+  "tables_with_units_total": 1334,
+  "narrative_demoted_total": 1253,
+  "merged_tables_total": 26,
+  "aef_value_total": 6063,
+  "value_kind_counts": {
+    "actual": 758,
+    "estimate": 744,
+    "forecast": 1374,
+    "guidance": 1
+  },
+  "failed_pages_total": 0,
+  "numbers_checked_total": 26304,
+  "number_mismatch_total": 1195,
+  "number_match_rate": 0.9546,
+  "source_page_detected": 131,
+  "source_page_detect_rate": 0.5369,
+  "chart_pages_total": 35,
+  "scan_pages_total": 37,
+  "encrypted": 0,
+  "duplicates": 0,
+  "duplicate_list": [],
+  "exceptions": [
+    {
+      "file": "SK하이닉스/2026-05-18_SK하이닉스_미래에셋증권_NAND 모멘텀 추가 반영.pdf",
+      "status": "partial",
+      "error": null
+    }
+  ],
+  "broker_quality": {
+    "키움증권": {
+      "n": 33,
+      "tables": 234,
+      "checked": 4759,
+      "mismatch": 1168
+    },
+    "대신증권": {
+      "n": 27,
+      "tables": 408,
+      "checked": 3442,
+      "mismatch": 0
+    },
+    "하나증권": {
+      "n": 21,
+      "tables": 80,
+      "checked": 2157,
+      "mismatch": 1
+    },
+    "미래에셋증권": {
+      "n": 45,
+      "tables": 223,
+      "checked": 1913,
+      "mismatch": 25
+    },
+    "유진투자증권": {
+      "n": 14,
+      "tables": 147,
+      "checked": 1724,
+      "mismatch": 0
+    },
+    "SK증권": {
+      "n": 18,
+      "tables": 185,
+      "checked": 3695,
+      "mismatch": 0
+    },
+    "DS투자증권": {
+      "n": 11,
+      "tables": 35,
+      "checked": 932,
+      "mismatch": 0
+    },
+    "iM증권": {
+      "n": 19,
+      "tables": 120,
+      "checked": 880,
+      "mismatch": 1
+    },
+    "교보증권": {
+      "n": 12,
+      "tables": 149,
+      "checked": 1258,
+      "mismatch": 0
+    },
+    "유안타증권": {
+      "n": 13,
+      "tables": 98,
+      "checked": 1734,
+      "mismatch": 0
+    },
+    "현대차증권": {
+      "n": 3,
+      "tables": 22,
+      "checked": 279,
+      "mismatch": 0
+    },
+    "IBK투자증권": {
+      "n": 11,
+      "tables": 102,
+      "checked": 1508,
+      "mismatch": 0
+    },
+    "한화투자증권": {
+      "n": 14,
+      "tables": 116,
+      "checked": 1795,
+      "mismatch": 0
+    },
+    "메리츠증권": {
+      "n": 1,
+      "tables": 13,
+      "checked": 189,
+      "mismatch": 0
+    },
+    "삼성증권": {
+      "n": 2,
+      "tables": 4,
+      "checked": 39,
+      "mismatch": 0
+    }
+  },
+  "loadable_reports": 244,
+  "est_db_report_rows": 244,
+  "est_db_table_rows": 15256,
+  "est_embed_chunks": 2932
+}

@@ -103,12 +103,35 @@ def build_term_block(term: dict | None) -> str:
     return "\n".join(parts)
 
 
+def build_report_block(reports: list) -> str:
+    """증권사 리포트 검색 결과를 프롬프트 블록으로.
+
+    전망값을 실제 실적으로 표현하지 않도록, 증권사·발행일과 함께 '전망/추정'임을 명시한다.
+    """
+    if not reports:
+        return ""
+    lines = ["[증권사 리포트] (증권사의 전망·목표주가는 예측치이며 확정 실적이 아니다)"]
+    for h in reports:
+        page = h.source_page if h.source_page is not None else h.pdf_page
+        meta = f"{h.broker or '증권사'} · {h.report_date or ''}"
+        if h.investment_opinion:
+            meta += f" · 투자의견 {h.investment_opinion}"
+        vk = h.table_value_kinds or {}
+        vk_note = ""
+        if vk:
+            vk_note = " | 표성격: " + ", ".join(f"{k}×{v}" for k, v in vk.items())
+        body = " ".join((h.content or "").split())[:400]
+        lines.append(f"- ({meta} · p{page}){vk_note}\n  {body}")
+    return "\n".join(lines)
+
+
 def build_user_prompt(
     question: str,
     chunks: list[RetrievedChunk],
     *,
     facts: list | None = None,
     term: dict | None = None,
+    reports: list | None = None,
 ) -> str:
     blocks = []
     facts_block = build_facts_block(facts or [])
@@ -117,6 +140,9 @@ def build_user_prompt(
     term_block = build_term_block(term)
     if term_block:
         blocks.append(term_block)
+    report_block = build_report_block(reports or [])
+    if report_block:
+        blocks.append(report_block)
     context = build_context_block(chunks) if chunks else "(관련 자료 없음)"
     blocks.append(f"[문맥]\n{context}")
     blocks.append(f"[질문]\n{question}")

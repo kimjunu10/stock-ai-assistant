@@ -126,12 +126,21 @@ Claude Code는 작업하면서 직접 체크박스를 수정한다.
 | 1 | DB·Storage·기본 Repository | [x] | [x] |
 | 2 | 뉴스 기반 최소 RAG | [x] | [x] |
 | 3 | 하이브리드 검색 | [x] | [x] |
-| 4 | 숫자·용어·혼합 질문 | [x] | [ ] |
-| 5 | 증권사 리포트 | [ ] | [ ] |
+| 4 | 숫자·용어·혼합 질문 (결정론적 QA 라이브 경로 완료) | [x] | [x] |
+| 5 | 증권사 리포트 | [x] 적재+검색+QA 연결 완료 | [ ] |
 | 6 | 주가 질문 | [ ] | [ ] |
 | 7 | 프런트엔드 연결 | [ ] | [ ] |
 | 8 | 평가·튜닝 | [ ] | [ ] |
 | 9 | 배포·발표 준비 | [ ] | [ ] |
+| Ext A | 공통 read-only Tool 인터페이스 (향후) | [ ] | [ ] |
+| Ext B | 제한형 Agentic Orchestrator (향후) | [ ] | [ ] |
+| Ext C | MCP 서버 공개 (선택, Tool·Agentic 안정화 후) | [ ] | [ ] |
+| Ext D | ~~A2A PoC~~ (이번 프로젝트 범위 제외) | 제외 | — |
+
+> Ext A~B는 Phase 6 이후의 **향후 확장**이며 미구현이다. Agentic·MCP는 아직 완료 기능이 아니다.
+> **Ext C(MCP)**는 Tool·Agentic 안정화 이후 일정·시연 가치가 있을 때만 선택적으로 추가한다.
+> **Ext D(A2A)**는 이번 프로젝트 범위에서 **제외**하며, 적용하지 않은 이유만 설계 판단으로 기록한다.
+> Phase 4 의 결정론적 QA(숫자·용어·혼합)는 2026-07-24 통합으로 **실제 QA API 라이브 경로**가 되었다.
 
 ---
 
@@ -531,6 +540,27 @@ tests/unit/test_query_plan.py, test_facts_format.py
 기획서와 달라진 점: PyMuPDF 좌표+목차 기반 파서, related_terms 컬럼 추가, 조사 접미사 제거, account 신호어 매핑
 남은 지원 범위: 별도재무·2023 이전·주가(Phase6) 미지원, 단독 숫자질문 기간 표기 튜닝
 기존 데이터: DART·재무·공시 전부 읽기 전용(SELECT, 무변경). 신규 쓰기는 rag_terms(795)뿐
+```
+
+### 변경 기록 — 결정론적 QA 라이브 경로 (Phase 5 선결 작업, 2026-07-24)
+
+```text
+발견: Phase 4 의 QueryPlan/FactsQaService(숫자·용어·혼합 결정론적 경로)는
+      구현·테스트만 되고 실제 QA API(qa.py)에는 미연결이었다.
+      라이브 /qa 는 RagQaService(뉴스 하이브리드 검색 전용)만 서빙하고 있었다.
+조치: qa.py 단일 진입점을 FactsQaService 로 전환(진입점 하나 유지).
+      QueryPlan 판정으로 순수 뉴스→기존 검색 재사용, 숫자→SQL, 용어→lookup,
+      혼합→결합. FactsQaService.stream() 추가(생성만 스트리밍).
+      QaResponse 에 numeric_sources·term 선택 필드 추가(기존 필드 유지, 비파괴).
+      RagQaService 는 삭제하지 않고 유지(validate_citations 및 참조 보존).
+검증: 전체 136 테스트 통과(신규 통합 7개 포함), ruff·format 통과.
+결과: 결정론적 QA 라이브 경로 완료. Agentic·Tool Registry·MCP·A2A 는 미구현(범위 밖).
+
+후속 수정(2026-07-24): QueryPlan need_documents 규칙을 의도 신호 기반으로 정정.
+  이전에는 need_financials 이면 문서 검색을 항상 켜서 순수 숫자 질문도 뉴스 검색을
+  유발했다. 이제 설명/정정 신호가 있거나(켬), 사실 신호(숫자/용어)가 없는 자연어
+  질문일 때만 문서 검색을 켠다. 순수 숫자→SQL만, 순수 용어→용어만(뉴스 검색·임베딩
+  호출 없음). 질문 문장 하드코딩 없이 신호 조합으로만 판정. 전체 143 테스트 통과.
 한국은행 자료 이용범위: 공개·상용 출시 전 확인 필요(개방 라이선스 미명시), 원본 PDF는 Git 제외
 ```
 
@@ -593,17 +623,71 @@ tests/unit/test_query_plan.py, test_facts_format.py
 ## Phase 종료 기록
 
 ```text
-상태:
-완료일:
-시험 PDF 수:
-전체 처리 PDF 수:
-사용한 파서 조합:
-표 추출 성공률:
-목표주가 추출 성공률:
-OCR 대상 수:
-실제 비용:
-전체 예상 비용:
-사람이 확인할 항목:
+상태: 적재 완료(QA 연결·리포트 검색 연결은 미진행 — 지시에 따름)
+완료일: 2026-07-24
+시험 PDF 수: 14(2단계 대표) + 6(파서 회귀)
+전체 처리 PDF 수: 244 (success 243 / partial 1 / failed 0, 오류 0)
+사용한 파서: app/rag/report_parser.py(PyMuPDF 좌표+find_tables, 로컬 파서. OCR 미사용)
+적재 결과: research_reports 244, pages 1877, tables 1937,
+  rag_documents(report) 244, rag_chunks(report) 4351
+표 value_kind(DB): unknown 547 / forecast 254 / mixed 187 / actual 12
+투자의견 추출: 1p 규칙 추출(목표주가 numeric 추출은 후속 검수 대상)
+OCR 대상 수: 0 (partial 1건은 스캔형이나 OCR 미적용, 발표/검색 제외 후보)
+실제 임베딩 비용: ~$0.22 (본문 청크 4351, solar-embedding-2-passage)
+재실행 skip: content_hash 동일 시 재임베딩 0 (3건 재실행 검증)
+사람이 확인할 항목: 목표주가 numeric 파싱, 키움류 표 소수점 토큰(값 손실 0),
+  partial 1건 발표 제외 여부
+```
+
+### 변경 기록 — 파서 규칙 확정 + 적재 (2026-07-24)
+
+```text
+키움 병합셀 재정렬(_resplit_merged)·소수점/콤마 정규화(normalize_cell) 일반 규칙 추가.
+원문 대조는 콤마·공백 무시 비교로 정정. 값 손실 0 확인(재정렬이 값 보존).
+A/E/F 토큰 단위 value_kind 합계 = aef_value_total 일치 확인(정의상 일치).
+표 단위 value_kind 는 DB CHECK(actual/forecast/mixed/unknown)에 맞춰 매핑
+  (열별 estimate/guidance 세부는 metadata·col 분류로 보존, 표 단위는 mixed/forecast 로 집계).
+파서 app/rag/report_parser.py 로 재사용화. 적재 scripts/load_research_reports.py
+  (Storage 업로드 + reports/pages/tables + 본문 임베딩, file_hash 멱등·재시작·재실행 skip).
+QA 연결·Agentic·MCP 미진행(지시).
+```
+
+### 검증 기록 — QA 연결 전 확인 (2026-07-24)
+
+```text
+1) partial 리포트 1건: reports/pages/tables 에는 저장하되 본문 임베딩·검색에서 제외.
+   최초 적재 시 차트 축 텍스트 조각 1청크가 임베딩됐던 것을 발견 → 해당 문서/청크를
+   is_active=false·is_current=false 로 비활성화(활성 report 청크 4351→4350).
+   재발 방지: 적재 스크립트가 parse_status='success' 인 리포트만 본문 임베딩하도록 수정.
+2) report rag_chunks NULL embedding = 0.
+3) Storage 객체 = 244 (research-reports-private, 모든 stock_code 폴더 합).
+4) research_report_tables 총 count = 1937. "1000" 은 PostgREST 기본 조회 limit 때문에
+   select() 가 1000행만 반환한 것(데이터 차이 아님). range 로 전량 집계 시
+   unknown 1112 / forecast 469 / mixed 344 / actual 12 = 합 1937 로 일치.
+
+A/E/F 6063 과 표 단위 value_kind 집계의 기준 차이:
+- aef_value_total(6063) = 본문+표 텍스트에서 A/E/F '토큰 출현 횟수'(2025A·2026E·2027F …
+  개별 등장 수). 한 표의 한 열에 같은 A/E/F 가 여러 행에서 반복 출현하므로 수가 크다.
+- research_report_tables.value_kind(합 1937) = '표 1개당 1건'의 표 단위 분류
+  (열들의 kind 를 actual/forecast/mixed/unknown 으로 요약). 집계 대상 단위가 다르다
+  (토큰 vs 표). 따라서 두 수는 정의상 일치할 수 없으며 비교 대상이 아니다.
+- 토큰 단위 value_kind 합(actual/estimate/forecast) 은 aef_value_total 과 일치함을
+  파서 회귀(phase5_verify_parser.py)에서 별도 확인.
+```
+
+### 완료 기록 — 검색·QA 연결 (2026-07-24)
+
+```text
+search_research_reports(app/services/research_reports.py): HybridRetriever 재사용
+  (source_type=research_report). RPC 가 is_active·is_current 강제 → partial·NULL emb 제외.
+  stock_code·발행일 필터(RPC), 증권사 필터(후처리). 제목·증권사·발행일·투자의견·
+  page_number·pdf_page·source_page·표 value_kind 반환. 전망값을 실적으로 표현 안 함.
+검색 품질: 5개 유형(정확명칭·자연어·전망·목표주가·실적원인) Recall@8=100%(25/25),
+  타종목 혼입 0, 출처페이지 유효 40/40.
+QA 연결: QueryPlan need_reports 추가(report intent 독립 판정). FactsQaService 병렬
+  조회에 리포트 추가. QaResponse.report_sources 비파괴 확장. 세 의도(financial/news/
+  report) 독립 판정으로 과호출 제거('목표주가' 만으로 SQL·뉴스 자동 안 켜짐).
+QA 응답 계약: 비파괴(선택 필드만 추가). Agentic·Tool Registry·MCP 미진행.
 ```
 
 ---
@@ -657,6 +741,96 @@ OCR 대상 수:
 평균 조회 시간:
 캐시:
 제약 사항:
+```
+
+---
+
+# Extension A~C. Tool·Agentic·MCP 확장 (향후 계획) / A2A 제외
+
+> **주의**: Extension A~C는 Phase 5(리포트 RAG)와 Phase 6(주가)이 완료된 뒤 진행하는
+> **향후 계획**이다. 아직 미구현이며, 현재 시스템은 LangChain·LangGraph 없이 직접 구현한
+> **결정론적 하이브리드 RAG**다. Extension은 기존 결정론적 경로를 대체하지 않고 감싸며,
+> 단순 질문은 계속 기존 라우터로 처리한다. 기존 Phase 0~7 번호는 그대로 유지한다.
+> **A2A(Extension D)는 이번 프로젝트 범위에서 제외한다** — 아래 "Extension D" 절에 사유만 기록한다.
+
+## Extension A. 공통 읽기 전용 Tool 인터페이스
+
+### 목표
+기존 서비스(FactsService, 하이브리드 검색, 용어 조회, Phase 5 리포트, Phase 6 주가)를
+동일한 read-only Tool 시그니처로 추상화해 라우터와 (향후) Agent가 공유하게 한다.
+
+### 작업 체크리스트
+- [ ] Tool 인터페이스(입력 스키마·출력 스키마·부작용 없음) 정의
+- [ ] 기존 서비스들을 Tool Registry에 등록(쓰기 없는 조회만 노출)
+- [ ] 기존 결정론적 라우터가 Registry를 통해 동일 Tool 호출하도록 전환
+- [ ] Tool 호출 로깅(선택 Tool·지연·결과 크기)
+- [ ] 회귀: 기존 답변 품질·지연 변화 없음 확인
+
+### 최소 통과 조건
+- 모든 Tool이 읽기 전용
+- 기존 라우터 동작·결과가 이전과 동일(회귀 없음)
+
+## Extension B. 제한형 Agentic Orchestrator
+
+### 목표
+복합·다단계 질문에만 제한적으로 Agent를 적용하고, 단순 질문은 기존 라우터를 유지한다.
+
+### 작업 체크리스트
+- [ ] 복합 질문 판별 기준 정의(다단계·비교·다중 종목 등)
+- [ ] Agent는 Extension A의 read-only Tool만 사용
+- [ ] 최대 Tool 호출 횟수 상한
+- [ ] 실행 시간 상한
+- [ ] 실패·시간 초과 시 기존 결정론적 라우터로 fallback
+- [ ] 단순 질문은 Agent를 거치지 않음(라우터 직결)
+- [ ] Agent 경로 on/off 플래그
+- [ ] 반복·불필요 호출 방지 로깅
+
+### 최소 통과 조건
+- 단순 질문은 기존 라우터로만 처리됨
+- Agent 실패·초과 시 fallback으로 답변 보장
+- 플래그로 즉시 비활성화 가능
+
+## Extension C. MCP 서버 공개 (선택)
+
+### 목표
+Extension A의 동일 Tool을 MCP 서버로 노출해 외부·다른 런타임에서 재사용 가능하게 한다.
+**Tool·Agentic이 안정화되고 일정·시연 가치가 확인될 때만** 선택적으로 진행한다.
+Agentic보다 먼저 구현하지 않는다.
+
+### 작업 체크리스트
+- [ ] MCP 서버로 노출할 핵심 Tool 3개 확정(예: search_news·get_financial_facts·search_research_reports, read-only만)
+- [ ] 내부 함수 호출과 MCP 노출이 같은 Tool 정의를 공유
+- [ ] 인증·접근 범위 정의
+- [ ] MCP on/off 및 장애 시 내부 경로 유지 확인
+
+### 최소 통과 조건
+- MCP가 꺼져도 내부 RAG는 정상 동작
+- 노출 Tool이 전부 읽기 전용
+
+## Extension D. A2A — 이번 프로젝트 범위에서 제외
+
+**구현하지 않는다.** 구현 계획에도 넣지 않으며, 적용하지 않은 이유만 설계 판단으로 기록한다.
+
+### 제외 사유
+- 현재 서비스는 하나의 FastAPI 애플리케이션 안에서 뉴스·공시·재무·용어·리포트·주가를
+  처리한다. 이를 억지로 독립 Agent로 나누면 배포 복잡도·Agent 간 통신 오류·응답 지연이
+  늘고, 실제 서비스 품질보다 기술 이름을 넣기 위한 구현이 된다.
+- 하나의 백엔드 안에서 공통 read-only Tool을 안전하게 호출하는 구조(Ext A~B)가 더 단순하고
+  안정적이며, 짧은 일정 안에서 검증·평가하기에도 적합하다.
+- 따라서 독립 Agent 간 작업 위임을 위한 A2A는 현재 프로젝트의 핵심 문제를 해결하지 않는다.
+
+### 발표 표현
+> A2A는 독립 Agent 간 작업 위임이 필요한 구조에서 의미가 있지만, 현재 서비스는 하나의
+> 백엔드 안에서 공통 Tool을 안전하게 호출하는 구조가 더 적합하다고 판단해 적용하지 않았습니다.
+
+## Extension 종료 기록
+
+```text
+Extension A 상태:
+Extension B 상태:
+Extension C 상태(선택):
+Extension D(A2A) 상태: 제외(범위 밖). 사유는 위 "Extension D" 절에 기록.
+비고(미진행 결정 포함):
 ```
 
 ---

@@ -36,6 +36,7 @@ class RetrievedChunk:
     lexical_similarity: float | None = None
     rrf_score: float | None = None
     parent_context: str | None = None
+    source_locator: dict | None = None
 
 
 def _row_to_chunk(r: dict) -> RetrievedChunk:
@@ -57,6 +58,7 @@ def _row_to_chunk(r: dict) -> RetrievedChunk:
         content_hash=r.get("content_hash"),
         lexical_similarity=r.get("lexical_similarity"),
         rrf_score=r.get("rrf_score"),
+        source_locator=r.get("source_locator"),
     )
 
 
