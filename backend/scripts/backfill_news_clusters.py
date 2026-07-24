@@ -319,8 +319,7 @@ def estimate_company_assignment_calls(
         "proxy_existing": proxy_existing,
         "proxy_new": proxy_new,
         "method": (
-            f"bge_m3_{cluster_cfg.ACTIVE_WINDOW_HOURS}h_candidate_"
-            "simulation_proxy_merge_at_0.74"
+            f"bge_m3_{cluster_cfg.ACTIVE_WINDOW_HOURS}h_candidate_simulation_proxy_merge_at_0.74"
         ),
         "elapsed_seconds": round(time.monotonic() - started, 3),
     }
