@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~F 통과, 세부채점·G 대기) | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~F 완료·전지표 통과, G 대기) | [ ] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -352,23 +352,23 @@ trace: request_id·model/tool count·latency·stop_reason·validation_errors·so
 
 ---
 
-## 5.5-F. 평가  ✅ 핵심 게이트 통과, 세부 채점 잔여 (2026-07-24)
+## 5.5-F. 평가  ✅ 전 지표 통과 (개발셋 + 홀드아웃, 2026-07-24)
 
 Agent 모델: **gpt-4.1-mini-2025-04-14** (provider-agnostic 교체; solar-pro3 는 지연·hang 으로 미달).
 
 - [x] 개발셋 작성 (`eval/devset.json`, 12개 유형별)
-- [ ] 홀드아웃 작성 (미작성 — devset 우선 실행)
+- [x] 홀드아웃 작성 (`eval/holdout.json`, 10개 — 개발셋과 다른 종목·기간·표현)
 - [x] 금융용어 / 재무 연간·분기·누적 / 뉴스 / 공시 / 리포트 / 복합 / 부정·제외 / no_data (유형 포함)
-- [ ] 현재 문맥 (devset 미포함)
-- [x] no_data (1/1 정직 처리 — 미래값을 상식으로 없음 판단)
+- [ ] 현재 문맥 (devset 미포함 — Phase 7 프런트 연결 시 검증)
+- [x] no_data (1/1 정직 처리)
 - [x] legacy QueryPlan 비교 (각 케이스 legacy_route 대비 기록 — Agent 가 규칙과 다르게 선택 증명)
-- [x] Tool Recall (**1.0**, 기준 0.95 통과)
-- [x] forbidden Tool violation (**0%**, 기준 3% 통과)
-- [ ] Tool arg accuracy (세부 채점 미구현 — 잔여)
-- [ ] 숫자 Exact Match (세부 채점 미구현 — 잔여)
-- [ ] Citation Precision (세부 채점 미구현 — 잔여)
-- [x] 지연·비용 (P50 4.5s / **P95 7.1s**, 복합 10s 통과)
-- [x] 동일 호출 반복 (**0건**, 기준 0 통과)
+- [x] Tool Recall (**1.0 / 1.0**, 기준 0.95 통과)
+- [x] forbidden Tool violation (**0% / 0%**, 기준 3% 통과)
+- [x] Tool arg accuracy (재무 인자→값 정확: dev 2/2, holdout 3/3)
+- [x] 숫자 Exact Match (재무 dev 2/2, holdout **3/3**, 기간·actual 전부)
+- [x] Citation Precision (존재하지 않는 인용 **0 / 0**)
+- [x] 지연·비용 (P95 **9.2s / 8.9s** ≤10s / 질문당 ~$0.002)
+- [x] 동일 호출 반복 (**0 / 0**, 기준 0 통과)
 
 ### 하드코딩 감사 + Tool 선택 증명 (추가 지시)
 
@@ -377,27 +377,34 @@ Agent 모델: **gpt-4.1-mini-2025-04-14** (provider-agnostic 교체; solar-pro3 
 - [x] Tool trace 로 모델이 직접 Tool 선택 증명 (질문마다 다른 tool_calls, legacy 규칙과 불일치,
       부정·제외 질문에서 금지 Tool 미호출)
 
-### 평가 결과 요약 (gpt-4.1-mini)
+### 평가 결과 요약 (gpt-4.1-mini, 개발셋 / 홀드아웃)
 
 ```text
-Required Tool Recall: 1.0 (12/12)     기준 0.95  → 통과
-Forbidden Violation:  0% (0/12)       기준 3%    → 통과
-부정·제외 치명 위반:  0                          → 통과
-no_data 처리:         1/1                          → 통과
-동일 호출 반복:       0건               기준 0    → 통과
-지연 P50/P95:         4.5s / 7.1s      복합 10s   → 통과
+Required Tool Recall: 1.0 / 1.0        기준 0.95  → 통과
+Forbidden Violation:  0% / 0%          기준 3%    → 통과
+부정·제외 치명 위반:  0 / 0                        → 통과
+no_data 처리:         1/1 / 1/1                    → 통과
+동일 호출 반복:       0 / 0             기준 0    → 통과
+재무 Exact Match:     2/2 / 3/3         기준 100%  → 통과
+재무 기간 정확도:     2/2 / 3/3         기준 100%  → 통과
+actual/forecast 혼동: 0 / 0                        → 통과
+존재하지 않는 인용:   0 / 0             기준 0    → 통과
+지연 P95:             9.2s / 8.9s      복합 10s   → 통과
+질문당 비용:          ~$0.0019 / ~$0.0017          → 참고
 하드코딩:             없음                         → 통과
 모델 자율 Tool 선택:  증명됨                       → 통과
 ```
 
-### 잔여(미측정) — 5.5-G 전 완료 필요
+홀드아웃(개발셋과 다른 종목·기간·표현)에서도 동일 통과 → 평가셋에 맞춘 하드코딩이 아님.
 
-- 재무 숫자 Exact Match / 기간·단위 정확도 / actual·forecast 혼동 / Citation Precision 의
-  **평가셋 정답값 대비 자동 채점 로직 미구현.** Tool·검증기 코드가 이미 강제하나(5.5-B/E),
-  명시적 자동 채점으로 승인 기준 전체를 검증한 뒤 5.5-G 로 진행한다.
+### 이번 라운드 개선(일반 규칙, 특정 질문·종목 하드코딩 없음)
+
+- FactsService.REPRT_LABEL 공식 매핑 수정(11013=1분기 … 11011=연간) → 기간 라벨 정확화.
+- 시스템 프롬프트 재무 인자 매핑 규칙 + no_data 시 다른 기간 대체 금지.
+- get_financial_facts 결과에 value_display(조/억) 제공 → 큰 숫자 자릿수 변환 실수 제거.
 
 상세: `docs/rag/phase_5_5/eval/EVAL_REPORT.md`.
-산출물: `scripts/evaluate_agent.py`, `eval/devset.json`, `EVAL_REPORT.md`
+산출물: `scripts/evaluate_agent.py`, `eval/devset.json`, `eval/holdout.json`, `EVAL_REPORT.md`
 (`eval_result.json` 은 답변 원문 조각 포함으로 gitignore).
 
 ### 반드시 포함
@@ -435,10 +442,10 @@ actual/forecast 혼동 0
 
 ## 5.5-G. 라이브 전환
 
-> ⚠️ **조건부 대기**: 5.5-F 핵심 게이트(Recall 1.0, Forbidden 0%, 부정·제외 0, 반복 0,
-> 복합 P95 7.1s)는 gpt-4.1-mini 로 **통과**. 그러나 재무 Exact Match·기간·단위·Citation
-> **자동 채점이 미구현**이라, 이를 완료해 승인 기준 전체를 명시 검증한 뒤 라이브 전환한다.
-> 현재 `agent_enabled=false` 유지(라이브는 결정론적 경로).
+> ✅ **5.5-F 승인 기준 전 지표 통과**(개발셋·홀드아웃; Recall 1.0, Forbidden 0%, 부정·제외 0,
+> 반복 0, 재무 Exact Match·기간·actual·인용 전부, 복합 P95 ≤10s). 5.5-G 진입 조건 충족.
+> 단, 실제 라이브 전환은 아래 5.5-G 체크리스트(스테이징 flag on·UI smoke·legacy 비교·
+> 운영 flag 전환)를 별도로 밟는다. 현재 `agent_enabled=false` 유지.
 
 - [ ] 승인 기준 통과
 - [ ] `AGENT_ENABLED=true` 스테이징

@@ -109,6 +109,8 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
         )
         return no_data(f"요청한 재무 데이터가 없습니다: {want}. 다른 기간으로 대체하지 않았습니다.")
 
+    from app.rag.prompting import format_won
+
     data = []
     sources = []
     for f in rows:
@@ -116,6 +118,9 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
             {
                 "label": f.label,
                 "value_won": f.value,
+                # 조/억 표기를 미리 계산해 제공한다(모델이 큰 숫자 변환에서 자릿수를
+                # 틀리지 않도록). 답변에는 이 표기 또는 원 정수를 그대로 쓴다.
+                "value_display": format_won(f.value),
                 "unit": f.unit,
                 "period": f.period,
                 "basis": f.basis,

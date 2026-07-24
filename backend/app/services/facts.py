@@ -18,11 +18,12 @@ from typing import Any
 from supabase import Client
 
 # DART 표준 보고서 코드(특정 종목/항목이 아닌 공용 코드 매핑).
+# DART 공식 reprt_code 매핑(인수인계 문서 §3). 숫자 크기 순서로 추측하지 않는다.
 REPRT_LABEL = {
-    "11011": "1분기보고서",
+    "11013": "1분기보고서",
     "11012": "반기보고서",
-    "11013": "3분기보고서",
-    "11014": "사업보고서(연간)",
+    "11014": "3분기보고서",
+    "11011": "사업보고서(연간)",
 }
 FS_DIV_LABEL = {"CFS": "연결", "OFS": "별도"}
 AMOUNT_TYPE_LABEL = {

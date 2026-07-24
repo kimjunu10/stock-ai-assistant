@@ -101,7 +101,7 @@ def test_extract_parses_tool_payload():
             AIMessage(content="영업이익은 6조원입니다."),
         ]
     }
-    answer, tool_calls, model_calls, payloads = AgentQaService._extract(out)
+    answer, tool_calls, model_calls, payloads, in_tok, out_tok = AgentQaService._extract(out)
     assert answer == "영업이익은 6조원입니다."
     assert tool_calls[0].name == "get_financial_facts"
     assert tool_calls[0].status == "ok" and tool_calls[0].result_count == 1

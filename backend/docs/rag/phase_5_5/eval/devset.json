@@ -19,6 +19,7 @@
       "required_tools": ["get_financial_facts"],
       "forbidden_tools": ["search_news", "search_research_reports"],
       "expected_args": {"get_financial_facts": {"account_name": "영업이익", "report_period": "annual", "business_year": 2025}},
+      "expected_financial": {"stock_code": "005930", "account_name": "영업이익", "business_year": 2025, "report_period": "annual", "amount_type": "cumulative", "value_kind": "actual_value"},
       "is_answerable": true
     },
     {
@@ -29,6 +30,7 @@
       "required_tools": ["get_financial_facts"],
       "forbidden_tools": ["search_news", "search_research_reports"],
       "expected_args": {"get_financial_facts": {"account_name": "영업이익", "report_period": "q3", "amount_type": "cumulative"}},
+      "expected_financial": {"stock_code": "005930", "account_name": "영업이익", "business_year": 2025, "report_period": "q3", "amount_type": "cumulative", "value_kind": "actual_value"},
       "is_answerable": true
     },
     {

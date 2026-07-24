@@ -41,6 +41,8 @@ class AgentQaResult:
     source_ids: list[str] = field(default_factory=list)
     validation_errors: list[str] = field(default_factory=list)
     trace: dict = field(default_factory=dict)
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 class AgentQaService:
@@ -65,8 +67,8 @@ class AgentQaService:
         )
 
     @staticmethod
-    def _extract(out: dict) -> tuple[str, list[AgentToolCall], int, list[dict]]:
-        """Agent 결과에서 최종 답변·Tool 호출 요약·Tool payload 를 뽑는다.
+    def _extract(out: dict) -> tuple[str, list[AgentToolCall], int, list[dict], int, int]:
+        """Agent 결과에서 최종 답변·Tool 호출 요약·Tool payload·토큰 usage 를 뽑는다.
 
         내부 추론(chain-of-thought)은 저장하지 않는다. Tool payload 는 검증·trace 용
         메타/근거 dict 만 수집(원문 본문 아님).
@@ -76,10 +78,14 @@ class AgentQaService:
         tool_calls: list[AgentToolCall] = []
         tool_payloads: list[dict] = []
         model_calls = 0
+        in_tok = out_tok = 0
         for m in msgs:
             mtype = getattr(m, "type", "")
             if mtype == "ai":
                 model_calls += 1
+                um = getattr(m, "usage_metadata", None) or {}
+                in_tok += int(um.get("input_tokens", 0) or 0)
+                out_tok += int(um.get("output_tokens", 0) or 0)
                 for tc in getattr(m, "tool_calls", []) or []:
                     tool_calls.append(AgentToolCall(name=tc.get("name", "")))
                 content = getattr(m, "content", "")
@@ -107,7 +113,7 @@ class AgentQaService:
                                         c.result_count = len(data[key])
                                         break
                             break
-        return answer, tool_calls, model_calls, tool_payloads
+        return answer, tool_calls, model_calls, tool_payloads, in_tok, out_tok
 
     def answer(
         self,
@@ -153,7 +159,7 @@ class AgentQaService:
                 request_id, "error", f"일시적 오류({type(e).__name__})로 답변하지 못했습니다.", t0
             )
 
-        answer, tool_calls, model_calls, tool_payloads = self._extract(out)
+        answer, tool_calls, model_calls, tool_payloads, in_tok, out_tok = self._extract(out)
 
         # ── 코드 검증(SPEC §12.2): 숫자를 고치지 않고 오류만 기록 ──
         evidence = collect_evidence(tool_payloads)
@@ -180,6 +186,8 @@ class AgentQaService:
             source_ids=sorted(evidence.source_ids),
             validation_errors=validation.errors,
             trace=trace.to_log_dict(),
+            input_tokens=in_tok,
+            output_tokens=out_tok,
         )
 
     def _failed(self, request_id: str, reason: str, message: str, t0: float) -> AgentQaResult:

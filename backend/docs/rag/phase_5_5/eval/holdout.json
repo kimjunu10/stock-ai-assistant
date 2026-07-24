@@ -1,0 +1,111 @@
+{
+  "_note": "Phase 5.5-F 홀드아웃. 개발셋과 겹치지 않는 질문. 재무 정답 숫자는 채점 시 DB(FactsService)에서 조회한다(하드코딩 아님). expected_financial 은 기대 계정·연도·기간·유형·성격만 명시.",
+  "cases": [
+    {
+      "id": "h-term-1",
+      "type": "금융용어",
+      "question": "EPS가 무슨 뜻이야?",
+      "stock_code": null,
+      "required_tools": ["lookup_financial_term"],
+      "forbidden_tools": ["get_financial_facts", "search_news", "search_research_reports"],
+      "is_answerable": true
+    },
+    {
+      "id": "h-fin-annual",
+      "type": "재무-연간",
+      "question": "SK하이닉스 2025년 연간 매출액 알려줘.",
+      "stock_code": "000660",
+      "required_tools": ["get_financial_facts"],
+      "forbidden_tools": ["search_news", "search_research_reports"],
+      "expected_financial": {
+        "stock_code": "000660", "account_name": "매출액",
+        "business_year": 2025, "report_period": "annual",
+        "amount_type": "cumulative", "value_kind": "actual_value"
+      },
+      "is_answerable": true
+    },
+    {
+      "id": "h-fin-q3-cum",
+      "type": "재무-분기누적",
+      "question": "현대차 2025년 3분기 누적 영업이익은 얼마야?",
+      "stock_code": "005380",
+      "required_tools": ["get_financial_facts"],
+      "forbidden_tools": ["search_news", "search_research_reports"],
+      "expected_financial": {
+        "stock_code": "005380", "account_name": "영업이익",
+        "business_year": 2025, "report_period": "q3",
+        "amount_type": "cumulative", "value_kind": "actual_value"
+      },
+      "is_answerable": true
+    },
+    {
+      "id": "h-fin-balance",
+      "type": "재무-시점",
+      "question": "삼성전자 2025년 자산총계 알려줘.",
+      "stock_code": "005930",
+      "required_tools": ["get_financial_facts"],
+      "forbidden_tools": ["search_news"],
+      "expected_financial": {
+        "stock_code": "005930", "account_name": "자산총계",
+        "business_year": 2025, "report_period": "annual",
+        "amount_type": "point_in_time", "value_kind": "actual_value"
+      },
+      "is_answerable": true
+    },
+    {
+      "id": "h-news",
+      "type": "뉴스",
+      "question": "한화오션 최근 소식 알려줘.",
+      "stock_code": "042660",
+      "required_tools": ["search_news"],
+      "forbidden_tools": ["get_financial_facts", "search_research_reports"],
+      "is_answerable": true
+    },
+    {
+      "id": "h-report",
+      "type": "리포트",
+      "question": "SK하이닉스 증권사 목표주가와 전망은 어때?",
+      "stock_code": "000660",
+      "required_tools": ["search_research_reports"],
+      "forbidden_tools": [],
+      "is_answerable": true
+    },
+    {
+      "id": "h-exclude-1",
+      "type": "부정제외",
+      "question": "현대차 실적 얘기는 빼고 최근 뉴스만 알려줘.",
+      "stock_code": "005380",
+      "required_tools": ["search_news"],
+      "forbidden_tools": ["get_financial_facts"],
+      "is_answerable": true
+    },
+    {
+      "id": "h-exclude-2",
+      "type": "부정제외",
+      "question": "삼성전자 증권사 의견 말고 회사가 직접 발표한 공시만 보여줘.",
+      "stock_code": "005930",
+      "required_tools": ["search_disclosures"],
+      "forbidden_tools": ["search_research_reports"],
+      "is_answerable": true
+    },
+    {
+      "id": "h-mixed",
+      "type": "복합",
+      "question": "SK하이닉스 영업이익이 어땠고 증권사는 앞으로 어떻게 보는지 알려줘.",
+      "stock_code": "000660",
+      "required_tools": ["search_research_reports"],
+      "forbidden_tools": [],
+      "is_answerable": true
+    },
+    {
+      "id": "h-nodata",
+      "type": "답변불가",
+      "question": "두산에너빌리티 2010년 영업이익 확정값을 알려줘.",
+      "stock_code": "034020",
+      "required_tools": [],
+      "forbidden_tools": [],
+      "is_answerable": false,
+      "_note": "DB 미보유 연도. Tool 조회해도 no_data 여야 하며 숫자 생성 금지."
+    }
+  ]
+}
