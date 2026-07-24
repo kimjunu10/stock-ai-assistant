@@ -140,48 +140,54 @@ create_agent로 표현할 수 없는 승인·장시간 작업·복잡한 병렬 
 
 현재 범위에는 해당하지 않는다.
 
-## 3.3 Upstage
+## 3.3 Upstage (5.5-A preflight 확정)
 
-공식 LangChain integration을 사용한다.
+Upstage 는 **OpenAI 호환 API**이므로 `langchain-openai`의 `ChatOpenAI`에 Upstage base_url 을
+지정해 사용한다. `langchain-upstage`는 사용하지 않는다(아래 이유).
 
 ```python
-from langchain_upstage import ChatUpstage
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    model=AGENT_CHAT_MODEL,          # 예: solar-pro3-260323
+    base_url=UPSTAGE_BASE_URL,       # https://api.upstage.ai/v1
+    api_key=UPSTAGE_API_KEY,
+)
 ```
 
-단, Agent 전환 전 현재 모델의 Tool Calling을 실제 검증한다.
+> **langchain-upstage 미사용 이유(5.5-A)**: `langchain-upstage 0.7.7`이
+> `tokenizers<0.21`을 강제한다. 프로젝트의 `transformers>=5`는 `tokenizers 0.22`를
+> 요구하므로 uv lock 이 해결 불가 충돌을 낸다. `langchain-openai`는 tokenizers 의존이
+> 없어 충돌이 없고, Upstage OpenAI 호환 엔드포인트로 동일하게 Tool Calling 이 된다.
 
-검증 항목:
+Agent 전환 전 5.5-A preflight 에서 현재 모델(`solar-pro3-260323`)의 Tool Calling 을 실제
+검증했다. 검증·결과는 `docs/rag/phase_5_5/AGENT_PREFLIGHT.md` 참조.
 
-- 단일 Tool call
-- 연속 Tool call
-- 병렬 Tool call 지원 여부
-- Tool result 후 추가 Tool call
-- Tool call streaming
-- 한국어 제외 조건
-- LangChain `create_agent` 호환
+- 단일 Tool call — 통과
+- Tool result 후 추가 / 연속 Tool call — 통과(복합 질문 표현에 따라 편차; 시스템 프롬프트로 보강)
+- Tool call streaming — 통과
+- 한국어 부정·제외 — 통과(재무 Tool 미호출)
+- `create_agent` 호환 — 통과
 
-통과하지 않으면 별도 `AGENT_CHAT_MODEL`을 사용한다. 생성 모델과 Agent 모델을 환경변수로 분리한다.
+모델 공급자를 코드에 고정하지 않고 환경변수로 분리한다.
 
 ```env
-AGENT_CHAT_PROVIDER=upstage
-AGENT_CHAT_MODEL=
+AGENT_CHAT_PROVIDER=upstage      # OpenAI 호환 엔드포인트
+AGENT_CHAT_MODEL=solar-pro3-260323
+UPSTAGE_BASE_URL=https://api.upstage.ai/v1
 ANSWER_CHAT_MODEL=
 ```
 
-모델 공급자를 코드에 고정하지 않는다.
-
-## 3.4 패키지
-
-주요 버전 계열:
+## 3.4 패키지 (5.5-A uv.lock 고정)
 
 ```text
-langchain 1.x
-langgraph 1.x
-langchain-upstage
-langsmith
+langchain>=1.3.14,<1.4        # 검증 1.3.14 (langchain-core 1.5.1 자동 해결)
+langgraph>=1.2.5,<1.3         # 검증 1.2.9
+langchain-openai>=1.4,<2      # 검증 1.4.1 (langchain-upstage 대체)
 ```
 
-정확한 버전은 Phase 5.5 preflight에서 호환성 테스트 후 `uv.lock`에 고정한다. 범위가 넓은 무제한 버전을 운영에 사용하지 않는다.
+`langsmith`는 개발·스테이징 tracing 용으로만 선택 도입한다. 정확한 버전은 5.5-A preflight
+에서 호환성 테스트 후 `pyproject.toml`/`uv.lock`에 고정 완료. 무제한 버전 범위는 쓰지 않는다.
 
 ---
 

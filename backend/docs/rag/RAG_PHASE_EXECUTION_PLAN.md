@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] (A 완료, B~G 대기) | [ ] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -109,22 +109,28 @@ QA report_sources 연결
 
 ---
 
-## 5.5-A. 의존성과 모델 preflight
+## 5.5-A. 의존성과 모델 preflight  ✅ 완료 (2026-07-24)
 
-- [ ] 새 브랜치 생성
-- [ ] LangChain v1·LangGraph v1 호환 버전 조사
-- [ ] `langchain-upstage` 현재 호환 버전 조사
-- [ ] 작은 별도 환경에서 설치
-- [ ] 기존 테스트 실행
-- [ ] `ChatUpstage.bind_tools()` 단일 Tool call 검증
-- [ ] Tool result 후 추가 Tool call 검증
-- [ ] 2개 Tool 연속 호출 검증
-- [ ] Tool call streaming 검증
-- [ ] 한국어 부정·제외 질문 검증
-- [ ] `create_agent` 호환 검증
-- [ ] 정확한 버전을 `uv.lock`에 고정
-- [ ] 비밀키 미출력
-- [ ] preflight 결과 문서화
+- [x] 새 브랜치 생성 (`phase/5.5-a-agent-preflight`)
+- [x] LangChain v1·LangGraph v1 호환 버전 조사 (1.3.14 / 1.2.9)
+- [x] Upstage integration 호환 조사 — **langchain-upstage 대신 langchain-openai 채택**
+- [x] 작은 별도 환경에서 설치 (uv --no-project 격리) + 정식 .venv 설치
+- [x] 기존 테스트 실행 (pytest 156 passed, ruff clean — 회귀 없음)
+- [x] `bind_tools()` 단일 Tool call 검증
+- [x] Tool result 후 추가 Tool call 검증
+- [x] 2개 Tool 연속 호출 검증 (복합 질문 표현에 따라 편차 → 5.5-C 프롬프트 보강)
+- [x] Tool call streaming 검증 (tool_call_chunks 감지)
+- [x] 한국어 부정·제외 질문 검증 (재무 Tool 미호출 확인)
+- [x] `create_agent` 호환 검증
+- [x] 정확한 버전을 `uv.lock`에 고정
+- [x] 비밀키 미출력
+- [x] preflight 결과 문서화 (`AGENT_PREFLIGHT.md`)
+
+### ⚠️ 5.5-A 발견: langchain-upstage → langchain-openai 대체
+
+`langchain-upstage 0.7.7`이 `tokenizers<0.21`을 강제해 프로젝트 `transformers>=5`
+(tokenizers 0.22)와 uv lock 해결 불가 충돌. Upstage 는 OpenAI 호환 API 이므로
+`langchain-openai`의 `ChatOpenAI(base_url=Upstage)`로 대체(설계 변경 아님, provider 분리 유지).
 
 ### 중단 조건
 
@@ -133,13 +139,26 @@ QA report_sources 연결
 - 패키지 도입으로 기존 테스트 대량 회귀
 - 모델 비용·지연이 프로젝트 한도를 크게 초과
 
-중단 시 임의 parser Agent를 만들지 않는다. `AGENT_CHAT_MODEL` 후보를 보고한다.
+→ **해당 없음.** 임의 parser Agent 불필요.
 
 ### 산출물
 
 ```text
-backend/docs/rag/phase_5_5/AGENT_PREFLIGHT.md
-backend/scripts/agent_preflight.py
+backend/docs/rag/phase_5_5/AGENT_PREFLIGHT.md      (완료)
+backend/docs/rag/phase_5_5/preflight_result.json  (완료)
+backend/scripts/agent_preflight.py                (완료)
+```
+
+### 5.5-A 종료 기록
+
+```text
+상태: 완료
+완료일: 2026-07-24
+고정 버전: langchain 1.3.14 / langchain-core 1.5.1 / langgraph 1.2.9 / langchain-openai 1.4.1
+Agent 모델: solar-pro3-260323 (ChatOpenAI + Upstage base_url)
+Tool Calling: 단일·부정제외·streaming·create_agent 통과. 멀티툴은 프롬프트 보강 대상.
+기존 테스트: 156 passed (회귀 없음)
+langchain-upstage: 미채택(tokenizers<0.21 충돌) → langchain-openai 대체
 ```
 
 ---
@@ -184,7 +203,7 @@ backend/tests/agent/test_tool_*.py
 
 ## 5.5-C. Agent 구현
 
-- [ ] `ChatUpstage` 또는 검증된 Agent model 초기화
+- [ ] Agent model 초기화 (ChatOpenAI + Upstage base_url; 5.5-A 확정)
 - [ ] `create_agent` 사용
 - [ ] 시스템 프롬프트 작성
 - [ ] Tool 목록 연결

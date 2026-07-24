@@ -406,7 +406,7 @@ Phase 9 배포
 
 ---
 
-## 15. 모델 호환성 확인
+## 15. 모델 호환성 확인 (5.5-A preflight 완료)
 
 Agent 모델은 반드시 다음을 실제 API로 통과해야 한다.
 
@@ -418,16 +418,20 @@ Tool 결과를 보고 추가 호출
 한국어 부정·제외 조건
 ```
 
-현재 Solar 모델이 통과하면 `ChatUpstage`를 사용한다.
-
-통과하지 않으면 Agent용 모델을 별도 환경변수로 설정한다.
+**결과(2026-07-24)**: 현재 Solar 모델(`solar-pro3-260323`)이 위 항목을 통과했다.
+단, Upstage 전용 패키지(`langchain-upstage`)는 tokenizers 버전이 프로젝트 `transformers`와
+충돌하므로 사용하지 않고, **OpenAI 호환 API로 `langchain-openai`의 `ChatOpenAI`에 Upstage
+base_url 을 지정**해 사용한다. (기능·모델은 동일, 패키지만 교체.)
 
 ```env
-AGENT_CHAT_MODEL=
+AGENT_CHAT_PROVIDER=upstage
+AGENT_CHAT_MODEL=solar-pro3-260323
+UPSTAGE_BASE_URL=https://api.upstage.ai/v1
 ANSWER_CHAT_MODEL=
 ```
 
 이는 설계 변경이 아니다. Agent 모델 교체가 가능하도록 처음부터 provider-agnostic하게 만드는 것이다.
+자세한 preflight 결과는 `docs/rag/phase_5_5/AGENT_PREFLIGHT.md` 참조.
 
 ---
 
