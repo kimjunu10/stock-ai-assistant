@@ -1,408 +1,482 @@
-# 우리 프로젝트의 핵심 RAG 확장 방향
+# 우리 프로젝트의 최종 RAG 확장 방향
 
-## 1. 결론
-
-우리 프로젝트에는 아래 네 가지면 충분하다.
-
-```text
-현재 RAG 완성
-→ 공통 Tool 인터페이스
-→ 제한형 Agentic Orchestrator
-→ 실행 추적·평가
-```
-
-MCP는 핵심 구현이 안정된 뒤 **선택적으로 추가**한다.
-
-A2A는 이번 프로젝트에서 제외한다.
-
-```text
-LangChain: 도입하지 않음
-A2A: 구현하지 않음
-MCP: 선택적
-Agentic: 복합 질문에만 적용
-오케스트레이션: 직접 구현
-```
+> 문서 상태: 최종 설계안  
+> 기준 시점: Phase 5 완료 후  
+> 대상 프로젝트: `stock-ai-assistant`
 
 ---
 
-## 2. A2A를 제외하는 이유
+## 1. 최종 결론
 
-A2A는 서로 독립적으로 실행되는 여러 Agent가 작업을 위임하고 결과를 주고받을 때 필요하다.
+이 프로젝트는 다음 구조로 구현한다.
 
-예를 들면 다음과 같은 구조다.
+> **LangChain `create_agent` 기반 단일 Tool-Calling Agentic Hybrid RAG**  
+> **실행 런타임은 LangGraph를 사용하고, 기존 금융 조회·검색 코드는 읽기 전용 Tool로 재사용한다.**
+
+핵심 흐름:
 
 ```text
-총괄 Agent
-→ 재무 Agent
-→ 뉴스 Agent
-→ 리포트 Agent
+사용자 질문 + 현재 화면 문맥
+        ↓
+단일 LangChain Agent
+        ↓
+LLM이 질문 전체 의미를 해석
+        ↓
+필요한 Tool을 0개·1개·여러 개 선택
+        ↓
+Tool 결과를 확인하고 필요하면 추가 Tool 호출
+        ↓
+숫자·기간·실제값/전망값·출처 검증
+        ↓
+근거가 있는 최종 답변
 ```
 
-하지만 현재 우리 서비스는 하나의 FastAPI 애플리케이션 안에서 뉴스, 공시, 재무, 금융용어, 리포트, 주가 기능을 처리한다.
+모든 질문은 같은 Agent에 들어간다.
 
-이 기능들을 억지로 독립 Agent로 나누면 다음 문제가 생긴다.
-
-- 배포 구조가 복잡해진다.
-- Agent 간 통신 오류가 추가된다.
-- 응답 시간이 길어진다.
-- 실제 서비스 품질보다 기술 이름을 넣기 위한 구현이 될 수 있다.
-- 일주일 안에 검증·평가하기 어렵다.
-
-따라서 A2A는 현재 프로젝트의 핵심 문제를 해결하지 않는다.
-
-발표에서는 다음과 같이 설명한다.
-
-> A2A는 독립 Agent 간 작업 위임이 필요한 구조에서 의미가 있지만, 현재 서비스는 하나의 백엔드 안에서 공통 Tool을 안전하게 호출하는 구조가 더 적합하다고 판단해 적용하지 않았습니다.
+- 별도의 키워드 기반 질문 분류기를 두지 않는다.
+- 단순 질문과 복합 질문을 사전에 하드코딩으로 나누지 않는다.
+- Agent가 Tool 하나로 충분하다고 판단하면 한 번 호출하고 끝낸다.
+- 여러 자료가 필요하면 결과를 보면서 추가 Tool을 호출한다.
+- Tool 호출이 필요 없는 인사·UI 도움말은 바로 답한다.
 
 ---
 
-## 3. LangChain을 도입하지 않는 이유
+## 2. 기존 설계에서 폐기하는 부분
 
-LangChain은 RAG 또는 Agentic의 필수 조건이 아니다.
+기존 `QueryPlan`은 질문 안의 단어 존재 여부로 다음 값을 켰다.
 
-현재 프로젝트는 이미 다음 기능을 직접 구현했다.
+```text
+need_financials
+need_news
+need_reports
+need_terms
+need_price
+```
 
-- 뉴스·공시·금융용어 검색
-- 벡터 검색과 키워드 검색 결합
-- RRF 순위 결합
-- 재무 SQL 조회
-- 질문 라우팅
-- 출처 결합
-- 증분 인덱싱
+이 방식은 다음 질문을 안정적으로 처리하지 못한다.
 
-이 코드를 LangChain으로 다시 작성해도 사용자 기능이 늘어나지 않는다.
+```text
+최근 뉴스에서 삼성전자 호재 있어?
+영업이익 같은 실적 관련 내용은 제외해.
+```
 
-오히려 다음 위험이 있다.
+단어만 보면 `뉴스`, `호재`, `영업이익`이 모두 발견되므로 재무 Tool까지 잘못 실행할 수 있다.  
+사용자는 영업이익을 **요청한 것이 아니라 제외한 것**이다.
 
-- 기존 동작 회귀
-- 디버깅 범위 증가
-- 프레임워크 구조와 현재 코드의 중복
-- 발표에서 실제 구현 내용을 설명하기 어려워짐
+따라서 다음을 메인 경로에서 제거한다.
 
-따라서 기존 FastAPI 기반 직접 구현을 유지한다.
+```text
+키워드·신호어 기반 Tool 선택
+완성 문장별 예외 처리
+기업별 라우팅 예외
+미분류 질문을 뉴스 검색으로 보내는 기본값
+단순/복합 질문을 규칙으로 사전 분류하는 로직
+```
 
-발표 표현:
-
-> LangChain 템플릿을 사용하지 않고 검색, 라우팅, 데이터 조회, 출처 결합을 직접 구현했습니다.
+기존 `QueryPlan`은 회귀 비교용 legacy 코드로만 잠시 보존한 뒤, 새 Agent 평가가 통과하면 라이브 경로에서 제거한다. Agent 실패 시에도 기존 QueryPlan으로 되돌아가지 않는다. 잘못된 경로로 답하는 것보다 근거 부족이나 일시 오류를 명시하는 것이 안전하다.
 
 ---
 
-## 4. 가장 먼저 추가할 것: 공통 Tool 인터페이스
+## 3. 왜 이 방식이 표준적인가
 
-Agentic을 구현하기 전에 기존 기능을 Tool로 정리한다.
+이번 설계는 새로운 사설 프레임워크를 만드는 방식이 아니다.
 
-예상 Tool:
+### 3.1 LangChain `create_agent`
+
+LangChain v1의 표준 Agent 생성 인터페이스다.
+
+- 모델
+- Tool 목록
+- 시스템 지시
+- middleware
+- 상태와 스트리밍
+
+을 조합해 Agent를 만든다.
+
+`create_agent`는 내부적으로 LangGraph 런타임을 사용한다. 직접 `StateGraph`를 설계하지 않아도 Tool 호출, 결과 관찰, 추가 호출, 종료 흐름을 제공한다.
+
+### 3.2 ReAct / Tool-Calling Agent
+
+Agent가 다음 과정을 반복한다.
+
+```text
+질문 이해
+→ Tool 호출
+→ 결과 관찰
+→ 추가 Tool이 필요한지 판단
+→ 충분하면 최종 답변
+```
+
+이는 ReAct 계열의 일반적인 Agent 실행 패턴이다. 우리 프로젝트는 모델의 내부 추론 전문을 저장하거나 사용자에게 노출하지 않고, Tool 호출과 결과만 trace로 기록한다.
+
+### 3.3 Agentic RAG
+
+뉴스·공시·리포트 검색 Tool을 Agent가 필요할 때 호출하므로 Agentic RAG다.
+
+- 재무 SQL Tool만 호출: Agentic structured-data QA
+- 금융용어 Tool만 호출: Agentic lookup QA
+- 뉴스·공시·리포트 검색 Tool 호출: Agentic RAG
+- SQL과 검색 Tool을 함께 호출: Agentic Hybrid RAG
+
+시스템 전체 명칭은 다음으로 통일한다.
+
+> **금융 데이터 Tool을 사용하는 단일 Agent 기반 Agentic Hybrid RAG**
+
+---
+
+## 4. LangChain과 LangGraph 사용 범위
+
+### 사용한다
+
+```text
+langchain.agents.create_agent
+langchain Tool 인터페이스
+Pydantic Tool 입력 스키마
+LangChain middleware
+LangGraph 기반 상태·Tool loop·스트리밍
+LangGraph checkpointer(대화 상태가 필요할 때)
+```
+
+### 직접 만들지 않는다
+
+```text
+커스텀 Agent loop
+커스텀 planner/replanner
+키워드 intent router
+직접 만든 조건부 StateGraph
+다중 Agent supervisor
+Agent 간 A2A
+자유 SQL Agent
+```
+
+### 기존 구현은 유지한다
+
+```text
+FastAPI
+Supabase PostgreSQL
+pgvector
+pg_trgm
+RRF
+HybridRetriever
+FactsService
+리포트 파서·페이지·표·청크
+뉴스 사건 클러스터
+금융용어 DB
+출처 및 페이지 메타데이터
+SSE API
+```
+
+LangChain으로 기존 검색기와 Repository를 다시 작성하지 않는다. 기존 Service를 얇은 Tool로 감싼다.
+
+---
+
+## 5. Tool 목록
+
+현재 Tool은 6개로 시작한다.
 
 ```text
 get_financial_facts
+lookup_financial_term
 search_news
 search_disclosures
-lookup_financial_term
+get_disclosure_values
 search_research_reports
-get_stock_price
+```
+
+Phase 6에서 다음을 추가한다.
+
+```text
+get_stock_prices
 calculate_event_return
 ```
 
-각 Tool은 동일한 형식으로 동작한다.
+Tool 수가 10개 이하이므로 별도의 Tool Selector Agent나 Tool 검색 middleware는 사용하지 않는다. Tool 설명과 입력 스키마를 정확히 작성해 주 Agent가 직접 선택하게 한다.
+
+각 Tool은 읽기 전용이며 다음 공통 형식으로 반환한다.
 
 ```json
 {
-  "ok": true,
+  "status": "ok | no_data | error",
   "data": {},
   "sources": [],
-  "warnings": [],
-  "error": null
+  "warnings": []
 }
 ```
 
-Tool의 원칙:
-
-- 기존 Service와 Repository를 재사용한다.
-- 검색 로직을 다시 만들지 않는다.
-- 기본적으로 읽기 전용이다.
-- 숫자에는 단위와 기간을 포함한다.
-- 리포트 전망값은 실제 실적과 구분한다.
-- 검색 결과에는 출처를 포함한다.
-- 오류와 timeout 형식을 통일한다.
-
-Tool 인터페이스를 먼저 만들면 다음 장점이 있다.
-
-- 기존 라우터에서도 같은 Tool을 사용한다.
-- Agentic에서도 같은 Tool을 사용한다.
-- 나중에 MCP를 붙일 때도 같은 Tool을 재사용한다.
-- 테스트 대상이 명확해진다.
-
----
-
-## 5. 핵심 확장: 제한형 Agentic Orchestrator
-
-모든 질문을 Agent에게 맡기지 않는다.
-
-### 단순 질문
-
-기존 결정론적 경로를 유지한다.
+Agent가 직접 SQL을 생성하지 않는다.
 
 ```text
-“PER이 뭐야?”
-→ 금융용어 Tool
-
-“2025년 영업이익은 얼마야?”
-→ 재무 SQL Tool
-
-“최근 삼성전자 뉴스 보여줘.”
-→ 뉴스 검색 Tool
-```
-
-### 복합 질문
-
-여러 데이터가 필요한 질문만 Agentic 경로로 보낸다.
-
-```text
-“삼성전자 영업이익은 왜 감소했고
-증권사들은 앞으로 어떻게 전망해?”
-```
-
-예상 실행:
-
-```text
-1. get_financial_facts
-   → 실제 영업이익과 비교 기간 확인
-
-2. search_news 또는 search_disclosures
-   → 감소 원인 검색
-
-3. search_research_reports
-   → 증권사 전망 검색
-
-4. 검증
-   → 실제값과 전망값 분리
-   → 핵심 주장마다 출처 연결
-
-5. 최종 답변
-```
-
-Agentic의 핵심은 첫 단계에서 모든 호출을 미리 확정하지 않는 것이다.
-
-```text
-Tool 실행
-→ 결과 확인
-→ 정보가 부족하면 다음 Tool
-→ 충분하면 종료
+Agent
+→ 검증된 Tool 인자
+→ 기존 Service
+→ 제한된 SQL 또는 검색
 ```
 
 ---
 
-## 6. Agentic 안전장치
+## 6. 질문 예시
 
-우리 Agent는 범용 자율 Agent가 아니라 제한형 Agent다.
-
-```text
-최대 Tool 호출: 5회
-최대 실행 단계: 6회
-전체 timeout: 적용
-동일 Tool·동일 인자 반복: 차단
-허용 목록 외 Tool: 차단
-DB 쓰기·삭제: 금지
-주문 실행: 금지
-SQL 숫자: LLM 추론보다 우선
-실제값·전망값: 분리
-출처 없는 사실: 최종 답변에서 제거
-Agent 실패: 기존 라우터로 fallback
-```
-
-이 제한이 있어야 금융 정보 서비스에서 예측 가능성과 정확성을 유지할 수 있다.
-
----
-
-## 7. 오케스트레이션
-
-오케스트레이션은 별도의 마지막 기술이 아니라 전체 실행을 관리하는 구조다.
-
-현재도 일부 오케스트레이션이 있다.
+### 금융용어
 
 ```text
-질문
-→ QueryPlan
-→ SQL·검색·용어 작업 선택
-→ 결과 통합
+질문: PER이 뭐야?
+
+Agent
+→ lookup_financial_term(term="PER")
 → 답변
 ```
 
-확장 후에는 다음 역할을 추가한다.
+### 정확한 재무 숫자
 
 ```text
-질문 복잡도 판정
-→ 단순 질문은 기존 경로
-→ 복합 질문은 Agentic 경로
-→ Tool 실행 순서 관리
-→ 반복·timeout·오류 통제
-→ fallback
-→ 출처 검증
-→ 최종 답변
+질문: 삼성전자 2025년 영업이익은 얼마야?
+
+Agent
+→ get_financial_facts(
+     stock_code="005930",
+     account_name="영업이익",
+     business_year=2025,
+     report_period="annual",
+     amount_type="cumulative",
+     fs_div="CFS"
+   )
+→ 답변
 ```
 
-따라서 우리 프로젝트는 LangGraph 없이 오케스트레이션을 직접 구현한다.
+연간·분기·누적·연결·별도 선택은 Tool 내부의 금융 규칙으로 검증한다. Agent가 DB 행을 임의 선택하지 않는다.
 
----
-
-## 8. 실행 추적과 평가
-
-교수님이 지적한 문제를 피하려면, 기술을 사용했다는 말보다 실제 실행을 보여줘야 한다.
-
-Agentic 요청마다 다음 정보를 기록한다.
+### 제외 조건이 있는 뉴스 질문
 
 ```text
-요청 ID
-선택된 모드
-호출한 Tool
-Tool 호출 순서
-Tool별 실행 시간
-반환 결과 개수
-오류와 timeout
-종료 이유
-fallback 여부
-출처 검증 결과
+질문:
+최근 뉴스에서 삼성전자 호재 있어?
+영업이익 같은 실적 관련 내용은 제외해.
+
+Agent
+→ search_news(
+     stock_code="005930",
+     query="최근 호재",
+     sentiment="positive",
+     exclude_topics=["영업이익", "실적"]
+   )
+→ 검색 결과 확인
+→ 제외 조건에 맞지 않는 근거는 답변에서 사용하지 않음
+→ 필요하면 검색어를 바꿔 한 번 추가 검색
+→ 답변
 ```
 
-모델의 내부 추론 전문은 저장하지 않는다.
+`영업이익`이라는 단어가 있다는 이유로 재무 Tool을 호출하지 않는다. 문장 전체 의미와 Tool 인자 설명을 바탕으로 모델이 판단한다.
 
-평가 지표:
-
-- 단순·복합 질문 분기 정확도
-- 필수 Tool 선택률
-- 불필요 Tool 호출률
-- 동일 호출 반복 횟수
-- 복합 질문 완료율
-- 숫자 정확도
-- 출처 정확도
-- fallback 성공률
-- 응답 시간
-- 질문당 비용
-
-Agentic을 추가한 뒤 기존 결정론적 RAG와 같은 질문으로 비교한다.
-
----
-
-## 9. MCP는 선택적으로 추가
-
-MCP는 기존 Tool을 외부 AI 클라이언트가 표준 방식으로 호출하게 하는 연결 계층이다.
+### 복합 질문
 
 ```text
-외부 AI 클라이언트
-→ MCP 서버
-→ 공통 Tool Registry
-→ 기존 서비스
-```
+질문:
+삼성전자 영업이익이 왜 줄었고
+증권사들은 앞으로 어떻게 전망해?
 
-MCP를 추가해도 검색 알고리즘이 좋아지는 것은 아니다.
-
-우리 프로젝트에서 MCP가 의미 있는 경우:
-
-- 교수님이 표준 프로토콜 구현을 요구함
-- 외부 MCP 클라이언트에서 실제 Tool 호출을 시연할 수 있음
-- Agentic과 기존 Tool이 안정화됨
-- 남은 일정이 충분함
-
-MCP를 구현할 경우 최소 범위:
-
-```text
-search_news
-get_financial_facts
-search_research_reports
-```
-
-핵심 Tool 3개만 공개해도 충분하다.
-
-MCP는 Agentic보다 먼저 구현하지 않는다.
-
----
-
-## 10. 최종 구현 순서
-
-```text
-Phase 5
-증권사 리포트 RAG 완성
-
-Phase 6
-주가 조회·수익률 계산 완성
-
-Extension A
-기존 기능을 공통 Tool로 정리
-
-Extension B
-복합 질문용 제한형 Agentic Orchestrator
-
-Extension C
-실행 trace와 Agentic 평가
-
-선택 Extension
-MCP 서버로 핵심 Tool 3개 공개
-```
-
-제외:
-
-```text
-LangChain 재작성
-LangGraph 도입
-A2A
-다중 Agent 분산 구조
-DB 쓰기 Agent
-투자 주문 Agent
+Agent
+→ get_financial_facts
+→ search_news 또는 search_disclosures
+→ search_research_reports
+→ 실제값과 전망값을 분리
+→ 답변
 ```
 
 ---
 
-## 11. 최종 구조
+## 7. 하드코딩 정책
+
+### 금지되는 하드코딩
 
 ```text
-사용자 질문
-   ↓
-질문 복잡도 판정
-   ├─ 단순 질문
-   │    └─ 기존 결정론적 라우터
-   │         └─ 공통 Tool
-   │
-   └─ 복합 질문
-        └─ 제한형 Agentic Orchestrator
-             └─ 공통 Tool
-                  ├─ 재무
-                  ├─ 뉴스
-                  ├─ 공시
-                  ├─ 금융용어
-                  ├─ 리포트
-                  └─ 주가
-   ↓
-숫자·실제값·전망값·출처 검증
-   ↓
-최종 답변
+특정 질문 문장과 완전 일치
+질문 속 특정 단어만으로 Tool 선택
+삼성전자·현대차 등 회사별 예외
+평가 실패 질문을 위한 if 문
+특정 기사·리포트 ID 강제
+미분류 질문의 고정 뉴스 fallback
 ```
 
-선택적 외부 연결:
+### 반드시 코드로 고정해야 하는 금융 규칙
+
+다음은 하드코딩 문제가 아니라 데이터 계약과 도메인 불변식이다.
 
 ```text
-외부 MCP 클라이언트
-→ MCP 서버
-→ 같은 공통 Tool
+DART reprt_code 공식 매핑
+annual / quarter / cumulative / point_in_time 의미
+CFS / OFS 구분
+실제값 / 전망값 구분
+정정공시 최신본 우선
+원 / 억 / 조 단위 변환
+Tool 호출 횟수와 timeout
+읽기 전용 권한
+```
+
+자연어를 특정 경로로 보내는 규칙과, 데이터의 정확성을 지키는 규칙을 구분한다.
+
+### 설정값
+
+다음은 환경변수 또는 설정 파일로 관리한다.
+
+```text
+최대 Tool 호출 수
+최대 모델 호출 수
+검색 후보 수
+최종 문맥 수
+timeout
+RRF 상수
+reranker 활성화 여부
+```
+
+특정 질문을 통과시키기 위해 설정값을 바꾸지 않는다. 개발셋에서 조정하고 홀드아웃으로 확인한다.
+
+---
+
+## 8. 검색 방식
+
+기존 하이브리드 검색을 유지한다.
+
+```text
+semantic retrieval
++
+lexical retrieval
++
+RRF
++
+metadata filter
++
+중복 제거
++
+부모 문맥 확장
+```
+
+이 구조는 뉴스·공시·리포트별 검색 Tool 내부에 그대로 남는다.
+
+### Reranker
+
+Cross-encoder reranker는 표준적인 2단계 검색 기법이지만 무조건 추가하지 않는다.
+
+```text
+현재 HybridRetriever
+vs
+HybridRetriever + bge-reranker-v2-m3
+```
+
+를 홀드아웃에서 비교한 뒤 다음 조건을 모두 만족할 때만 활성화한다.
+
+- Recall@8 또는 MRR이 의미 있게 개선
+- Citation Precision이 악화되지 않음
+- 검색 P95 증가가 허용 범위 이내
+- 배포 메모리와 비용 한도 이내
+
+이 결정 게이트 자체를 최종 설계에 포함한다. 이름을 넣기 위해 무거운 모델을 강제하지 않는다.
+
+---
+
+## 9. 안전장치
+
+LangChain의 prebuilt middleware를 사용한다.
+
+```text
+ModelCallLimitMiddleware
+ToolCallLimitMiddleware
+ToolRetryMiddleware
+ModelRetryMiddleware
+ToolErrorMiddleware
+```
+
+초기 제한:
+
+```text
+모델 호출: 질문당 최대 4회
+Tool 호출: 질문당 최대 5회
+동일 Tool + 동일 인자 반복: 금지
+외부 API Tool 재시도: 최대 1회
+전체 timeout: 8초
+읽기 전용 Tool만 허용
+```
+
+다음은 사용하지 않는다.
+
+```text
+무제한 ReAct loop
+DB 쓰기 Tool
+주문 실행 Tool
+파일 시스템 Tool
+코드 실행 Tool
+웹 검색 Tool
+다중 Agent
 ```
 
 ---
 
-## 12. 발표에서 설명할 문장
+## 10. Phase 5 이후 구현 순서
 
-### Agentic까지 구현한 경우
-
-> LangChain이나 LangGraph에 의존하지 않고 금융 특화 하이브리드 RAG를 직접 구현했습니다. 단순 질문은 기존 결정론적 라우팅으로 처리하고, 여러 데이터가 필요한 복합 질문에는 허용된 읽기 전용 Tool을 선택하고 결과에 따라 다음 호출을 결정하는 제한형 Agentic Orchestration을 적용했습니다.
-
-### MCP까지 구현한 경우
-
-> 내부 RAG와 Agentic에서 사용한 동일 Tool을 MCP 서버로 공개해 외부 AI 클라이언트에서도 표준 방식으로 호출할 수 있게 했습니다.
-
-### A2A를 적용하지 않은 이유
-
-> 현재 서비스는 하나의 백엔드 안에서 공통 Tool을 호출하는 구조가 더 단순하고 안정적이기 때문에, 독립 Agent 간 통신을 위한 A2A는 적용하지 않았습니다.
+```text
+Phase 5 승인·머지
+        ↓
+Phase 5.5 Agentic RAG 전환
+  1. LangChain/Upstage Tool Calling 호환성 검증
+  2. 기존 Service를 typed Tool로 래핑
+  3. create_agent 기반 단일 Agent 구현
+  4. prebuilt middleware 적용
+  5. /qa·/qa/stream을 Agent 경로로 전환
+  6. legacy QueryPlan 라이브 사용 중단
+  7. Tool trace·출처·숫자 validator 연결
+  8. 개발셋·홀드아웃 평가
+        ↓
+Phase 6 주가 Tool 추가
+        ↓
+Phase 7 프런트 연결
+        ↓
+Phase 8 전체 평가·튜닝
+        ↓
+Phase 9 배포
+```
 
 ---
 
-## 13. 한 문장 요약
+## 11. 사용하지 않는 RAG 이름
 
-> 기존 RAG를 LangChain으로 다시 만들거나 A2A 다중 Agent 구조로 복잡하게 바꾸지 않고, 현재 기능을 공통 Tool로 정리한 뒤 복합 질문에만 제한형 Agentic Orchestration을 적용하고, MCP는 일정과 시연 가치가 있을 때만 선택적으로 추가한다.
+### GraphRAG
+
+기업·제품·공급망 관계를 그래프로 탐색하는 기능이 핵심이 아니므로 현재 적용하지 않는다.
+
+### Self-RAG
+
+별도 reflection token 학습을 요구하는 연구 방식이므로 적용하지 않는다.
+
+### CRAG
+
+검색 품질 판정기와 별도 수정 검색 파이프라인을 강제하지 않는다. Agent가 검색 결과를 보고 제한된 범위에서 재검색할 수 있으므로, 초기 구현을 CRAG라고 부르지 않는다.
+
+### Multi-Agent RAG
+
+단일 Agent와 6~8개 Tool로 충분하므로 적용하지 않는다.
+
+---
+
+## 12. 발표용 설명
+
+> 기존에는 질문 안의 키워드를 기준으로 SQL과 검색 경로를 선택했지만, 부정·제외 조건을 잘못 해석할 수 있어 해당 라우터를 제거했습니다. 최종 구조는 LangChain의 표준 `create_agent`와 LangGraph 런타임을 사용한 단일 Tool-Calling Agent입니다. Agent가 질문 전체 의미를 이해해 재무 SQL, 금융용어, 뉴스, 공시, 증권사 리포트 Tool을 선택하고, 결과를 확인한 뒤 필요한 경우에만 추가 Tool을 호출합니다. 기존 하이브리드 검색과 금융 데이터 검증 코드는 읽기 전용 Tool로 재사용하며, 특정 질문이나 기업을 위한 라우팅 하드코딩은 사용하지 않습니다.
+
+---
+
+## 13. 참고 기준
+
+- LangChain Agents: https://docs.langchain.com/oss/python/langchain/agents
+- LangChain Tools: https://docs.langchain.com/oss/python/langchain/tools
+- LangChain prebuilt middleware: https://docs.langchain.com/oss/python/langchain/middleware/built-in
+- LangGraph Agentic RAG: https://docs.langchain.com/oss/python/langgraph/agentic-rag
+- LangGraph workflows and agents: https://docs.langchain.com/oss/python/langgraph/workflows-agents
+- ReAct paper: https://arxiv.org/abs/2210.03629
+- RAG paper: https://arxiv.org/abs/2005.11401
+- RRF paper: https://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf
+- BGE-M3 paper: https://arxiv.org/abs/2402.03216
+- Upstage LangChain integration: https://docs.langchain.com/oss/python/integrations/providers/upstage
+
+---
+
+## 14. 한 문장 요약
+
+> **키워드 QueryPlan을 제거하고, LangChain `create_agent`가 기존 금융 SQL·뉴스·공시·리포트 검색 Tool을 직접 선택하는 단일 Agentic Hybrid RAG로 전환한다.**

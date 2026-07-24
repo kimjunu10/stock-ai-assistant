@@ -1,0 +1,128 @@
+{
+  "_note": "Phase 5.5-F 개발셋. 정답 Tool/인자는 평가용 정답표이며 런타임 코드 하드코딩이 아니다(SPEC §2.2). 종목코드는 평가 데이터이지 코드 분기가 아니다.",
+  "cases": [
+    {
+      "id": "term-1",
+      "type": "금융용어",
+      "question": "PER이 뭐야?",
+      "stock_code": null,
+      "required_tools": ["lookup_financial_term"],
+      "forbidden_tools": ["get_financial_facts", "search_news", "search_research_reports"],
+      "expected_args": {"lookup_financial_term": {"term_contains": "PER"}},
+      "is_answerable": true
+    },
+    {
+      "id": "fin-annual-1",
+      "type": "재무-연간",
+      "question": "삼성전자 2025년 영업이익은 얼마야?",
+      "stock_code": "005930",
+      "required_tools": ["get_financial_facts"],
+      "forbidden_tools": ["search_news", "search_research_reports"],
+      "expected_args": {"get_financial_facts": {"account_name": "영업이익", "report_period": "annual", "business_year": 2025}},
+      "expected_financial": {"stock_code": "005930", "account_name": "영업이익", "business_year": 2025, "report_period": "annual", "amount_type": "cumulative", "value_kind": "actual_value"},
+      "is_answerable": true
+    },
+    {
+      "id": "fin-q3-cum-1",
+      "type": "재무-분기누적",
+      "question": "삼성전자 2025년 3분기 누적 영업이익은 얼마야?",
+      "stock_code": "005930",
+      "required_tools": ["get_financial_facts"],
+      "forbidden_tools": ["search_news", "search_research_reports"],
+      "expected_args": {"get_financial_facts": {"account_name": "영업이익", "report_period": "q3", "amount_type": "cumulative"}},
+      "expected_financial": {"stock_code": "005930", "account_name": "영업이익", "business_year": 2025, "report_period": "q3", "amount_type": "cumulative", "value_kind": "actual_value"},
+      "is_answerable": true
+    },
+    {
+      "id": "news-1",
+      "type": "뉴스",
+      "question": "삼성전자 최근 뉴스 알려줘.",
+      "stock_code": "005930",
+      "required_tools": ["search_news"],
+      "forbidden_tools": ["get_financial_facts", "search_research_reports"],
+      "expected_args": {"search_news": {"stock_code": "005930"}},
+      "is_answerable": true
+    },
+    {
+      "id": "disclosure-1",
+      "type": "공시",
+      "question": "삼성전자가 직접 공시한 최근 내용만 알려줘. 증권사 전망은 빼고.",
+      "stock_code": "005930",
+      "required_tools": ["search_disclosures"],
+      "forbidden_tools": ["search_research_reports"],
+      "expected_args": {"search_disclosures": {"stock_code": "005930"}},
+      "is_answerable": true
+    },
+    {
+      "id": "report-1",
+      "type": "리포트",
+      "question": "삼성전자 목표주가와 증권사 전망 알려줘.",
+      "stock_code": "005930",
+      "required_tools": ["search_research_reports"],
+      "forbidden_tools": [],
+      "expected_args": {"search_research_reports": {"stock_code": "005930"}},
+      "is_answerable": true
+    },
+    {
+      "id": "mixed-1",
+      "type": "복합",
+      "question": "삼성전자 영업이익이 왜 변했고 증권사 전망은 어때?",
+      "stock_code": "005930",
+      "required_tools": ["search_research_reports"],
+      "forbidden_tools": [],
+      "expected_args": {},
+      "is_answerable": true
+    },
+    {
+      "id": "exclude-1",
+      "type": "부정제외",
+      "question": "최근 뉴스에서 삼성전자 호재 있어? 영업이익 같은 실적 관련은 제외해.",
+      "stock_code": "005930",
+      "required_tools": ["search_news"],
+      "forbidden_tools": ["get_financial_facts"],
+      "expected_args": {"search_news": {"stock_code": "005930", "exclude_contains": "실적"}},
+      "is_answerable": true
+    },
+    {
+      "id": "exclude-2",
+      "type": "부정제외",
+      "question": "실적 얘기는 빼고 삼성전자 최근 악재만 알려줘.",
+      "stock_code": "005930",
+      "required_tools": ["search_news"],
+      "forbidden_tools": ["get_financial_facts"],
+      "expected_args": {"search_news": {"stock_code": "005930"}},
+      "is_answerable": true
+    },
+    {
+      "id": "exclude-3",
+      "type": "부정제외",
+      "question": "삼성전자 증권사 전망 말고 회사가 직접 공시한 내용만 알려줘.",
+      "stock_code": "005930",
+      "required_tools": ["search_disclosures"],
+      "forbidden_tools": ["search_research_reports"],
+      "expected_args": {},
+      "is_answerable": true
+    },
+    {
+      "id": "compare-1",
+      "type": "대조",
+      "question": "삼성전자 2025년 3분기 누적 영업이익과 3분기 단독 영업이익을 비교해줘.",
+      "stock_code": "005930",
+      "required_tools": ["get_financial_facts"],
+      "forbidden_tools": ["search_research_reports"],
+      "expected_args": {},
+      "is_answerable": true
+    },
+    {
+      "id": "no-data-1",
+      "type": "답변불가",
+      "question": "삼성전자 2099년 영업이익 확정값을 알려줘.",
+      "stock_code": "005930",
+      "required_tools": [],
+      "forbidden_tools": [],
+      "expected_args": {},
+      "is_answerable": false,
+      "_note": "존재 불가한 미래값. Tool 호출 없이 없음을 밝혀도 정답(재무 Tool 강제 아님)."
+    }
+  ]
+}

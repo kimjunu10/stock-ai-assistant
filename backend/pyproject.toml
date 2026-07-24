@@ -11,6 +11,13 @@ dependencies = [
     "apscheduler>=3.10,<4",
     "beautifulsoup4>=4.12,<5",
     "fastapi>=0.115,<1",
+    # Phase 5.5 Agentic RAG: LangChain v1 create_agent + LangGraph runtime.
+    # Upstage 는 OpenAI 호환 API 이므로 langchain-openai 의 ChatOpenAI(base_url=Upstage)로 쓴다.
+    # langchain-upstage 0.7.7 은 tokenizers<0.21 을 강제해 프로젝트 transformers>=5 와
+    # 해결 불가 충돌이 나므로 사용하지 않는다(5.5-A preflight 문서 참조).
+    "langchain>=1.3.14,<1.4",
+    "langgraph>=1.2.5,<1.3",
+    "langchain-openai>=1.4,<2",
     "numpy>=2,<3",
     "psycopg[binary]>=3.2,<4",
     "pydantic-settings>=2.7,<3",
