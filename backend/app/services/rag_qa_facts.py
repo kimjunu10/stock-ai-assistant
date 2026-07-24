@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 import time
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
@@ -100,14 +101,19 @@ class FactsQaService:
         """
         return self._facts.lookup_term(_term_candidates(question))
 
-    def answer(
+    def _prepare(
         self,
         question: str,
         *,
-        stock_code: str | None = None,
-        context_source_id: str | None = None,
-        current_stock_code: str | None = None,
-    ) -> FactsQaResult:
+        stock_code: str | None,
+        context_source_id: str | None,
+        current_stock_code: str | None,
+    ) -> tuple[list[NumericFact], list, dict | None, dict, float]:
+        """QueryPlan 판정 후 숫자(SQL)·문서(RAG)·용어를 병렬 조회한다.
+
+        answer() 와 stream() 이 공유하는 사전조회 단계(로직 복제 방지).
+        반환: (facts, chunks, term, plan_dict, retrieve_ms).
+        """
         plan = build_query_plan(
             question,
             stock_code=stock_code,
@@ -116,7 +122,6 @@ class FactsQaService:
         )
         eff_stock = plan.stock_code
 
-        # 숫자 조회(SQL) + 문서 검색(RAG) + 용어 조회를 병렬 실행
         t0 = time.perf_counter()
         with ThreadPoolExecutor(max_workers=3) as ex:
             fut_facts = (
@@ -142,14 +147,18 @@ class FactsQaService:
             term = fut_term.result() if fut_term else None
         retrieve_ms = (time.perf_counter() - t0) * 1000
 
-        sources = build_sources(chunks)
-        user_prompt = build_user_prompt(question, chunks, facts=facts, term=term)
+        plan_dict = {
+            "stock_code": plan.stock_code,
+            "need_financials": plan.need_financials,
+            "need_documents": plan.need_documents,
+            "need_terms": plan.need_terms,
+            "need_correction": plan.need_correction,
+        }
+        return facts, chunks, term, plan_dict, retrieve_ms
 
-        t1 = time.perf_counter()
-        answer = self._generator.generate(SYSTEM_PROMPT, user_prompt)
-        gen_ms = (time.perf_counter() - t1) * 1000
-
-        numeric_sources = [
+    @staticmethod
+    def _numeric_sources(facts: list[NumericFact]) -> list[dict]:
+        return [
             {
                 "label": f.label,
                 "value": f.value,
@@ -163,18 +172,62 @@ class FactsQaService:
             for f in facts
         ]
 
+    def answer(
+        self,
+        question: str,
+        *,
+        stock_code: str | None = None,
+        context_source_id: str | None = None,
+        current_stock_code: str | None = None,
+    ) -> FactsQaResult:
+        facts, chunks, term, plan_dict, retrieve_ms = self._prepare(
+            question,
+            stock_code=stock_code,
+            context_source_id=context_source_id,
+            current_stock_code=current_stock_code,
+        )
+
+        sources = build_sources(chunks)
+        user_prompt = build_user_prompt(question, chunks, facts=facts, term=term)
+
+        t1 = time.perf_counter()
+        answer = self._generator.generate(SYSTEM_PROMPT, user_prompt)
+        gen_ms = (time.perf_counter() - t1) * 1000
+
         return FactsQaResult(
             answer=answer,
             sources=sources,
-            numeric_sources=numeric_sources,
+            numeric_sources=self._numeric_sources(facts),
             term=term,
             invalid_citations=validate_citations(answer, len(sources)),
-            plan={
-                "stock_code": plan.stock_code,
-                "need_financials": plan.need_financials,
-                "need_documents": plan.need_documents,
-                "need_terms": plan.need_terms,
-                "need_correction": plan.need_correction,
-            },
+            plan=plan_dict,
             latency_ms={"retrieve_and_fetch": round(retrieve_ms), "generate": round(gen_ms)},
+        )
+
+    def stream(
+        self,
+        question: str,
+        *,
+        stock_code: str | None = None,
+        context_source_id: str | None = None,
+        current_stock_code: str | None = None,
+    ) -> tuple[list[dict], list[dict], dict | None, Iterator[str]]:
+        """(문서 출처, 숫자 출처, 용어, 토큰 이터레이터)를 반환한다.
+
+        answer() 와 동일한 사전조회를 재사용하고, 생성만 토큰 스트리밍한다.
+        라우트가 SSE 로 포장한다.
+        """
+        facts, chunks, term, _plan_dict, _ms = self._prepare(
+            question,
+            stock_code=stock_code,
+            context_source_id=context_source_id,
+            current_stock_code=current_stock_code,
+        )
+        sources = build_sources(chunks)
+        user_prompt = build_user_prompt(question, chunks, facts=facts, term=term)
+        return (
+            sources,
+            self._numeric_sources(facts),
+            term,
+            self._generator.stream(SYSTEM_PROMPT, user_prompt),
         )
