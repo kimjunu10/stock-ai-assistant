@@ -1,13 +1,15 @@
-"""Phase 5.5-A: LangChain create_agent + ChatUpstage Tool Calling preflight.
+"""Phase 5.5-A: LangChain create_agent + Upstage(OpenAI 호환) Tool Calling preflight.
 
-프로젝트 .venv/uv.lock 을 오염시키지 않기 위해 격리 실행한다:
+Upstage 는 OpenAI 호환 API 이므로 langchain-openai 의 ChatOpenAI(base_url=Upstage)로 쓴다.
+langchain-upstage 0.7.7 은 tokenizers<0.21 을 강제해 프로젝트 transformers>=5 와 충돌하므로
+사용하지 않는다(5.5-A 문서 참조). 이 조합은 프로젝트 .venv 에 정식 설치·고정돼 있다.
+
+실행:
     cd backend
-    uv run --with 'langchain==1.3.14' --with 'langgraph>=1.2.5,<1.3.0' \
-        --with 'langchain-upstage==0.7.7' --with 'python-dotenv' \
-        python scripts/agent_preflight.py
+    .venv/bin/python scripts/agent_preflight.py
 
 검증(문서 5.5-A):
-  1) ChatUpstage.bind_tools() 단일 Tool call
+  1) bind_tools() 단일 Tool call
   2) Tool result 후 추가 Tool call
   3) 2개 Tool 연속 호출
   4) Tool call streaming
@@ -15,7 +17,6 @@
   6) create_agent 호환(단일 Agent가 Tool 0..N 선택)
 
 비밀키는 출력하지 않는다. 실제 DB·서비스는 호출하지 않고 더미 Tool 로 모델 능력만 본다.
-결과 요약을 stdout 에 출력한다(문서화는 AGENT_PREFLIGHT.md 에 수기 반영).
 """
 
 from __future__ import annotations
@@ -62,18 +63,17 @@ def main() -> int:
         "langchain": _ver("langchain"),
         "langchain_core": _ver("langchain-core"),
         "langgraph": _ver("langgraph"),
-        "langchain_upstage": _ver("langchain-upstage"),
+        "langchain_openai": _ver("langchain-openai"),
     }
     try:
-        import langchain_upstage  # noqa: F401
+        from langchain_openai import ChatOpenAI
     except Exception as e:  # noqa: BLE001
-        _record("import_langchain_upstage", False, str(e))
+        _record("import_langchain_openai", False, str(e))
         _finish()
         return 1
     print("versions:", json.dumps(results["versions"], ensure_ascii=False))
 
     from langchain_core.tools import tool
-    from langchain_upstage import ChatUpstage
 
     # ── 더미 read-only Tool 2종 (실제 DB 미접근) ──
     calls: list[str] = []
@@ -111,12 +111,13 @@ def main() -> int:
     tools = [get_financial_facts, search_news]
 
     try:
-        llm = ChatUpstage(model=MODEL, api_key=API_KEY, base_url=BASE_URL)
+        # Upstage OpenAI 호환 엔드포인트를 ChatOpenAI 로 사용
+        llm = ChatOpenAI(model=MODEL, api_key=API_KEY, base_url=BASE_URL, temperature=0)
     except Exception as e:  # noqa: BLE001
-        _record("init_chatupstage", False, str(e))
+        _record("init_chat_model", False, str(e))
         _finish()
         return 1
-    _record("init_chatupstage", True, f"model={MODEL}")
+    _record("init_chat_model", True, f"model={MODEL} via langchain-openai(base_url=Upstage)")
 
     # ── 1) bind_tools 단일 Tool call ──
     try:
