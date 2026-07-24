@@ -2,7 +2,9 @@
 
 기존 assign_llm.LLMAssigner 를 건드리지 않고 v2 정책을 별도 구현한다.
 정책(prompt.md v2):
-  - BGE-M3 로 같은 종목·시간창 후보를 찾고, 최종 existing/new 는 Solar 가 판정.
+  - BGE-M3 로 같은 종목·시간창 후보를 찾는다.
+  - dense cosine 유사도가 0.85를 초과하면 가장 유사한 후보에 즉시 병합한다.
+  - 0.85 이하의 애매한 후보만 최종 existing/new 를 Solar 가 판정한다.
   - 같은 회사·산업·키워드만으로 병합하지 않는다. 실제 같은 발표/발생 사건만 병합.
   - 후보에는 최초 기사만이 아니라 다음을 전달한다:
       클러스터 event_signature / 최초 기사 / 대표 기사 / 최근 기사 최대 2개.
@@ -375,6 +377,39 @@ class LLMAssignerV2:
                 0,
                 False,
                 "no candidates",
+                candidates=candidate_debug,
+            )
+
+        # 명확히 가까운 후보는 LLM의 보수적인 new 판정으로 쪼개지지 않도록 즉시
+        # 병합한다. centroid와 prototype 중 더 높은 BGE-M3 cosine을 사용하되,
+        # 여러 후보가 기준을 넘으면 dense cosine이 가장 높은 하나를 선택한다.
+        auto_candidate = max(cands, key=lambda candidate: candidate.dense_similarity)
+        auto_similarity = auto_candidate.dense_similarity
+        if auto_similarity > CFG.LLM_ASSIGN_AUTO_MERGE_MIN_SIM:
+            cid = auto_candidate.cluster.cluster_id
+            self._add_to_cluster(cid, vec, art, t_h)
+            self._seen[aid] = cid
+            logger.info(
+                "NEWS_CLUSTER_DECISION article_id=%s stock_code=%s decision=existing "
+                "matched_cluster_id=%s candidate_count=%d reason=auto_dense_similarity "
+                "dense_similarity=%.4f threshold=%.2f",
+                aid,
+                stock,
+                cid,
+                len(cands),
+                auto_similarity,
+                CFG.LLM_ASSIGN_AUTO_MERGE_MIN_SIM,
+            )
+            return AssignResultV2(
+                aid,
+                cid,
+                "assigned_existing",
+                len(cands),
+                False,
+                (
+                    f"auto dense similarity {auto_similarity:.4f} > "
+                    f"{CFG.LLM_ASSIGN_AUTO_MERGE_MIN_SIM:.2f}"
+                ),
                 candidates=candidate_debug,
             )
 

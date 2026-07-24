@@ -52,6 +52,10 @@ LLM_ASSIGN_MAX_CANDIDATES = 5
 # 후보 검색 시 최소 유사도 하한(이 미만 후보는 애초에 배정 후보에서 제외).
 # threshold(0.74)보다 낮춰 LLM 이 판정할 여지를 넓히되, 완전 무관한 건 거른다.
 LLM_ASSIGN_CANDIDATE_MIN_SIM = 0.55
+# BGE-M3 dense cosine 유사도가 이 값을 초과하면 명확한 동일 사건으로 보고 Solar를
+# 호출하지 않고 가장 유사한 후보에 즉시 병합한다. 이 이하의 애매한 후보만 LLM이
+# existing/new를 최종 판정한다.
+LLM_ASSIGN_AUTO_MERGE_MIN_SIM = 0.85
 LLM_ASSIGN_MODEL = "solar-pro3-260323"
 LLM_ASSIGN_PROMPT_VERSION = "same_event_v1"
 LLM_ASSIGN_MAX_TOKENS = 200
