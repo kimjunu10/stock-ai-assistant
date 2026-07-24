@@ -1,0 +1,35 @@
+{
+  "model": "solar-pro3-260323",
+  "checks": {
+    "init_chatupstage": {
+      "ok": true,
+      "detail": "model=solar-pro3-260323"
+    },
+    "1_single_tool_call": {
+      "ok": true,
+      "detail": "tool_calls=['get_financial_facts']"
+    },
+    "5_korean_exclusion": {
+      "ok": true,
+      "detail": "tool_calls=['search_news']"
+    },
+    "6_create_agent_multitool": {
+      "ok": true,
+      "detail": "tool_msgs=2 calls=['fin:005930:operating_profit:2025', \"news:005930:삼성전자:excl=['주가', '주가 변동', '분석', '시장 동향']\"]"
+    },
+    "2_3_followup_and_sequential": {
+      "ok": true,
+      "detail": "fin=True news=True"
+    },
+    "4_tool_call_streaming": {
+      "ok": true,
+      "detail": "chunks=33 tool_call_chunks_seen=True"
+    }
+  },
+  "versions": {
+    "langchain": "1.3.14",
+    "langchain_core": "1.5.1",
+    "langgraph": "1.2.9",
+    "langchain_upstage": "0.7.7"
+  }
+}
