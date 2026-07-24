@@ -127,7 +127,7 @@ Claude Code는 작업하면서 직접 체크박스를 수정한다.
 | 2 | 뉴스 기반 최소 RAG | [x] | [x] |
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 숫자·용어·혼합 질문 (결정론적 QA 라이브 경로 완료) | [x] | [x] |
-| 5 | 증권사 리포트 | [ ] (1단계 조사 완료) | [ ] |
+| 5 | 증권사 리포트 | [x] 적재 완료(QA 연결 미진행) | [ ] |
 | 6 | 주가 질문 | [ ] | [ ] |
 | 7 | 프런트엔드 연결 | [ ] | [ ] |
 | 8 | 평가·튜닝 | [ ] | [ ] |
@@ -623,17 +623,33 @@ tests/unit/test_query_plan.py, test_facts_format.py
 ## Phase 종료 기록
 
 ```text
-상태:
-완료일:
-시험 PDF 수:
-전체 처리 PDF 수:
-사용한 파서 조합:
-표 추출 성공률:
-목표주가 추출 성공률:
-OCR 대상 수:
-실제 비용:
-전체 예상 비용:
-사람이 확인할 항목:
+상태: 적재 완료(QA 연결·리포트 검색 연결은 미진행 — 지시에 따름)
+완료일: 2026-07-24
+시험 PDF 수: 14(2단계 대표) + 6(파서 회귀)
+전체 처리 PDF 수: 244 (success 243 / partial 1 / failed 0, 오류 0)
+사용한 파서: app/rag/report_parser.py(PyMuPDF 좌표+find_tables, 로컬 파서. OCR 미사용)
+적재 결과: research_reports 244, pages 1877, tables 1937,
+  rag_documents(report) 244, rag_chunks(report) 4351
+표 value_kind(DB): unknown 547 / forecast 254 / mixed 187 / actual 12
+투자의견 추출: 1p 규칙 추출(목표주가 numeric 추출은 후속 검수 대상)
+OCR 대상 수: 0 (partial 1건은 스캔형이나 OCR 미적용, 발표/검색 제외 후보)
+실제 임베딩 비용: ~$0.22 (본문 청크 4351, solar-embedding-2-passage)
+재실행 skip: content_hash 동일 시 재임베딩 0 (3건 재실행 검증)
+사람이 확인할 항목: 목표주가 numeric 파싱, 키움류 표 소수점 토큰(값 손실 0),
+  partial 1건 발표 제외 여부
+```
+
+### 변경 기록 — 파서 규칙 확정 + 적재 (2026-07-24)
+
+```text
+키움 병합셀 재정렬(_resplit_merged)·소수점/콤마 정규화(normalize_cell) 일반 규칙 추가.
+원문 대조는 콤마·공백 무시 비교로 정정. 값 손실 0 확인(재정렬이 값 보존).
+A/E/F 토큰 단위 value_kind 합계 = aef_value_total 일치 확인(정의상 일치).
+표 단위 value_kind 는 DB CHECK(actual/forecast/mixed/unknown)에 맞춰 매핑
+  (열별 estimate/guidance 세부는 metadata·col 분류로 보존, 표 단위는 mixed/forecast 로 집계).
+파서 app/rag/report_parser.py 로 재사용화. 적재 scripts/load_research_reports.py
+  (Storage 업로드 + reports/pages/tables + 본문 임베딩, file_hash 멱등·재시작·재실행 skip).
+QA 연결·Agentic·MCP 미진행(지시).
 ```
 
 ---
