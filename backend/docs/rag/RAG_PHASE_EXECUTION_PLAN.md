@@ -447,16 +447,22 @@ actual/forecast 혼동 0
 > 단, 실제 라이브 전환은 아래 5.5-G 체크리스트(스테이징 flag on·UI smoke·legacy 비교·
 > 운영 flag 전환)를 별도로 밟는다. 현재 `agent_enabled=false` 유지.
 
-- [ ] 승인 기준 통과
-- [ ] `AGENT_ENABLED=true` 스테이징
-- [ ] 실제 UI smoke test
-- [ ] legacy와 결과 비교
-- [ ] 운영 flag 전환
-- [ ] QueryPlan 라이브 호출 제거
-- [ ] QueryPlan deprecated 표시
-- [ ] 문서 갱신
+- [x] 승인 기준 통과 (5.5-F 전 지표)
+- [x] `AGENT_ENABLED=true` 스테이징 (로컬 별도 포트 기동)
+- [~] 실제 UI smoke test — **웹 UI 미연결(Phase 7)** 이라 API SSE 레벨로 대체 smoke.
+      SSE 진행 표시(agent_start→tool_*→sources→delta→done) 정상, 단순 2~4s·복합 5~6s.
+- [x] legacy와 결과 비교 — ⛔ **회귀 발견**(아래)
+- [ ] 운영 flag 전환 — **차단**: 기간 미지정 재무 질문 오답(§smoke §4). 수정·승인 후 진행.
+- [ ] QueryPlan 라이브 호출 제거 (운영 전환 후)
+- [ ] QueryPlan deprecated 표시 (운영 전환 후)
+- [x] 문서 갱신 (`docs/rag/phase_5_5/SMOKE_TEST.md`)
 - [ ] 완료 보고
 - [ ] 다음 Phase 자동 진행 금지
+
+> ⛔ **운영 전환 차단**: smoke test 에서 "2025년 영업이익 얼마?"(기간 미지정) 질문에
+> Agent 가 3회 모두 "확정 데이터 없음" 오답(legacy 는 정답 23.53조). 기간 미지정 재무
+> 질문 처리를 수정하고 재확인한 뒤 사용자 승인을 받아 운영 전환한다. `agent_enabled=false` 유지.
+> 상세: `docs/rag/phase_5_5/SMOKE_TEST.md`.
 
 ---
 
