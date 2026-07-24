@@ -47,8 +47,8 @@ MAX_BODY_CHARS = 2400
 # feature flag. True 면 company 기사를 LLM 판정으로 배정, False 면 기존 거리 단독 배정.
 # 끄면 기존 방식으로 롤백된다(로직 삭제 없음).
 USE_LLM_ASSIGN = False
-# LLM 에 넘길 임베딩 후보 최대 개수(한 번의 요청으로 판정).
-LLM_ASSIGN_MAX_CANDIDATES = 5
+# LLM 에 넘길 후보 최대 개수. BGE-M3 상위 2개와 사건정보 복구 후보 1개를 사용한다.
+LLM_ASSIGN_MAX_CANDIDATES = 3
 # 후보 검색 시 최소 유사도 하한(이 미만 후보는 애초에 배정 후보에서 제외).
 # threshold(0.74)보다 낮춰 LLM 이 판정할 여지를 넓히되, 완전 무관한 건 거른다.
 LLM_ASSIGN_CANDIDATE_MIN_SIM = 0.55

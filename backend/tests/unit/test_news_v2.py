@@ -406,11 +406,15 @@ def test_v2_prompt_treats_same_participants_but_different_event_as_new():
         ],
     )
 
-    assert "핵심 주체·핵심 사건 주제·고유 식별어" in prompt
-    assert "단순히 인물·회사·산업만 같으면 new" in prompt
+    assert "최초·대표 제목을 함께 비교" in prompt
+    assert "같은 주체만 등장하는 별개의 사건이면 new" in prompt
+    assert "모든 후보가 별개의 사건일 때만 new" in prompt
     assert "정부 공식 AI 선언과 해외 순방 일정" not in prompt
     assert "글로벌 AI 협력 논의" not in prompt
-    assert assign_llm_v2.ASSIGN_V2_PROMPT_VERSION == "same_story_title_v6_multiprototype"
+    assert assign_llm_v2.ASSIGN_V2_PROMPT_VERSION == "same_story_title_v7_three_candidates"
+    assert "고유 식별어가 없다는 이유만으로 new로 판정하지 않는다" in (
+        assign_llm_v2.SYSTEM_PROMPT_V3
+    )
 
 
 def test_simplified_signature_recovers_direct_follow_up_story():
@@ -468,7 +472,35 @@ def test_assignment_prompt_never_includes_candidate_descriptions():
     assert "웨이퍼 생산능력 확대" not in prompt
     assert "AI 인프라 투자" not in prompt
     assert "대표 오염 문구" not in prompt
+    assert "최근 제목:" not in prompt
     assert "최근 오염 문구" not in prompt
+
+
+def test_assignment_prompt_limits_candidates_and_titles():
+    candidates = [
+        {
+            "cluster_id": cluster_id,
+            "event_signature": None,
+            "anchor_title": f"최초 제목 {cluster_id}",
+            "rep_title": (
+                f"대표 제목 {cluster_id}" if cluster_id != 1 else f"최초 제목 {cluster_id}"
+            ),
+            "recent": [{"title": f"최근 제목 {cluster_id}", "description": "설명"}],
+        }
+        for cluster_id in range(1, 5)
+    ]
+
+    prompt = assign_llm_v2.build_user_prompt_v2(
+        {"title": "새 기사", "event_signature": None},
+        candidates,
+    )
+
+    assert prompt.count("- cluster_id=") == 3
+    assert "최초 제목 1" in prompt
+    assert "대표 제목 1" not in prompt
+    assert "대표 제목 2" in prompt
+    assert "최근 제목" not in prompt
+    assert "cluster_id=4" not in prompt
 
 
 def test_v2_assigner_recovers_candidate_from_prototype_when_centroid_drifted():
@@ -522,7 +554,7 @@ def test_v2_assigner_reserves_candidate_slots_for_structured_event_identity():
             {"decision": "existing", "matched_cluster_id": 77},
             {"ok": True, "parse_success": True, "usage": {}},
         ),
-        max_candidates=5,
+        max_candidates=3,
     )
     for cluster_id, dense_score in enumerate((0.84, 0.81, 0.78, 0.75, 0.72), 1):
         assigner.clusters[cluster_id] = assign_llm_v2.ClusterV2(
@@ -574,8 +606,8 @@ def test_v2_assigner_reserves_candidate_slots_for_structured_event_identity():
 
     assert result.status == "assigned_existing"
     assert result.cluster_id == 77
-    assert len(result.candidates) <= 5
-    assert 77 in {candidate["cluster_id"] for candidate in result.candidates}
+    assert len(result.candidates) == 3
+    assert {candidate["cluster_id"] for candidate in result.candidates} == {1, 2, 77}
 
 
 def test_v2_assigner_existing_merge():

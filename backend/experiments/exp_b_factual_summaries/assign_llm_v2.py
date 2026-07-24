@@ -7,8 +7,8 @@
   - 0.85 이하의 애매한 후보만 최종 existing/new 를 Solar 가 판정한다.
   - 같은 회사·산업·키워드만으로 병합하지 않는다. 제목상 같은 이슈 흐름과 직접
     후속 보도만 병합한다.
-  - 후보에는 최초 기사만이 아니라 다음을 전달한다:
-      단순 event_signature / 최초 제목 / 대표 제목 / 최근 제목 최대 2개.
+  - Solar에는 BGE-M3 상위 2개와 사건정보 복구 후보 1개, 최대 3개만 전달한다.
+  - 후보별 입력은 단순 event_signature / 최초 제목 / 대표 제목으로 제한한다.
   - 실패·환각·후보밖 id → pending_retry (임의 배정·신규 생성 금지).
 
 BGE-M3 후보검색·centroid 갱신은 검증된 assign_llm 과 동일하게 유지한다.
@@ -30,30 +30,51 @@ from .classify_role import normalize_event_signature
 
 logger = logging.getLogger(__name__)
 
-ASSIGN_V2_PROMPT_VERSION = "same_story_title_v6_multiprototype"
+ASSIGN_V2_PROMPT_VERSION = "same_story_title_v7_three_candidates"
 
-SYSTEM_PROMPT_V2 = (
-    "너는 한국어 금융 뉴스의 '같은 이슈 흐름' 판정기다. 새 기사 제목이 후보 "
-    "클러스터의 제목들과 같은 핵심 사건 또는 그 사건의 직접 후속 보도인지 판단한다. "
-    "검색 결과 요약과 본문은 신뢰하지 않고 제목과 단순 사건 정보만 사용한다.\n"
-    "핵심 판단 기준:\n"
-    "  · 핵심 주체: 사건의 중심 인물·기관·회사\n"
-    "  · 핵심 사건 주제: 무엇에 관한 이슈인지\n"
-    "  · 고유 식별어: 금액·계약명·제품명·행사명 등\n"
-    "  · 이슈 관계: 최초 사건, 그 사건의 후속 조치, 반응·영향 보도\n"
-    "규칙:\n"
-    "1. 핵심 주제와 고유 식별어가 같으면 기사별 표현과 강조점이 달라도 existing 이다.\n"
-    "2. 최초 사건에서 직접 이어진 후속 조치·자금 마련·공식 반응·시장 영향은 같은 "
-    "이슈의 연속 보도이므로 existing 이다. 예: '9440억원 재산분할 판결'과 "
-    "'9440억원 마련을 위한 지분 활용 검토'.\n"
-    "3. 같은 회사·인물·산업·날짜만 겹치고 핵심 주제나 고유 식별어가 다르면 new 다.\n"
-    "4. 같은 순방이나 행사 일정이어도 별개의 회동·발표라면 new 다. 반대로 같은 출발·"
-    "회동·발표를 참석자나 의제만 달리 강조한 제목은 existing 이다.\n"
-    "5. 제목만으로 직접 연결을 확인할 수 없으면 억지로 합치지 말고 new 로 판정한다. "
-    "후보 중 같은 사건이 하나도 없을 때만 new 로 판정한다.\n"
-    '출력은 반드시 {"decision":"existing"|"new","matched_cluster_id":<cluster_id 또는 null>} '
-    "형태의 JSON 하나만. 설명을 덧붙이지 않는다."
-)
+SYSTEM_PROMPT_V3 = """
+너는 한국어 금융 뉴스의 동일 이슈 흐름 판정기다.
+
+새 기사가 후보 클러스터의 원 사건과 동일한 사건이거나,
+그 사건에서 직접 파생된 후속·확정·반응·영향 보도인지 판단한다.
+
+판단 자료:
+- 새 기사 제목과 사건 정보
+- 후보 클러스터의 최초·대표 제목과 사건 정보
+
+판정 규칙:
+1. 같은 핵심 사건을 서로 다르게 표현한 기사는 existing이다.
+
+2. 다음은 원 사건과 직접 연결되면 existing이다.
+- 후속 조치
+- 판결·계약·결정의 확정
+- 공식 입장이나 외신 반응
+- 자금 마련이나 이행 과정
+- 해당 사건이 기업이나 시장에 미친 영향
+
+3. 반응·후속 기사 제목에는 원 사건의 금액·계약명·제품명 등이 생략될 수 있다.
+고유 식별어가 없다는 이유만으로 new로 판정하지 않는다.
+후보 제목 전체를 보고 어떤 원 사건에 대한 보도인지 판단한다.
+
+4. 사건 정보는 참고자료다.
+추출된 핵심 주제나 고유 식별어가 제목과 충돌하면 제목들을 우선한다.
+
+5. 같은 인물·회사·산업·날짜만 같고 실제 행동·결정·계약·소송·발표가 다르면 new다.
+
+6. 서로 다른 계약명·제품명·소송·상대방·행사·발표이거나,
+양립할 수 없는 핵심 사실이 있으면 new다.
+
+7. 후보를 각각 비교하여 직접 연결되는 후보가 하나라도 있으면 existing을 선택한다.
+모든 후보가 별개의 사건일 때만 new를 선택한다.
+
+출력은 반드시 다음 JSON 하나만 반환한다.
+{"decision":"existing"|"new","matched_cluster_id":<cluster_id 또는 null>}
+
+설명이나 추가 문장은 출력하지 않는다.
+""".strip()
+
+# 기존 import 사용처와의 호환성을 유지하되 실제 호출은 V3를 명시적으로 사용한다.
+SYSTEM_PROMPT_V2 = SYSTEM_PROMPT_V3
 
 
 def _sig_line(sig: dict | None) -> str:
@@ -83,18 +104,21 @@ def build_user_prompt_v2(article: dict, candidates: list[dict]) -> str:
         "",
         "[후보 클러스터]",
     ]
-    for c in candidates:
+    for c in candidates[:3]:
         lines.append(f"- cluster_id={c['cluster_id']}")
         lines.append(_sig_line(c.get("event_signature")))
-        lines.append(f"  최초 제목: {c.get('anchor_title', '')}")
-        if c.get("rep_title"):
-            lines.append(f"  대표 제목: {c.get('rep_title', '')}")
-        for i, recent in enumerate(c.get("recent", [])[:2], 1):
-            lines.append(f"  최근 제목{i}: {recent.get('title', '')}")
+        anchor_title = c.get("anchor_title", "")
+        rep_title = c.get("rep_title", "")
+        lines.append(f"  최초 제목: {anchor_title}")
+        if rep_title and rep_title != anchor_title:
+            lines.append(f"  대표 제목: {rep_title}")
     lines.append("")
     lines.append(
-        "제목의 핵심 주체·핵심 사건 주제·고유 식별어를 후보 제목들과 비교하라. 같은 "
-        "사건의 후속 조치나 반응이면 existing, 단순히 인물·회사·산업만 같으면 new 다."
+        "각 후보의 최초·대표 제목을 함께 비교하라. "
+        "새 제목에 금액이나 사건명이 생략되어도 원 사건에 대한 직접적인 "
+        "후속·확정·반응·영향 보도라면 existing이다. "
+        "같은 주체만 등장하는 별개의 사건이면 new다. "
+        "모든 후보가 별개의 사건일 때만 new를 선택하라."
     )
     return "\n".join(lines)
 
@@ -226,7 +250,7 @@ class LLMAssignerV2:
         candidate_min_sim: float | None = None,
     ) -> None:
         self.api_key = api_key
-        self._call = call_fn or (lambda p: call_solar_assign(api_key, p, system=SYSTEM_PROMPT_V2))
+        self._call = call_fn or (lambda p: call_solar_assign(api_key, p, system=SYSTEM_PROMPT_V3))
         self.window_h = CFG.ACTIVE_WINDOW_HOURS if window_hours is None else window_hours
         self.max_cand = CFG.LLM_ASSIGN_MAX_CANDIDATES if max_candidates is None else max_candidates
         self.min_sim = (
@@ -275,13 +299,14 @@ class LLMAssignerV2:
         dense_candidates.sort(key=lambda item: -item.dense_similarity)
         signature_candidates.sort(key=lambda item: -item.signature_similarity)
 
-        # Preserve three semantic-retrieval slots and reserve up to two slots for
-        # structured event identity. This avoids one signal crowding out the other.
+        # Solar에는 의미 유사도 상위 2개와 사건정보 복구 후보 1개를 우선 전달한다.
+        # 사건정보는 흔들릴 수 있으므로 dense 후보보다 많은 자리를 차지하지 않는다.
         selected: dict[int, CandidateV2] = {}
-        dense_slots = max(1, self.max_cand - min(2, self.max_cand))
+        signature_slots = min(1, self.max_cand)
+        dense_slots = max(1, self.max_cand - signature_slots)
         for candidate in dense_candidates[:dense_slots]:
             selected[candidate.cluster.cluster_id] = candidate
-        for candidate in signature_candidates[: min(2, self.max_cand)]:
+        for candidate in signature_candidates[:signature_slots]:
             if len(selected) >= self.max_cand:
                 break
             selected[candidate.cluster.cluster_id] = candidate
@@ -406,10 +431,7 @@ class LLMAssignerV2:
                 "cluster_id": cl.cluster_id,
                 "event_signature": cl.event_signature,
                 "anchor_title": cl.anchor_title,
-                "anchor_description": cl.anchor_description,
                 "rep_title": cl.rep_title,
-                "rep_description": cl.rep_description,
-                "recent": cl.recent,
             }
             for candidate in cands
             for cl in [candidate.cluster]
@@ -508,6 +530,7 @@ __all__ = [
     "ClusterV2",
     "AssignResultV2",
     "build_user_prompt_v2",
+    "SYSTEM_PROMPT_V3",
     "SYSTEM_PROMPT_V2",
     "ASSIGN_V2_PROMPT_VERSION",
     "signature_similarity",
