@@ -171,9 +171,7 @@ class NewsV2Repository:
             offset += page
         return out
 
-    def get_unassigned_recent_v2_event_pairs(
-        self, *, published_since: str
-    ) -> list[dict[str, Any]]:
+    def get_unassigned_recent_v2_event_pairs(self, *, published_since: str) -> list[dict[str, Any]]:
         """최근 역할분류 완료 건 중 v2 성공 배정이 없는 pair를 복구한다.
 
         역할 저장 직후 프로세스가 재배포되면 스케줄러가 그 pair를 신규 후보로 다시
@@ -192,10 +190,7 @@ class NewsV2Repository:
             id_batch = article_ids[start : start + 200]
             resp = (
                 self.client.table("news_cluster_assignments")
-                .select(
-                    "article_id,stock_code,status,"
-                    "news_clusters!inner(clustering_version)"
-                )
+                .select("article_id,stock_code,status,news_clusters!inner(clustering_version)")
                 .in_("article_id", id_batch)
                 .in_("status", ["assigned_new", "assigned_existing"])
                 .eq("news_clusters.clustering_version", self.version)
@@ -207,9 +202,7 @@ class NewsV2Repository:
                     assigned.add(key)
 
         return [
-            pair
-            for pair in pairs
-            if (int(pair["article_id"]), pair["stock_code"]) not in assigned
+            pair for pair in pairs if (int(pair["article_id"]), pair["stock_code"]) not in assigned
         ]
 
     def get_assigned_v2_pairs(self) -> set[tuple[int, str]]:

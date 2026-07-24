@@ -129,13 +129,10 @@ def run_news_collection_cycle(cfg: Settings = settings) -> dict[str, Any]:
         ).isoformat()
         recovery_pairs = _run_news_stage(
             "cluster_recovery",
-            lambda: v2_repo.get_unassigned_recent_v2_event_pairs(
-                published_since=recovery_since
-            ),
+            lambda: v2_repo.get_unassigned_recent_v2_event_pairs(published_since=recovery_since),
         )
         candidates = {
-            (int(pair["article_id"]), pair["stock_code"]): pair
-            for pair in new_event_pairs
+            (int(pair["article_id"]), pair["stock_code"]): pair for pair in new_event_pairs
         }
         recovered_unassigned = 0
         for pair in recovery_pairs:
