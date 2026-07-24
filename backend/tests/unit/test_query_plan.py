@@ -20,11 +20,20 @@ def test_pure_number_question_skips_documents():
 
 
 def test_pure_number_question_batch_no_documents():
-    """설명 신호 없는 다양한 숫자 질문 전부 문서 검색을 끈다(문장 하드코딩 아님)."""
-    for q in ("배당 얼마야?", "매출 몇이야?", "자산총계 얼마?", "목표주가 얼마?"):
+    """설명 신호 없는 재무 수치 질문은 SQL 만(문서 검색 끔). 문장 하드코딩 아님."""
+    for q in ("배당 얼마야?", "매출 몇이야?", "자산총계 얼마?", "순이익 규모"):
         p = build_query_plan(q, stock_code="005930")
         assert p.need_financials is True, q
         assert p.need_documents is False, q
+        assert p.need_reports is False, q
+
+
+def test_target_price_is_report_intent_not_financial():
+    """'목표주가'는 증권사 예측치 → report intent. financial(SQL)·뉴스를 켜지 않는다."""
+    p = build_query_plan("목표주가 얼마?", stock_code="005930")
+    assert p.need_reports is True
+    assert p.need_financials is False
+    assert p.need_documents is False
 
 
 def test_pure_term_question_skips_documents():
@@ -56,21 +65,44 @@ def test_pure_news_question_sets_documents():
     assert p.need_documents is True
 
 
-def test_report_signals_set_reports():
-    """전망·목표주가·투자의견·증권사·리포트 신호는 리포트 검색을 켠다."""
+def _route(q, sc="005930"):
+    p = build_query_plan(q, stock_code=sc)
+    return (p.need_financials, p.need_documents, p.need_reports)
+
+
+def test_report_intent_synonyms_and_wording():
+    """report intent: 동의어·어순·복합 표현 모두 리포트만 켠다(SQL·뉴스 미호출)."""
     for q in (
-        "삼성전자 목표주가 전망",
-        "투자의견 알려줘",
-        "증권사 리포트 정리",
+        "삼성전자 목표주가",
+        "목표가는?",
+        "증권사 목표가는 얼마",
+        "투자의견 어때",
+        "증권사 분석 정리해줘",
         "애널리스트 컨센서스",
+        "리포트 전망 어떻게 봐",
+        "목표주가 상향됐어?",
     ):
-        assert build_query_plan(q, stock_code="005930").need_reports is True, q
+        fin, news, rep = _route(q)
+        assert rep is True, q
+        assert fin is False and news is False, q  # 과호출 없음
+
+
+def test_intents_are_independent_combinations():
+    """여러 의도가 있으면 해당 신호만 조합된다."""
+    # financial + report
+    assert _route("영업이익이랑 목표주가 둘 다") == (True, False, True)
+    assert _route("매출이랑 증권사 전망") == (True, False, True)
+    # news + report
+    assert _route("실적 악화 원인이랑 향후 전망") == (False, True, True)
+    assert _route("최근 이슈랑 목표주가") == (False, True, True)
+    # financial + news + report
+    assert _route("영업이익 얼마고 왜 줄었고 증권사 전망은?") == (True, True, True)
 
 
 def test_non_report_questions_skip_reports():
-    """순수 숫자·뉴스·용어 질문은 리포트 검색을 켜지 않는다."""
-    assert build_query_plan("영업이익 얼마?", stock_code="005930").need_reports is False
-    assert build_query_plan("삼성전자 최근 뉴스", stock_code="005930").need_reports is False
+    """부정 사례: 순수 숫자·뉴스·용어 질문은 리포트 검색을 켜지 않는다."""
+    assert _route("2025년 영업이익 얼마?") == (True, False, False)
+    assert _route("삼성전자 최근 뉴스") == (False, True, False)
     assert build_query_plan("PER이 뭐야?").need_reports is False
 
 
