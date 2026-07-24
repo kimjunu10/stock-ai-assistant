@@ -54,14 +54,14 @@ def _hours(value: str) -> float:
 def classify_and_save_cluster_sentiment(
     repo: NewsV2Repository,
     cluster_id: int,
-    representative_title: str | None,
+    summary_title: str | None,
     service: NewsSentimentService,
     *,
     force: bool = False,
 ) -> str:
-    """Classify one representative title without allowing failures to escape."""
+    """Classify one finalized cluster summary title without escaping failures."""
 
-    normalized = normalize_sentiment_title(representative_title)
+    normalized = normalize_sentiment_title(summary_title)
     input_hash = sentiment_input_hash(normalized)
     try:
         state = repo.get_cluster_sentiment_state(cluster_id) or {}
@@ -218,8 +218,6 @@ def phase_cluster(
     arts = list(uniq.values())
     vecs = embedder.encode_many(arts) if arts else np.empty((0,))
     vec_cache = {a["article_id"]: v for a, v in zip(arts, vecs, strict=True)}
-    sentiment_service = get_news_sentiment_service(settings)
-
     for stock_code, items in by_stock.items():
         # 한 종목의 오류가 전체 클러스터링을 죽이지 않도록 종목 단위로 격리한다.
         # 실패 종목은 배정이 남으므로 재실행 시 이어서 처리된다.
@@ -231,7 +229,6 @@ def phase_cluster(
                 vec_cache,
                 assigned,
                 totals,
-                sentiment_service=sentiment_service,
             )
         except Exception as exc:  # noqa: BLE001 - 종목 단위 격리, 재실행이 재시도
             logger.warning("CLUSTER_STOCK_FAILED %s: %s", stock_code, exc)
@@ -246,8 +243,6 @@ def _cluster_one_stock(
     vec_cache,
     assigned,
     totals,
-    *,
-    sentiment_service: NewsSentimentService | None = None,
 ) -> None:
     """한 종목의 company_event pair 를 시간순으로 v2 클러스터링(대표기사 갱신 포함).
 
@@ -328,15 +323,6 @@ def _cluster_one_stock(
             reason=res.reason,
             error_code=None,
         )
-        if sentiment_service is not None:
-            sentiment_outcome = classify_and_save_cluster_sentiment(
-                repo,
-                db_cid,
-                p.get("title"),
-                sentiment_service,
-            )
-            metric = f"sentiment_{sentiment_outcome}"
-            totals[metric] = totals.get(metric, 0) + 1
         totals[res.status] += 1
     totals["assign_llm_calls"] += assigner.calls
 
@@ -378,11 +364,12 @@ def _hydrate_v2_assigner(rows: list[dict]) -> assign_llm_v2.LLMAssignerV2:
 
 
 def phase_summary(repo: NewsV2Repository, totals: dict) -> None:
-    """5) v2 사건 클러스터 통합 요약 생성(미완료만)."""
+    """5) v2 사건 요약을 확정한 뒤 그 summary_title로 감성을 분류한다."""
     stock_names = repo.get_stock_names()
     clusters = repo.get_v2_clusters(only_unsummarized=True)
     logger.info("SUMMARY_PHASE start: %d clusters to summarize", len(clusters))
     calls = 0
+    sentiment_service: NewsSentimentService | None = None
     for i, c in enumerate(clusters, 1):
         cid = int(c["id"])
         articles = repo.get_v2_cluster_articles(cid)[: CFG.MAX_ARTICLES_PER_SUMMARY]
@@ -398,6 +385,17 @@ def phase_summary(repo: NewsV2Repository, totals: dict) -> None:
         repo.save_v2_summary(cid, parsed, meta, 1)
         if meta.get("ok") and meta.get("parse_success"):
             totals["summaries"] += 1
+            if settings.sentiment_enabled:
+                if sentiment_service is None:
+                    sentiment_service = get_news_sentiment_service(settings)
+                sentiment_outcome = classify_and_save_cluster_sentiment(
+                    repo,
+                    cid,
+                    parsed.get("title"),
+                    sentiment_service,
+                )
+                metric = f"sentiment_{sentiment_outcome}"
+                totals[metric] = totals.get(metric, 0) + 1
         else:
             totals["summary_failed"] += 1
         if i % 50 == 0:

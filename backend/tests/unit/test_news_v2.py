@@ -379,11 +379,10 @@ def test_incremental_cluster_phase_can_merge_into_persisted_cluster(monkeypatch)
     assert repo.saved[0]["status"] == "assigned_existing"
 
 
-def test_new_cluster_persists_sentiment_from_representative_title():
+def test_new_cluster_does_not_classify_sentiment_before_summary_exists():
     class Repo:
         def __init__(self):
             self.assignments = []
-            self.sentiments = []
 
         def get_v2_assignment_clusters(self, _stock_code, *, active_since=None):
             return []
@@ -394,13 +393,53 @@ def test_new_cluster_persists_sentiment_from_representative_title():
         def save_v2_assignment(self, **values):
             self.assignments.append(values)
 
+    repo = Repo()
+    item = {
+        "article_id": 100,
+        "stock_code": "005380",
+        "title": "현대차, 신규 공장 투자 발표",
+        "description": "투자 계획",
+        "published_at": "2026-07-22T07:00:00+00:00",
+        "event_signature": {"subject": "현대차", "action": "투자"},
+    }
+    totals = {"cluster_pending": 0, "assigned_new": 0, "assign_llm_calls": 0}
+
+    _cluster_one_stock(
+        repo,
+        [item],
+        {100: np.array([1.0, 0.0], dtype=np.float32)},
+        set(),
+        totals,
+    )
+
+    assert repo.assignments[0]["cluster_id"] == 77
+    assert "sentiment_analyzed" not in totals
+
+
+def test_summary_title_is_saved_before_sentiment_classification(monkeypatch):
+    events = []
+
+    class Repo:
+        def get_stock_names(self):
+            return {"005930": "삼성전자"}
+
+        def get_v2_clusters(self, *, only_unsummarized):
+            assert only_unsummarized is True
+            return [{"id": 77, "stock_code": "005930"}]
+
+        def get_v2_cluster_articles(self, _cluster_id):
+            return [{"title": "대표 기사에는 단종 표현", "body": "본문"}]
+
+        def save_v2_summary(self, cluster_id, parsed, _meta, _retry_count):
+            events.append(("summary", cluster_id, parsed["title"]))
+
         def get_cluster_sentiment_state(self, _cluster_id):
             return {}
 
         def save_cluster_sentiment(self, cluster_id, value, *, input_hash):
-            self.sentiments.append((cluster_id, value, input_hash))
+            events.append(("sentiment", cluster_id, value.label, input_hash))
 
-    class SentimentService:
+    class Service:
         model_id = "test-model"
         model_revision = "test-revision"
 
@@ -419,31 +458,33 @@ def test_new_cluster_persists_sentiment_from_representative_title():
                 model_revision=self.model_revision,
             )
 
-    repo = Repo()
-    service = SentimentService()
-    item = {
-        "article_id": 100,
-        "stock_code": "005380",
-        "title": "현대차, 신규 공장 투자 발표",
-        "description": "투자 계획",
-        "published_at": "2026-07-22T07:00:00+00:00",
-        "event_signature": {"subject": "현대차", "action": "투자"},
-    }
-    totals = {"cluster_pending": 0, "assigned_new": 0, "assign_llm_calls": 0}
-
-    _cluster_one_stock(
-        repo,
-        [item],
-        {100: np.array([1.0, 0.0], dtype=np.float32)},
-        set(),
-        totals,
-        sentiment_service=service,
+    service = Service()
+    summary_title = "삼성전자, 폴드8·플립8과 첫 스마트글래스 공개"
+    monkeypatch.setattr(
+        run_full_news_v2.summarize,
+        "call_solar",
+        lambda _key, _prompt: (
+            {
+                "title": summary_title,
+                "easy_explanation": "신제품 공개",
+                "factual_body": "사실 본문",
+            },
+            {"ok": True, "parse_success": True},
+        ),
     )
+    monkeypatch.setattr(
+        run_full_news_v2,
+        "get_news_sentiment_service",
+        lambda _settings: service,
+    )
+    totals = {"summaries": 0, "summary_failed": 0}
 
-    assert service.titles == ["현대차, 신규 공장 투자 발표"]
-    assert repo.assignments[0]["cluster_id"] == 77
-    assert repo.sentiments[0][0] == 77
-    assert repo.sentiments[0][1].label == "positive"
+    run_full_news_v2.phase_summary(Repo(), totals)
+
+    assert service.titles == [summary_title]
+    assert events[0] == ("summary", 77, summary_title)
+    assert events[1][0:3] == ("sentiment", 77, "positive")
+    assert totals["summaries"] == 1
     assert totals["sentiment_analyzed"] == 1
 
 
