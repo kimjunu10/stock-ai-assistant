@@ -1,9 +1,10 @@
-"""FISA sentiment classification for finalized news-cluster summary titles."""
+"""FISA sentiment classification for finalized news-cluster summaries."""
 
 from __future__ import annotations
 
 import hashlib
 import logging
+import re
 import threading
 from dataclasses import dataclass
 from typing import Any
@@ -14,10 +15,15 @@ from app.core.config import Settings, settings
 
 logger = logging.getLogger(__name__)
 
-SENTIMENT_INPUT_VERSION = "cluster_summary_title_v2"
+SENTIMENT_INPUT_VERSION = "cluster_summary_title_easy_v3"
 SENTIMENT_MAX_LENGTH = 128
 LABEL_BY_INDEX = {0: "negative", 1: "neutral", 2: "positive"}
 VALID_LABELS = frozenset((*LABEL_BY_INDEX.values(), "unknown"))
+_MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\([^)]+\)")
+_MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]+\)")
+_MARKDOWN_LINE_PREFIX_RE = re.compile(r"(?m)^\s{0,3}(?:#{1,6}|>|[-+*]|\d+[.)])\s+")
+_MARKDOWN_DECORATION_RE = re.compile(r"[*_~`]+")
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 
 @dataclass(frozen=True)
@@ -33,20 +39,52 @@ class SentimentResult:
     error: str | None = None
 
 
+def normalize_sentiment_text(value: str | None) -> str:
+    """Remove presentation markup and normalize whitespace for model input."""
+
+    text = value or ""
+    text = _MARKDOWN_IMAGE_RE.sub(r"\1", text)
+    text = _MARKDOWN_LINK_RE.sub(r"\1", text)
+    text = _MARKDOWN_LINE_PREFIX_RE.sub("", text)
+    text = _MARKDOWN_DECORATION_RE.sub("", text)
+    text = _HTML_TAG_RE.sub(" ", text)
+    return " ".join(text.split())
+
+
 def normalize_sentiment_title(title: str | None) -> str:
-    """Normalize the finalized cluster summary title without changing its meaning."""
+    """Backward-compatible alias for callers that normalize a single title."""
 
-    return " ".join((title or "").split())
+    return normalize_sentiment_text(title)
 
 
-def sentiment_input_hash(title: str | None) -> str:
-    normalized = normalize_sentiment_title(title)
-    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+def build_sentiment_input(
+    summary_title: str | None,
+    easy_explanation: str | None = None,
+) -> str:
+    """Combine the cluster title and easy explanation without another LLM call."""
+
+    return " ".join(
+        part
+        for part in (
+            normalize_sentiment_text(summary_title),
+            normalize_sentiment_text(easy_explanation),
+        )
+        if part
+    )
+
+
+def sentiment_input_hash(
+    summary_title: str | None,
+    easy_explanation: str | None = None,
+) -> str:
+    model_input = build_sentiment_input(summary_title, easy_explanation)
+    return hashlib.sha256(model_input.encode("utf-8")).hexdigest()
 
 
 def sentiment_state_is_current(
     state: dict[str, Any],
-    title: str | None,
+    summary_title: str | None,
+    easy_explanation: str | None,
     service: NewsSentimentService,
 ) -> bool:
     return (
@@ -54,7 +92,8 @@ def sentiment_state_is_current(
         and state.get("sentiment_model") == service.model_id
         and state.get("sentiment_model_revision") == service.model_revision
         and state.get("sentiment_input_version") == SENTIMENT_INPUT_VERSION
-        and state.get("sentiment_input_hash") == sentiment_input_hash(title)
+        and state.get("sentiment_input_hash")
+        == sentiment_input_hash(summary_title, easy_explanation)
     )
 
 
@@ -161,13 +200,13 @@ class NewsSentimentService:
                 f"Unexpected FISA id2label mapping: expected={LABEL_BY_INDEX}, actual={actual}"
             )
 
-    def analyze(self, title: str) -> SentimentResult:
-        return self.analyze_batch([title])[0]
+    def analyze(self, text: str) -> SentimentResult:
+        return self.analyze_batch([text])[0]
 
-    def analyze_batch(self, titles: list[str]) -> list[SentimentResult]:
-        if not titles:
+    def analyze_batch(self, texts: list[str]) -> list[SentimentResult]:
+        if not texts:
             return []
-        normalized = [normalize_sentiment_title(title) for title in titles]
+        normalized = [normalize_sentiment_text(text) for text in texts]
         results: list[SentimentResult | None] = [None] * len(normalized)
         valid_positions = [index for index, title in enumerate(normalized) if title]
         for index, title in enumerate(normalized):

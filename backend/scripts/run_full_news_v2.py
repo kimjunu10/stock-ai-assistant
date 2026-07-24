@@ -33,8 +33,8 @@ from app.repositories.news_v2 import V2_VERSION, NewsV2Repository
 from app.services.news_clustering import BgeM3Embedder
 from app.services.news_sentiment import (
     NewsSentimentService,
+    build_sentiment_input,
     get_news_sentiment_service,
-    normalize_sentiment_title,
     sentiment_input_hash,
     sentiment_state_is_current,
 )
@@ -55,21 +55,27 @@ def classify_and_save_cluster_sentiment(
     repo: NewsV2Repository,
     cluster_id: int,
     summary_title: str | None,
+    easy_explanation: str | None,
     service: NewsSentimentService,
     *,
     force: bool = False,
 ) -> str:
-    """Classify one finalized cluster summary title without escaping failures."""
+    """Classify one finalized cluster summary without escaping failures."""
 
-    normalized = normalize_sentiment_title(summary_title)
-    input_hash = sentiment_input_hash(normalized)
+    model_input = build_sentiment_input(summary_title, easy_explanation)
+    input_hash = sentiment_input_hash(summary_title, easy_explanation)
     try:
         state = repo.get_cluster_sentiment_state(cluster_id) or {}
-        is_current = sentiment_state_is_current(state, normalized, service)
+        is_current = sentiment_state_is_current(
+            state,
+            summary_title,
+            easy_explanation,
+            service,
+        )
         if is_current and not force:
             return "skipped"
 
-        result = service.analyze(normalized)
+        result = service.analyze(model_input)
         repo.save_cluster_sentiment(cluster_id, result, input_hash=input_hash)
         if result.label == "unknown":
             logger.warning(
@@ -229,6 +235,7 @@ def phase_cluster(
                 vec_cache,
                 assigned,
                 totals,
+                embedder=embedder,
             )
         except Exception as exc:  # noqa: BLE001 - 종목 단위 격리, 재실행이 재시도
             logger.warning("CLUSTER_STOCK_FAILED %s: %s", stock_code, exc)
@@ -243,6 +250,8 @@ def _cluster_one_stock(
     vec_cache,
     assigned,
     totals,
+    *,
+    embedder=None,
 ) -> None:
     """한 종목의 company_event pair 를 시간순으로 v2 클러스터링(대표기사 갱신 포함).
 
@@ -255,8 +264,11 @@ def _cluster_one_stock(
         datetime.fromisoformat(item["published_at"].replace("Z", "+00:00")) for item in items
     )
     active_since = (earliest - timedelta(hours=CFG.ACTIVE_WINDOW_HOURS)).isoformat()
+    persisted_clusters = repo.get_v2_assignment_clusters(stock_code, active_since=active_since)
+    prototype_vectors = _encode_cluster_prototypes(persisted_clusters, embedder)
     assigner = _hydrate_v2_assigner(
-        repo.get_v2_assignment_clusters(stock_code, active_since=active_since)
+        persisted_clusters,
+        prototype_vectors=prototype_vectors,
     )
     stock_local_to_db: dict[int, int] = {}  # local cluster_id -> DB cluster_id
     for p in items:
@@ -280,7 +292,7 @@ def _cluster_one_stock(
                 status="pending_retry",
                 llm_called=res.llm_called,
                 candidate_count=res.n_candidates,
-                reason=res.reason,
+                reason=_assignment_reason(res),
                 error_code=res.error,
             )
             continue
@@ -320,17 +332,66 @@ def _cluster_one_stock(
             status=res.status,
             llm_called=res.llm_called,
             candidate_count=res.n_candidates,
-            reason=res.reason,
+            reason=_assignment_reason(res),
             error_code=None,
         )
         totals[res.status] += 1
     totals["assign_llm_calls"] += assigner.calls
 
 
-def _hydrate_v2_assigner(rows: list[dict]) -> assign_llm_v2.LLMAssignerV2:
+def _encode_cluster_prototypes(rows: list[dict], embedder) -> dict[int, list[np.ndarray]]:
+    """Batch-encode persisted anchor/representative articles for candidate recall."""
+
+    if embedder is None:
+        return {}
+    articles: list[dict] = []
+    owners: list[int] = []
+    seen: set[tuple[int, str, str]] = set()
+    for row in rows:
+        cluster_id = int(row["id"])
+        for key in ("anchor", "representative"):
+            article = row.get(key) or {}
+            title = article.get("title") or ""
+            description = article.get("description") or ""
+            identity = (cluster_id, title, description)
+            if not (title or description) or identity in seen:
+                continue
+            seen.add(identity)
+            owners.append(cluster_id)
+            articles.append({"title": title, "description": description})
+    if not articles:
+        return {}
+    vectors = embedder.encode_many(articles)
+    out: dict[int, list[np.ndarray]] = {}
+    for cluster_id, vector in zip(owners, vectors, strict=True):
+        out.setdefault(cluster_id, []).append(np.asarray(vector, dtype=np.float32))
+    return out
+
+
+def _assignment_reason(res) -> str:
+    """Persist compact candidate diagnostics without a schema migration."""
+
+    if not res.candidates:
+        return res.reason
+    candidates = ",".join(
+        (
+            f"{item['cluster_id']}:c{item['centroid']:.4f}"
+            f"/p{item['prototype']:.4f}/s{item['signature']:.4f}"
+        )
+        for item in res.candidates
+    )
+    return f"{res.reason} | candidates={candidates}"
+
+
+def _hydrate_v2_assigner(
+    rows: list[dict],
+    *,
+    prototype_vectors: dict[int, list[np.ndarray]] | None = None,
+) -> assign_llm_v2.LLMAssignerV2:
     """Restore persisted v2 clusters before assigning a resumed/incremental batch."""
 
     assigner = assign_llm_v2.LLMAssignerV2(api_key=settings.upstage_api_key)
+    prototype_vectors = prototype_vectors or {}
     max_id = 0
     for row in rows:
         cluster_id = int(row["id"])
@@ -355,6 +416,7 @@ def _hydrate_v2_assigner(rows: list[dict]) -> assign_llm_v2.LLMAssignerV2:
             rep_description=representative.get("description") or "",
             event_signature=row.get("event_signature"),
             recent=recent,
+            prototype_vectors=prototype_vectors.get(cluster_id, []),
             member_article_ids=[f"persisted:{cluster_id}:{i}" for i in range(count)],
             last_active_h=_hours(row["last_active_at"]),
         )
@@ -364,7 +426,7 @@ def _hydrate_v2_assigner(rows: list[dict]) -> assign_llm_v2.LLMAssignerV2:
 
 
 def phase_summary(repo: NewsV2Repository, totals: dict) -> None:
-    """5) v2 사건 요약을 확정한 뒤 그 summary_title로 감성을 분류한다."""
+    """5) v2 사건 요약을 확정한 뒤 제목과 핵심 정리로 감성을 분류한다."""
     stock_names = repo.get_stock_names()
     clusters = repo.get_v2_clusters(only_unsummarized=True)
     logger.info("SUMMARY_PHASE start: %d clusters to summarize", len(clusters))
@@ -392,6 +454,7 @@ def phase_summary(repo: NewsV2Repository, totals: dict) -> None:
                     repo,
                     cid,
                     parsed.get("title"),
+                    parsed.get("easy_explanation"),
                     sentiment_service,
                 )
                 metric = f"sentiment_{sentiment_outcome}"

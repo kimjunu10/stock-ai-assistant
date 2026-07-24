@@ -10,13 +10,15 @@ from app.services.news_sentiment import (
     SENTIMENT_INPUT_VERSION,
     NewsSentimentService,
     SentimentResult,
+    build_sentiment_input,
     get_news_sentiment_service,
     initialize_news_sentiment_service,
     label_for_index,
+    normalize_sentiment_text,
     reset_news_sentiment_service_for_tests,
     sentiment_input_hash,
 )
-from scripts.backfill_news_sentiment import run_backfill
+from scripts.backfill_news_sentiment import _date_bounds_utc, run_backfill
 from scripts.run_full_news_v2 import classify_and_save_cluster_sentiment
 
 
@@ -91,14 +93,75 @@ def test_empty_title_returns_unknown_without_inference() -> None:
     assert service._tokenizer.calls == []
 
 
-def test_inference_uses_summary_title_only_and_expected_tokenizer_options() -> None:
-    service = loaded_service([[0.0, 0.0, 5.0]])
+def test_sentiment_input_combines_title_and_easy_explanation_without_markdown() -> None:
+    assert SENTIMENT_INPUT_VERSION == "cluster_summary_title_easy_v3"
+    assert (
+        build_sentiment_input(
+            " **삼성전자**, 신규 계약",
+            "- [핵심](https://example.com): `공급` 확대\n- 매출 증가",
+        )
+        == "삼성전자, 신규 계약 핵심: 공급 확대 매출 증가"
+    )
+    assert build_sentiment_input("제목", None) == "제목"
+    assert build_sentiment_input(None, "핵심 정리") == "핵심 정리"
+    assert build_sentiment_input(None, None) == ""
+    assert normalize_sentiment_text("  <b>계약</b>\n\n  체결  ") == "계약 체결"
 
-    sentiment = service.analyze("  회사가 신규 계약을 체결했다  ")
+
+def test_sentiment_hash_changes_when_easy_explanation_changes() -> None:
+    original = sentiment_input_hash("같은 제목", "기존 핵심")
+
+    assert sentiment_input_hash("같은 제목", "변경된 핵심") != original
+    assert sentiment_input_hash(" 같은  제목 ", " 기존   핵심 ") == original
+
+
+def test_backfill_date_uses_seoul_day_boundaries() -> None:
+    assert _date_bounds_utc("2026-07-24") == (
+        "2026-07-23T15:00:00+00:00",
+        "2026-07-24T15:00:00+00:00",
+    )
+
+
+def test_backfill_forwards_optional_date_bounds() -> None:
+    class Repo:
+        def __init__(self):
+            self.query = None
+
+        def get_sentiment_backfill_batch(self, **query):
+            self.query = query
+            return []
+
+    repo = Repo()
+    service = SimpleNamespace()
+
+    assert run_backfill(
+        repo,
+        service,
+        batch_size=32,
+        force=True,
+        published_since="2026-07-23T15:00:00+00:00",
+        published_before="2026-07-24T15:00:00+00:00",
+    ) == {"scanned": 0, "success": 0, "failed": 0, "skipped": 0}
+    assert repo.query == {
+        "after_id": 0,
+        "batch_size": 32,
+        "published_since": "2026-07-23T15:00:00+00:00",
+        "published_before": "2026-07-24T15:00:00+00:00",
+    }
+
+
+def test_inference_uses_combined_input_and_expected_tokenizer_limit() -> None:
+    service = loaded_service([[0.0, 0.0, 5.0]])
+    model_input = build_sentiment_input(
+        "회사가 신규 계약을 체결했다",
+        "향후 매출 증가가 기대된다",
+    )
+
+    sentiment = service.analyze(model_input)
 
     assert sentiment.label == "positive"
     titles, options = service._tokenizer.calls[0]
-    assert titles == ["회사가 신규 계약을 체결했다"]
+    assert titles == ["회사가 신규 계약을 체결했다 향후 매출 증가가 기대된다"]
     assert options == {
         "max_length": 128,
         "truncation": True,
@@ -129,7 +192,7 @@ def test_cluster_sentiment_skips_same_title_and_reanalyzes_changed_title() -> No
                 "sentiment_model": "test-model",
                 "sentiment_model_revision": "test-revision",
                 "sentiment_input_version": SENTIMENT_INPUT_VERSION,
-                "sentiment_input_hash": sentiment_input_hash("같은 제목"),
+                "sentiment_input_hash": sentiment_input_hash("같은 제목", "같은 핵심"),
             }
             self.saved = []
 
@@ -153,10 +216,28 @@ def test_cluster_sentiment_skips_same_title_and_reanalyzes_changed_title() -> No
     repo = Repo()
     service = Service()
 
-    assert classify_and_save_cluster_sentiment(repo, 7, "같은   제목", service) == "skipped"
+    assert (
+        classify_and_save_cluster_sentiment(
+            repo,
+            7,
+            "같은   제목",
+            "같은 핵심",
+            service,
+        )
+        == "skipped"
+    )
     assert service.titles == []
-    assert classify_and_save_cluster_sentiment(repo, 7, "변경된 제목", service) == "analyzed"
-    assert service.titles == ["변경된 제목"]
+    assert (
+        classify_and_save_cluster_sentiment(
+            repo,
+            7,
+            "같은 제목",
+            "변경된 핵심",
+            service,
+        )
+        == "analyzed"
+    )
+    assert service.titles == ["같은 제목 변경된 핵심"]
     assert repo.saved[0][0] == 7
 
 
@@ -175,7 +256,16 @@ def test_sentiment_storage_failure_does_not_escape_pipeline_boundary() -> None:
         def analyze(self, _title):
             return result()
 
-    assert classify_and_save_cluster_sentiment(Repo(), 9, "대표 제목", Service()) == "failed"
+    assert (
+        classify_and_save_cluster_sentiment(
+            Repo(),
+            9,
+            "대표 제목",
+            "핵심 정리",
+            Service(),
+        )
+        == "failed"
+    )
 
 
 def test_backfill_skips_current_force_reprocesses_and_resumes_after_failure() -> None:
@@ -184,14 +274,19 @@ def test_backfill_skips_current_force_reprocesses_and_resumes_after_failure() ->
         "sentiment_model": "test-model",
         "sentiment_model_revision": "test-revision",
         "sentiment_input_version": SENTIMENT_INPUT_VERSION,
-        "sentiment_input_hash": sentiment_input_hash("현재 제목"),
+        "sentiment_input_hash": sentiment_input_hash("현재 제목", "현재 핵심"),
     }
 
     class Repo:
         def __init__(self):
             self.rows = [
-                {"id": 1, "summary_title": "새 제목"},
-                {"id": 2, "summary_title": "현재 제목", **current},
+                {"id": 1, "summary_title": "새 제목", "easy_explanation": "새 핵심"},
+                {
+                    "id": 2,
+                    "summary_title": "현재 제목",
+                    "easy_explanation": "현재 핵심",
+                    **current,
+                },
             ]
             self.fail_once = {1}
 
