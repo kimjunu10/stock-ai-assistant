@@ -1,7 +1,13 @@
 # Stock Assistant Backend
 
-`SPEC.md`에 정의된 증권 AI 투자 어시스턴트의 FastAPI 백엔드 뼈대입니다.
-현재는 디렉터리와 모듈의 책임만 나눠 놓았으며, 수집·분류·RAG·DB 처리 로직은 구현하지 않았습니다.
+증권 AI 투자 어시스턴트의 FastAPI 백엔드입니다. 네이버 뉴스 수집·본문 크롤링,
+종목 관련성/기사 역할 분류, BGE-M3와 Solar를 이용한 사건 클러스터링, 사건 요약,
+클러스터 제목 기반 감성분류, Supabase 저장과 조회 API가 구현되어 있습니다.
+
+현재 뉴스 처리 기준은 다음 문서를 기준으로 합니다.
+
+- [뉴스 처리·클러스터링](docs/NEWS_PIPELINE.md)
+- [뉴스 클러스터 감성분류](docs/NEWS_CLUSTER_SENTIMENT.md)
 
 ## 디렉터리 구조
 
@@ -31,4 +37,4 @@ uv sync --extra dev
 uv run uvicorn app.main:app --reload
 ```
 
-실제 기능 구현 시 API → 서비스 → 저장소/외부 소스 순으로 의존하도록 구성합니다.
+API → 서비스 → 저장소/외부 소스 순으로 의존하도록 구성합니다.

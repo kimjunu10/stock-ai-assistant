@@ -1,7 +1,7 @@
 """EXP-5 오케스트레이터: 클러스터링 재사용/생성 → Solar 사실 통합 본문 → 산출물 6개.
 
-이번 단계는 **오프라인 산출물 단계**다. Supabase에 아무것도 쓰지 않고, KorFinASC 등
-감성 모델을 실행하지 않으며, gold_label 을 만들지 않는다. 산출물 생성 후 멈춘다.
+이번 단계는 **오프라인 산출물 단계**다. Supabase에 아무것도 쓰지 않고, 감성 모델을
+실행하지 않으며, gold_label 을 만들지 않는다. 산출물 생성 후 멈춘다.
 
 실행:
     python -m experiments.exp_b_factual_summaries.run --device mps
@@ -374,7 +374,7 @@ def _write_run_env(rows, clusters, summaries, stats, args) -> None:
                 },
                 "did_not_do": [
                     "Supabase write",
-                    "KorFinASC / sentiment prediction",
+                    "sentiment prediction",
                     "gold_label 자동 생성",
                     "API / UI 구현",
                 ],
@@ -393,9 +393,13 @@ def _write_readme(rows, clusters, stats, args) -> None:
 
 이 폴더는 확정된 뉴스 클러스터링 설정을 재사용/재현하여 각 사건 클러스터의
 **라벨 비의존 사실 통합 본문**과 원문 출처 목록을 생성한 오프라인 산출물이다.
-감성 분류(KorFinASC), gold label, Supabase 반영, API/UI는 이 단계에서 하지 않는다.
+감성 분류, gold label, Supabase 반영, API/UI는 이 단계에서 하지 않았다.
 
-## 확정 설정
+## 이 산출물을 만들 당시의 실험 설정
+
+> 이 절은 오프라인 실험을 재현하기 위한 기록이며 현재 운영 클러스터링 설정을
+> 뜻하지 않는다.
+
 - 임베딩: `{CFG.EMBEDDING_MODEL}` (revision `{CFG.EMBEDDING_REVISION[:12]}…`), 1024차원
 - 입력: title + description
 - 클러스터링: online centroid, cosine ≥ {CFG.COSINE_THRESHOLD}, 활성창 {CFG.ACTIVE_WINDOW_HOURS}h, 같은 stock_code끼리만
@@ -425,7 +429,7 @@ python -m experiments.exp_b_factual_summaries.run --device mps
 
 ## 다음 단계에서 사람이 결정/작성할 것
 - `sentiment_reference_template.csv` 의 `gold_label` (positive/negative/neutral) 과 `label_reason` 을 사람이 작성하고 reference version 을 동결한다.
-- 동결 전에는 KorFinASC 예측을 생성·노출하지 않는다.
+- 이 실험 산출물만으로 감성 예측을 생성·노출하지 않는다.
 
 ## 한계
 - 원문 body 크롤 실패 기사는 title+description 만으로 임베딩·요약된다.

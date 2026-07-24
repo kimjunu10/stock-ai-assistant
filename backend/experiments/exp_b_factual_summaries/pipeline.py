@@ -6,7 +6,7 @@ online centroid 클러스터링.
 
 exp_a_clustering.clustering_lib 의 전처리·임베딩 함수를 재사용해 실험과 서비스가
 동일한 임베딩 로직을 쓰도록 한다. online centroid 수식(온라인 평균 후 L2 normalize,
-sliding 72h 활성창)도 clustering_lib 과 동일하되, 여기서는 배정 유사도·신규여부·
+설정 기반 sliding 활성창(현재 24h)도 clustering_lib 과 동일하되, 여기서는 배정 유사도·신규여부·
 centroid·마지막 활성시각 같은 산출물용 메타데이터를 함께 기록한다.
 """
 
