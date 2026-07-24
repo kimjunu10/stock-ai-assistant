@@ -555,6 +555,12 @@ tests/unit/test_query_plan.py, test_facts_format.py
       RagQaService 는 삭제하지 않고 유지(validate_citations 및 참조 보존).
 검증: 전체 136 테스트 통과(신규 통합 7개 포함), ruff·format 통과.
 결과: 결정론적 QA 라이브 경로 완료. Agentic·Tool Registry·MCP·A2A 는 미구현(범위 밖).
+
+후속 수정(2026-07-24): QueryPlan need_documents 규칙을 의도 신호 기반으로 정정.
+  이전에는 need_financials 이면 문서 검색을 항상 켜서 순수 숫자 질문도 뉴스 검색을
+  유발했다. 이제 설명/정정 신호가 있거나(켬), 사실 신호(숫자/용어)가 없는 자연어
+  질문일 때만 문서 검색을 켠다. 순수 숫자→SQL만, 순수 용어→용어만(뉴스 검색·임베딩
+  호출 없음). 질문 문장 하드코딩 없이 신호 조합으로만 판정. 전체 143 테스트 통과.
 한국은행 자료 이용범위: 공개·상용 출시 전 확인 필요(개방 라이선스 미명시), 원본 PDF는 Git 제외
 ```
 

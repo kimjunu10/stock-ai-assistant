@@ -86,12 +86,19 @@ def build_query_plan(
     plan.need_correction = _hit(q, _CORRECTION_SIGNALS)
     explain = _hit(q, _EXPLAIN_SIGNALS)
 
-    # 설명/공시 성격이면 문서 검색(RAG)도 켠다. 숫자만 물어도 근거 문서를 함께 쓸 수 있다.
+    # 문서 검색(RAG)은 "설명이 필요한 질문"에만 켠다. 의도 신호로만 구분한다.
+    #  - 순수 숫자 질문(숫자 신호만, 설명 없음)  → 문서 검색 끔(SQL 만; 뉴스 검색·임베딩 호출 안 함)
+    #  - 숫자 + 설명(왜/영향/전망 등)           → 문서 검색 켬
+    #  - 정정공시 질문                          → 문서 검색 켬(정정 설명 근거)
+    #  - 순수 용어 질문                         → 문서 검색 끔(용어 조회만)
+    #  - 그 외(뉴스성 자연어 질문)              → 문서 검색 켬(기본 뉴스 하이브리드 검색)
+    #
+    # 판정 순서: 설명/정정이면 항상 켬. 아니면 "숫자 또는 용어 신호가 있는" 사실조회형
+    # 질문은 문서 검색을 끄고(그 신호에 맞는 SQL/용어만 실행), 어떤 사실 신호도 없는
+    # 자연어 질문만 기본 뉴스 검색으로 보낸다.
+    fact_lookup_only = (plan.need_financials or plan.need_terms) and not explain
     plan.need_documents = (
-        explain
-        or plan.need_financials
-        or plan.need_correction
-        or not (plan.need_terms and not explain)
+        explain or plan.need_correction or (not fact_lookup_only and not plan.need_terms)
     )
     # 공시 관련 신호가 있으면 구조화 공시 값도 후보로.
     plan.need_disclosure_values = plan.need_correction or _hit(

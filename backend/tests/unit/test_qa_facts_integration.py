@@ -107,6 +107,26 @@ def test_numeric_question_uses_sql():
     assert "6,000,000,000,000" in gen.prompts[0] or "6000000000000" in gen.prompts[0]
 
 
+def test_pure_numeric_question_does_not_call_retriever():
+    """순수 숫자 질문: 뉴스 검색(HybridRetriever.search) 을 호출하지 않는다.
+
+    임베딩 API 호출을 유발하지 않도록 문서 검색 경로가 완전히 꺼져야 한다.
+    """
+    svc, retr, facts, gen = _service()
+    result = svc.answer("삼성전자 2025년 영업이익 얼마?", stock_code="005930")
+    assert facts.financials_calls == 1
+    assert retr.calls == []  # 검색 미호출
+    assert result.sources == []  # 문서 출처 없음
+    assert result.numeric_sources  # 숫자 출처만 존재
+
+
+def test_pure_term_question_does_not_call_retriever():
+    svc, retr, facts, gen = _service()
+    svc.answer("PER이 뭐야?")
+    assert facts.term_calls == 1
+    assert retr.calls == []  # 용어만; 검색 미호출
+
+
 def test_term_question_uses_lookup():
     svc, retr, facts, gen = _service()
     result = svc.answer("PER이 뭐야?")
