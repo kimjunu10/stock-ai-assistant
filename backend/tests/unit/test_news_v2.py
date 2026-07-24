@@ -599,6 +599,67 @@ def test_role_candidates_are_filtered_in_database_before_body_download():
     ]
 
 
+def test_recent_unassigned_event_pairs_recover_only_missing_assignments():
+    pairs = [
+        {
+            "article_id": 10,
+            "stock_code": "005930",
+            "title": "이미 배정된 사건",
+            "description": "",
+            "published_at": "2026-07-24T03:00:00+00:00",
+            "event_signature": {},
+        },
+        {
+            "article_id": 11,
+            "stock_code": "005930",
+            "title": "재배포 중 누락된 사건",
+            "description": "",
+            "published_at": "2026-07-24T04:00:00+00:00",
+            "event_signature": {},
+        },
+    ]
+
+    class Query:
+        def select(self, *_args, **_kwargs):
+            return self
+
+        def in_(self, *_args, **_kwargs):
+            return self
+
+        def eq(self, *_args, **_kwargs):
+            return self
+
+        def execute(self):
+            return SimpleNamespace(
+                data=[
+                    {
+                        "article_id": 10,
+                        "stock_code": "005930",
+                        "status": "assigned_new",
+                    }
+                ]
+            )
+
+    class Client:
+        def table(self, _name):
+            return Query()
+
+    repo = NewsV2Repository(Client(), SimpleNamespace())
+    requested = {}
+
+    def fake_get_event_pairs(*, published_since):
+        requested["published_since"] = published_since
+        return pairs
+
+    repo.get_event_pairs = fake_get_event_pairs
+    recovered = repo.get_unassigned_recent_v2_event_pairs(
+        published_since="2026-07-22T05:00:00+00:00"
+    )
+
+    assert requested["published_since"] == "2026-07-22T05:00:00+00:00"
+    assert [pair["article_id"] for pair in recovered] == [11]
+
+
 def test_incremental_cluster_phase_does_not_scan_historical_pairs():
     class Repo:
         def get_retryable_v2_event_pairs(self):

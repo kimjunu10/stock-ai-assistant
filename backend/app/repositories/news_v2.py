@@ -125,16 +125,17 @@ class NewsV2Repository:
         return counts
 
     # ------------------------------------------------------- 클러스터링 대상
-    def get_event_pairs(self) -> list[dict[str, Any]]:
+    def get_event_pairs(self, *, published_since: str | None = None) -> list[dict[str, Any]]:
         """company_event + event_eligible=true 인 pair 를 발행 시각순으로.
 
         v2 클러스터링 입력. event_signature 를 함께 싣는다.
+        published_since 가 있으면 최근 복구 창만 조회한다.
         """
         out: list[dict[str, Any]] = []
         offset = 0
         page = 1000
         while True:
-            resp = (
+            query = (
                 self.client.table("article_stocks")
                 .select(
                     "article_id,stock_code,event_signature,"
@@ -148,9 +149,10 @@ class NewsV2Repository:
                 .order("published_at", foreign_table="articles")
                 .order("article_id")
                 .order("stock_code")
-                .range(offset, offset + page - 1)
-                .execute()
             )
+            if published_since:
+                query = query.gte("articles.published_at", published_since)
+            resp = query.range(offset, offset + page - 1).execute()
             rows = resp.data or []
             for r in rows:
                 art = r.get("articles") or {}
@@ -168,6 +170,47 @@ class NewsV2Repository:
                 break
             offset += page
         return out
+
+    def get_unassigned_recent_v2_event_pairs(
+        self, *, published_since: str
+    ) -> list[dict[str, Any]]:
+        """최근 역할분류 완료 건 중 v2 성공 배정이 없는 pair를 복구한다.
+
+        역할 저장 직후 프로세스가 재배포되면 스케줄러가 그 pair를 신규 후보로 다시
+        반환하지 못할 수 있다. 최근 company_event만 제한 조회하고 성공 배정은 배치로
+        제외하여, 전체 과거 데이터를 재순회하지 않고 그 중단 구간을 복구한다.
+        """
+
+        pairs = self.get_event_pairs(published_since=published_since)
+        if not pairs:
+            return []
+
+        pair_keys = {(int(p["article_id"]), p["stock_code"]) for p in pairs}
+        assigned: set[tuple[int, str]] = set()
+        article_ids = sorted({article_id for article_id, _ in pair_keys})
+        for start in range(0, len(article_ids), 200):
+            id_batch = article_ids[start : start + 200]
+            resp = (
+                self.client.table("news_cluster_assignments")
+                .select(
+                    "article_id,stock_code,status,"
+                    "news_clusters!inner(clustering_version)"
+                )
+                .in_("article_id", id_batch)
+                .in_("status", ["assigned_new", "assigned_existing"])
+                .eq("news_clusters.clustering_version", self.version)
+                .execute()
+            )
+            for row in resp.data or []:
+                key = (int(row["article_id"]), row["stock_code"])
+                if key in pair_keys:
+                    assigned.add(key)
+
+        return [
+            pair
+            for pair in pairs
+            if (int(pair["article_id"]), pair["stock_code"]) not in assigned
+        ]
 
     def get_assigned_v2_pairs(self) -> set[tuple[int, str]]:
         """이미 v2 클러스터에 성공 배정된 (article_id, stock_code) 집합(멱등 재개용, 배치).
