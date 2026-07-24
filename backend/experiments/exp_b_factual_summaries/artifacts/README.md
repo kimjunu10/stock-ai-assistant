@@ -2,9 +2,13 @@
 
 이 폴더는 확정된 뉴스 클러스터링 설정을 재사용/재현하여 각 사건 클러스터의
 **라벨 비의존 사실 통합 본문**과 원문 출처 목록을 생성한 오프라인 산출물이다.
-감성 분류(KorFinASC), gold label, Supabase 반영, API/UI는 이 단계에서 하지 않는다.
+감성 분류, gold label, Supabase 반영, API/UI는 이 단계에서 하지 않았다.
 
-## 확정 설정
+## 이 산출물을 만들 당시의 실험 설정
+
+> 이 절은 과거 오프라인 실험을 재현하기 위한 기록이다. 현재 운영 클러스터링 설정을
+> 뜻하지 않는다.
+
 - 임베딩: `BAAI/bge-m3` (revision `5617a9f61b02…`), 1024차원
 - 입력: title + description
 - 클러스터링: online centroid, cosine ≥ 0.74, 활성창 72h, 같은 stock_code끼리만
@@ -12,6 +16,19 @@
 
 기존 확정 클러스터링 결과가 DB에 없어(clusters 테이블 미존재) prompt.md 2번 경로에 따라
 위 확정 설정으로 신규 생성했다.
+
+## 현재 운영 기준과의 차이
+
+- 임베딩 모델과 입력은 동일하게 BGE-M3 `title + description`을 사용한다.
+- 활성 후보 창은 현재 24시간이다.
+- BGE-M3 유사도는 최종 병합 판정이 아니라 같은 종목의 사건 후보를 찾는 데 사용한다.
+- 유사도 0.55 이상 후보 중 최종 동일 사건 여부는 Solar가 사건명, 주최자, 행사 형태,
+  장소, 목적, 핵심 행위가 같은지 보수적으로 판정한다.
+- 감성분류는 대표 기사 제목이 아니라 Solar 요약이 성공한 뒤 확정된
+  `news_clusters.summary_title`을 사용한다.
+
+따라서 이 폴더의 72시간 배치 결과를 현재 운영 결과나 감성 입력 기준으로 해석하면 안
+된다.
 
 ## 실행
 ```bash
@@ -34,7 +51,7 @@ python -m experiments.exp_b_factual_summaries.run --device mps
 
 ## 다음 단계에서 사람이 결정/작성할 것
 - `sentiment_reference_template.csv` 의 `gold_label` (positive/negative/neutral) 과 `label_reason` 을 사람이 작성하고 reference version 을 동결한다.
-- 동결 전에는 KorFinASC 예측을 생성·노출하지 않는다.
+- 이 실험 산출물만으로 감성 예측을 생성·노출하지 않는다.
 
 ## 한계
 - 원문 body 크롤 실패 기사는 title+description 만으로 임베딩·요약된다.
