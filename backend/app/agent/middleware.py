@@ -39,6 +39,13 @@ class DuplicateToolCallMiddleware(AgentMiddleware):
         self._max_repeats = max_repeats
         self._seen: dict[str, int] = {}
 
+    def before_agent(self, state, runtime):  # type: ignore[override]
+        # Agent 는 lru_cache 로 1회 생성돼 모든 요청이 이 인스턴스를 공유한다.
+        # 요청(질문)마다 반복 카운트를 초기화해야 이전 질문의 호출이 이번 질문을
+        # 막지 않는다(요청 간 상태 누수 방지).
+        self._seen = {}
+        return None
+
     def wrap_tool_call(self, request, handler):  # type: ignore[override]
         name = getattr(request, "tool_name", None) or getattr(
             getattr(request, "tool_call", {}), "get", lambda *_: None

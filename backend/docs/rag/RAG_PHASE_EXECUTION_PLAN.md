@@ -451,17 +451,21 @@ actual/forecast 혼동 0
 - [x] `AGENT_ENABLED=true` 스테이징 (로컬 별도 포트 기동)
 - [~] 실제 UI smoke test — **웹 UI 미연결(Phase 7)** 이라 API SSE 레벨로 대체 smoke.
       SSE 진행 표시(agent_start→tool_*→sources→delta→done) 정상, 단순 2~4s·복합 5~6s.
-- [x] legacy와 결과 비교 — ⛔ **회귀 발견**(아래)
-- [ ] 운영 flag 전환 — **차단**: 기간 미지정 재무 질문 오답(§smoke §4). 수정·승인 후 진행.
+- [x] legacy와 결과 비교 — 회귀 발견 → 수정 완료(아래)
+- [x] smoke 결함 수정 — (A) 기간 미지정 재무→연간 규칙, (B) DuplicateToolCall 요청 간 상태 누수.
+      재검증 4/4 통과, 홀드아웃 회귀 없음.
+- [ ] 운영 flag 전환 — **사용자 승인 대기**(지시: smoke 결과 보고 후 승인받고 진행).
 - [ ] QueryPlan 라이브 호출 제거 (운영 전환 후)
 - [ ] QueryPlan deprecated 표시 (운영 전환 후)
 - [x] 문서 갱신 (`docs/rag/phase_5_5/SMOKE_TEST.md`)
 - [ ] 완료 보고
 - [ ] 다음 Phase 자동 진행 금지
 
-> ⛔ **운영 전환 차단**: smoke test 에서 "2025년 영업이익 얼마?"(기간 미지정) 질문에
-> Agent 가 3회 모두 "확정 데이터 없음" 오답(legacy 는 정답 23.53조). 기간 미지정 재무
-> 질문 처리를 수정하고 재확인한 뒤 사용자 승인을 받아 운영 전환한다. `agent_enabled=false` 유지.
+> ✅ **smoke 결함 수정 완료**: (A) 기간 미지정 재무 질문 오답 → get_financial_facts 에
+> "사업연도만 있으면 연간 해석" 일반 규칙(_resolve_report_period). (B) DuplicateToolCall
+> middleware 가 lru_cache 공유 Agent 에서 요청 간 상태 누수 → before_agent 로 요청마다 초기화.
+> 스테이징 재검증(연도만/연간/분기누적/없는기간 각 4/4), 홀드아웃 회귀 없음, 전체 201 테스트 통과.
+> **운영 flag 전환은 사용자 승인 후 진행.** 현재 `agent_enabled=false` 유지.
 > 상세: `docs/rag/phase_5_5/SMOKE_TEST.md`.
 
 ---

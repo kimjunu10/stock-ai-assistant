@@ -69,11 +69,28 @@ def _default_amount_type(account: str, report_period: str | None) -> str | None:
     return None
 
 
+def _resolve_report_period(account: str, business_year: int | None, report_period: str | None):
+    """일반 금융 규칙: 사업연도만 있고 보고기간이 비면 연간(annual)으로 해석한다.
+
+    질문 원문을 파싱하지 않고, 인자 조합만으로 판단하는 도메인 규칙이다.
+    - business_year 지정 + report_period 미지정 → annual(연간 보고서, reprt 11011).
+    - 재무상태표(자산·부채·자본)는 연간=결산일 시점값이라 여기서도 annual 로 두면 point_in_time.
+    business_year 도 없으면(기간 전체 미지정) 규칙을 강제하지 않는다(최신 우선 정렬에 맡김).
+    """
+    if report_period is None and business_year is not None:
+        return "annual"
+    return report_period
+
+
 def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> ToolResult:
     """검증된 인자로 재무 1건(또는 소수)을 조회한다. 없으면 no_data."""
     try:
-        reprt_code = PERIOD_TO_REPRT[inp.report_period] if inp.report_period else None
-        amount_type = inp.amount_type or _default_amount_type(inp.account_name, inp.report_period)
+        # 사업연도만 있고 보고기간 미지정이면 연간으로 확정 해석(일반 규칙, 질문 파싱 아님).
+        report_period = _resolve_report_period(
+            inp.account_name, inp.business_year, inp.report_period
+        )
+        reprt_code = PERIOD_TO_REPRT[report_period] if report_period else None
+        amount_type = inp.amount_type or _default_amount_type(inp.account_name, report_period)
 
         rows = facts.get_financials(
             inp.stock_code,
