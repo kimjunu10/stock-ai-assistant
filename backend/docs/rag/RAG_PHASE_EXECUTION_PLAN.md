@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~E 완료, F~G 대기) | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~E 완료, F 미달·재평가 필요, G 차단) | [ ] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -352,27 +352,48 @@ trace: request_id·model/tool count·latency·stop_reason·validation_errors·so
 
 ---
 
-## 5.5-F. 평가
+## 5.5-F. 평가  ⚠️ 수행 완료, 승인 기준 미달 (2026-07-24)
 
-- [ ] 개발셋 작성
-- [ ] 홀드아웃 작성
-- [ ] 금융용어
-- [ ] 재무 연간·분기·누적
-- [ ] 뉴스
-- [ ] 공시
-- [ ] 리포트
-- [ ] 복합 질문
-- [ ] 부정·제외
-- [ ] 현재 문맥
-- [ ] no_data
-- [ ] legacy QueryPlan 비교
-- [ ] Tool Recall
-- [ ] forbidden Tool violation
-- [ ] Tool arg accuracy
-- [ ] 숫자 Exact Match
-- [ ] Citation Precision
-- [ ] 지연·비용
-- [ ] 동일 호출 반복
+- [x] 개발셋 작성 (`eval/devset.json`, 12개 유형별)
+- [ ] 홀드아웃 작성 (미작성 — devset 우선 실행)
+- [x] 금융용어 / 재무 연간·분기·누적 / 뉴스 / 공시 / 리포트 / 복합 / 부정·제외 / no_data (유형 포함)
+- [ ] 현재 문맥 (devset 미포함)
+- [x] no_data (1/1 정직 처리)
+- [x] legacy QueryPlan 비교 (각 케이스 legacy_route 대비 기록 — Agent 가 규칙과 다르게 선택 증명)
+- [x] Tool Recall (0.833, 기준 0.95 미달)
+- [x] forbidden Tool violation (8.3%, 기준 3% 미달)
+- [ ] Tool arg accuracy (세부 채점 미구현)
+- [ ] 숫자 Exact Match (세부 채점 미구현)
+- [ ] Citation Precision (세부 채점 미구현)
+- [x] 지연·비용 (P50 8.5s / P95 106s — 복합 10s 기준 미달)
+- [x] 동일 호출 반복 (1건, 기준 0 미달)
+
+### 하드코딩 감사 + Tool 선택 증명 (추가 지시)
+
+- [x] 질문별·종목별 Tool 선택 하드코딩 없음 (Agent 경로 grep 감사 — 질문비교·종목·회사명·
+      Tool 강제·프롬프트 few-shot 라우팅 전부 없음)
+- [x] Tool trace 로 모델이 직접 Tool 선택 증명 (질문마다 다른 tool_calls, legacy 규칙과 불일치)
+
+### 평가 결과 요약
+
+```text
+Required Tool Recall: 0.833 (10/12)   기준 0.95  → 미달
+Forbidden Violation:  8.3% (1/12)     기준 3%    → 미달 (fin-annual 이 search_news 추가 호출)
+no_data 처리:         1/1                          → 통과
+동일 호출 반복:       1건 (compare 4회) 기준 0    → 미달
+지연 P50/P95:         8.5s / 106s      복합 10s   → 미달
+하드코딩:             없음                         → 통과
+모델 자율 Tool 선택:  증명됨                       → 통과
+```
+
+주요 결함(평가가 드러냄):
+- timeout 이 Tool 내부 LLM 왕복을 중단 못 해 report-1 106s·exclude-1 609s 폭주(실동작 결함).
+- 순수 재무 질문에 불필요한 search_news 호출(프롬프트 튜닝 필요).
+- 비교 질문 재무 Tool 과다 반복.
+
+상세: `docs/rag/phase_5_5/eval/EVAL_REPORT.md`.
+산출물: `scripts/evaluate_agent.py`, `eval/devset.json`, `EVAL_REPORT.md`
+(`eval_result.json` 은 답변 원문 조각 포함으로 gitignore).
 
 ### 반드시 포함
 
@@ -408,6 +429,10 @@ actual/forecast 혼동 0
 ---
 
 ## 5.5-G. 라이브 전환
+
+> ⛔ **진입 차단**: 5.5-F 승인 기준 미달(Recall 0.83<0.95, Forbidden 8.3%>3%, 반복 1건,
+> 복합 P95 106s≫10s, timeout 미작동 결함). 승인 기준 통과 전까지 라이브 전환하지 않는다.
+> `agent_enabled=false` 유지(라이브는 결정론적 경로). 5.5-F 개선 후 재평가 필요.
 
 - [ ] 승인 기준 통과
 - [ ] `AGENT_ENABLED=true` 스테이징
