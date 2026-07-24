@@ -1,4 +1,4 @@
-"""FISA sentiment classification for news-cluster representative article titles."""
+"""FISA sentiment classification for finalized news-cluster summary titles."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from app.core.config import Settings, settings
 
 logger = logging.getLogger(__name__)
 
-SENTIMENT_INPUT_VERSION = "cluster_title_v1"
+SENTIMENT_INPUT_VERSION = "cluster_summary_title_v2"
 SENTIMENT_MAX_LENGTH = 128
 LABEL_BY_INDEX = {0: "negative", 1: "neutral", 2: "positive"}
 VALID_LABELS = frozenset((*LABEL_BY_INDEX.values(), "unknown"))
@@ -34,7 +34,7 @@ class SentimentResult:
 
 
 def normalize_sentiment_title(title: str | None) -> str:
-    """Normalize only whitespace; the model still receives the representative title alone."""
+    """Normalize the finalized cluster summary title without changing its meaning."""
 
     return " ".join((title or "").split())
 

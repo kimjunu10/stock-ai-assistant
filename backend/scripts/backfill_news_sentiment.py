@@ -1,4 +1,4 @@
-"""Backfill FISA sentiment for cluster representative article titles.
+"""Backfill FISA sentiment for finalized cluster summary titles.
 
 Usage:
     uv run python -m scripts.backfill_news_sentiment --batch-size 32
@@ -42,8 +42,10 @@ def run_backfill(
         selected: list[tuple[dict[str, Any], str]] = []
         for row in rows:
             totals["scanned"] += 1
-            representative = row.get("representative") or {}
-            title = normalize_sentiment_title(representative.get("title"))
+            title = normalize_sentiment_title(row.get("summary_title"))
+            if not title:
+                totals["skipped"] += 1
+                continue
             if not force and sentiment_state_is_current(row, title, service):
                 totals["skipped"] += 1
                 continue

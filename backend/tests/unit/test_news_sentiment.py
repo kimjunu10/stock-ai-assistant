@@ -91,7 +91,7 @@ def test_empty_title_returns_unknown_without_inference() -> None:
     assert service._tokenizer.calls == []
 
 
-def test_inference_uses_title_only_and_expected_tokenizer_options() -> None:
+def test_inference_uses_summary_title_only_and_expected_tokenizer_options() -> None:
     service = loaded_service([[0.0, 0.0, 5.0]])
 
     sentiment = service.analyze("  회사가 신규 계약을 체결했다  ")
@@ -190,8 +190,8 @@ def test_backfill_skips_current_force_reprocesses_and_resumes_after_failure() ->
     class Repo:
         def __init__(self):
             self.rows = [
-                {"id": 1, "representative": {"title": "새 제목"}},
-                {"id": 2, "representative": {"title": "현재 제목"}, **current},
+                {"id": 1, "summary_title": "새 제목"},
+                {"id": 2, "summary_title": "현재 제목", **current},
             ]
             self.fail_once = {1}
 

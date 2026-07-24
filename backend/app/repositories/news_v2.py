@@ -384,16 +384,17 @@ class NewsV2Repository:
         after_id: int,
         batch_size: int,
     ) -> list[dict[str, Any]]:
-        """Page clusters by primary key without loading the full table into memory."""
+        """Page finalized cluster summary titles without loading the full table."""
 
         return list(
             (
                 self.client.table("news_clusters")
                 .select(
                     "id,sentiment_label,sentiment_model,sentiment_model_revision,"
-                    "sentiment_input_version,sentiment_input_hash,"
-                    "representative:articles!news_clusters_representative_article_id_fkey(title)"
+                    "sentiment_input_version,sentiment_input_hash,summary_title,summary_status"
                 )
+                .eq("clustering_version", self.version)
+                .eq("summary_status", "success")
                 .gt("id", after_id)
                 .order("id")
                 .limit(batch_size)
