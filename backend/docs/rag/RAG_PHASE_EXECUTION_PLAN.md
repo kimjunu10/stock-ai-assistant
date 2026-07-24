@@ -1,146 +1,505 @@
 # RAG_PHASE_EXECUTION_PLAN.md
 
-## 0. 이 문서의 역할
+## 0. 문서 역할
 
-이 문서는 `RAG_IMPLEMENTATION_SPEC.md`를 실제 개발 순서로 실행하기 위한 **진행 체크리스트**다.
+이 문서는 최종 Agentic Hybrid RAG 구현 체크리스트다.
 
-Claude Code 또는 Codex는 아래 규칙을 따른다.
+고정 원칙:
 
-- 한 번에 전체 RAG를 구현하지 않는다.
-- 현재 Phase 안에서는 필요한 코드 변경을 유연하게 수행한다.
-- 사소한 구현 선택 때문에 작업을 멈추지 않는다.
-- 기획서와 달라지는 부분은 숨기지 말고 기록한다.
-- 각 Phase가 끝나면 이 문서의 체크박스와 진행 기록을 직접 갱신한다.
-- 다음 Phase로 자동 진행하지 않고 결과를 보고한 뒤 기다린다.
-
-관련 문서:
-
-```text
-docs/rag/RAG_IMPLEMENTATION_SPEC.md
-docs/rag/RAG_GUIDE_FOR_OWNER.md
-docs/rag/RAG_PHASE_EXECUTION_PLAN.md
-```
+- 키워드 기반 Tool 라우팅을 새로 추가하지 않는다.
+- 특정 질문·기업·평가 사례를 런타임 코드에 하드코딩하지 않는다.
+- LangChain `create_agent`와 prebuilt middleware를 우선한다.
+- 직접 custom StateGraph를 만들지 않는다.
+- 기존 검색·SQL Service를 Tool로 재사용한다.
+- 각 Phase 완료 후 자동으로 다음 단계로 진행하지 않는다.
 
 ---
 
-
-# 0.1 현재 데이터 위치
-
-Claude Code는 아래 상태를 사실로 보고 시작한다.
-
-| 데이터 | 현재 위치 | 현재 상태 | 구현 중 해야 할 일 |
-|---|---|---|---|
-| 뉴스·클러스터·요약 | Supabase | 저장되어 있음 | 기존 데이터를 읽어 RAG 인덱싱 |
-| DART 원문·구조화 공시 | Supabase | 저장되어 있음 | 기존 데이터를 읽어 RAG 인덱싱 |
-| 기존 재무 데이터 | Supabase | 저장되어 있음 | 정확한 숫자 조회에 재사용 |
-| 토스증권 API 설정 | 로컬/배포 환경변수 | 키 또는 설정은 있으나 실제 수집 안 함 | Phase 0에서 소량 호출 검증 |
-| 토스증권 주가 이력 | 없음 | Supabase에 저장되어 있지 않음 | Phase 6에서 필요 시 조회·계산·캐시 |
-| 증권사 리포트 PDF | 로컬 폴더 | 원본만 존재 | Phase 5에서 비공개 Storage 업로드 |
-| 리포트 페이지·표·청크 | 없음 | 아직 생성되지 않음 | Phase 5에서 파싱·저장·임베딩 |
-
-주의:
-
-- 주가 데이터를 이미 DB에 저장한 것으로 가정하지 않는다.
-- 리포트가 이미 Supabase에 있다고 가정하지 않는다.
-- 로컬 PDF 경로를 코드에 하드코딩하지 않는다.
-- 리포트 업로드 후 로컬 원본을 자동 삭제하지 않는다.
-
-
-# 1. 개발 운영 원칙
-
-## 1.1 반드시 지켜야 하는 고정 원칙
-
-아래는 개발 중 임의로 바꾸면 안 된다.
-
-- 정확한 재무·공시 숫자는 LLM이 추측하거나 계산하지 않는다.
-- 실제값과 증권사 전망값을 구분한다.
-- 정정공시는 최신 정정 내용을 우선한다.
-- 뉴스·공시·리포트 출처를 답변과 함께 제공한다.
-- 리포트 원본 PDF는 비공개로 저장한다.
-- 차트 모양만 보고 정확한 숫자를 추측하지 않는다.
-- 기존 뉴스 수집·클러스터링·DART 기능을 깨지 않는다.
-- API 키와 비밀정보를 출력하거나 커밋하지 않는다.
-- DB를 파괴적으로 변경하기 전에 백업·롤백 방법을 확인한다.
-- 임베딩 모델 세대와 차원이 다른 벡터를 같은 인덱스에 섞지 않는다.
-
-## 1.2 개발하면서 바꿀 수 있는 부분
-
-아래는 실제 코드와 실험 결과에 따라 변경할 수 있다.
-
-- 파일과 함수 이름
-- 클래스 분리 방법
-- Repository와 Service의 세부 구조
-- 청크 길이와 overlap
-- 검색 후보 개수
-- 최종 문맥 개수
-- RRF 상수
-- 캐시 방식과 만료시간
-- PDF 파서 조합
-- 일부 DB 컬럼의 이름과 타입
-- API 응답의 부가 필드
-- 프런트 컴포넌트 구조
-- 테스트 구현 방식
-- 답변 프롬프트의 세부 문장
-
-단, 기획서와 달라진 경우 반드시 이 문서의 **변경 기록**에 남긴다.
-
-## 1.3 작업을 멈춰야 하는 경우
-
-아래만 즉시 중단하고 사용자에게 확인한다.
-
-- 임베딩 차원이 예상과 달라 현재 DB 설계를 사용할 수 없음
-- 기존 데이터가 삭제되거나 손상될 가능성이 있음
-- 기존 테이블과 신규 마이그레이션이 충돌함
-- 전체 PDF 처리 예상 비용이 프로젝트 한도를 크게 초과함
-- 외부 API 또는 라이선스 문제로 원본을 처리할 수 없음
-- 실제값과 전망값을 안정적으로 구분할 수 없음
-- 출처를 원문과 연결할 수 없음
-- 기존 핵심 기능이 회귀 테스트에서 깨짐
-- 보안키가 프런트엔드나 저장소에 노출될 위험이 있음
-
-그 외의 작은 문제는 합리적인 방법으로 해결하고 Phase 종료 보고서에 기록한다.
-
----
-
-# 2. 상태 표시 방법
-
-각 항목은 다음 표시를 사용한다.
-
-```text
-[ ] 시작 전
-[~] 진행 중
-[x] 완료
-[!] 변경 또는 주의 필요
-[-] 이번 MVP에서 제외
-```
-
-Claude Code는 작업하면서 직접 체크박스를 수정한다.
-
----
-
-# 3. 전체 진행 현황
+# 1. 전체 진행 현황
 
 | Phase | 내용 | 상태 | 승인 |
 |---|---|---:|---:|
 | 0 | 사전 검증 | [x] | [x] |
-| 1 | DB·Storage·기본 Repository | [x] | [x] |
-| 2 | 뉴스 기반 최소 RAG | [x] | [x] |
+| 1 | DB·Storage·Repository | [x] | [x] |
+| 2 | 뉴스 RAG | [x] | [x] |
 | 3 | 하이브리드 검색 | [x] | [x] |
-| 4 | 숫자·용어·혼합 질문 (결정론적 QA 라이브 경로 완료) | [x] | [x] |
-| 5 | 증권사 리포트 | [x] 적재+검색+QA 연결 완료 | [ ] |
-| 6 | 주가 질문 | [ ] | [ ] |
-| 7 | 프런트엔드 연결 | [ ] | [ ] |
-| 8 | 평가·튜닝 | [ ] | [ ] |
-| 9 | 배포·발표 준비 | [ ] | [ ] |
-| Ext A | 공통 read-only Tool 인터페이스 (향후) | [ ] | [ ] |
-| Ext B | 제한형 Agentic Orchestrator (향후) | [ ] | [ ] |
-| Ext C | MCP 서버 공개 (선택, Tool·Agentic 안정화 후) | [ ] | [ ] |
-| Ext D | ~~A2A PoC~~ (이번 프로젝트 범위 제외) | 제외 | — |
+| 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
+| 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [ ] | [ ] |
+| 6 | 주가 Tool | [ ] | [ ] |
+| 7 | 프런트 연결 | [ ] | [ ] |
+| 8 | 전체 평가·튜닝 | [ ] | [ ] |
+| 9 | 배포·발표 | [ ] | [ ] |
+| 선택 | MCP 노출 | [-] 기본 제외 | — |
+| 제외 | A2A·다중 Agent | [-] 제외 | — |
 
-> Ext A~B는 Phase 6 이후의 **향후 확장**이며 미구현이다. Agentic·MCP는 아직 완료 기능이 아니다.
-> **Ext C(MCP)**는 Tool·Agentic 안정화 이후 일정·시연 가치가 있을 때만 선택적으로 추가한다.
-> **Ext D(A2A)**는 이번 프로젝트 범위에서 **제외**하며, 적용하지 않은 이유만 설계 판단으로 기록한다.
-> Phase 4 의 결정론적 QA(숫자·용어·혼합)는 2026-07-24 통합으로 **실제 QA API 라이브 경로**가 되었다.
+---
+
+# 2. 고정 설계 결정
+
+## 채택
+
+```text
+LangChain v1 create_agent
+LangGraph runtime
+단일 Agent
+typed read-only Tools
+기존 HybridRetriever
+기존 FactsService
+prebuilt middleware
+Tool trace
+```
+
+## 폐기
+
+```text
+키워드 QueryPlan을 메인 라우터로 사용
+단순/복합 규칙 분류
+legacy QueryPlan fallback
+특정 질문 예외
+```
+
+## 제외
+
+```text
+custom StateGraph
+다중 Agent
+Supervisor
+A2A
+자유 SQL
+GraphRAG
+Self-RAG
+CRAG 명목 구현
+Deep Agents
+```
+
+---
+
+# Phase 5. 현재 완료 상태
+
+## 완료 내용
+
+```text
+244 research_reports
+1,877 pages
+1,937 tables
+활성 리포트 청크 4,350
+partial 리포트 검색 제외
+search_research_reports
+QA report_sources 연결
+페이지 출처
+```
+
+## Phase 5 승인 전 확인
+
+- [ ] PR CI 통과
+- [ ] 변경 범위가 Phase 5에 한정
+- [ ] 비관련 `vercel.json` 미포함
+- [ ] 전체 테스트·ruff 통과
+- [ ] Phase 5 문서와 실제 DB count 일치
+- [ ] 머지
+
+---
+
+# Phase 5.5. 단일 Agentic RAG 전환
+
+## 목표
+
+키워드 QueryPlan을 라이브 경로에서 제거하고, 모든 질문을 LangChain 표준 Tool-Calling Agent가 처리하도록 전환한다.
+
+---
+
+## 5.5-A. 의존성과 모델 preflight
+
+- [ ] 새 브랜치 생성
+- [ ] LangChain v1·LangGraph v1 호환 버전 조사
+- [ ] `langchain-upstage` 현재 호환 버전 조사
+- [ ] 작은 별도 환경에서 설치
+- [ ] 기존 테스트 실행
+- [ ] `ChatUpstage.bind_tools()` 단일 Tool call 검증
+- [ ] Tool result 후 추가 Tool call 검증
+- [ ] 2개 Tool 연속 호출 검증
+- [ ] Tool call streaming 검증
+- [ ] 한국어 부정·제외 질문 검증
+- [ ] `create_agent` 호환 검증
+- [ ] 정확한 버전을 `uv.lock`에 고정
+- [ ] 비밀키 미출력
+- [ ] preflight 결과 문서화
+
+### 중단 조건
+
+- 현재 Agent 모델이 Tool Calling을 안정적으로 지원하지 않음
+- 스트리밍 Tool call이 현재 SSE 계약과 연결 불가
+- 패키지 도입으로 기존 테스트 대량 회귀
+- 모델 비용·지연이 프로젝트 한도를 크게 초과
+
+중단 시 임의 parser Agent를 만들지 않는다. `AGENT_CHAT_MODEL` 후보를 보고한다.
+
+### 산출물
+
+```text
+backend/docs/rag/phase_5_5/AGENT_PREFLIGHT.md
+backend/scripts/agent_preflight.py
+```
+
+---
+
+## 5.5-B. Tool 계약
+
+- [ ] 공통 `ToolResult` 구현
+- [ ] 공통 `SourceRef` 구현
+- [ ] `QaRuntimeContext` 구현
+- [ ] Tool error sanitize
+- [ ] Tool 결과 크기 제한
+- [ ] 읽기 전용 확인
+
+### Tools
+
+- [ ] `get_financial_facts`
+- [ ] `lookup_financial_term`
+- [ ] `search_news`
+- [ ] `search_disclosures`
+- [ ] `get_disclosure_values`
+- [ ] `search_research_reports`
+
+### 검증
+
+- [ ] 기존 Service 재사용
+- [ ] Agent가 SQL 문자열을 전달할 수 없음
+- [ ] `get_financial_facts` 기간·amount_type 엄격 검증
+- [ ] 다른 기간 fallback 없음
+- [ ] latest disclosure 기본값
+- [ ] partial report 제외
+- [ ] 모든 결과에 source metadata
+
+### 산출물
+
+```text
+backend/app/agent/context.py
+backend/app/agent/tools/
+backend/tests/agent/test_tool_*.py
+```
+
+---
+
+## 5.5-C. Agent 구현
+
+- [ ] `ChatUpstage` 또는 검증된 Agent model 초기화
+- [ ] `create_agent` 사용
+- [ ] 시스템 프롬프트 작성
+- [ ] Tool 목록 연결
+- [ ] Runtime Context 연결
+- [ ] `ModelCallLimitMiddleware`
+- [ ] `ToolCallLimitMiddleware`
+- [ ] `ToolRetryMiddleware`
+- [ ] `ModelRetryMiddleware`
+- [ ] `ToolErrorMiddleware`
+- [ ] 동일 Tool·동일 인자 반복 검사
+- [ ] 전체 timeout
+- [ ] 내부 추론 전문 비로그
+- [ ] Agent feature flag
+
+초기 제한:
+
+```text
+모델 최대 4회
+Tool 최대 5회
+동일 Tool+인자 최대 1회
+외부 Tool 재시도 1회
+전체 8초
+```
+
+### 금지
+
+- [ ] custom planner node를 만들지 않음
+- [ ] keyword router를 만들지 않음
+- [ ] simple/complex classifier를 만들지 않음
+- [ ] custom StateGraph를 만들지 않음
+- [ ] legacy QueryPlan fallback을 만들지 않음
+
+### 산출물
+
+```text
+backend/app/agent/runtime.py
+backend/app/agent/prompts.py
+backend/app/agent/middleware.py
+backend/app/services/agent_qa.py
+```
+
+---
+
+## 5.5-D. API 연결
+
+- [ ] `/qa` Agent 경로
+- [ ] `/qa/stream` Agent 경로
+- [ ] 기존 요청 계약 유지
+- [ ] `execution.toolCalls` 응답 추가
+- [ ] `queryPlan` deprecated optional
+- [ ] SSE `tool_start`
+- [ ] SSE `tool_end`
+- [ ] SSE `sources`
+- [ ] SSE `delta`
+- [ ] SSE `done`
+- [ ] 오류 응답
+- [ ] feature flag로 legacy/agent A-B 실행
+- [ ] 운영 전 기본 flag false
+
+### 산출물
+
+```text
+backend/app/api/routes/qa.py
+backend/app/schemas/qa.py
+```
+
+---
+
+## 5.5-E. 검증기와 trace
+
+- [ ] source_id 유효성
+- [ ] 숫자 Tool 결과 포함 여부
+- [ ] 단위·기간 검증
+- [ ] actual/forecast 검증
+- [ ] latest correction 검증
+- [ ] Tool call count 기록
+- [ ] model call count 기록
+- [ ] Tool latency
+- [ ] stop reason
+- [ ] validation errors
+- [ ] 비밀정보·전체 PDF 미로그
+
+### 선택
+
+- [ ] LangSmith 개발 tracing 검토
+- [ ] 데이터 외부 전송 정책 확인
+- [ ] 미승인 시 `rag_query_logs`만 사용
+
+---
+
+## 5.5-F. 평가
+
+- [ ] 개발셋 작성
+- [ ] 홀드아웃 작성
+- [ ] 금융용어
+- [ ] 재무 연간·분기·누적
+- [ ] 뉴스
+- [ ] 공시
+- [ ] 리포트
+- [ ] 복합 질문
+- [ ] 부정·제외
+- [ ] 현재 문맥
+- [ ] no_data
+- [ ] legacy QueryPlan 비교
+- [ ] Tool Recall
+- [ ] forbidden Tool violation
+- [ ] Tool arg accuracy
+- [ ] 숫자 Exact Match
+- [ ] Citation Precision
+- [ ] 지연·비용
+- [ ] 동일 호출 반복
+
+### 반드시 포함
+
+```text
+최근 뉴스에서 삼성전자 호재 있어?
+영업이익 같은 실적 관련은 제외해.
+
+실적 얘기는 빼고 최근 악재만 알려줘.
+
+목표주가 말고 실제 주가가 왜 떨어졌어?
+
+증권사 전망 말고 회사가 직접 공시한 내용만 알려줘.
+
+2025년 3분기 누적 영업이익과
+3분기 단독 영업이익을 비교해줘.
+```
+
+### 승인 기준
+
+```text
+필수 Tool Recall ≥ 95%
+금지 Tool 위반 ≤ 3%
+부정·제외 치명적 위반 0
+재무 Exact Match 100%
+기간·단위 100%
+actual/forecast 혼동 0
+존재하지 않는 인용 0
+동일 호출 반복 0
+단순 P95 ≤ 6초
+복합 P95 ≤ 10초
+```
+
+---
+
+## 5.5-G. 라이브 전환
+
+- [ ] 승인 기준 통과
+- [ ] `AGENT_ENABLED=true` 스테이징
+- [ ] 실제 UI smoke test
+- [ ] legacy와 결과 비교
+- [ ] 운영 flag 전환
+- [ ] QueryPlan 라이브 호출 제거
+- [ ] QueryPlan deprecated 표시
+- [ ] 문서 갱신
+- [ ] 완료 보고
+- [ ] 다음 Phase 자동 진행 금지
+
+---
+
+## Phase 5.5 종료 기록
+
+```text
+상태:
+완료일:
+Agent 모델:
+LangChain 버전:
+LangGraph 버전:
+Tool 수:
+Tool 선택 평가:
+금융 Exact Match:
+부정·제외 평가:
+단순 P95:
+복합 P95:
+질문당 평균 비용:
+legacy QueryPlan 라이브 제거 여부:
+남은 위험:
+Phase 6 진행 가능 여부:
+```
+
+---
+
+# Phase 6. 주가 Tool
+
+## 목표
+
+주가 조회와 사건 전후 수익률을 Agent가 사용할 수 있는 읽기 전용 Tool로 추가한다.
+
+- [ ] 토스증권 API 실제 범위 재확인
+- [ ] `get_stock_prices`
+- [ ] `calculate_event_return`
+- [ ] 거래일 처리
+- [ ] 휴장일
+- [ ] 데이터 누락
+- [ ] 30초 cache
+- [ ] 백엔드 계산
+- [ ] source metadata
+- [ ] Agent Tool 등록
+- [ ] 호출 limit
+- [ ] 인과 단정 금지
+- [ ] 평가셋 추가
+
+통과:
+
+```text
+계산 Exact Match 100%
+Agent가 산술로 대체 0
+데이터 없음 추측 0
+```
+
+---
+
+# Phase 7. 프런트 연결
+
+- [ ] Agent SSE 이벤트
+- [ ] Tool 실행 상태 표시
+- [ ] 뉴스 현재 문맥
+- [ ] 공시 현재 문맥
+- [ ] 리포트 현재 문맥·페이지
+- [ ] 종목 코드
+- [ ] 출처 카드
+- [ ] numeric source
+- [ ] report source
+- [ ] 오류
+- [ ] 중단
+- [ ] 모바일
+- [ ] 내부 추론 미표시
+
+표시 예:
+
+```text
+재무 데이터 확인 중
+최근 뉴스 검색 중
+증권사 리포트 확인 중
+```
+
+Tool 인자 전체나 내부 reasoning은 사용자에게 보여주지 않는다.
+
+---
+
+# Phase 8. 전체 평가·튜닝
+
+- [ ] 160개 평가셋
+- [ ] 홀드아웃
+- [ ] Agent trajectory
+- [ ] 검색
+- [ ] 숫자
+- [ ] 출처
+- [ ] 제외 조건
+- [ ] 답변 불가능
+- [ ] 지연
+- [ ] 비용
+- [ ] reranker A/B
+- [ ] 사람 평가 2인
+- [ ] 치명적 오류 수정
+- [ ] 특정 질문 하드코딩 점검
+- [ ] 발표 질문 선정
+
+---
+
+# Phase 9. 배포
+
+- [ ] lockfile
+- [ ] Docker 의존성
+- [ ] 메모리
+- [ ] 환경변수
+- [ ] feature flag
+- [ ] migration
+- [ ] trace 정책
+- [ ] CI
+- [ ] 배포 smoke
+- [ ] SSE proxy
+- [ ] 비용
+- [ ] rollback
+- [ ] 발표 리허설
+
+rollback:
+
+```text
+AGENT_ENABLED=false
+```
+
+이 플래그는 장애 대응용이다. legacy QueryPlan을 장기 운영 fallback으로 유지한다는 뜻이 아니다. 비활성화 시 QA를 안전한 제한 응답 또는 검증된 단일 조회 API로 전환한다.
+
+---
+
+# 선택: MCP
+
+기본 제외한다.
+
+다음 조건이 모두 만족될 때만 진행한다.
+
+- Agent와 Tool 안정화
+- 외부 클라이언트 재사용 요구
+- 인증 범위 확정
+- 일정 여유
+
+노출 후보:
+
+```text
+get_financial_facts
+search_news
+search_research_reports
+```
+
+내부 Agent보다 먼저 구현하지 않는다.
+
+---
+
+# 부록 P0-5. Phase 0~5 상세 실행 기록 (보존)
+
+> 아래는 Agentic 전환(Phase 5.5) 이전, Phase 0~5 실제 구현·검증·적재·비용의 상세 기록이다.
+> 위 §1 진행 현황표의 완료 근거이며, 삭제·축약하지 않고 원문 보존한다.
+> 참고: Phase 4~5의 '결정론적 QueryPlan/FactsQaService 라이브 경로'는 Phase 5.5에서
+> LangChain 단일 Agent로 대체될 예정이다(당시 시점의 완료 기록으로 읽을 것).
 
 ---
 
@@ -692,330 +1051,24 @@ QA 응답 계약: 비파괴(선택 필드만 추가). Agentic·Tool Registry·MC
 
 ---
 
-# Phase 6. 주가 질문
-
-## 목표
-
-기존 시장 데이터 연동을 이용해 현재가와 사건 전후 가격 변화를 정확히 계산한다.
-
-## 작업 체크리스트
-
-- [ ] Supabase에 기존 주가 이력이 없다는 전제 확인
-- [ ] 기존 토스증권 연동 코드 확인
-- [ ] 토스증권 API 실제 지원 범위 확인
-- [ ] 현재가 조회
-- [ ] 전일 대비 계산
-- [ ] 특정 기간 수익률 계산
-- [ ] 사건 전후 1거래일 계산
-- [ ] 사건 전후 3거래일 계산
-- [ ] 사건 전후 5거래일 계산
-- [ ] 거래량 변화 계산
-- [ ] 휴장일 처리
-- [ ] 데이터 누락 처리
-- [ ] 가격 캐시
-- [ ] 계산값 structured fact로 전달
-- [ ] 인과관계 단정 방지
-- [ ] API 응답 시간 측정
-
-## 유연하게 판단할 부분
-
-- 기존 API가 기간 시세를 제공하지 않으면 지원 범위를 줄일 수 있다.
-- 1·3·5거래일 중 실제 발표 UI에 필요한 구간부터 구현할 수 있다.
-- 가격 데이터 소스의 제약은 종료 보고서에 명시한다.
-- 주가 질문을 별도 API로 분리할 수 있다.
-
-## 최소 통과 조건
-
-- 수익률은 백엔드 코드가 계산함
-- 거래일 기준으로 계산함
-- 데이터가 없으면 추측하지 않음
-- 뉴스와 주가의 인과관계를 확정적으로 말하지 않음
-
-## Phase 종료 기록
-
-```text
-상태:
-완료일:
-지원하는 가격 질문:
-사용 데이터 소스:
-평균 조회 시간:
-캐시:
-제약 사항:
-```
 
 ---
 
-# Extension A~C. Tool·Agentic·MCP 확장 (향후 계획) / A2A 제외
+# 변경 기록
 
-> **주의**: Extension A~C는 Phase 5(리포트 RAG)와 Phase 6(주가)이 완료된 뒤 진행하는
-> **향후 계획**이다. 아직 미구현이며, 현재 시스템은 LangChain·LangGraph 없이 직접 구현한
-> **결정론적 하이브리드 RAG**다. Extension은 기존 결정론적 경로를 대체하지 않고 감싸며,
-> 단순 질문은 계속 기존 라우터로 처리한다. 기존 Phase 0~7 번호는 그대로 유지한다.
-> **A2A(Extension D)는 이번 프로젝트 범위에서 제외한다** — 아래 "Extension D" 절에 사유만 기록한다.
-
-## Extension A. 공통 읽기 전용 Tool 인터페이스
-
-### 목표
-기존 서비스(FactsService, 하이브리드 검색, 용어 조회, Phase 5 리포트, Phase 6 주가)를
-동일한 read-only Tool 시그니처로 추상화해 라우터와 (향후) Agent가 공유하게 한다.
-
-### 작업 체크리스트
-- [ ] Tool 인터페이스(입력 스키마·출력 스키마·부작용 없음) 정의
-- [ ] 기존 서비스들을 Tool Registry에 등록(쓰기 없는 조회만 노출)
-- [ ] 기존 결정론적 라우터가 Registry를 통해 동일 Tool 호출하도록 전환
-- [ ] Tool 호출 로깅(선택 Tool·지연·결과 크기)
-- [ ] 회귀: 기존 답변 품질·지연 변화 없음 확인
-
-### 최소 통과 조건
-- 모든 Tool이 읽기 전용
-- 기존 라우터 동작·결과가 이전과 동일(회귀 없음)
-
-## Extension B. 제한형 Agentic Orchestrator
-
-### 목표
-복합·다단계 질문에만 제한적으로 Agent를 적용하고, 단순 질문은 기존 라우터를 유지한다.
-
-### 작업 체크리스트
-- [ ] 복합 질문 판별 기준 정의(다단계·비교·다중 종목 등)
-- [ ] Agent는 Extension A의 read-only Tool만 사용
-- [ ] 최대 Tool 호출 횟수 상한
-- [ ] 실행 시간 상한
-- [ ] 실패·시간 초과 시 기존 결정론적 라우터로 fallback
-- [ ] 단순 질문은 Agent를 거치지 않음(라우터 직결)
-- [ ] Agent 경로 on/off 플래그
-- [ ] 반복·불필요 호출 방지 로깅
-
-### 최소 통과 조건
-- 단순 질문은 기존 라우터로만 처리됨
-- Agent 실패·초과 시 fallback으로 답변 보장
-- 플래그로 즉시 비활성화 가능
-
-## Extension C. MCP 서버 공개 (선택)
-
-### 목표
-Extension A의 동일 Tool을 MCP 서버로 노출해 외부·다른 런타임에서 재사용 가능하게 한다.
-**Tool·Agentic이 안정화되고 일정·시연 가치가 확인될 때만** 선택적으로 진행한다.
-Agentic보다 먼저 구현하지 않는다.
-
-### 작업 체크리스트
-- [ ] MCP 서버로 노출할 핵심 Tool 3개 확정(예: search_news·get_financial_facts·search_research_reports, read-only만)
-- [ ] 내부 함수 호출과 MCP 노출이 같은 Tool 정의를 공유
-- [ ] 인증·접근 범위 정의
-- [ ] MCP on/off 및 장애 시 내부 경로 유지 확인
-
-### 최소 통과 조건
-- MCP가 꺼져도 내부 RAG는 정상 동작
-- 노출 Tool이 전부 읽기 전용
-
-## Extension D. A2A — 이번 프로젝트 범위에서 제외
-
-**구현하지 않는다.** 구현 계획에도 넣지 않으며, 적용하지 않은 이유만 설계 판단으로 기록한다.
-
-### 제외 사유
-- 현재 서비스는 하나의 FastAPI 애플리케이션 안에서 뉴스·공시·재무·용어·리포트·주가를
-  처리한다. 이를 억지로 독립 Agent로 나누면 배포 복잡도·Agent 간 통신 오류·응답 지연이
-  늘고, 실제 서비스 품질보다 기술 이름을 넣기 위한 구현이 된다.
-- 하나의 백엔드 안에서 공통 read-only Tool을 안전하게 호출하는 구조(Ext A~B)가 더 단순하고
-  안정적이며, 짧은 일정 안에서 검증·평가하기에도 적합하다.
-- 따라서 독립 Agent 간 작업 위임을 위한 A2A는 현재 프로젝트의 핵심 문제를 해결하지 않는다.
-
-### 발표 표현
-> A2A는 독립 Agent 간 작업 위임이 필요한 구조에서 의미가 있지만, 현재 서비스는 하나의
-> 백엔드 안에서 공통 Tool을 안전하게 호출하는 구조가 더 적합하다고 판단해 적용하지 않았습니다.
-
-## Extension 종료 기록
-
-```text
-Extension A 상태:
-Extension B 상태:
-Extension C 상태(선택):
-Extension D(A2A) 상태: 제외(범위 밖). 사유는 위 "Extension D" 절에 기록.
-비고(미진행 결정 포함):
-```
+| 날짜 | 변경 | 이유 | 영향 |
+|---|---|---|---|
+| 2026-07-24 | 키워드 QueryPlan을 메인 라우터에서 제거하기로 결정 | 부정·제외 범위를 단어 규칙으로 처리할 수 없음 | Phase 5.5 추가 |
+| 2026-07-24 | LangChain v1 `create_agent` 채택 | 표준 Agent harness, custom 최소화 | LangGraph runtime 사용 |
+| 2026-07-24 | custom StateGraph 제외 | 현재 Tool 수와 작업에 불필요 | 유지보수 범위 축소 |
+| 2026-07-24 | 모든 질문을 단일 Agent로 처리 | simple/complex 분류 하드코딩 제거 | Tool 0..N 동적 호출 |
+| 2026-07-24 | legacy QueryPlan fallback 제외 | 잘못된 경로로 조용히 오답 생성 가능 | 명시적 오류/근거 부족 우선 |
+| 2026-07-24 | CRAG·Self-RAG 명목 구현 제외 | 연구 구조를 억지로 복제하지 않음 | bounded Agent retry만 사용 |
+| 2026-07-24 | reranker 평가 게이트 도입 | 무조건 추가 시 지연·메모리 위험 | 홀드아웃 개선 시만 활성화 |
 
 ---
 
-# Phase 7. 프런트엔드 연결
-
-## 목표
-
-현재 UI 안에서 RAG를 자연스럽게 사용할 수 있게 한다.
-
-## 작업 체크리스트
-
-- [ ] QA API 클라이언트
-- [ ] SSE 스트리밍 훅
-- [ ] 뉴스 모달 AI 패널 연결
-- [ ] 뉴스 `sourceId` 전달
-- [ ] 종목 코드 전달
-- [ ] 공시 질문 연결
-- [ ] 리포트 질문 연결
-- [ ] 리포트 페이지 context 전달
-- [ ] 전역 질문 화면 연결
-- [ ] Markdown 답변 렌더링
-- [ ] 쉬운 설명 영역 표시
-- [ ] 자세한 설명 영역 표시
-- [ ] 핵심 숫자 표시
-- [ ] 주의할 점 표시
-- [ ] 출처 카드 표시
-- [ ] 출처 번호 클릭 상호작용
-- [ ] 로딩 상태
-- [ ] 스트리밍 중단 처리
-- [ ] 오류와 재시도
-- [ ] 모바일 화면 확인
-- [ ] 기존 UI 회귀 확인
-
-## 유연하게 판단할 부분
-
-- 쉬운 설명과 자세한 설명을 탭으로 보여줄 수 있다.
-- 한 화면에 연속으로 보여줄 수도 있다.
-- 핵심 숫자는 카드 UI로 분리할 수 있다.
-- 출처는 아래 목록 또는 우측 패널로 표시할 수 있다.
-- 기존 디자인 시스템을 우선한다.
-
-## 최소 통과 조건
-
-- 현재 문서 context가 백엔드로 전달됨
-- 답변이 스트리밍됨
-- 쉬운 설명과 자세한 설명을 사용자가 구분할 수 있음
-- 출처를 확인할 수 있음
-- 기존 화면을 크게 망가뜨리지 않음
-
-## Phase 종료 기록
-
-```text
-상태:
-완료일:
-연결한 화면:
-답변 표시 방식:
-출처 표시 방식:
-모바일 결과:
-기획서와 달라진 UI:
-남은 UX 문제:
-```
-
----
-
-# Phase 8. 평가·튜닝
-
-## 목표
-
-완벽한 연구 평가가 아니라, 발표에서 신뢰할 수 있는 수준인지 확인한다.
-
-## 작업 체크리스트
-
-- [ ] 평가 질문 50개 작성
-- [ ] 숫자 질문 포함
-- [ ] 용어 질문 포함
-- [ ] 뉴스 문맥 질문 포함
-- [ ] 공시 질문 포함
-- [ ] 리포트 질문 포함
-- [ ] 혼합 질문 포함
-- [ ] 근거가 없는 질문 포함
-- [ ] 의미 검색 단독 결과 기록
-- [ ] 하이브리드 결과 기록
-- [ ] 검색 top 5 근거 포함 여부
-- [ ] 숫자 정확성
-- [ ] 실제·전망 혼동
-- [ ] 정정공시 최신값
-- [ ] 인용 번호 검증
-- [ ] 응답 시간
-- [ ] 비용
-- [ ] 치명적 오류 수정
-- [ ] 발표용 대표 질문 선정
-
-## 유연하게 판단할 부분
-
-- 모든 기준을 수치 100%로 맞출 필요는 없다.
-- 발표용 프로젝트이므로 치명적 오류를 우선 수정한다.
-- 검색 결과가 조금 다르더라도 답변 근거가 정확하면 허용할 수 있다.
-- 평가 질문은 실제 UI 사용 사례에 맞춰 바꿀 수 있다.
-- 재정렬 모델은 개선 효과가 명확할 때만 추가한다.
-
-## 반드시 0건이어야 하는 오류
-
-- 정정 전 값을 최신값으로 답함
-- 증권사 예상값을 확정 실적으로 표현함
-- 존재하지 않는 출처 번호 사용
-- 차트에서 없는 숫자를 만들어냄
-- 매수·매도 직접 추천
-- 비공개 키 또는 원본 파일 노출
-
-## Phase 종료 기록
-
-```text
-상태:
-완료일:
-평가 질문 수:
-검색 결과:
-숫자 정확도:
-치명적 오류:
-평균 응답 시간:
-누적 예상 비용:
-발표 가능 여부:
-남은 한계:
-```
-
----
-
-# Phase 9. 배포·발표 준비
-
-## 목표
-
-발표 환경에서 안정적으로 동작하게 한다.
-
-## 작업 체크리스트
-
-- [ ] 최종 환경변수 목록 확인
-- [ ] 비밀키 Git 미포함 확인
-- [ ] 배포 환경에 Upstage 키 설정
-- [ ] 배포 환경에 Supabase 키 설정
-- [ ] 시장 데이터 키 확인
-- [ ] 마이그레이션 적용 상태 확인
-- [ ] 전체 인덱싱 완료 확인
-- [ ] 실패 문서 목록 확인
-- [ ] Docker 빌드
-- [ ] 백엔드 배포
-- [ ] 프런트 배포
-- [ ] CORS 확인
-- [ ] 스트리밍 프록시 확인
-- [ ] 실제 배포 URL smoke test
-- [ ] 발표용 질문 10개 리허설
-- [ ] 장애 시 대체 화면 또는 녹화 준비
-- [ ] 최종 비용 확인
-- [ ] 알려진 한계 문서화
-
-## 유연하게 판단할 부분
-
-- 발표 안정성을 위해 일부 기능을 숨길 수 있다.
-- 처리 실패한 오래된 리포트는 발표 대상에서 제외할 수 있다.
-- 성능이 느린 고급 질문은 베타 표시할 수 있다.
-- 실제 배포에서 스트리밍 문제가 있으면 일반 응답 방식으로 임시 전환할 수 있다.
-
-## 최소 통과 조건
-
-- 발표용 핵심 질문이 정상 작동
-- 비밀정보가 노출되지 않음
-- 출처가 표시됨
-- 치명적인 숫자 오류가 없음
-- 장애 대응 방법이 있음
-
-## Phase 종료 기록
-
-```text
-상태:
-완료일:
-배포 주소:
-최종 지원 기능:
-제외한 기능:
-발표용 질문:
-알려진 한계:
-장애 대응:
-```
-
----
-
-# 4. 변경 기록
+## 부록: 기존(Extension 계획 시기) 변경 기록
 
 기획서와 구현이 달라질 때 아래 표를 추가한다.
 
@@ -1069,112 +1122,27 @@ Extension D(A2A) 상태: 제외(범위 밖). 사유는 위 "Extension D" 절에 
 
 ---
 
-# 5. Phase 종료 보고 템플릿
-
-Claude Code는 매 Phase 종료 시 아래 형식으로 보고한다.
-
-```markdown
-# Phase N 완료 보고
-
-## 완료한 작업
-- ...
-
-## 수정한 파일
-- ...
-
-## DB 변경
-- ...
-
-## 테스트 결과
-- ...
-
-## 실제 응답 시간과 비용
-- ...
-
-## 기획서와 달라진 점
-- 변경 없음
-또는
-- 원래:
-- 실제:
-- 이유:
-- 영향:
-
-## 아직 남은 문제
-- ...
-
-## 사용자 확인이 필요한 것
-- 없음
-또는
-- ...
-
-## 다음 Phase 진행 가능 여부
-- 가능 / 조건부 가능 / 불가능
-```
 
 ---
 
-# 6. Claude Code에 처음 전달할 명령
+# Claude Code에 줄 Phase 5.5 시작 명령
 
 ```text
 docs/rag/RAG_IMPLEMENTATION_SPEC.md,
 docs/rag/RAG_GUIDE_FOR_OWNER.md,
+docs/rag/RAG_EVALUATION_PLAN.md,
 docs/rag/RAG_PHASE_EXECUTION_PLAN.md를 전체 읽어라.
 
-RAG_PHASE_EXECUTION_PLAN.md를 실제 진행 체크리스트로 사용하고,
-작업하면서 체크박스와 Phase 종료 기록을 직접 갱신해라.
+현재는 Phase 5.5-A 의존성과 모델 preflight만 수행해라.
 
-현재는 Phase 0만 진행해라.
-
-사소한 구현 선택은 합리적으로 판단해서 진행하고
-작업을 불필요하게 멈추지 마라.
-
-단, 고정 원칙을 바꾸거나 데이터 손상·비용 초과·보안 위험이
-발생할 가능성이 있으면 중단하고 보고해라.
-
-기획서와 다른 방식으로 구현한 부분은 숨기지 말고
-변경 기록에 원래 계획, 실제 구현, 이유, 영향을 작성해라.
-
-Phase 0이 끝나면 다음 Phase로 자동 진행하지 말고
-완료 보고를 남긴 뒤 기다려라.
-
-비밀키와 .env 값은 출력하거나 커밋하지 마라.
-```
-
----
-
-# 7. 이후 Phase 시작 명령
-
-Phase 0을 승인한 뒤에는 짧게 명령하면 된다.
-
-```text
-RAG_PHASE_EXECUTION_PLAN.md의 Phase 1을 진행해라.
-해당 Phase의 체크박스와 종료 기록을 갱신하고,
-완료 보고 후 다음 Phase로 넘어가지 말고 기다려라.
-```
-
-Phase 번호만 바꿔 반복한다.
-
----
-
-# 8. 핵심 운영 방식
-
-이 문서는 Claude Code를 지나치게 묶기 위한 문서가 아니다.
-
-목적은 다음 세 가지다.
-
-1. 어디까지 했는지 잊지 않게 하기
-2. 중요한 원칙이 개발 중 사라지지 않게 하기
-3. 실제 코드 때문에 계획이 바뀌었을 때 이유를 남기기
-
-따라서 작은 구현 차이는 자유롭게 허용하고, 다음만 확실히 관리한다.
-
-```text
-정확한 숫자
-실제값과 전망값 구분
-최신 정정공시
-출처
-비공개 원본
-비용
-보안
-기존 기능 보호
+중요:
+- 기존 키워드 QueryPlan에 규칙을 추가하지 마라.
+- 특정 질문·기업·평가 사례 하드코딩 금지.
+- custom StateGraph를 만들지 마라.
+- LangChain v1 create_agent와 공식 Upstage integration 호환성을 먼저 검증해라.
+- 실제 Tool Calling, 연속 Tool 호출, 스트리밍, 한국어 부정·제외 표현을 시험해라.
+- 비밀키를 출력하지 마라.
+- 코드·DB 라이브 경로는 아직 변경하지 마라.
+- 정확한 패키지 버전을 uv.lock에 고정할 제안과 결과를 보고해라.
+- 완료 후 다음 단계로 넘어가지 말고 기다려라.
 ```
