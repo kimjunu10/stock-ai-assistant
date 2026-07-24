@@ -10,14 +10,14 @@ from __future__ import annotations
 EMBEDDING_MODEL = "BAAI/bge-m3"
 EMBEDDING_REVISION = "5617a9f61b028005a4858fdac845db406aefb181"  # 재현성 고정 (exp_a와 동일)
 EMBEDDING_DIM = 1024
-INPUT_TYPE = "B_title_desc"  # title + " " + description
-PREPROCESS_VERSION = "v1"  # exp_a clustering_lib.PREPROCESS_VERSION과 동일해야 함
+INPUT_TYPE = "A_title"
+PREPROCESS_VERSION = "v2_title_only"
 CLUSTERING_METHOD = "online_centroid"
 COSINE_THRESHOLD = 0.74
 # 같은 종목의 오래된 유사 사건이 새 기사에 다시 붙는 범위를 제한한다.
 # 이 값은 동일 사건 판정 자체가 아니라 LLM에 전달할 후보의 최근성 제한이다.
 ACTIVE_WINDOW_HOURS = 24
-CLUSTERING_VERSION = "bge_m3_title_desc_centroid_v1"
+CLUSTERING_VERSION = "bge_m3_title_multiprototype_v2"
 
 # --- over-merge 보호 (시장 뉴스 + 비사건형 투자정보 브리지 차단) ---
 # 기본은 끄기(False) → 기존 결과와 100% 동일. 켜면 시황(market)·비사건형 투자정보(info)
@@ -29,7 +29,7 @@ SEPARATE_INFO = (
     True  # 비사건형 투자정보(info)를 별도 유형으로 분리(BLOCK_MARKET_BRIDGE=True일 때만)
 )
 # 보호 기능을 켰을 때 사용할 새 클러스터링 버전명(기존 산출물과 구분).
-CLUSTERING_VERSION_PROTECTED = "bge_m3_title_desc_centroid_bridge_info_v3"
+CLUSTERING_VERSION_PROTECTED = "bge_m3_title_multiprototype_bridge_info_v4"
 
 # --- Solar 사실 통합 본문 (SPEC Step 6) ---
 SOLAR_MODEL = "solar-pro3-260323"  # solar-pro3 pinned revision
