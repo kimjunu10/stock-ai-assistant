@@ -90,7 +90,7 @@ def test_v2_assigner_new_when_no_candidates():
 
 
 def test_v2_assigner_signature_conflict_new():
-    # 유사 임베딩이지만 Solar 가 event_signature 충돌로 new 판정 → 별도 클러스터.
+    # 0.85 미만의 유사 임베딩은 Solar가 event_signature 충돌로 new 판정한다.
     # (첫 기사는 후보 0개라 LLM 미호출이므로, LLM 은 항상 new 를 반환하도록 둔다.)
     def fake(_prompt):
         return (
@@ -99,7 +99,8 @@ def test_v2_assigner_signature_conflict_new():
         )
 
     a = assign_llm_v2.LLMAssignerV2(call_fn=fake)
-    vec = np.array([1.0, 0.0], dtype=np.float32)
+    first_vec = np.array([1.0, 0.0], dtype=np.float32)
+    ambiguous_vec = np.array([0.84, (1 - 0.84**2) ** 0.5], dtype=np.float32)
     r1 = a.assign(
         {
             "article_id": "005380:1",
@@ -108,7 +109,7 @@ def test_v2_assigner_signature_conflict_new():
             "description": "A",
             "event_signature": {"action": "착공"},
         },
-        vec,
+        first_vec,
         100.0,
     )
     r2 = a.assign(
@@ -119,12 +120,94 @@ def test_v2_assigner_signature_conflict_new():
             "description": "B",
             "event_signature": {"action": "실적발표"},
         },
-        vec,
+        ambiguous_vec,
         101.0,
     )
     assert r1.status == "assigned_new"
     assert r2.status == "assigned_new"  # 충돌 → 별도 클러스터
     assert r1.cluster_id != r2.cluster_id
+
+
+def test_v2_assigner_auto_merges_high_dense_similarity_without_llm():
+    calls = []
+
+    def fake(_prompt):
+        calls.append(_prompt)
+        raise AssertionError("0.85 이상 후보는 LLM을 호출하면 안 됨")
+
+    assigner = assign_llm_v2.LLMAssignerV2(call_fn=fake)
+    first_vec = np.array([1.0, 0.0], dtype=np.float32)
+    high_sim_vec = np.array([0.86, (1 - 0.86**2) ** 0.5], dtype=np.float32)
+    first = assigner.assign(
+        {
+            "article_id": "005930:auto-1",
+            "stock_code": "005930",
+            "title": "삼성전자 미국 반도체 투자 확대",
+            "description": "미국 AI 공급망 투자 계획",
+            "event_signature": None,
+        },
+        first_vec,
+        100.0,
+    )
+    merged = assigner.assign(
+        {
+            "article_id": "005930:auto-2",
+            "stock_code": "005930",
+            "title": "삼성, AI 호황 현금으로 미국 기업 인수 확대",
+            "description": "같은 미국 투자 확대 보도",
+            "event_signature": None,
+        },
+        high_sim_vec,
+        101.0,
+    )
+
+    assert merged.status == "assigned_existing"
+    assert merged.cluster_id == first.cluster_id
+    assert merged.llm_called is False
+    assert merged.reason == "auto dense similarity 0.8600 > 0.85"
+    assert calls == []
+
+
+def test_v2_assigner_sends_below_auto_merge_threshold_to_llm():
+    calls = []
+
+    def fake(prompt):
+        calls.append(prompt)
+        return (
+            {"decision": "existing", "matched_cluster_id": 1},
+            {"ok": True, "parse_success": True, "usage": {}},
+        )
+
+    assigner = assign_llm_v2.LLMAssignerV2(call_fn=fake)
+    first_vec = np.array([1.0, 0.0], dtype=np.float32)
+    ambiguous_vec = np.array([0.84, (1 - 0.84**2) ** 0.5], dtype=np.float32)
+    first = assigner.assign(
+        {
+            "article_id": "005930:llm-1",
+            "stock_code": "005930",
+            "title": "삼성전자 미국 투자",
+            "description": "첫 보도",
+            "event_signature": None,
+        },
+        first_vec,
+        100.0,
+    )
+    merged = assigner.assign(
+        {
+            "article_id": "005930:llm-2",
+            "stock_code": "005930",
+            "title": "삼성전자 미국 공급망 확대",
+            "description": "판단이 필요한 보도",
+            "event_signature": None,
+        },
+        ambiguous_vec,
+        101.0,
+    )
+
+    assert merged.status == "assigned_existing"
+    assert merged.cluster_id == first.cluster_id
+    assert merged.llm_called is True
+    assert calls and "cluster_id=1" in calls[0]
 
 
 def test_v2_assigner_defaults_to_24_hour_candidate_window():
@@ -248,7 +331,8 @@ def test_v2_assigner_recovers_candidate_from_prototype_when_centroid_drifted():
     assert result.cluster_id == 41
     assert result.candidates[0]["centroid"] == 0.0
     assert result.candidates[0]["prototype"] == 1.0
-    assert calls and "cluster_id=41" in calls[0]
+    assert result.llm_called is False
+    assert calls == []
 
 
 def test_v2_assigner_reserves_candidate_slots_for_structured_event_identity():
@@ -259,7 +343,7 @@ def test_v2_assigner_reserves_candidate_slots_for_structured_event_identity():
         ),
         max_candidates=5,
     )
-    for cluster_id, dense_score in enumerate((0.99, 0.95, 0.91, 0.88, 0.84), 1):
+    for cluster_id, dense_score in enumerate((0.84, 0.81, 0.78, 0.75, 0.72), 1):
         assigner.clusters[cluster_id] = assign_llm_v2.ClusterV2(
             cluster_id=cluster_id,
             stock_code="005930",
@@ -343,7 +427,7 @@ def test_v2_assigner_existing_merge():
             "description": "A2",
             "event_signature": {"action": "착공"},
         },
-        vec,
+        np.array([0.84, (1 - 0.84**2) ** 0.5], dtype=np.float32),
         101.0,
     )
     assert r2.status == "assigned_existing"
@@ -378,7 +462,7 @@ def test_v2_assigner_invalid_response_pending():
             "description": "d",
             "event_signature": None,
         },
-        vec,
+        np.array([0.84, (1 - 0.84**2) ** 0.5], dtype=np.float32),
         101.0,
     )
     assert r2.status == "pending_retry"
