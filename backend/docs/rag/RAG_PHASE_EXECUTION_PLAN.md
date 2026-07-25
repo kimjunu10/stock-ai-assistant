@@ -471,22 +471,30 @@ actual/forecast 혼동 0
 > middleware 가 lru_cache 공유 Agent 에서 요청 간 상태 누수 → before_agent 로 요청마다 초기화.
 > 스테이징 재검증(연도만/연간/분기누적/없는기간 각 4/4), 홀드아웃 회귀 없음.
 
-> ✅ **5.5-G 라이브 전환 완료 (2026-07-25)**: 운영 `AGENT_ENABLED=true` 적용·검증(agent=true,
-> 타 종목 혼입 0, broker_opinions 정화). legacy QueryPlan/FactsQaService 를 라이브 QA 경로에서
-> 제거하고 단일 Agent 경로로 일원화. Agent 미구성 시 503(조용한 규칙 fallback 금지).
-> QueryPlan/FactsQaService 파일은 평가 스크립트·단위테스트용으로 보존(deprecated 명시).
-> smoke 8항목(용어·재무·뉴스제외·리포트·복합·no_data·타종목·SSE순서) 전체 통과, 251 테스트 통과.
+> ✅ **5.5-G 라이브 전환·배포 검증 완료 (2026-07-25)**: PR #37→#38 순차 머지·배포. 운영
+> `AGENT_ENABLED=true` 적용·검증(agent=true, 타 종목 혼입 0, broker_opinions 정화).
+> legacy QueryPlan/FactsQaService 를 라이브 QA 경로에서 제거하고 단일 Agent 경로로 일원화.
+> Agent 미구성 시 503(조용한 규칙 fallback 금지). QueryPlan/FactsQaService 파일은 평가
+> 스크립트·단위테스트용으로 보존(deprecated 명시). 로컬 251 테스트·ruff·format 통과.
+>
+> **배포 후 운영 검증(PR #38 머지커밋 c3d9243)**: CI/CD success, 운영 컨테이너=c3d9243,
+> healthy, /docs 200, AGENT_ENABLED=true. 운영 API smoke 8항목 통과(용어·재무·뉴스제외·
+> 리포트·복합·no_data·타종목혼입0·SSE순서). legacy QueryPlan 호출 0건, queryPlan 응답필드
+> 없음, 전 요청 agent=true(access 로그 200), 비밀키 노출 0. SSE 순서 정확·error 0건·
+> 내부추론/Tool 전체인자 미노출 확인.
 
 ---
 
 ## Phase 5.5 종료 기록
 
 ```text
-상태:                          완료 (라이브 전환·legacy 제거)
+상태:                          완료 (라이브 전환·legacy 제거·배포 후 운영 검증까지)
 완료일:                        2026-07-25
+배포 커밋:                     c3d92437d3ff8a37ce132a867635d4167e83b248 (PR #38 머지, CI/CD success)
 Agent 모델:                    gpt-4.1-mini-2025-04-14 (provider: openai, provider-agnostic)
-LangChain 버전:                langchain>=1.3.14,<1.4 (create_agent 표준 Tool-Calling Agent)
-LangGraph 버전:                LangChain v1 번들 런타임(별도 custom StateGraph 없음)
+LangChain 버전:                langchain==1.3.14 (create_agent 표준 Tool-Calling Agent)
+LangGraph 버전:                langgraph==1.2.9 (v1 번들 런타임; 별도 custom StateGraph 없음)
+관련 패키지:                   langchain-openai==1.4.1, langchain-core==1.5.1
 Tool 수:                       6 (financials/terms/news/disclosures/get_disclosure_values/reports)
 Tool 선택 평가:                Recall 1.0/1.0, Forbidden 0%/0%, 모델 자율 선택 증명(하드코딩 없음)
 금융 Exact Match:              dev 2/2 · holdout 3/3 (기간·actual 전부 통과)
@@ -494,11 +502,22 @@ Tool 선택 평가:                Recall 1.0/1.0, Forbidden 0%/0%, 모델 자�
 단순 P95:                      2~4s (콜드스타트 1회 예외)
 복합 P95:                      9.2s / 8.9s (≤10s 통과)
 질문당 평균 비용:              ~$0.0017~0.0019
+운영 smoke 결과:               8/8 통과 (운영 API 직접). 1 용어 6.1s / 2 재무 2.2s /
+                               3 뉴스제외 콜드 8.9s→재시도 7.3s completed / 4 리포트 4.7s(4건) /
+                               5 복합 6.4s / 6 no_data 2.0s(환각0) / 7 타종목 SK하이닉스 5건
+                               390만~430만(삼성값 0혼입) / 8 SSE 순서 정확·error0·민감정보 미노출.
+                               전 요청 agent=true, query_plan 응답필드 없음, legacy 호출 0건.
 legacy QueryPlan 라이브 제거:  완료 — /qa·/qa/stream 단일 Agent, 미구성 시 503(fallback 금지).
                                query_plan.py·rag_qa_facts.py 는 평가·테스트용 보존(deprecated).
-남은 위험:                     (1) 뉴스 등 임베딩 왕복 질문 콜드스타트 시 8s timeout 1회성(안전 처리).
+                               운영 로그상 legacy 호출 0건 확인.
+알려진 위험:                   (1) 뉴스 등 임베딩 왕복 질문 콜드스타트 시 8s timeout 1회성 —
+                                   안전 처리(빈 답변+stop=timeout, 200), 재시도 후 정상(2/2 completed).
                                (2) official_information 은 Agent 경로 미채움(기존 제한, 회귀 아님).
-                               (3) 이 브랜치는 로컬 검증만 — 운영 배포·머지는 사용자 승인 필요.
+rollback 방법:                 AGENT_ENABLED=false 는 이제 legacy 복귀가 아니라 QA 503 이다.
+                               장애 시 flag 를 끄지 말고 이전 정상 revision 으로 이미지 롤백:
+                                 export BACKEND_IMAGE=ghcr.io/kimjunu10/stock-ai-assistant-backend:<prev-sha>
+                                 docker compose up -d backend
+                               (직전 정상 revision 예: c655af6 = PR #37 시점)
 Phase 6 진행 가능 여부:        조건 충족하나 자동 진행 금지(사용자 승인 후).
 ```
 

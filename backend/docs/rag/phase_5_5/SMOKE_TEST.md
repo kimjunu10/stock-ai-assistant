@@ -84,5 +84,42 @@
 
 ## 8. 결론 / 운영 전환 판단
 - 결함 A·B 수정으로 기간 미지정 재무 질문·반복 호출 모두 안정화(4/4). SSE·응답 시간 정상.
-- **운영 flag 전환(agent_enabled=true 라이브)은 이번에도 하지 않는다** — 지시대로 smoke 결과
-  보고 후 사용자 승인 뒤 진행. 현재 `agent_enabled=false` 유지.
+- (이 시점 기준) 운영 flag 전환은 아직 하지 않음 — 사용자 승인 대기. 아래 9절에서 승인 후 전환·검증.
+
+## 9. 운영 라이브 전환 + legacy 제거 + 배포 후 검증 (2026-07-25, 사용자 승인 후)
+
+**전환/제거**
+- 운영 `AGENT_ENABLED=true` 적용(OpenAI 키 주입·재시작), agent=true 확인. 이후 기존 OpenAI 키
+  로테이션(로컬 새 키를 운영 `.env` 로 값 노출 없이 반영, 구 키 폐기).
+- legacy QueryPlan/FactsQaService 를 라이브 QA 경로(`/qa`·`/qa/stream`)에서 제거하고 단일 Agent
+  경로로 일원화(PR #38, 머지커밋 `c3d9243`). Agent 미구성 시 503(조용한 규칙 fallback 금지).
+  `query_plan.py`·`rag_qa_facts.py` 는 평가 스크립트·단위테스트용으로 보존(deprecated 명시).
+
+**배포 후 운영 검증 (PR #38 머지커밋 c3d9243)**
+- CI/CD: success. 운영 컨테이너 이미지 = `...backend:c3d9243...`, running·healthy, /docs 200,
+  AGENT_ENABLED=true(값 노출 없이 확인).
+- 운영 API smoke 8/8 통과:
+
+  | # | 항목 | 결과 | 소요 |
+  |---|---|---|---|
+  | 1 | 금융용어 | ✅ lookup_financial_term | 6.1s |
+  | 2 | 재무숫자 | ✅ get_financial_facts, 43.60조 | 2.2s |
+  | 3 | 뉴스제외 | ⚠️콜드 timeout→재시도 completed(search_news) | 8.9→7.3s |
+  | 4 | 증권사리포트 | ✅ broker_opinions 4건 | 4.7s |
+  | 5 | 복합질문 | ✅ 재무3+리포트 | 6.4s |
+  | 6 | no_data | ✅ "확인할 수 없습니다"(환각0) | 2.0s |
+  | 7 | 타종목혼입 | ✅ SK하이닉스 5건 390만~430만(삼성값0) | 4.0s |
+  | 8 | SSE 순서 | ✅ 아래 | — |
+
+- **SSE 정밀 검증**(`/api/qa/stream` curl raw): 이벤트 순서
+  `agent_start → tool_start → tool_end → sources → delta → done` 정확. **error 이벤트 0건**.
+  payload 에 내부 추론·Tool 전체 인자·원문 청크 **미노출**(tool_start/end 는 name·status 만,
+  done 은 stop_reason·model_calls·tool 이름목록만).
+- **추가 확인**: legacy QueryPlan 호출 0건(운영 로그), queryPlan 응답필드 없음(8종 전부),
+  전 요청 agent=true(access 로그 전부 200), 배포/런타임 로그 비밀키 노출 0.
+
+**rollback**: `AGENT_ENABLED=false` 는 이제 legacy 복귀가 아니라 QA 503. 장애 시 flag 를 끄지
+말고 이전 정상 revision 으로 이미지 롤백(`export BACKEND_IMAGE=...:<prev-sha>; docker compose
+up -d backend`; 직전 정상 예 c655af6=PR #37).
+
+**결론**: Phase 5.5-G 종료. 다음 Phase(6 주가 Tool)는 사용자 승인 후 진행(자동 진행 금지).
