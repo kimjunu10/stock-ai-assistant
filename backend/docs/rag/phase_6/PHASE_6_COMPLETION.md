@@ -3,7 +3,7 @@
 - 일자: 2026-07-25
 - 브랜치: `phase/6-stock-price-tools`
 - 범위: 구현·통합·평가까지 한 브랜치에서 연속 수행. **운영 배포·머지는 하지 않음**(최종 PR만).
-- 상태: 구현·테스트·실제 API smoke·평가 완료. 사용자 승인 후 배포 대기.
+- 상태: 구현·테스트·실제 API smoke·평가 완료 → **운영 배포·검증 완료(2026-07-25)**.
 
 ---
 
@@ -114,6 +114,44 @@
 | 5종목 게이트 | 앱 지원 5종목 외 질문 | StockPriceError→안전 처리(범위 밖 안내) |
 | IP 허용목록 | 운영 VM IP 가 토스 허용목록에 있어야 함 | 로컬 실측 통과. 배포 시 VM IP 등록 확인(ip_not_allowed→기존 처리) |
 | 수정/비수정 혼용 | 전일대비(비수정) vs 기간수익률(수정) | 결과에 adjusted 플래그 명시, 용도별 기준 고정 |
+
+## 7.5 운영 배포 검증(2026-07-25, PR #41 머지 후)
+
+- **배포 커밋**: 운영 컨테이너 `stock-assistant-backend` = `ghcr.io/kimjunu10/
+  stock-ai-assistant-backend:1df5d04`(= PR #41 머지 커밋), healthy, /docs 200,
+  `AGENT_ENABLED='true'`. TOSS_CLIENT_ID/SECRET 설정(값 노출 없이 len 32/54 확인).
+  운영 VM 외부 IP `34.64.197.122`에서 토스 API 실호출 성공 = **IP 허용목록 등록 확인**.
+- **주가 smoke(운영 /api/qa 10문)**: 전부 `agent=true`, `stop=completed`.
+  | Q | Tool | 결과 |
+  |---|---|---|
+  | 삼성 현재가 | get_stock_prices | 252,500원(전일 -7.51%), price:005930:2026-07-24 |
+  | SK하이닉스 현재가 | get_stock_prices | 1,781,000원(전일 -8.53%) |
+  | 삼성 1개월 수익률 | get_stock_prices | -25.63%(6/24→7/24) |
+  | 목표주가 말고 실제 | calculate_event_return | -25.63%, **리포트 Tool 미호출** ✅ |
+  | 목표 vs 실제 비교 | search_research_reports + get_stock_prices | 값 구분, 검증기가 근거 없는 증권사 4곳 제거 |
+  | 5/4 발표 전후 | calculate_event_return | +24.43%(4/24→5/12), "발표 전후"(인과 아님) |
+  | 5/3(휴장일) 전후 | calculate_event_return | +28.31%, 직전 거래일 4/23→5/11 스냅 |
+  | 없는 종목 999999 | get_stock_prices(error) | 대체 없이 "지원하지 않음" 안내 |
+  | 1990년 수익률 | calculate_event_return | no_data 안내, 숫자·기간 생성 안 함 |
+  | 현재가 연속 2회 | get_stock_prices | 동일 252,500원(캐시 히트) |
+- **계산 Exact Match**: 서비스 재계산과 답변값 일치 — 1m -25.63%(339,500→252,500),
+  event 5/4 +24.43%(219,000→272,500), event 5/3 +28.31%(222,500→285,500).
+  시작/종료 거래일·휴장일 직전 스냅 표시. Agent 직접 산술 0.
+- **SourceRef**: Tool 결과에 `source_type="price"`, value_kind="actual",
+  publisher="토스증권 Open API" 존재. API 응답에는 `execution.source_ids`(`price:…`)로 표면화.
+- **캐시·429**: 연속 현재가 동일 값(캐시), 운영 로그에 토스 429·무한 재시도·백오프 폭주 **없음**.
+  (로그의 send_with_retry 는 Supabase postgrest 프레임으로 토스 무관.)
+- **비밀키 노출**: 운영 로그에 client_secret·sk-·Bearer 토큰 패턴 **0건**.
+- **SSE(/api/qa/stream)**: `agent_start → tool_start → tool_end → sources → delta → done`
+  순서 확인, error 0건. tool_start=`{name}`, tool_end=`{name,status}` 만 노출
+  (전체 인자·내부 추론 미노출).
+- **기존 기능 회귀(운영 5건)**: 금융용어(lookup_financial_term)·재무(get_financial_facts,
+  43.60조원)·뉴스 제외(search_news)·리포트(search_research_reports)·no_data(2099년) 전부 정상.
+- **운영 관찰(수정 없음, 원인만)**:
+  - "목표주가 말고 실제 주가" → get_stock_prices 대신 calculate_event_return 선택.
+    둘 다 백엔드 계산이고 핵심 조건(리포트 Tool 미호출)은 충족 → `required_tools_any` 부합.
+  - 없는 종목(999999) 답변에 검증기 경고 "재무성 숫자 근거 없음" 부착. 답변 텍스트엔
+    실제 재무 숫자 없음(코드 "999999"만) → 사용자 답변 영향 없는 오탐. 임의 수정하지 않음.
 
 ## 8. 운영 배포 절차(승인 후)
 
