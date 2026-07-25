@@ -31,6 +31,14 @@ class UpstageEmbedder:
     def _embed(self, model: str, inputs: list[str], max_retries: int = 4) -> list[list[float]]:
         if not inputs:
             return []
+        # 빈/공백 입력 방어: 외부 임베딩 API 는 빈 input 을 400 으로 거부한다.
+        # 임의 문장·임의 벡터로 대체하지 않고, 명확한 내부 입력 오류로 추적 가능하게 한다.
+        # (검색 주제 없는 뉴스 조회는 애초에 이 계층을 호출하지 않아야 한다 — retrieval 참조)
+        if any(not (isinstance(t, str) and t.strip()) for t in inputs):
+            raise ValueError(
+                "임베딩 입력에 빈/공백 문자열이 포함됨(외부 API 호출 금지). "
+                "검색 주제 없는 조회는 임베딩 계층을 호출하지 않아야 한다."
+            )
         url = f"{self._cfg.upstage_base_url}/embeddings"
         headers = {
             "Authorization": f"Bearer {self._cfg.upstage_api_key}",

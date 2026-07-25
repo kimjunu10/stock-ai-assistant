@@ -598,6 +598,26 @@ typed UI payload: 공개 sources + source_ids 필수 visualization enum
 미수행: 운영 배포·자동 머지·Phase 8
 ```
 
+## Phase 7 후속 결함 수정 — 뉴스 빈 검색어(2026-07-26)
+
+증상: "삼성전자 어제 악재 있었어?"류 질문에서 search_news error(웹 UI "일시적 오류").
+원인: Agent 가 종목·기간·감성만 있는 질문에서 `query=''` 를 넘기고, 빈 문자열이
+임베딩 API 에 전달돼 Upstage 400 → Tool error. "어제(yesterday)" 계열 100% 재현.
+
+수정:
+```text
+검색 주제 유무로 뉴스 조회 경로 분리
+  - 주제 있음(HBM 등) → 기존 semantic+lexical+RRF 유지
+  - 주제 없음(None/빈/공백) → 임베딩 미호출, news_clusters 종목·기간·감성 최신순 조회
+임베딩 계층: 빈/공백 입력은 외부 HTTP 없이 ValueError(임의 벡터 대체 금지)
+sentiment 는 news_clusters.sentiment_label DB 조건으로 필터(키워드 라우터 아님)
+검증: pytest 310 passed(+13), ruff·format, Agent 평가 recall 1.0/forbidden 0.0
+     실제 Agent 반복 5회×7문 → search_news error 0/35, 임베딩 400 0건
+timeout: agent_timeout_seconds 8→45(별개 결함, 실측 p95≈6.7s 근거)
+문서: phase_7/PHASE_7_BUG_NEWS_EMPTY_QUERY.md
+미수행: 운영 배포·자동 머지·Phase 8
+```
+
 ---
 
 # Phase 8. 전체 평가·튜닝

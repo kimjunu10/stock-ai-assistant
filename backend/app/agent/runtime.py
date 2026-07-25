@@ -125,8 +125,9 @@ def build_tools() -> list:
     @tool
     def search_news(
         stock_code: str,
-        query: str,
         runtime: ToolRuntime[QaRuntimeContext],
+        query: str | None = None,
+        sentiment: str | None = None,
         exclude_topics: list[str] | None = None,
         include_topics: list[str] | None = None,
         date_from: str | None = None,
@@ -135,10 +136,20 @@ def build_tools() -> list:
     ) -> str:
         """종목 뉴스 사건을 검색한다.
 
-        상대 기간은 relative_period(recent/today/yesterday/last_7_days/last_30_days/
-        this_week/this_month)로 지정한다. recent는 KST 오늘부터 2일 전까지이며, 서버가
-        정확한 날짜 범위로 변환한다.
-        date_from/date_to는 사용자가 절대 날짜를 지정한 경우에 사용한다.
+        query(검색 주제):
+        - 특정 사건·제품·주제가 있을 때만 채운다. 예: "HBM 공급계약", "배당", "화재".
+          이 경우 의미 검색 + 키워드 검색으로 관련 뉴스를 찾는다.
+        - 특정 주제가 없으면 query를 비운다(생략). 예: "어제 무슨 일 있었어?",
+          "최근 뉴스", "어제 악재/호재 있었어?"는 주제가 아니라 기간·감성 조건이므로
+          query를 넣지 말 것. 이때는 종목·기간·감성으로 최신 뉴스 사건을 조회한다.
+        - query에 종목명만 억지로 넣지 말 것(그건 주제가 아니다).
+
+        sentiment(감성): 사용자가 악재/호재/부정/긍정을 물으면 지정한다.
+          positive(호재/긍정) | negative(악재/부정) | neutral. 없으면 생략.
+
+        기간: relative_period(recent/today/yesterday/last_7_days/last_30_days/
+        this_week/this_month)로 상대 기간을 지정한다. recent는 KST 오늘부터 2일 전까지.
+        date_from/date_to는 사용자가 절대 날짜를 지정한 경우에만 쓴다.
         """
         svc, err = _services(runtime)
         if err:
@@ -156,6 +167,7 @@ def build_tools() -> list:
         inp = SearchNewsInput(
             stock_code=stock_code,
             query=query,
+            sentiment=sentiment,
             exclude_topics=exclude_topics or [],
             include_topics=include_topics or [],
             date_from=date_from,

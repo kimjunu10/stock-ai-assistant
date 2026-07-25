@@ -39,6 +39,15 @@ class RetrievedChunk:
     source_locator: dict | None = None
 
 
+def _first_topic(event_signature: object) -> str | None:
+    """news_clusters.event_signature 에서 사람이 읽을 대표 주제를 뽑는다(제목 대체용)."""
+    if isinstance(event_signature, dict):
+        topic = event_signature.get("core_topic")
+        if isinstance(topic, str) and topic.strip():
+            return topic
+    return None
+
+
 def _row_to_chunk(r: dict) -> RetrievedChunk:
     return RetrievedChunk(
         chunk_id=r["chunk_id"],
@@ -194,6 +203,72 @@ class HybridRetriever:
         if expand_parent:
             self._expand_parents(final)
         return final
+
+    def list_recent_news(
+        self,
+        *,
+        stock_code: str,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        sentiment: str | None = None,
+        top_k: int | None = None,
+    ) -> list[RetrievedChunk]:
+        """검색 주제 없는 뉴스 조회(SPEC §10, prompt.md 2절).
+
+        특정 사건·제품·주제가 없을 때는 의미 검색(임베딩)을 수행하지 않고,
+        종목·기간·감성 조건으로 뉴스 **사건(news_clusters)** 을 최신순 조회한다.
+        - 임베딩 API 를 호출하지 않는다(query 벡터 없음).
+        - 사건 단위(cluster) 결과 → 동일 사건 중복 없음.
+        - 최신순(last_active_at desc, 동률 시 first_published_at desc).
+        - 결과 없으면 빈 리스트(다른 종목·기간 대체 금지).
+        """
+        top_k = top_k or self._cfg.rag_retrieval_top_k
+        q = (
+            self._db.table("news_clusters")
+            .select(
+                "id,stock_code,summary_title,event_signature,factual_body,"
+                "easy_explanation,first_published_at,last_active_at,sentiment_label,"
+                "summary_status"
+            )
+            .eq("stock_code", stock_code)
+        )
+        if date_from:
+            q = q.gte("last_active_at", date_from)
+        if date_to:
+            # date_to 는 날짜(YYYY-MM-DD)일 수 있으므로 종료일 끝까지 포함.
+            end = f"{date_to}T23:59:59+09:00" if len(date_to) == 10 else date_to
+            q = q.lte("first_published_at", end)
+        if sentiment:
+            q = q.eq("sentiment_label", sentiment)
+        rows = (
+            q.order("last_active_at", desc=True)
+            .order("first_published_at", desc=True)
+            .limit(top_k)
+            .execute()
+        ).data or []
+
+        out: list[RetrievedChunk] = []
+        for r in rows:
+            title = r.get("summary_title") or _first_topic(r.get("event_signature"))
+            body = r.get("factual_body") or r.get("easy_explanation") or ""
+            out.append(
+                RetrievedChunk(
+                    chunk_id=f"news_cluster:{r['id']}",
+                    document_id=f"news_cluster:{r['id']}",
+                    content=body,
+                    value_kind=None,
+                    stock_code=r.get("stock_code"),
+                    source_type="news_event",
+                    published_at=r.get("first_published_at"),
+                    source_pk=str(r["id"]),
+                    title=title,
+                    publisher=None,
+                    source_url=None,
+                    similarity=0.0,
+                    source_locator={"sentiment_label": r.get("sentiment_label")},
+                )
+            )
+        return out
 
     def _dedupe(self, chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
         """SPEC §10.5: content_hash 제거, 문서/사건당 최대 N, 매우 유사 청크 하나만.

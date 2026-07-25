@@ -243,26 +243,47 @@ def test_search_disclosures_latest_only_default():
     assert r.status == "ok" and r.sources[0].source_type == "dart_document"
 
 
-# ── news: exclude 경고 노출 ──
-class _FakeRetriever:
-    def search(self, q, **kwargs):
-        from app.rag.retrieval import RetrievedChunk
+# ── news: 검색 주제 유무에 따른 경로 분리(prompt.md phase_7 빈 검색어 결함) ──
+def _news_chunk(chunk_id, title, published_at, source_pk="1"):
+    from app.rag.retrieval import RetrievedChunk
 
+    return RetrievedChunk(
+        chunk_id=chunk_id,
+        document_id="d1",
+        content=f"{title} 본문",
+        value_kind=None,
+        stock_code="005930",
+        source_type="news_event",
+        published_at=published_at,
+        source_pk=source_pk,
+        title=title,
+        publisher="언론사",
+        source_url="http://x",
+        similarity=0.9,
+    )
+
+
+class _FakeRetriever:
+    """검색 주제 있는 경로(search)와 없는 경로(list_recent_news)를 구분해 기록한다."""
+
+    def __init__(self, recent=None):
+        self.search_called = False
+        self.recent_called = False
+        self.recent_kwargs = None
+        self._recent = recent
+
+    def search(self, q, **kwargs):
+        self.search_called = True
+        return [_news_chunk("c1", "공급계약", "2026-07-01")]
+
+    def list_recent_news(self, **kwargs):
+        self.recent_called = True
+        self.recent_kwargs = kwargs
+        if self._recent is not None:
+            return self._recent
         return [
-            RetrievedChunk(
-                chunk_id="c1",
-                document_id="d1",
-                content="공급계약 뉴스",
-                value_kind=None,
-                stock_code="005930",
-                source_type="news_event",
-                published_at="2026-07-01",
-                source_pk="1",
-                title="공급계약",
-                publisher="언론사",
-                source_url="http://x",
-                similarity=0.9,
-            )
+            _news_chunk("news_cluster:2", "어제 사건 B", "2026-07-24T09:00:00+00:00", "2"),
+            _news_chunk("news_cluster:1", "어제 사건 A", "2026-07-24T08:00:00+00:00", "1"),
         ]
 
 
@@ -276,6 +297,48 @@ def test_search_news_surfaces_exclude_topics():
     assert r.data["applied_filters"]["exclude_topics"] == ["실적", "영업이익"]
     assert r.data["news"][0]["source_id"] == "c1"
     assert r.data["news"][0]["url"] == "http://x"
+
+
+def test_search_news_with_topic_uses_hybrid_search():
+    """주제(HBM 등) 있으면 기존 하이브리드 search 경로."""
+    fake = _FakeRetriever()
+    r = run_search_news(
+        fake, SearchNewsInput(stock_code="005930", query="HBM 공급계약", date_from="2026-07-24")
+    )
+    assert r.status == "ok"
+    assert fake.search_called and not fake.recent_called
+    assert r.data["applied_filters"]["mode"] == "hybrid_search"
+
+
+@pytest.mark.parametrize("empty_query", [None, "", "   "])
+def test_search_news_without_topic_skips_embedding(empty_query):
+    """None·빈·공백 query → list_recent_news(임베딩 없는 조건 조회) 경로."""
+    fake = _FakeRetriever()
+    r = run_search_news(
+        fake,
+        SearchNewsInput(
+            stock_code="005930",
+            query=empty_query,
+            sentiment="negative",
+            date_from="2026-07-24",
+            date_to="2026-07-24",
+        ),
+    )
+    assert r.status == "ok"
+    assert fake.recent_called and not fake.search_called  # search(임베딩)는 호출 안 됨
+    assert r.data["applied_filters"]["mode"] == "recent_events"
+    assert r.data["applied_filters"]["sentiment"] == "negative"
+    # 조건이 그대로 조회 계층에 전달됨(다른 종목·기간 대체 없음)
+    assert fake.recent_kwargs["stock_code"] == "005930"
+    assert fake.recent_kwargs["sentiment"] == "negative"
+
+
+def test_search_news_no_topic_no_result_is_no_data_not_error():
+    """결과 없으면 error 가 아니라 no_data(다른 종목·기간 대체 금지)."""
+    fake = _FakeRetriever(recent=[])
+    r = run_search_news(fake, SearchNewsInput(stock_code="005930", query=None))
+    assert r.status == "no_data"
+    assert fake.recent_called
 
 
 # ── reports: source metadata + forecast 경고 ──

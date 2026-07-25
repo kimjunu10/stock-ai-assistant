@@ -25,26 +25,45 @@ from app.rag.retrieval import HybridRetriever
 
 class SearchNewsInput(BaseModel):
     stock_code: str = Field(pattern=r"^[0-9]{6}$")
-    query: str
+    # query 는 특정 사건·제품·주제가 있을 때만 채운다. 없으면 생략(None)한다.
+    # None·빈 문자열·공백은 모두 "별도 검색 주제 없음"으로 처리한다.
+    query: str | None = None
     date_from: str | None = None
     date_to: str | None = None
+    sentiment: str | None = None  # positive | neutral | negative (감성 조건)
     include_topics: list[str] = Field(default_factory=list)
     exclude_topics: list[str] = Field(default_factory=list)
     current_event_id: str | None = None
     limit: int = Field(default=5, ge=1, le=12)
 
 
+def _has_topic(query: str | None) -> bool:
+    """검색 주제가 실제로 있는지 판정(None·빈·공백 = 없음)."""
+    return bool(query and query.strip())
+
+
 def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolResult:
     try:
-        chunks = retriever.search(
-            inp.query,
-            stock_code=inp.stock_code,
-            source_type="news_event",
-            context_source_id=inp.current_event_id,
-            date_from=inp.date_from,
-            date_to=inp.date_to,
-            top_k=inp.limit,
-        )
+        if _has_topic(inp.query):
+            # 특정 주제 있음 → 기존 하이브리드(semantic + lexical + RRF) 유지.
+            chunks = retriever.search(
+                inp.query,
+                stock_code=inp.stock_code,
+                source_type="news_event",
+                context_source_id=inp.current_event_id,
+                date_from=inp.date_from,
+                date_to=inp.date_to,
+                top_k=inp.limit,
+            )
+        else:
+            # 주제 없음 → 임베딩 호출 없이 종목·기간·감성 조건으로 사건 최신순 조회.
+            chunks = retriever.list_recent_news(
+                stock_code=inp.stock_code,
+                date_from=inp.date_from,
+                date_to=inp.date_to,
+                sentiment=inp.sentiment,
+                top_k=inp.limit,
+            )
     except Exception as e:  # noqa: BLE001
         return error(sanitize_exception(e))
     if not chunks:
@@ -88,6 +107,8 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
                 "exclude_topics": inp.exclude_topics,
                 "date_from": inp.date_from,
                 "date_to": inp.date_to,
+                "sentiment": inp.sentiment,
+                "mode": "hybrid_search" if _has_topic(inp.query) else "recent_events",
             },
         },
         sources=sources,

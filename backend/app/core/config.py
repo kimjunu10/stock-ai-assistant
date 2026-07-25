@@ -113,7 +113,12 @@ class Settings(BaseSettings):
     agent_max_tool_calls: int = 5
     agent_max_same_tool_args: int = 1
     agent_tool_retry: int = 1
-    agent_timeout_seconds: float = 8.0
+    # 전체(벽시계) 상한. Agent 는 최대 agent_max_model_calls 회 모델 호출 +
+    # agent_max_tool_calls 회 Tool 호출을 순차로 하며, 개별 모델 호출은
+    # agent_model_timeout_seconds(20s)까지 걸릴 수 있다. 8s 는 다단계 호출·콜드스타트에서
+    # 정상 응답도 timeout 시켜 빈 답변을 유발했다(Phase 7 UI 빈 답변 결함). 개별 모델
+    # timeout 보다 크고 다단계 왕복을 감안해 상향한다.
+    agent_timeout_seconds: float = 45.0
     # 개별 LLM 호출 HTTP timeout. API hang 이 전체 응답을 무한정 매달리게 하는 것을
     # 막는다(5.5-F 지연 결함 대응). 모델 왕복이 이 시간을 넘으면 그 호출만 끊는다.
     agent_model_timeout_seconds: float = 20.0
