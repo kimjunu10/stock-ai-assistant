@@ -117,9 +117,10 @@ def run(argv: list[str]) -> int:
         return 2
 
     client = get_supabase_client()
+    # dry-run 은 migration 0022 미적용 환경(배포 이미지)에서도 돌아야 하므로 신규 컬럼을
+    # select 하지 않는다(target_price_status 등은 apply 시 UPDATE 로만 쓴다).
     q = client.table("research_reports").select(
-        "id,stock_code,broker,title,report_date,target_price,target_price_status,"
-        "storage_bucket,storage_path"
+        "id,stock_code,broker,title,report_date,target_price,storage_bucket,storage_path"
     )
     if args.stock_code:
         q = q.eq("stock_code", args.stock_code)

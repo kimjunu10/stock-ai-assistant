@@ -125,3 +125,32 @@ def test_extract_falls_back_to_page_when_table_has_no_matching_date():
 def test_extract_not_stated_when_nothing():
     res = extract_target_price([], [{"page_number": 1, "plain_text": "업황 개선"}], None)
     assert res.status == "not_stated"
+
+
+# ── 실제 리포트 표지 형식(감사 [3] 표본) 회귀 방지 ──
+def test_real_cover_comma_with_qualifier_token():
+    # '목표주가(12M) 480,000원(유지)' — 라벨과 값 사이 (12M) 토큰
+    txt = "Buy 목표주가(12M) 480,000원(유지) 종가(2026.07.07) 296,000원 상승여력 62.2%"
+    r = extract_from_page_text([{"page_number": 1, "plain_text": txt}], date(2026, 7, 8))
+    assert r.status == "stated" and r.value == 480_000
+
+
+def test_real_cover_han_man_won_unit():
+    # '목표주가 48만원' — 한글 만 단위
+    txt = "투자의견 BUY, 목표주가 48만원을 유지한다."
+    r = extract_from_page_text([{"page_number": 1, "plain_text": txt}], date(2026, 7, 8))
+    assert r.status == "stated" and r.value == 480_000
+
+
+def test_real_cover_target_then_current_price_not_confused():
+    # '목표주가 560,000원 ... 현재주가 296,000원' — 목표가(앞)만, 현재가(뒤) 무시
+    txt = "STRONG BUY 목표주가 560,000원(유지) 현재주가 296,000원(7/7)"
+    r = extract_from_page_text([{"page_number": 1, "plain_text": txt}], date(2026, 7, 8))
+    assert r.status == "stated" and r.value == 560_000
+
+
+def test_current_price_alone_is_not_target():
+    # 목표주가 라벨 없이 현재주가만 → 목표가로 쓰지 않는다
+    txt = "현재주가 296,000원 상승여력 62%"
+    r = extract_from_page_text([{"page_number": 1, "plain_text": txt}], date(2026, 7, 8))
+    assert r.status == "not_stated"

@@ -32,6 +32,8 @@ TP_LABEL_RE = re.compile(r"(목표\s*주\s*가|목표\s*가격|목표가|target\
 # 원화 목표주가 금액: 콤마 포함(74,000 / 320,000) 형식만. 콤마 없는 4자리는 연도(2026)와
 # 충돌하므로 배제한다. 목표주가는 실무상 천단위 콤마 표기가 지배적이라 안전하다.
 WON_RE = re.compile(r"(\d{1,3}(?:,\d{3})+)\s*원?")
+# 한글 '만원' 단위(48만원, 56만 원). 콤마 표기가 아닌 리포트 대비.
+MAN_WON_RE = re.compile(r"(\d{1,4})\s*만\s*원?")
 # 이력표 신호
 HISTORY_HINT_RE = re.compile(r"(변동\s*추이|제시\s*일자|괴리율)")
 # 날짜 토큰: 2026.05.04 / 2026-05-04 / 2026/05/04
@@ -70,6 +72,32 @@ def _to_won(raw: str) -> int | None:
         return None
     v = int(n)
     return v if _MIN_TP <= v <= _MAX_TP else None
+
+
+def _find_won_near_label(text: str) -> tuple[int, str] | None:
+    """라벨 '뒤' 텍스트(text)에서 현재 목표주가 금액을 찾는다.
+
+    콤마형(560,000원) 또는 만원형(48만원) 중 라벨에 가장 가까운 첫 금액을 쓴다.
+    라벨과 그 금액 '사이'에 매출/이익/현재가 등 방해 라벨이 끼면 목표주가로 보지 않는다
+    (금액 '뒤'에 오는 현재주가 등은 무관 — 사이 구간만 검사).
+    """
+    cand: list[tuple[int, int]] = []  # (start, value)
+    for m in WON_RE.finditer(text):
+        v = _to_won(m.group(1))
+        if v is not None:
+            cand.append((m.start(), v))
+    for m in MAN_WON_RE.finditer(text):
+        v = int(m.group(1)) * 10_000
+        if _MIN_TP <= v <= _MAX_TP:
+            cand.append((m.start(), v))
+    if not cand:
+        return None
+    cand.sort(key=lambda z: z[0])
+    start, value = cand[0]
+    # 라벨(=text 시작)과 첫 금액 사이에 방해 라벨이 있으면 목표주가 아님
+    if NON_TP_LABEL_RE.search(text[:start]):
+        return None
+    return value, start
 
 
 def _parse_date(y: str, m: str, d: str) -> date | None:
@@ -160,21 +188,17 @@ def extract_from_page_text(
             saw_history = True
         for lm in TP_LABEL_RE.finditer(txt):
             saw_label = True
-            # 라벨 '뒤' 40자만 본다(라벨 자체를 검사에서 제외 → '목표주가'가 '주가'로 오인 안 됨).
+            # 라벨 '뒤' 40자에서 목표주가 금액을 찾는다(라벨 자체는 제외).
             window = txt[lm.end() : lm.end() + 40]
-            # 라벨 근처에 금액이 있고, 같은 창에 매출/이익/현재가 라벨이 끼지 않아야 함
-            if NON_TP_LABEL_RE.search(window):
-                continue
-            wm = WON_RE.search(window)
-            if wm:
-                v = _to_won(wm.group(1))
-                if v is not None:
-                    return TargetPriceExtraction(
-                        status="stated", value=v, source_page=p.get("page_number"),
-                        effective_date=report_date,
-                        evidence_text=txt[lm.start() : lm.end() + 40],
-                        reason="page_text:label_adjacent",
-                    )
+            found = _find_won_near_label(window)
+            if found:
+                v, _ = found
+                return TargetPriceExtraction(
+                    status="stated", value=v, source_page=p.get("page_number"),
+                    effective_date=report_date,
+                    evidence_text=txt[lm.start() : lm.end() + 40],
+                    reason="page_text:label_adjacent",
+                )
     if saw_label and saw_history:
         return TargetPriceExtraction(
             status="ambiguous", reason="page_text:history_without_clear_current"
