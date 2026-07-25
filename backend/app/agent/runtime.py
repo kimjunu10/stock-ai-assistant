@@ -10,6 +10,7 @@ Tool 은 ToolRuntime.context(QaRuntimeContext.services)로 기존 Service 에 �
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from typing import Literal
 
@@ -60,6 +61,22 @@ def _services(runtime: ToolRuntime[QaRuntimeContext]):
     if ctx is None or getattr(ctx, "services", None) is None:
         return None, error("실행 컨텍스트가 없어 조회할 수 없습니다.")
     return ctx.services, None
+
+
+def _resolve_stock_code(stock_code: str, runtime: ToolRuntime[QaRuntimeContext]) -> str:
+    """Agent 가 stock_code 자리에 회사명(예: '삼성')을 넣는 실수를 방어한다.
+
+    6자리 숫자 코드가 아니면, 사용자가 UI 문맥으로 제공한 종목코드
+    (runtime.context.stock_code)로 폴백한다. 문맥도 없으면 원값을 그대로 두어
+    입력 스키마 검증이 안전 오류로 처리하게 한다.
+    질문 문자열을 파싱하거나 회사명을 코드로 매핑하지 않는다(하드코딩·라우터 아님).
+    """
+    if isinstance(stock_code, str) and re.fullmatch(r"[0-9]{6}", stock_code):
+        return stock_code
+    ctx_code = getattr(runtime.context, "stock_code", None)
+    if isinstance(ctx_code, str) and re.fullmatch(r"[0-9]{6}", ctx_code):
+        return ctx_code
+    return stock_code
 
 
 @dynamic_prompt
@@ -136,6 +153,9 @@ def build_tools() -> list:
     ) -> str:
         """종목 뉴스 사건을 검색한다.
 
+        stock_code: 항상 6자리 숫자 코드(예: 005930). 제공된 문맥의 종목코드를 쓰고,
+        회사명("삼성"/"삼성전자"/"하이닉스" 등)을 이 자리에 넣지 말 것.
+
         query(검색 주제):
         - 특정 사건·제품·주제가 있을 때만 채운다. 예: "HBM 공급계약", "배당", "화재".
           이 경우 의미 검색 + 키워드 검색으로 관련 뉴스를 찾는다.
@@ -165,7 +185,7 @@ def build_tools() -> list:
             except ValueError:
                 return _dump(error("서버의 날짜 기준이 올바르지 않습니다."))
         inp = SearchNewsInput(
-            stock_code=stock_code,
+            stock_code=_resolve_stock_code(stock_code, runtime),
             query=query,
             sentiment=sentiment,
             exclude_topics=exclude_topics or [],
@@ -183,12 +203,16 @@ def build_tools() -> list:
         latest_only: bool = True,
         only_corrections: bool = False,
     ) -> str:
-        """종목 공시 목록을 검색한다. 기본적으로 정정 최신본만 반환한다."""
+        """종목 공시 목록을 검색한다. 기본적으로 정정 최신본만 반환한다.
+
+        stock_code: 항상 6자리 숫자 코드(예: 005930). 문맥의 종목코드를 쓰고
+        회사명을 이 자리에 넣지 말 것.
+        """
         svc, err = _services(runtime)
         if err:
             return _dump(err)
         inp = SearchDisclosuresInput(
-            stock_code=stock_code,
+            stock_code=_resolve_stock_code(stock_code, runtime),
             query=query,
             latest_only=latest_only,
             only_corrections=only_corrections,
@@ -221,6 +245,8 @@ def build_tools() -> list:
     ) -> str:
         """증권사 리포트를 검색한다(목표주가·투자의견·전망). 전망값은 예측치다.
 
+        stock_code: 항상 6자리 숫자 코드(예: 005930). 문맥의 종목코드를 쓰고
+        회사명을 이 자리에 넣지 말 것.
         목표주가 숫자는 결과의 target_price(target_price_status='stated')만 사용한다.
         snippet 안의 숫자를 목표주가로 인용하지 않는다.
         time_context 로 검색의 시간 기준을 준다(생략하면 "current" 가 기본):
@@ -235,7 +261,7 @@ def build_tools() -> list:
         if err:
             return _dump(err)
         inp = SearchResearchReportsInput(
-            stock_code=stock_code,
+            stock_code=_resolve_stock_code(stock_code, runtime),
             query=query,
             broker=broker,
             date_from=date_from,

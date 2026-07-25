@@ -37,6 +37,34 @@ def test_eight_tools_registered():
     ]
 
 
+class _FakeRuntime:
+    def __init__(self, ctx_stock=None):
+        self.context = type("C", (), {"stock_code": ctx_stock})()
+
+
+def test_resolve_stock_code_keeps_valid_code():
+    from app.agent.runtime import _resolve_stock_code
+
+    assert _resolve_stock_code("005930", _FakeRuntime(ctx_stock="000660")) == "005930"
+
+
+def test_resolve_stock_code_falls_back_to_context_on_company_name():
+    """Agent 가 stock_code 자리에 회사명('삼성')을 넣으면 문맥 종목코드로 폴백."""
+    from app.agent.runtime import _resolve_stock_code
+
+    assert _resolve_stock_code("삼성", _FakeRuntime(ctx_stock="005930")) == "005930"
+    assert _resolve_stock_code("", _FakeRuntime(ctx_stock="005930")) == "005930"
+
+
+def test_resolve_stock_code_no_context_keeps_original_for_safe_error():
+    """문맥 종목코드도 없으면 원값 유지 → 입력 스키마 검증이 안전 오류로 처리."""
+    from app.agent.runtime import _resolve_stock_code
+
+    assert _resolve_stock_code("삼성", _FakeRuntime(ctx_stock=None)) == "삼성"
+    # 질문 문자열을 파싱하거나 회사명을 코드로 매핑하지 않는다(하드코딩 없음).
+    assert _resolve_stock_code("삼성", _FakeRuntime(ctx_stock="삼성전자")) == "삼성"
+
+
 def test_build_agent_assembles_without_api_call():
     cfg = Settings()
     agent = build_agent(cfg, api_key="dummy", base_url="https://api.upstage.ai/v1")

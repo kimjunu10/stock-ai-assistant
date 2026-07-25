@@ -628,6 +628,22 @@ timeout: agent_timeout_seconds 8→45(별개 결함, 실측 p95≈6.7s 근거)
 미수행: 운영 배포·자동 머지·Phase 8
 ```
 
+## Phase 7 후속 결함 수정 — 검색 Tool stock_code 회사명 혼입(2026-07-26)
+
+실사용자 톤 UI 시뮬레이션(20문)에서 발견. "삼성 HBM 관련 뉴스"처럼 회사 약칭+주제가
+겹치면 Agent 가 stock_code 자리에 회사명('삼성')을 넣어 검색계 Tool 검증 실패
+→ "종목 코드 알려달라" 되물음(문맥에 005930 있는데도). news/disclosures/reports 3개 Tool.
+
+수정:
+```text
+_resolve_stock_code: stock_code 가 6자리 숫자 아니면 문맥(runtime.context.stock_code)로 폴백
+  - 회사명→코드 매핑·질문 파싱·키워드 라우터 없음. 문맥 없으면 원값 유지(안전 오류)
+docstring: 3개 Tool 에 "stock_code=6자리 숫자, 회사명 금지" 명시
+검증: pytest 313 passed(+3), ruff·format, UI 20문 재현 error 0·내부노출 0
+문서: phase_7/PHASE_7_BUG_STOCKCODE_COMPANY_NAME.md
+미수행: 운영 배포·자동 머지·Phase 8
+```
+
 ---
 
 # Phase 8. 전체 평가·튜닝
