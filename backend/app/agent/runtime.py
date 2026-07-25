@@ -10,6 +10,8 @@ Tool 은 ToolRuntime.context(QaRuntimeContext.services)로 기존 Service 에 �
 from __future__ import annotations
 
 import json
+from datetime import date
+from typing import Literal
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import (
@@ -18,13 +20,15 @@ from langchain.agents.middleware import (
     ToolCallLimitMiddleware,
     ToolErrorMiddleware,
     ToolRetryMiddleware,
+    dynamic_prompt,
 )
 from langchain.tools import ToolRuntime, tool
 from langchain_openai import ChatOpenAI
 
 from app.agent.context import QaRuntimeContext
 from app.agent.middleware import DuplicateToolCallMiddleware, sanitize_tool_error
-from app.agent.prompts import FINANCIAL_AGENT_SYSTEM_PROMPT
+from app.agent.prompts import financial_agent_system_prompt
+from app.agent.time_context import RelativePeriod, resolve_relative_date_range
 from app.agent.tools.common import ToolResult, error
 from app.agent.tools.disclosures import (
     DisclosureValuesInput,
@@ -58,6 +62,18 @@ def _services(runtime: ToolRuntime[QaRuntimeContext]):
     return ctx.services, None
 
 
+@dynamic_prompt
+def _runtime_prompt(request) -> str:
+    """모든 모델 호출에 요청 시점의 서버 시간 기준을 주입한다."""
+
+    ctx = request.runtime.context
+    return financial_agent_system_prompt(
+        current_datetime=getattr(ctx, "current_datetime", None),
+        current_date=getattr(ctx, "current_date", None),
+        timezone=getattr(ctx, "timezone", "Asia/Seoul"),
+    )
+
+
 def build_tools() -> list:
     """8개 read-only Tool 을 LangChain @tool 로 반환. 실제 조회는 기존 Service 재사용.
 
@@ -67,16 +83,20 @@ def build_tools() -> list:
     @tool
     def get_financial_facts(
         stock_code: str,
-        account_name: str,
         runtime: ToolRuntime[QaRuntimeContext],
+        account_name: str | None = None,
+        account_names: list[str] | None = None,
         business_year: int | None = None,
         report_period: str | None = None,
         amount_type: str | None = None,
         fs_div: str = "CFS",
+        period_mode: Literal["latest", "exact", "history"] = "latest",
     ) -> str:
         """종목의 정확한 재무 수치(매출·영업이익·순이익·자산/부채/자본·현금흐름)를 조회한다.
 
         report_period 는 q1/half/q3/annual, amount_type 은 quarter/cumulative/point_in_time.
+        광범위한 실적 질문은 account_name을 생략하면 매출·영업이익·순이익을 함께 조회한다.
+        여러 특정 항목은 account_names 한 번으로 조회한다.
         정확히 일치하는 기간·유형이 없으면 no_data 를 반환하며 다른 기간으로 대체하지 않는다.
         """
         svc, err = _services(runtime)
@@ -85,10 +105,12 @@ def build_tools() -> list:
         inp = FinancialFactsInput(
             stock_code=stock_code,
             account_name=account_name,
+            account_names=account_names or [],
             business_year=business_year,
             report_period=report_period,
             amount_type=amount_type,
             fs_div=fs_div,
+            period_mode=period_mode,
         )
         return _dump(run_get_financial_facts(svc.facts, inp))
 
@@ -109,11 +131,27 @@ def build_tools() -> list:
         include_topics: list[str] | None = None,
         date_from: str | None = None,
         date_to: str | None = None,
+        relative_period: RelativePeriod | None = None,
     ) -> str:
-        """종목 뉴스 사건을 검색한다. exclude_topics 로 제외할 주제를 지정할 수 있다."""
+        """종목 뉴스 사건을 검색한다.
+
+        상대 기간은 relative_period(today/yesterday/last_7_days/last_30_days/
+        this_week/this_month)로 지정한다. 서버가 KST 기준 정확한 날짜 범위로 변환한다.
+        date_from/date_to는 사용자가 절대 날짜를 지정한 경우에 사용한다.
+        """
         svc, err = _services(runtime)
         if err:
             return _dump(err)
+        if relative_period:
+            current_date = getattr(runtime.context, "current_date", None)
+            if not current_date:
+                return _dump(error("서버의 현재 날짜를 확인할 수 없습니다."))
+            try:
+                date_from, date_to = resolve_relative_date_range(
+                    relative_period, reference_date=date.fromisoformat(current_date)
+                )
+            except ValueError:
+                return _dump(error("서버의 날짜 기준이 올바르지 않습니다."))
         inp = SearchNewsInput(
             stock_code=stock_code,
             query=query,
@@ -286,6 +324,7 @@ def build_agent(cfg: Settings, *, api_key: str, base_url: str):
         max_retries=0,
     )
     middleware = [
+        _runtime_prompt,
         ModelCallLimitMiddleware(run_limit=cfg.agent_max_model_calls, exit_behavior="end"),
         ToolCallLimitMiddleware(run_limit=cfg.agent_max_tool_calls, exit_behavior="end"),
         DuplicateToolCallMiddleware(max_repeats=cfg.agent_max_same_tool_args),
@@ -296,7 +335,6 @@ def build_agent(cfg: Settings, *, api_key: str, base_url: str):
     return create_agent(
         model=model,
         tools=build_tools(),
-        system_prompt=FINANCIAL_AGENT_SYSTEM_PROMPT,
         context_schema=QaRuntimeContext,
         middleware=middleware,
     )

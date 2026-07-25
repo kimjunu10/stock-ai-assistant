@@ -91,7 +91,11 @@ disclosure metrics, term definition이다. 출처 없는/알 수 없는/빈 데�
 - `QaResponse`: 공개 `Source` 메타 확장, `visualizations`, `warnings` optional 추가
 - `AgentQaResult`: 검증된 ToolResult 기반 공개 UI payload 보존
 - SSE `sources/done`: typed payload 추가
-- Agent 라우팅/Tool 선택/검색/프롬프트/DB 변경 없음
+- 최초 Phase 7 연결에서는 Agent 라우팅/Tool 선택/검색/프롬프트/DB 변경 없음
+
+후속 시간·최신 실적 정확성 수정은 `PHASE_7_CHANGELOG.md`에 누적한다. Agent의
+자율 Tool 선택은 유지하며, 서버 시간 컨텍스트와 Tool 내부 결정론적 날짜/정렬 계약만
+보강했다.
 
 상세: `PHASE_7_UI_DATA_CONTRACT.md`.
 
@@ -183,6 +187,9 @@ ruff format --check  204 files already formatted
    실제 검색 결과를 표시한다.
 5. `history/conversation_id` 서버 checkpointer가 없어 탭 내 UI 기록만 제공한다.
 6. 운영 프록시의 SSE buffering/CORS는 운영 배포를 금지한 이번 Phase에서 미검증이다.
+
+후속 수정으로 모델 기준일 오해와 최신 DART 보고기간 선택 문제는 해결했다. 상세 원인,
+구현 계약, 실제 Agent smoke는 `PHASE_7_CHANGELOG.md`를 참조한다.
 
 ## 13. Phase 8 진행 가능 여부
 

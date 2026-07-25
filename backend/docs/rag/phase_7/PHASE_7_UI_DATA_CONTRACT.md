@@ -120,4 +120,6 @@ agent_start
 
 `QaResponse.sources`, `visualizations`, `warnings`는 optional/default empty 확장이다.
 기존 응답 필드는 유지한다. Agent Tool 선택, 프롬프트, 검색 알고리즘, DB schema는
-변경하지 않았다.
+최초 UI 연결 시 변경하지 않았다. 이후 서버 KST 시간 컨텍스트와 재무 Tool의 최신
+보고기간 선택 계약을 추가했으며 API 응답 스키마는 그대로 유지한다. 상세 변경 이력은
+`PHASE_7_CHANGELOG.md`에 기록한다.

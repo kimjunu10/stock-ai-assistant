@@ -43,4 +43,7 @@ class QaRuntimeContext:
     document_id: str | None = None
     report_page: int | None = None
     conversation_id: str | None = None
+    current_datetime: str | None = None
+    current_date: str | None = None
+    timezone: str = "Asia/Seoul"
     services: Any = field(default=None)  # ToolServices (직렬화 회피 위해 Any)

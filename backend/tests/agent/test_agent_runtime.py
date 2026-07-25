@@ -11,9 +11,12 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from app.agent.context import ToolServices
 from app.agent.middleware import DuplicateToolCallMiddleware, sanitize_tool_error
+from app.agent.prompts import financial_agent_system_prompt
 from app.agent.runtime import build_agent, build_tools
 from app.core.config import Settings
 from app.services.agent_qa import AgentQaService, get_agent_qa_service
@@ -38,6 +41,17 @@ def test_build_agent_assembles_without_api_call():
     cfg = Settings()
     agent = build_agent(cfg, api_key="dummy", base_url="https://api.upstage.ai/v1")
     assert agent is not None  # create_agent 로 조립됨(우리가 StateGraph 를 직접 만들지 않음)
+
+
+def test_runtime_prompt_uses_server_date_not_model_knowledge():
+    prompt = financial_agent_system_prompt(
+        current_datetime="2026-07-25T22:53:02+09:00",
+        current_date="2026-07-25",
+        timezone="Asia/Seoul",
+    )
+    assert "2026-07-25" in prompt
+    assert "Asia/Seoul" in prompt
+    assert "학습 기준일" in prompt
 
 
 def test_sanitize_tool_error_hides_internal():
@@ -128,6 +142,15 @@ def test_agent_qa_extracts_answer_and_toolcalls():
     assert "6조원" in r.answer
     assert [c.name for c in r.tool_calls] == ["get_financial_facts"]
     assert r.model_calls == 2
+
+
+def test_agent_context_captures_timezone_aware_kst_request_time():
+    svc = _svc_with(_FakeAgent())
+    ctx = svc._context("005930", None, None, None, None, None)
+    parsed = datetime.fromisoformat(ctx.current_datetime)
+    assert ctx.current_date == parsed.date().isoformat()
+    assert parsed.tzinfo is not None
+    assert parsed.utcoffset() == ZoneInfo("Asia/Seoul").utcoffset(parsed)
 
 
 def test_agent_qa_timeout_returns_safe_error():

@@ -19,6 +19,7 @@ from functools import lru_cache
 
 from app.agent.context import QaRuntimeContext, ToolServices
 from app.agent.runtime import build_agent
+from app.agent.time_context import SEOUL_TIMEZONE_NAME, current_seoul_datetime
 from app.agent.trace import AgentTrace, ToolTrace
 from app.agent.validator import (
     collect_evidence,
@@ -66,6 +67,7 @@ class AgentQaService:
     def _context(
         self, stock_code, source_type, source_id, document_id, report_page, conversation_id
     ):
+        request_now = current_seoul_datetime()
         return QaRuntimeContext(
             stock_code=stock_code,
             source_type=source_type,
@@ -73,6 +75,9 @@ class AgentQaService:
             document_id=document_id,
             report_page=report_page,
             conversation_id=conversation_id,
+            current_datetime=request_now.isoformat(timespec="seconds"),
+            current_date=request_now.date().isoformat(),
+            timezone=SEOUL_TIMEZONE_NAME,
             services=self._services,
         )
 

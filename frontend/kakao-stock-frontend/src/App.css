@@ -931,7 +931,7 @@
   .rag-messages { @apply mx-auto w-[min(760px,100%)]; }
   .rag-message { @apply mb-6 flex items-start gap-2.5; }
   .rag-message > div { @apply min-w-0 max-w-[88%]; }
-  .rag-message > div > p { @apply m-0 whitespace-pre-wrap text-[14px] leading-7 font-medium text-muted; }
+  .rag-message > div > p { @apply m-0 whitespace-pre-wrap text-[16px] leading-8 font-medium text-muted; }
   .rag-message--assistant > div { @apply rounded-[5px_18px_18px] border border-line bg-surface px-4 py-3.5; box-shadow: inset 1px 1px 1px var(--clay-highlight), 0 7px 17px var(--clay-shadow-deep); }
   .rag-message--user { @apply justify-end; }
   .rag-message--user > div { @apply rounded-[18px_5px_18px_18px] border border-brand bg-brand px-4 py-3; box-shadow: inset 2px 2px 1px rgba(255,255,255,.6), inset -2px -2px 4px rgba(85,74,0,.15), 0 7px 14px var(--clay-shadow); }
@@ -946,53 +946,53 @@
   .rag-viz { @apply min-w-0 rounded-[16px] border border-line bg-subtle p-3.5; }
   .rag-viz > header { @apply mb-3 flex items-center gap-2; }
   .rag-viz > header svg { @apply text-brand-ink; }
-  .rag-viz > header strong { @apply min-w-0 truncate text-[12px] font-extrabold text-ink; }
-  .rag-viz > header span { @apply ml-auto shrink-0 rounded-full bg-surface px-2 py-1 text-[8px] font-extrabold text-muted; }
-  .rag-viz > p { @apply mt-2 mb-0 text-[9px] leading-4 font-medium text-faint; }
+  .rag-viz > header strong { @apply min-w-0 truncate text-[14px] font-extrabold text-ink; }
+  .rag-viz > header span { @apply ml-auto shrink-0 rounded-full bg-surface px-2.5 py-1 text-[11px] font-extrabold text-muted; }
+  .rag-viz > p { @apply mt-2 mb-0 text-[12px] leading-5 font-medium text-faint; }
   .rag-viz--line svg { @apply h-auto w-full overflow-visible; }
   .rag-line-grid { fill: none; stroke: var(--line); stroke-width: 1; }
   .rag-line-path { fill: none; stroke: var(--brand-ink); stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
-  .rag-viz__range { @apply flex justify-between gap-3 text-[9px] font-semibold text-faint; }
+  .rag-viz__range { @apply flex justify-between gap-3 text-[12px] font-semibold text-faint; }
   .rag-metric-grid { @apply grid grid-cols-2 gap-2; }
   .rag-metric-grid > div { @apply flex min-w-0 flex-col rounded-xl border border-line bg-surface p-3; box-shadow: inset 1px 1px 1px var(--clay-highlight), 0 4px 8px var(--clay-shadow-deep); }
-  .rag-metric-grid small { @apply text-[9px] font-bold text-faint; }
-  .rag-metric-grid strong { @apply mt-1 truncate text-[16px] font-extrabold text-ink; }
-  .rag-metric-grid span { @apply mt-1 truncate text-[8px] font-semibold text-muted; }
+  .rag-metric-grid small { @apply text-[12px] font-bold text-faint; }
+  .rag-metric-grid strong { @apply mt-1 truncate text-[18px] font-extrabold text-ink; }
+  .rag-metric-grid span { @apply mt-1 text-[11px] leading-5 font-semibold text-muted; }
   .rag-return { @apply grid grid-cols-[1fr_auto_1fr] items-center gap-2; }
   .rag-return > div { @apply flex min-w-0 flex-col rounded-xl bg-surface p-2.5; }
-  .rag-return small, .rag-return span { @apply text-[8px] font-bold text-faint; }
-  .rag-return strong { @apply my-1 text-[13px] text-ink; }
-  .rag-return > em { @apply col-span-3 justify-self-center rounded-full bg-brand-soft px-3 py-1 text-[12px] font-black not-italic text-brand-ink; }
+  .rag-return small, .rag-return span { @apply text-[11px] font-bold text-faint; }
+  .rag-return strong { @apply my-1 text-[15px] text-ink; }
+  .rag-return > em { @apply col-span-3 justify-self-center rounded-full bg-brand-soft px-3 py-1 text-[14px] font-black not-italic text-brand-ink; }
   .rag-target-list { @apply flex flex-col gap-2; }
   .rag-target-list > div { @apply grid grid-cols-[1fr_auto] gap-x-3 rounded-xl bg-surface p-3; }
   .rag-target-list span { @apply flex min-w-0 flex-col; }
-  .rag-target-list span strong { @apply truncate text-[11px] text-ink; }
-  .rag-target-list span small { @apply text-[8px] text-faint; }
-  .rag-target-list b { @apply text-[13px] text-ink; }
-  .rag-target-list p { @apply col-span-2 mt-1 mb-0 text-[8px] font-semibold text-muted; }
+  .rag-target-list span strong { @apply truncate text-[13px] text-ink; }
+  .rag-target-list span small { @apply text-[11px] text-faint; }
+  .rag-target-list b { @apply text-[15px] text-ink; }
+  .rag-target-list p { @apply col-span-2 mt-1 mb-0 text-[11px] font-semibold text-muted; }
   .rag-disclosure-list { @apply flex flex-col gap-2; }
   .rag-disclosure-list > div { @apply rounded-xl bg-surface p-3; }
-  .rag-disclosure-list > div > strong { @apply text-[11px] text-ink; }
-  .rag-disclosure-list > div > span { @apply ml-2 text-[8px] text-faint; }
+  .rag-disclosure-list > div > strong { @apply text-[13px] text-ink; }
+  .rag-disclosure-list > div > span { @apply ml-2 text-[11px] text-faint; }
   .rag-disclosure-list dl { @apply my-2 grid grid-cols-2 gap-1.5; }
   .rag-disclosure-list dl div { @apply rounded-lg bg-subtle p-2; }
-  .rag-disclosure-list dt { @apply truncate text-[8px] font-bold text-faint; }
-  .rag-disclosure-list dd { @apply m-0 mt-1 break-words text-[10px] font-bold text-ink; }
-  .rag-disclosure-list p, .rag-viz--term > p { @apply m-0 text-[10px] leading-5 text-muted; }
+  .rag-disclosure-list dt { @apply truncate text-[11px] font-bold text-faint; }
+  .rag-disclosure-list dd { @apply m-0 mt-1 break-words text-[13px] font-bold text-ink; }
+  .rag-disclosure-list p, .rag-viz--term > p { @apply m-0 text-[13px] leading-6 text-muted; }
 
   .rag-sources { @apply mt-4 border-t border-line pt-3; }
-  .rag-sources h3 { @apply m-0 mb-2 text-[10px] font-extrabold text-muted; }
+  .rag-sources h3 { @apply m-0 mb-2 text-[12px] font-extrabold text-muted; }
   .rag-sources h3 span { @apply ml-1 text-faint; }
   .rag-sources > div { @apply flex gap-2 overflow-x-auto pb-1; scrollbar-width: thin; }
-  .rag-sources a, .rag-sources article { @apply relative flex min-w-[190px] max-w-[230px] flex-col rounded-xl border border-line bg-subtle p-3 text-left no-underline; }
+  .rag-sources a, .rag-sources article { @apply relative flex min-w-[230px] max-w-[280px] flex-col rounded-xl border border-line bg-subtle p-3.5 text-left no-underline; }
   .rag-sources a:hover { @apply border-brand/40; }
-  .rag-sources a > span, .rag-sources article > span { @apply text-[8px] font-extrabold text-brand-ink; }
-  .rag-sources strong { @apply mt-1 line-clamp-2 text-[10px] leading-4 text-ink; }
-  .rag-sources small { @apply mt-1 truncate text-[8px] text-faint; }
-  .rag-sources em { @apply mt-2 w-fit rounded bg-surface px-1.5 py-0.5 text-[8px] font-bold not-italic text-muted; }
+  .rag-sources a > span, .rag-sources article > span { @apply text-[11px] font-extrabold text-brand-ink; }
+  .rag-sources strong { @apply mt-1 line-clamp-2 text-[13px] leading-5 text-ink; }
+  .rag-sources small { @apply mt-1 truncate text-[11px] text-faint; }
+  .rag-sources em { @apply mt-2 w-fit rounded bg-surface px-1.5 py-0.5 text-[11px] font-bold not-italic text-muted; }
   .rag-sources svg { @apply absolute right-2.5 bottom-2.5 text-faint; }
   .rag-warnings { @apply mt-3 flex flex-col gap-1; }
-  .rag-warnings p { @apply m-0 flex items-start gap-1.5 text-[9px] leading-4 text-faint; }
+  .rag-warnings p { @apply m-0 flex items-start gap-1.5 text-[12px] leading-5 text-faint; }
   .rag-warnings svg { @apply mt-0.5 shrink-0; }
   .rag-retry { @apply mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[10px] font-bold text-muted; }
 

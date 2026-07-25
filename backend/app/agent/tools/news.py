@@ -84,6 +84,8 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
             "applied_filters": {
                 "include_topics": inp.include_topics,
                 "exclude_topics": inp.exclude_topics,
+                "date_from": inp.date_from,
+                "date_to": inp.date_to,
             },
         },
         sources=sources,
