@@ -84,10 +84,10 @@ class QaResponse(BaseModel):
     term: dict | None = None
     invalid_citations: list[int] = []
     latency_ms: dict = {}
-    # Phase 5.5-D: Agent 경로 실행 메타. 결정론적 경로에서는 None(기존 계약 유지).
+    # Phase 5.5-D: Agent 경로 실행 메타. Agent 경로에서 항상 채워진다.
     execution: AgentExecution | None = None
-    # deprecated: 결정론적 QueryPlan 판정. Agent 전환 완료 후 제거 예정(한 릴리스 유지).
-    query_plan: dict | None = None
+    # (제거됨) query_plan: legacy QueryPlan 판정 필드. Phase 5.5-G 에서 legacy 경로
+    #   제거와 함께 삭제. Agent 경로는 이 필드를 채운 적이 없다.
     # prompt.md §8: 공식 정보와 증권사 의견 분리(비파괴 추가). 리포트 미사용 질문에선 빈 값.
     official_information: list[dict] = []
     broker_opinions: list[BrokerOpinion] = []

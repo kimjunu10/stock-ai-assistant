@@ -1,19 +1,19 @@
-"""RAG question-answering API routes (Phase 2)."""
+"""RAG question-answering API routes.
+
+Phase 5.5-G 종료: 모든 정상 QA 요청은 단일 Agent(create_agent)만 처리한다.
+legacy QueryPlan/FactsQaService fallback 은 제거됐다. Agent 를 구성할 수 없으면
+(AGENT_ENABLED=false 또는 자격증명 없음) QueryPlan 으로 돌아가지 않고 503 으로
+"QA 비활성" 을 명확히 알린다(조용한 규칙 기반 fallback 금지).
+"""
 
 from __future__ import annotations
 
 import json
 from collections.abc import Iterator
-from functools import lru_cache
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.core.config import settings
-from app.db.client import get_supabase_client
-from app.ml.embeddings import UpstageEmbedder
-from app.ml.generation import SolarGenerator
-from app.rag.retrieval import HybridRetriever
 from app.schemas.qa import (
     AgentExecution,
     AgentToolCallInfo,
@@ -22,32 +22,11 @@ from app.schemas.qa import (
     QaResponse,
 )
 from app.services.agent_qa import get_agent_qa_service
-from app.services.facts import FactsService
-from app.services.rag_qa import validate_citations
-from app.services.rag_qa_facts import FactsQaService
-from app.services.research_reports import ResearchReportSearch
 
 router = APIRouter(prefix="/qa", tags=["qa"])
 
-
-@lru_cache(maxsize=1)
-def get_qa_service() -> FactsQaService:
-    """단일 QA 진입점.
-
-    QueryPlan(규칙 기반)으로 질문 유형을 판정해 하나의 서비스가 처리한다:
-    - 순수 뉴스 질문 → 기존 HybridRetriever 뉴스 검색만 사용(회귀 없음)
-    - 숫자 질문 → FactsService SQL 결과(실제값, 단위·기간·출처 보존)
-    - 용어 질문 → lookup_term 결과
-    - 전망·목표주가·투자의견·증권사 질문 → search_research_reports(리포트 검색)
-    - 혼합 질문 → 위를 병렬 결합
-    """
-    client = get_supabase_client()
-    embedder = UpstageEmbedder(settings)
-    retriever = HybridRetriever(client, settings, embedder)
-    facts = FactsService(client)
-    generator = SolarGenerator(settings)
-    reports = ResearchReportSearch(client, settings, retriever)
-    return FactsQaService(retriever, facts, generator, settings, reports=reports)
+# Agent 미구성(flag off/자격증명 없음) 시 반환할 명확한 비활성 응답.
+_QA_DISABLED_DETAIL = "QA 서비스가 현재 비활성화되어 있습니다(Agent 미구성)."
 
 
 def _sse(event: str, data: dict | str) -> str:
@@ -55,57 +34,21 @@ def _sse(event: str, data: dict | str) -> str:
     return f"event: {event}\ndata: {payload}\n\n"
 
 
-def _official_information(numeric_sources: list) -> list[dict]:
-    """공식 확인 정보(재무·공시 등 검증된 수치)를 broker 의견과 분리해 노출(prompt.md §8)."""
-    out = []
-    for ns in numeric_sources or []:
-        d = ns.model_dump() if hasattr(ns, "model_dump") else dict(ns)
-        out.append(
-            {
-                "label": d.get("label"),
-                "value": d.get("value"),
-                "unit": d.get("unit"),
-                "period": d.get("period"),
-                "basis": d.get("basis"),
-                "value_kind": d.get("value_kind"),
-                "source_type": d.get("source_type"),
-                "source_key": d.get("source_key"),
-            }
-        )
-    return out
+def _broker_opinions_from_agent(report_opinions: list[dict]) -> list[BrokerOpinion]:
+    """Agent 결과의 구조화 증권사 의견 카드를 스키마 모델로 변환한다."""
+    return [BrokerOpinion(**o) for o in report_opinions or []]
 
 
-def _broker_opinions(report_sources: list[dict]) -> list[BrokerOpinion]:
-    """증권사 전망 카드. 목표주가는 구조화 status='stated' 인 경우만 실린다(prompt.md §8)."""
-    out = []
-    for r in report_sources or []:
-        stated = r.get("target_price_status") == "stated" and r.get("target_price") is not None
-        out.append(
-            BrokerOpinion(
-                broker=r.get("broker"),
-                report_date=r.get("report_date"),
-                title=r.get("title"),
-                investment_opinion=r.get("investment_opinion"),
-                target_price=int(r["target_price"]) if stated else None,
-                target_price_currency=r.get("target_price_currency") if stated else None,
-                target_price_status=r.get("target_price_status", "unknown"),
-                source_id=r.get("chunk_id") or r.get("source_id"),
-                source_page=r.get("source_page") or r.get("page_number"),
-                is_stale=bool(r.get("is_stale", False)),
-            )
-        )
-    return out
+@router.post("", response_model=QaResponse)
+def ask(req: QaRequest) -> QaResponse:
+    """비스트리밍 QA. 단일 Agent 경로만 사용한다(legacy fallback 없음).
 
-
-def _answer_agent(req: QaRequest) -> QaResponse | None:
-    """Agent 경로. feature flag(agent_enabled)가 켜져 있을 때만 동작.
-
-    꺼져 있거나 구성 불가면 None 을 반환해 호출부가 기존 결정론적 경로로 처리한다.
-    (이는 legacy QueryPlan fallback 이 아니라, 아직 Agent 를 켜지 않은 상태의 기본 경로다.)
+    Agent 미구성 시 503(QA 비활성). QueryPlan 으로 돌아가지 않는다.
     """
     agent = get_agent_qa_service()
     if agent is None:
-        return None
+        raise HTTPException(status_code=503, detail=_QA_DISABLED_DETAIL)
+
     r = agent.answer(
         req.question,
         stock_code=req.stock_code,
@@ -129,51 +72,20 @@ def _answer_agent(req: QaRequest) -> QaResponse | None:
         invalid_citations=[],
         latency_ms={},
         execution=execution,
-        broker_opinions=[BrokerOpinion(**o) for o in getattr(r, "report_opinions", [])],
+        broker_opinions=_broker_opinions_from_agent(getattr(r, "report_opinions", [])),
     )
 
 
-@router.post("", response_model=QaResponse)
-def ask(req: QaRequest) -> QaResponse:
-    """비스트리밍 QA. 스트리밍은 아래 /qa/stream 를 사용한다.
+@router.post("/stream")
+def ask_stream(req: QaRequest) -> StreamingResponse:
+    """SSE 스트리밍 QA. 단일 Agent 경로만 사용한다(legacy fallback 없음).
 
-    feature flag(agent_enabled)가 켜져 있으면 단일 Agent 경로, 아니면 기존 결정론적 경로.
-    운영 기본값은 flag=false(기존 경로 유지).
-    """
-
-    agent_resp = _answer_agent(req)
-    if agent_resp is not None:
-        return agent_resp
-
-    service = get_qa_service()
-    result = service.answer(
-        req.question,
-        stock_code=req.stock_code,
-        context_source_id=req.context_source_id,
-    )
-    return QaResponse(
-        answer=result.answer,
-        sources=result.sources,
-        numeric_sources=result.numeric_sources,
-        report_sources=result.report_sources,
-        term=result.term,
-        invalid_citations=result.invalid_citations,
-        latency_ms=result.latency_ms,
-        query_plan=result.plan,  # deprecated: Agent 전환 완료 후 제거
-        official_information=_official_information(result.numeric_sources),
-        broker_opinions=_broker_opinions(result.report_sources),
-    )
-
-
-def _stream_agent(req: QaRequest) -> Iterator[str] | None:
-    """Agent 경로 SSE. flag off/구성불가면 None(기존 경로로).
-
-    5.5-D 에서는 Agent 결과를 받아 agent_start→(tool 요약)→delta→done 순으로 포장한다.
-    토큰 단위 실시간 스트리밍·tool_start/end 세분화는 5.5-E/G 튜닝 영역이다.
+    Agent 미구성 시 503(QA 비활성). 이벤트 순서:
+    agent_start → (tool_start/tool_end)* → sources → delta → done.
     """
     agent = get_agent_qa_service()
     if agent is None:
-        return None
+        raise HTTPException(status_code=503, detail=_QA_DISABLED_DETAIL)
 
     def gen() -> Iterator[str]:
         yield _sse("agent_start", {"question": req.question})
@@ -199,44 +111,5 @@ def _stream_agent(req: QaRequest) -> Iterator[str] | None:
                 "tool_calls": [c.name for c in r.tool_calls],
             },
         )
-
-    return gen()
-
-
-@router.post("/stream")
-def ask_stream(req: QaRequest) -> StreamingResponse:
-    """SSE 스트리밍 QA. feature flag 에 따라 Agent 경로 또는 기존 결정론적 경로.
-
-    기존 경로: sources → token* → done. Agent 경로: agent_start → tool_* → delta → done.
-    """
-
-    agent_gen = _stream_agent(req)
-    if agent_gen is not None:
-        return StreamingResponse(agent_gen, media_type="text/event-stream")
-
-    service = get_qa_service()
-    sources, numeric_sources, report_sources, term, token_iter = service.stream(
-        req.question,
-        stock_code=req.stock_code,
-        context_source_id=req.context_source_id,
-    )
-
-    def gen() -> Iterator[str]:
-        yield _sse(
-            "sources",
-            {
-                "sources": sources,
-                "numeric_sources": numeric_sources,
-                "report_sources": report_sources,
-                "term": term,
-            },
-        )
-        buffer: list[str] = []
-        for token in token_iter:
-            buffer.append(token)
-            yield _sse("token", {"text": token})
-        answer = "".join(buffer)
-        invalid = validate_citations(answer, len(sources))
-        yield _sse("done", {"invalid_citations": invalid})
 
     return StreamingResponse(gen(), media_type="text/event-stream")

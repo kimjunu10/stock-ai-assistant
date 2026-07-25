@@ -1,5 +1,12 @@
 """숫자·용어·혼합 질문 QA (Phase 4, SPEC §9·§11·§12).
 
+⚠️ DEPRECATED (Phase 5.5-G): 라이브 QA 경로(app/api/routes/qa.py)에서 제거됨.
+   모든 정상 QA 요청은 단일 Agent(AgentQaService)가 처리하며, 이 서비스는 더 이상
+   프로덕션 라우트에서 호출되지 않는다. 남은 사용처는 평가 스크립트
+   (scripts/rag_phase4_trial.py)·헬퍼 재사용(scripts/verify_bok_loaded.py 의
+   _term_candidates)·단위 테스트(tests/unit/test_qa_facts_integration.py)뿐이다.
+   새 코드에서 이 서비스를 QA 라우트로 다시 연결하지 말 것(legacy fallback 부활 금지).
+
 QueryPlan(규칙 기반)으로 질문을 해석해:
 - 정확 숫자는 SQL(FactsService)에서 조회하고,
 - 공시 설명은 RAG(HybridRetriever)로 검색하고,
