@@ -4,6 +4,48 @@ Phase 7 구현 이후 발견된 결함과 수정·검증 결과를 계속 누적
 하드코딩, 키워드 라우터는 추가하지 않는다. Agent가 의미를 해석해 Tool을 선택하고,
 Tool은 시간·정렬·숫자 같은 결정론적 정확성을 보장한다.
 
+## 2026-07-26 — 최근 뉴스 계약·뉴스 카드·긴 답변 스크롤
+
+### 최근의 기준
+
+- 기간 없는 `최근/요즘/최신` 뉴스 질문은 Agent가
+  `search_news(relative_period="recent")`를 선택한다.
+- `recent`는 서버의 KST 요청일을 기준으로 **오늘부터 2일 전까지** 양 끝을 포함한다.
+  예를 들어 2026-07-26 요청은 `2026-07-24 ~ 2026-07-26`이다.
+- 날짜 계산은 모델이 하지 않고 `time_context.resolve_relative_date_range`가 담당한다.
+- 해당 범위에 뉴스가 없으면 7일·30일 전 자료로 자동 확장하지 않는다.
+- 질문 문구나 기업별 분기, 종목별 하드코딩은 추가하지 않았다.
+
+### 뉴스·답변 UI
+
+- `search_news` ToolResult에 각 뉴스의 `source_id`와 검증된 원문 `url`을 함께 담는다.
+- 공개 visualization에 `news_cards`를 추가했다.
+- 뉴스 카드는 조회 기간, 기사 수, 언론사 수, 제목, 요약, 발행일, 원문 링크를 표시한다.
+- 같은 뉴스 출처를 하단 가로 출처 카드로 다시 복제하지 않는다.
+- 자연어의 번호 목록과 불릿을 HTML로 해석하지 않고 안전한 React 텍스트 목록으로
+  렌더링한다. 기사 내용을 답변 줄글로 반복하지 않도록 Agent 응답 원칙도 간결화했다.
+- 주가 시계열, 수익률, DART 재무, 구조화 공시, 증권사 목표주가는 기존처럼 Tool이
+  확정한 값만 각각 차트·지표 카드·표형 UI로 표시한다.
+
+### 스크롤
+
+- `100vh` 대신 모바일 주소창을 반영하는 `100dvh`를 사용한다.
+- 채팅 부모의 모든 grid 단계에 `min-height: 0`과 overflow 경계를 명시했다.
+- 메시지 끝 sentinel로 답변·카드 렌더 후 내부 대화 영역을 끝까지 이동한다.
+- 모바일에서는 하단 고정 내비게이션과 safe-area만큼 대화 영역 아래 여백을 둔다.
+
+### 검증
+
+- Backend Tool/UI payload 테스트: 26 passed
+- Backend Agent 전체 테스트: 70 passed (`AGENT_ENABLED=false` 격리 기준)
+- Frontend 전체 Vitest: 4 files, 9 tests passed
+- Frontend oxlint: PASS
+- Frontend TypeScript + Vite production build: PASS
+- 실제 Agent: 2026-07-26 요청에서 `2026-07-24 ~ 2026-07-26`, 뉴스 5건 확인
+- 브라우저 1280×720: 페이지 가로 overflow 0, 내부 대화 끝 sentinel 도달
+- 브라우저 390×844: 페이지 가로 overflow 0, 단일 열 뉴스 카드, 내부 스크롤
+  `scrollTop == maxScrollTop` 확인
+
 ## 2026-07-25 — 초보자용 재무 요약·컨센서스 조사
 
 네이버 증권 Financial Summary와 투자의견 컨센서스의 데이터 구성, 접근 방식,
@@ -46,7 +88,7 @@ FnGuide 라이선스, 현재 DART·리포트 데이터의 대체 가능성을 �
 - LangChain `dynamic_prompt`로 모든 모델 호출에 같은 런타임 시간 기준을 주입한다.
 - 뉴스 Tool에 일반화된 `relative_period` typed 인자를 추가했다.
 - Agent는 상대 기간의 의미를 선택하고, 백엔드는 KST 기준 ISO 범위를 계산한다.
-- 지원 범위: `today`, `yesterday`, `last_7_days`, `last_30_days`,
+- 지원 범위: `recent`, `today`, `yesterday`, `last_7_days`, `last_30_days`,
   `this_week`, `this_month`.
 - 사용자 질문 문자열을 백엔드에서 파싱하거나 Tool을 강제하는 분기는 없다.
 

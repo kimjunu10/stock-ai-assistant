@@ -54,10 +54,12 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
     for c in clamp_items(chunks, inp.limit):
         data.append(
             {
+                "source_id": c.chunk_id,
                 "title": c.title,
                 "snippet": clamp_text(c.content),
                 "published_at": iso(c.published_at),
                 "publisher": c.publisher,
+                "url": c.source_url,
             }
         )
         sources.append(

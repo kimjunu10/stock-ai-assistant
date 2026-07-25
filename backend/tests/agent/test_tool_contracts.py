@@ -214,6 +214,10 @@ def test_financial_broad_request_uses_core_metrics_in_one_query():
 
 def test_relative_date_ranges_use_server_reference_date():
     reference = date(2026, 7, 25)
+    assert resolve_relative_date_range("recent", reference_date=reference) == (
+        "2026-07-23",
+        "2026-07-25",
+    )
     assert resolve_relative_date_range("yesterday", reference_date=reference) == (
         "2026-07-24",
         "2026-07-24",
@@ -270,6 +274,8 @@ def test_search_news_surfaces_exclude_topics():
     assert r.status == "ok"
     assert any("제외" in w for w in r.warnings)
     assert r.data["applied_filters"]["exclude_topics"] == ["실적", "영업이익"]
+    assert r.data["news"][0]["source_id"] == "c1"
+    assert r.data["news"][0]["url"] == "http://x"
 
 
 # ── reports: source metadata + forecast 경고 ──

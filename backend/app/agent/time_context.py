@@ -8,8 +8,10 @@ from zoneinfo import ZoneInfo
 
 SEOUL_TIMEZONE_NAME = "Asia/Seoul"
 SEOUL_TIMEZONE = ZoneInfo(SEOUL_TIMEZONE_NAME)
+RECENT_LOOKBACK_DAYS = 2
 
 RelativePeriod = Literal[
+    "recent",
     "today",
     "yesterday",
     "last_7_days",
@@ -30,7 +32,9 @@ def resolve_relative_date_range(
 ) -> tuple[str, str]:
     """상대 기간을 양 끝을 포함하는 ISO 날짜 범위로 변환한다."""
 
-    if relative_period == "today":
+    if relative_period == "recent":
+        start, end = reference_date - timedelta(days=RECENT_LOOKBACK_DAYS), reference_date
+    elif relative_period == "today":
         start = end = reference_date
     elif relative_period == "yesterday":
         start = end = reference_date - timedelta(days=1)

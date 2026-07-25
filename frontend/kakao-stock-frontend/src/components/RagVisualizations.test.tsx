@@ -3,6 +3,28 @@ import { describe, expect, it } from 'vitest'
 import { RagVisualizations } from './RagVisualizations'
 
 describe('RagVisualizations', () => {
+  it('renders verified news as cards with a visible date window', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'news_cards',
+      title: '최근 뉴스',
+      data: {
+        date_from: '2026-07-23',
+        date_to: '2026-07-25',
+        items: [{
+          source_id: 'n1',
+          title: '반도체 공급 확대',
+          snippet: '공급 계약 관련 핵심 내용',
+          publisher: '테스트뉴스',
+          published_at: '2026-07-25T09:00:00+09:00',
+          url: 'https://example.com/news',
+        }],
+      },
+      sourceIds: ['n1'],
+    }]} />)
+    expect(screen.getByText('2026-07-23 ~ 2026-07-25')).toBeTruthy()
+    expect(screen.getByRole('link', { name: /반도체 공급 확대/ }).getAttribute('href')).toBe('https://example.com/news')
+  })
+
   it('labels actual financial values and broker forecasts separately', () => {
     render(<RagVisualizations visualizations={[
       {

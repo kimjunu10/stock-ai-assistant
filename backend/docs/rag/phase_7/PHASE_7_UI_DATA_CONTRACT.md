@@ -1,6 +1,6 @@
 # Phase 7 UI 데이터 계약
 
-- 작성일: 2026-07-25
+- 작성일: 2026-07-26
 - 원칙: Agent 라우팅/Tool 선택/검색은 변경하지 않고, 이미 실행된 ToolResult의 검증된
   `data`와 `sources`만 공개 UI view model로 변환한다.
 
@@ -80,6 +80,7 @@
 
 허용 enum:
 
+- `news_cards`: 검증된 뉴스 목록, 조회 기간, 원문 링크
 - `price_snapshot`: 단일 현재가/기간 요약 카드
 - `price_line`: Tool이 제공한 복수 실제 거래일 점
 - `event_return`: 발표 전/후 거래일·가격·백엔드 계산 수익률
@@ -99,6 +100,34 @@
 5. 차트 좌표 정규화는 표시 처리일 뿐 값 계산이 아니다.
 6. 알 수 없는 type은 안전하게 무시한다.
 7. `no_data`와 `error`는 빈 차트를 만들지 않고 경고/오류 UX로 보낸다.
+
+### `news_cards` 예시
+
+```json
+{
+  "type": "news_cards",
+  "title": "최근 뉴스",
+  "data": {
+    "date_from": "2026-07-24",
+    "date_to": "2026-07-26",
+    "items": [
+      {
+        "source_id": "news-1",
+        "title": "기사 제목",
+        "snippet": "검증된 검색 결과의 요약",
+        "publisher": "언론사",
+        "published_at": "2026-07-25T09:00:00+09:00",
+        "url": "https://example.com/article"
+      }
+    ]
+  },
+  "source_ids": ["news-1"]
+}
+```
+
+`최근` 뉴스의 기본 계약은 KST 요청일 기준 오늘부터 2일 전까지다. 기간 내 결과가
+없을 때는 더 오래된 뉴스를 카드에 섞지 않는다. 프런트는 URL을 다시 `http/https`로
+검증하며, 뉴스 카드에 포함된 Source는 하단 출처 카드에서 중복 표시하지 않는다.
 
 ## 5. SSE
 

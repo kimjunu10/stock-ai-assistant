@@ -21,6 +21,65 @@ function won(value: unknown, currency?: unknown) {
   return currency === 'KRW' || currency === '원' || currency == null ? `${formatted}원` : `${formatted} ${currency}`
 }
 
+function safeHref(value: unknown) {
+  if (typeof value !== 'string') return undefined
+  try {
+    const url = new URL(value, window.location.origin)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function shortDate(value: unknown) {
+  if (typeof value !== 'string') return '날짜 미상'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'Asia/Seoul',
+  }).format(date)
+}
+
+function NewsCards({ visualization }: { visualization: RagVisualization }) {
+  const items = records(visualization.data.items)
+  if (items.length === 0) return null
+  const publishers = new Set(items.map((item) => item.publisher).filter((value) => typeof value === 'string'))
+  const range = visualization.data.date_from && visualization.data.date_to
+    ? `${text(visualization.data.date_from)} ~ ${text(visualization.data.date_to)}`
+    : '조회 기간'
+  return (
+    <article className="rag-viz rag-viz--news">
+      <header>
+        <Icon name="document" size={17} />
+        <strong>{visualization.title}</strong>
+        <span>{range}</span>
+      </header>
+      <div className="rag-news-summary">
+        <strong>{items.length}건</strong>
+        <span>{publishers.size > 0 ? `${publishers.size}개 언론사에서 확인` : `${items.length}건의 출처 확인`}</span>
+      </div>
+      <div className="rag-news-grid">
+        {items.slice(0, 5).map((item, index) => {
+          const href = safeHref(item.url)
+          const content = (
+            <>
+              <div><span>{text(item.publisher, '언론 보도')}</span><time>{shortDate(item.published_at)}</time></div>
+              <strong>{text(item.title, '제목 없는 뉴스')}</strong>
+              {typeof item.snippet === 'string' && <p>{item.snippet}</p>}
+              {href && <small>기사 보기 <Icon name="external" size={13} /></small>}
+            </>
+          )
+          return href
+            ? <a href={href} key={`${text(item.source_id)}-${index}`} rel="noreferrer" target="_blank">{content}</a>
+            : <div key={`${text(item.source_id)}-${index}`}>{content}</div>
+        })}
+      </div>
+    </article>
+  )
+}
+
 function PriceLine({ visualization }: { visualization: RagVisualization }) {
   const points = records(visualization.data.points).filter(
     (point) => typeof point.close === 'number' && typeof point.trading_day === 'string',
@@ -162,6 +221,7 @@ export function RagVisualizations({ visualizations }: { visualizations: RagVisua
     <div className="rag-visualizations">
       {visualizations.map((visualization, index) => {
         const key = `${visualization.type}-${visualization.sourceIds.join('-')}-${index}`
+        if (visualization.type === 'news_cards') return <NewsCards key={key} visualization={visualization} />
         if (visualization.type === 'price_line') return <PriceLine key={key} visualization={visualization} />
         if (visualization.type === 'price_snapshot') return <PriceSnapshot key={key} visualization={visualization} />
         if (visualization.type === 'event_return') return <EventReturn key={key} visualization={visualization} />

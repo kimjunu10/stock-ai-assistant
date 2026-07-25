@@ -40,6 +40,7 @@ export interface RagSource {
 }
 
 export type RagVisualizationType =
+  | 'news_cards'
   | 'price_snapshot'
   | 'price_line'
   | 'event_return'

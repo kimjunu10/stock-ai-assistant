@@ -336,6 +336,19 @@ def _visualization_for_tool(
     tool_name: str | None, data: dict, source_ids: list[str]
 ) -> dict | None:
     """Tool 이름은 라우팅이 아니라 이미 실행된 typed 결과의 view 종류만 결정한다."""
+    if tool_name == "search_news" and isinstance(data.get("news"), list):
+        filters = data.get("applied_filters")
+        return {
+            "type": "news_cards",
+            "title": "최근 뉴스",
+            "data": {
+                "items": data["news"],
+                "date_from": filters.get("date_from") if isinstance(filters, dict) else None,
+                "date_to": filters.get("date_to") if isinstance(filters, dict) else None,
+            },
+            "source_ids": source_ids,
+        }
+
     if tool_name == "get_stock_prices":
         daily = data.get("daily")
         if isinstance(daily, list) and len(daily) >= 2:

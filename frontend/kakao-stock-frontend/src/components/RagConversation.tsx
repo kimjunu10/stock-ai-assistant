@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEven
 import { useRagConversation } from '../hooks/useRagConversation'
 import type { RagContext, RagSource, RagSourceType } from '../types/qa'
 import { Icon } from './Icon'
+import { RagAnswer } from './RagAnswer'
 import { RagVisualizations } from './RagVisualizations'
 
 interface RagConversationProps {
@@ -70,12 +71,16 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
   const [input, setInput] = useState('')
   const { abort, messages, phase, progress, reset, retry, send } = useRagConversation(context)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const endRef = useRef<HTMLDivElement>(null)
   const starterQuestions = useMemo(() => suggestions(context), [context])
   const active = phase === 'connecting' || phase === 'running' || phase === 'streaming'
 
   useEffect(() => {
     if (messages.length > 0 || progress) {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+      const frame = window.requestAnimationFrame(() => {
+        endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
+      })
+      return () => window.cancelAnimationFrame(frame)
     }
   }, [messages, progress])
 
@@ -115,10 +120,12 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
                 {message.role === 'assistant' && <span className="chat-avatar" aria-hidden="true">M</span>}
                 <div>
                   {message.text
-                    ? <p>{message.text}</p>
+                    ? message.role === 'assistant' ? <RagAnswer text={message.text} /> : <p>{message.text}</p>
                     : message.state === 'pending' && <span className="rag-answer-placeholder">근거를 확인하고 있어요…</span>}
                   {message.role === 'assistant' && <RagVisualizations visualizations={message.visualizations} />}
-                  {message.role === 'assistant' && <SourceCards sources={message.sources} />}
+                  {message.role === 'assistant' && <SourceCards sources={message.sources.filter((source) => !message.visualizations.some(
+                    (visualization) => visualization.type === 'news_cards' && visualization.sourceIds.includes(source.sourceId),
+                  ))} />}
                   {message.warnings.length > 0 && <div className="rag-warnings">{message.warnings.map((warning) => <p key={warning}><Icon name="info" size={13} />{warning}</p>)}</div>}
                   {(message.state === 'error' || message.state === 'aborted') && <button className="rag-retry" onClick={retry} type="button"><Icon name="refresh" size={14} /> 다시 시도</button>}
                 </div>
@@ -127,6 +134,7 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
           </div>
         )}
         {active && <div className="rag-progress" role="status"><i /><span>{progress}</span></div>}
+        <div aria-hidden="true" className="rag-thread-end" ref={endRef} />
       </div>
 
       <form className="rag-composer" onSubmit={submit}>

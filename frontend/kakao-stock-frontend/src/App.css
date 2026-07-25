@@ -605,7 +605,7 @@
   .assistant-composer > p,
   .global-composer > p { @apply mt-2 mb-0 text-center text-[10px] font-medium text-faint; }
 
-  .ask-page { @apply grid h-[calc(100vh-72px)] grid-cols-[255px_minmax(0,1fr)] overflow-hidden; }
+  .ask-page { @apply grid h-[calc(100dvh-72px)] min-h-0 grid-cols-[255px_minmax(0,1fr)] overflow-hidden; }
   .ask-sidebar { @apply flex flex-col border-r border-line bg-subtle px-[17px] py-6; }
   .ask-sidebar__title { @apply flex items-center gap-2 px-2 text-[14px] font-extrabold text-muted; }
   .new-chat-button { @apply mt-5 flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface text-[13px] font-extrabold text-ink; }
@@ -615,7 +615,7 @@
   .ask-sidebar__notice { @apply mt-auto flex gap-2 rounded-xl bg-surface p-3 text-faint; }
   .ask-sidebar__notice svg { @apply shrink-0; }
   .ask-sidebar__notice p { @apply m-0 text-[11px] leading-5 font-medium; }
-  .global-chat { @apply grid min-w-0 grid-rows-[auto_1fr_auto] bg-canvas; }
+  .global-chat { @apply grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-canvas; }
   .global-chat__header { @apply flex min-h-[72px] items-center justify-between gap-6 border-b border-line px-6 py-3; }
   .stock-select { @apply flex items-center gap-2; }
   .stock-select > span { @apply text-[11px] font-medium text-faint; }
@@ -717,7 +717,7 @@
     .financial-grid,
     .research-section { @apply grid-cols-1; }
     .research-section { @apply gap-14; }
-    .ask-page { @apply h-[calc(100vh-62px)] grid-cols-1; }
+    .ask-page { @apply h-[calc(100dvh-62px)] grid-cols-1; }
     .ask-sidebar { @apply hidden; }
     .global-chat { @apply pb-[72px]; }
     .global-chat__header { @apply min-h-[66px]; }
@@ -905,10 +905,10 @@
   .ask-sidebar__recent p { @apply m-0 rounded-lg px-2 py-2 text-[11px] font-semibold text-muted; }
 
   .rag-conversation { @apply grid min-h-0 grid-rows-[minmax(0,1fr)_auto]; }
-  .rag-conversation--page { @apply h-full; }
+  .rag-conversation--page { @apply h-full min-h-0 overflow-hidden; }
   .rag-conversation--panel { @apply min-h-0; }
   .rag-thread { @apply min-h-0 overflow-y-auto px-5 py-5; }
-  .rag-conversation--page .rag-thread { @apply px-6 py-[30px]; }
+  .rag-conversation--page .rag-thread { @apply overscroll-contain px-6 pt-[30px] pb-10; scrollbar-gutter: stable; }
   .rag-context-badge { @apply mx-auto mb-4 flex w-fit items-center gap-1.5 rounded-full border border-brand/25 bg-brand-soft px-3 py-1.5 text-[10px] font-extrabold text-brand-ink; box-shadow: inset 1px 1px 1px var(--clay-highlight), 0 4px 10px var(--clay-shadow); }
   .rag-context-title { @apply mx-auto mb-5 flex w-[min(760px,100%)] flex-col gap-2 rounded-[16px] border border-line bg-subtle p-3.5; }
   .rag-context-title strong { @apply line-clamp-2 text-[13px] leading-5 text-ink; }
@@ -932,6 +932,10 @@
   .rag-message { @apply mb-6 flex items-start gap-2.5; }
   .rag-message > div { @apply min-w-0 max-w-[88%]; }
   .rag-message > div > p { @apply m-0 whitespace-pre-wrap text-[16px] leading-8 font-medium text-muted; }
+  .rag-answer { @apply flex flex-col gap-3 text-[16px] leading-8 font-medium text-muted; }
+  .rag-answer p { @apply m-0; }
+  .rag-answer ol, .rag-answer ul { @apply m-0 flex flex-col gap-2 pl-6; }
+  .rag-answer li { @apply pl-1 marker:font-extrabold marker:text-brand-ink; }
   .rag-message--assistant > div { @apply rounded-[5px_18px_18px] border border-line bg-surface px-4 py-3.5; box-shadow: inset 1px 1px 1px var(--clay-highlight), 0 7px 17px var(--clay-shadow-deep); }
   .rag-message--user { @apply justify-end; }
   .rag-message--user > div { @apply rounded-[18px_5px_18px_18px] border border-brand bg-brand px-4 py-3; box-shadow: inset 2px 2px 1px rgba(255,255,255,.6), inset -2px -2px 4px rgba(85,74,0,.15), 0 7px 14px var(--clay-shadow); }
@@ -953,6 +957,19 @@
   .rag-line-grid { fill: none; stroke: var(--line); stroke-width: 1; }
   .rag-line-path { fill: none; stroke: var(--brand-ink); stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
   .rag-viz__range { @apply flex justify-between gap-3 text-[12px] font-semibold text-faint; }
+  .rag-news-summary { @apply mb-3 flex items-baseline gap-2 rounded-xl bg-brand-soft px-3 py-2 text-brand-ink; }
+  .rag-news-summary strong { @apply text-[18px] font-black; }
+  .rag-news-summary span { @apply text-[12px] font-bold; }
+  .rag-news-grid { @apply grid grid-cols-2 gap-2.5; }
+  .rag-news-grid > a, .rag-news-grid > div { @apply flex min-w-0 flex-col rounded-[14px] border border-line bg-surface p-3.5 text-left no-underline transition; box-shadow: inset 1px 1px 1px var(--clay-highlight), 0 5px 11px var(--clay-shadow-deep); }
+  .rag-news-grid > a:hover { @apply -translate-y-0.5 border-brand/40; }
+  .rag-news-grid > a:first-child, .rag-news-grid > div:first-child { @apply col-span-2; }
+  .rag-news-grid > a > div, .rag-news-grid > div > div { @apply mb-1.5 flex items-center justify-between gap-2; }
+  .rag-news-grid span { @apply truncate text-[11px] font-extrabold text-brand-ink; }
+  .rag-news-grid time { @apply shrink-0 text-[11px] font-semibold text-faint; }
+  .rag-news-grid strong { @apply line-clamp-2 text-[14px] leading-6 font-extrabold text-ink; }
+  .rag-news-grid p { @apply mt-1.5 mb-0 line-clamp-3 text-[12px] leading-5 font-medium text-muted; }
+  .rag-news-grid small { @apply mt-3 flex items-center gap-1 text-[11px] font-bold text-brand-ink; }
   .rag-metric-grid { @apply grid grid-cols-2 gap-2; }
   .rag-metric-grid > div { @apply flex min-w-0 flex-col rounded-xl border border-line bg-surface p-3; box-shadow: inset 1px 1px 1px var(--clay-highlight), 0 4px 8px var(--clay-shadow-deep); }
   .rag-metric-grid small { @apply text-[12px] font-bold text-faint; }
@@ -995,6 +1012,7 @@
   .rag-warnings p { @apply m-0 flex items-start gap-1.5 text-[12px] leading-5 text-faint; }
   .rag-warnings svg { @apply mt-0.5 shrink-0; }
   .rag-retry { @apply mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[10px] font-bold text-muted; }
+  .rag-thread-end { @apply h-px w-full; }
 
   .rag-composer { @apply border-t border-line bg-surface px-4 pt-3 pb-4; }
   .rag-conversation--page .rag-composer { @apply mx-auto w-[min(800px,calc(100%_-_40px))] border-0 bg-transparent px-0; }
@@ -1013,7 +1031,7 @@
   @layer components {
     .stock-rag-launcher { @apply px-4 py-3.5; }
     .stock-rag-launcher small { @apply hidden; }
-    .rag-conversation--page .rag-thread { @apply px-3.5 py-5; }
+    .rag-conversation--page .rag-thread { @apply px-3.5 pt-5 pb-[calc(88px+env(safe-area-inset-bottom))]; }
     .rag-thread { @apply px-3.5; }
     .rag-empty h1 { @apply text-[24px]; }
     .rag-empty p { @apply text-[12px] leading-6; }
@@ -1021,6 +1039,8 @@
     .rag-message > div { @apply max-w-[91%]; }
     .rag-message--assistant > div { @apply px-3.5; }
     .rag-metric-grid { @apply grid-cols-1; }
+    .rag-news-grid { @apply grid-cols-1; }
+    .rag-news-grid > a:first-child, .rag-news-grid > div:first-child { @apply col-span-1; }
     .rag-conversation--page .rag-composer { @apply w-[calc(100%_-_28px)]; }
   }
 }

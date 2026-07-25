@@ -67,6 +67,61 @@ def test_visualization_is_not_created_without_source():
     assert visualizations == []
 
 
+def test_news_tool_creates_cards_with_the_server_date_window():
+    _, visualizations, _ = _build_ui_payload(
+        [
+            {
+                "_tool_name": "search_news",
+                "status": "ok",
+                "data": {
+                    "news": [
+                        {
+                            "source_id": "news-1",
+                            "title": "반도체 공급 확대",
+                            "published_at": "2026-07-25T09:00:00+09:00",
+                            "publisher": "테스트뉴스",
+                            "url": "https://example.com/news-1",
+                        }
+                    ],
+                    "applied_filters": {
+                        "date_from": "2026-07-23",
+                        "date_to": "2026-07-25",
+                    },
+                },
+                "sources": [
+                    {
+                        "source_id": "news-1",
+                        "source_type": "news_event",
+                        "title": "반도체 공급 확대",
+                        "locator": {},
+                    }
+                ],
+                "warnings": [],
+            }
+        ]
+    )
+    assert visualizations == [
+        {
+            "type": "news_cards",
+            "title": "최근 뉴스",
+            "data": {
+                "items": [
+                    {
+                        "source_id": "news-1",
+                        "title": "반도체 공급 확대",
+                        "published_at": "2026-07-25T09:00:00+09:00",
+                        "publisher": "테스트뉴스",
+                        "url": "https://example.com/news-1",
+                    }
+                ],
+                "date_from": "2026-07-23",
+                "date_to": "2026-07-25",
+            },
+            "source_ids": ["news-1"],
+        }
+    ]
+
+
 def test_no_data_and_error_remain_distinct_and_do_not_make_empty_charts():
     _, visualizations, warnings = _build_ui_payload(
         [

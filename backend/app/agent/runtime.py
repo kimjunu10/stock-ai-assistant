@@ -135,8 +135,9 @@ def build_tools() -> list:
     ) -> str:
         """종목 뉴스 사건을 검색한다.
 
-        상대 기간은 relative_period(today/yesterday/last_7_days/last_30_days/
-        this_week/this_month)로 지정한다. 서버가 KST 기준 정확한 날짜 범위로 변환한다.
+        상대 기간은 relative_period(recent/today/yesterday/last_7_days/last_30_days/
+        this_week/this_month)로 지정한다. recent는 KST 오늘부터 2일 전까지이며, 서버가
+        정확한 날짜 범위로 변환한다.
         date_from/date_to는 사용자가 절대 날짜를 지정한 경우에 사용한다.
         """
         svc, err = _services(runtime)

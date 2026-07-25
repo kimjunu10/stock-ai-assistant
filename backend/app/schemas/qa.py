@@ -38,6 +38,7 @@ class Source(BaseModel):
 
 
 VisualizationType = Literal[
+    "news_cards",
     "price_snapshot",
     "price_line",
     "event_return",

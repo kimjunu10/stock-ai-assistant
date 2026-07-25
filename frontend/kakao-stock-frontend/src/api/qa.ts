@@ -20,6 +20,7 @@ const SOURCE_TYPES = new Set<RagSourceType>([
 ])
 
 const VISUALIZATION_TYPES = new Set<RagVisualizationType>([
+  'news_cards',
   'price_snapshot',
   'price_line',
   'event_return',
