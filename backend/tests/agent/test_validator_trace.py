@@ -9,7 +9,12 @@
 from __future__ import annotations
 
 from app.agent.trace import AgentTrace, ToolTrace
-from app.agent.validator import collect_evidence, sanitize_answer, validate_answer
+from app.agent.validator import (
+    collect_evidence,
+    collect_report_opinions,
+    sanitize_answer,
+    validate_answer,
+)
 
 
 def _report_payload(broker="하나증권", tp=480000, tp_status="stated"):
@@ -139,6 +144,81 @@ def test_sanitize_keeps_answer_when_all_supported():
     answer = "하나증권 목표주가 480,000원입니다."
     cleaned, changed = sanitize_answer(answer, ev)
     assert changed is False and cleaned == answer
+
+
+# ── broker_opinions 카드 게이트(promptv2 §5) ──
+def _reports_payload(reports: list[dict], sources: list[dict] | None = None) -> dict:
+    return {
+        "status": "ok",
+        "data": {"reports": reports},
+        "sources": sources or [{"source_id": f"rc{i}"} for i in range(len(reports))],
+    }
+
+
+def _card(broker, rdate, tp, status="stated", page=1):
+    d = {
+        "broker": broker,
+        "report_date": rdate,
+        "title": f"{broker} 리포트",
+        "investment_opinion": "매수",
+        "target_price_status": status,
+        "snippet": "본문",
+        "target_price_source_page": page,
+    }
+    if tp is not None:
+        d["target_price"] = tp
+    return d
+
+
+def test_report_opinions_only_stated():
+    """§5: stated 목표주가만 카드에 포함된다(unknown/ambiguous/not_stated 제외)."""
+    payload = _reports_payload(
+        [
+            _card("하나증권", "2026-05-04", 480000, status="stated"),
+            _card("키움증권", "2026-05-04", 999999, status="unknown"),
+            _card("대신증권", "2026-05-04", None, status="not_stated"),
+        ]
+    )
+    cards = collect_report_opinions([payload])
+    brokers = {c["broker"] for c in cards}
+    assert brokers == {"하나증권"}
+    assert cards[0]["target_price"] == 480000
+
+
+def test_report_opinions_dedupe_identical():
+    """§5: 같은 증권사·발행일·목표주가·source_id 완전중복 제거 + 증권사별 최신 1건."""
+    payload = _reports_payload(
+        [
+            _card("하나증권", "2025-12-17", 155000),
+            _card("하나증권", "2025-12-17", 155000),  # 완전중복
+            _card("키움증권", "2025-12-03", 140000),
+            _card("키움증권", "2025-12-03", 140000),  # 완전중복
+        ],
+        sources=[
+            {"source_id": "rc1"},
+            {"source_id": "rc1"},
+            {"source_id": "rc2"},
+            {"source_id": "rc2"},
+        ],
+    )
+    cards = collect_report_opinions([payload])
+    # 하나 1건 + 키움 1건
+    assert len(cards) == 2
+    assert {c["broker"] for c in cards} == {"하나증권", "키움증권"}
+
+
+def test_report_opinions_latest_per_broker():
+    """§5: 같은 증권사 여러 발행일이면 최신 1건만 남긴다."""
+    payload = _reports_payload(
+        [
+            _card("미래에셋증권", "2026-04-02", 300000),
+            _card("미래에셋증권", "2026-05-21", 480000),  # 더 최신
+        ],
+        sources=[{"source_id": "rc1"}, {"source_id": "rc2"}],
+    )
+    cards = collect_report_opinions([payload])
+    assert len(cards) == 1
+    assert cards[0]["report_date"] == "2026-05-21" and cards[0]["target_price"] == 480000
 
 
 def test_trace_log_dict_has_no_secrets():

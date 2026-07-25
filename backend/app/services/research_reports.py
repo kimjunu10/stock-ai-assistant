@@ -80,19 +80,22 @@ class ResearchReportSearch:
         time_context: str | None = None,
         as_of_date: str | None = None,
     ) -> list[ReportHit]:
-        """리포트 본문을 하이브리드 검색하고 메타를 보강한다(prompt.md §5·§6).
+        """리포트 본문을 하이브리드 검색하고 메타를 보강한다(prompt.md §5·§6, promptv2 §1~4).
 
         time_context(Agent 가 의미로 판단해 전달):
           - current: 최근 90일 우선(부족하면 180일 확대), 증권사별 최신 1건, 편중 방지,
-            90일 초과분은 is_stale=True.
+            90일 초과분은 is_stale=True. **기본값**(None 이면 current 로 처리) — 목표주가
+            질문 대다수가 '지금 값'을 원하므로 이력·타 종목 혼입을 막는 안전 기본값.
           - history: 변동추이 등 시계열 — 날짜별 개별값 유지(범위 합성 없음), 정렬만.
           - historical_point/around_event: date_from/date_to 로 시점 범위를 받아 그대로 필터.
-          - None: 기존 동작(관련도 순).
         broker 필터는 RPC 에 없으므로 검색 후 report 메타로 후처리 필터링한다.
         """
+        # promptv2 §1: Agent 가 time_context 를 생략해도 current 정책을 적용한다.
+        # (질문 키워드 분기 없음 — 단순히 안전한 기본값을 준다.)
+        effective_ctx = time_context if time_context in TIME_CONTEXTS else "current"
         base_k = top_k or self._cfg.rag_retrieval_top_k
         # current 는 증권사별 최신 1건을 뽑기 위해 후보를 넉넉히 가져온다.
-        fetch_k = base_k * (4 if time_context == "current" else (2 if broker else 1))
+        fetch_k = base_k * (4 if effective_ctx == "current" else (2 if broker else 1))
         chunks = self._retriever.search(
             question,
             stock_code=stock_code,
@@ -102,11 +105,11 @@ class ResearchReportSearch:
             top_k=fetch_k,
             expand_parent=False,
         )
-        hits = self._enrich(chunks)
+        hits = self._enrich(chunks, requested_stock_code=stock_code)
         if broker:
             hits = [h for h in hits if h.broker and broker in h.broker]
 
-        if time_context == "current":
+        if effective_ctx == "current":
             hits = self._apply_current_policy(hits, as_of_date)
         return hits[:base_k]
 
@@ -116,7 +119,34 @@ class ResearchReportSearch:
         """current: 90일 우선(부족 시 180일), 증권사별 최신 1건, 편중 방지, 오래된 자료 표시.
 
         as_of_date 미지정 시 hits 의 최신 report_date 를 기준일로 삼는다(테스트 결정성).
+        promptv2 §3·§4: 완전중복(같은 증권사·발행일·목표주가) 제거 후 증권사별 최신 1건.
         """
+        # promptv2 §3: current 에서는 '현재 목표주가'만 신뢰한다. stated 가 아니거나
+        # effective_date 가 report_date 와 다른 값(=이력표 과거값 등)은 목표주가를 강등한다.
+        # 리포트 자체(전망 근거)는 유지하되 그 target_price 는 카드에 실리지 않게 한다.
+        for h in hits:
+            if h.target_price_status == "stated":
+                eff = _to_date(h.target_price_effective_date)
+                rdate = _to_date(h.report_date)
+                # effective_date 가 있고 report_date 와 불일치하면 '현재값'이 아님 → 강등.
+                if eff is not None and rdate is not None and eff != rdate:
+                    h.target_price = None
+                    h.target_price_status = "ambiguous"
+                    h.target_price_currency = None
+                    h.target_price_effective_date = None
+                    h.target_price_source_page = None
+
+        # promptv2 §4: 완전중복(broker+report_date+target_price) 선제거.
+        deduped: list[ReportHit] = []
+        seen: set[tuple] = set()
+        for h in hits:
+            key = (h.broker or "?", h.report_date, h.target_price)
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(h)
+        hits = deduped
+
         dated = [(h, _to_date(h.report_date)) for h in hits]
         dated = [(h, d) for h, d in dated if d is not None]
         if not dated:
@@ -145,7 +175,9 @@ class ResearchReportSearch:
             h.is_stale = bool(d and d < primary_cut)
         return chosen
 
-    def _enrich(self, chunks: list[RetrievedChunk]) -> list[ReportHit]:
+    def _enrich(
+        self, chunks: list[RetrievedChunk], *, requested_stock_code: str | None = None
+    ) -> list[ReportHit]:
         # source_pk(=file_hash) 집합으로 리포트 메타 일괄 조회
         file_hashes = {c.source_pk for c in chunks if c.source_pk}
         reports: dict[str, dict] = {}
@@ -209,11 +241,32 @@ class ResearchReportSearch:
             page_no = loc.get("page_number")
             pm = page_meta.get((report_id, page_no), {}) if report_id and page_no else {}
             vk = table_vk.get((report_id, page_no), {}) if report_id and page_no else {}
+
+            # promptv2 §2: 종목 귀속 강제. 리포트/청크의 종목이 요청 종목과 다르면 그 리포트의
+            # target_price 는 '다른 종목 값'이므로 절대 신뢰·반환하지 않는다(ambiguous 강등).
+            tp = (rep or {}).get("target_price")
+            tp_status = (rep or {}).get("target_price_status") or "unknown"
+            tp_currency = (rep or {}).get("target_price_currency")
+            tp_effective = (rep or {}).get("target_price_effective_date")
+            tp_page = (rep or {}).get("target_price_source_page")
+            rep_stock = (rep or {}).get("stock_code")
+            chunk_stock = c.stock_code
+            mismatch = requested_stock_code is not None and (
+                (rep_stock is not None and rep_stock != requested_stock_code)
+                or (chunk_stock is not None and chunk_stock != requested_stock_code)
+            )
+            if mismatch:
+                tp = None
+                tp_status = "ambiguous"
+                tp_currency = None
+                tp_effective = None
+                tp_page = None
+
             hits.append(
                 ReportHit(
                     chunk_id=c.chunk_id,
                     content=c.content,
-                    stock_code=c.stock_code,
+                    stock_code=chunk_stock,
                     report_id=report_id,
                     title=(rep or {}).get("title") or c.title,
                     broker=(rep or {}).get("broker"),
@@ -225,11 +278,11 @@ class ResearchReportSearch:
                     table_value_kinds=vk,
                     similarity=c.similarity,
                     rrf_score=c.rrf_score,
-                    target_price=(rep or {}).get("target_price"),
-                    target_price_currency=(rep or {}).get("target_price_currency"),
-                    target_price_status=(rep or {}).get("target_price_status") or "unknown",
-                    target_price_effective_date=(rep or {}).get("target_price_effective_date"),
-                    target_price_source_page=(rep or {}).get("target_price_source_page"),
+                    target_price=tp,
+                    target_price_currency=tp_currency,
+                    target_price_status=tp_status,
+                    target_price_effective_date=tp_effective,
+                    target_price_source_page=tp_page,
                 )
             )
         return hits

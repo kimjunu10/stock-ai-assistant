@@ -41,7 +41,9 @@ class SearchResearchReportsInput(BaseModel):
 def run_search_research_reports(
     svc: ResearchReportSearch, inp: SearchResearchReportsInput
 ) -> ToolResult:
-    time_context = inp.time_context if inp.time_context in TIME_CONTEXTS else None
+    # promptv2 §1: Agent 가 생략하면 current 를 기본값으로 쓴다(검색 계층과 동일 규칙).
+    # 키워드 분기 없이 '안전한 기본값'만 제공한다.
+    time_context = inp.time_context if inp.time_context in TIME_CONTEXTS else "current"
     try:
         hits = svc.search(
             inp.query,

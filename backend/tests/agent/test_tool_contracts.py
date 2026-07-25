@@ -299,13 +299,21 @@ def test_reports_time_context_passed_through():
     assert fake.last_kwargs["time_context"] == "current"
 
 
-def test_reports_invalid_time_context_ignored():
+def test_reports_invalid_time_context_defaults_current():
+    # promptv2 §1: 화이트리스트 밖(또는 미지정)이면 안전 기본값 current 로 처리한다.
     fake = _FakeReports()
     run_search_research_reports(
         fake,
         SearchResearchReportsInput(stock_code="005930", query="x", time_context="not_a_context"),
     )
-    assert fake.last_kwargs["time_context"] is None  # 화이트리스트 밖이면 None
+    assert fake.last_kwargs["time_context"] == "current"
+
+
+def test_reports_omitted_time_context_defaults_current():
+    # promptv2 §1: Agent 가 time_context 를 생략해도 current 정책이 적용된다.
+    fake = _FakeReports()
+    run_search_research_reports(fake, SearchResearchReportsInput(stock_code="005930", query="x"))
+    assert fake.last_kwargs["time_context"] == "current"
 
 
 def test_all_tool_results_are_toolresult():
