@@ -25,7 +25,7 @@
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
-| 5.5 | 단일 Agentic RAG 전환 | [ ] (A~F 완료·전지표 통과, G 대기) | [ ] |
+| 5.5 | 단일 Agentic RAG 전환 | [x] A~G 완료 (라이브 전환·legacy 제거, 2026-07-25) | [x] |
 | 6 | 주가 Tool | [ ] | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
@@ -454,40 +454,52 @@ actual/forecast 혼동 0
 - [x] legacy와 결과 비교 — 회귀 발견 → 수정 완료(아래)
 - [x] smoke 결함 수정 — (A) 기간 미지정 재무→연간 규칙, (B) DuplicateToolCall 요청 간 상태 누수.
       재검증 4/4 통과, 홀드아웃 회귀 없음.
-- [ ] 운영 flag 전환 — **사용자 승인 대기**(지시: smoke 결과 보고 후 승인받고 진행).
-- [ ] QueryPlan 라이브 호출 제거 (운영 전환 후)
-- [ ] QueryPlan deprecated 표시 (운영 전환 후)
+- [x] 운영 flag 전환 — **완료 (2026-07-25)**. 운영 `.env` `AGENT_ENABLED=true`, OpenAI 키
+      주입·재시작, agent=true 확인. 롤백: `.env` `AGENT_ENABLED=false` + 재시작.
+- [x] QueryPlan 라이브 호출 제거 — **완료 (2026-07-25)**. `/qa`·`/qa/stream` 이 단일 Agent 만
+      사용. Agent 미구성 시 503(QueryPlan fallback 금지). `qa.py` 에서 FactsQaService·
+      QueryPlan import 완전 제거.
+- [x] QueryPlan deprecated 표시 — **완료**. `app/rag/query_plan.py`·`app/services/rag_qa_facts.py`
+      상단에 DEPRECATED 명시(라이브 경로 분리, 평가 스크립트·단위테스트만 사용). 파일은 보존.
+- [x] `QaResponse.query_plan` 필드 제거 — Agent 경로는 채운 적 없어 안전 제거.
 - [x] 문서 갱신 (`docs/rag/phase_5_5/SMOKE_TEST.md`)
-- [ ] 완료 보고
-- [ ] 다음 Phase 자동 진행 금지
+- [x] 완료 보고 — 아래 종료 기록.
+- [ ] 다음 Phase 자동 진행 금지 (유지)
 
 > ✅ **smoke 결함 수정 완료**: (A) 기간 미지정 재무 질문 오답 → get_financial_facts 에
 > "사업연도만 있으면 연간 해석" 일반 규칙(_resolve_report_period). (B) DuplicateToolCall
 > middleware 가 lru_cache 공유 Agent 에서 요청 간 상태 누수 → before_agent 로 요청마다 초기화.
-> 스테이징 재검증(연도만/연간/분기누적/없는기간 각 4/4), 홀드아웃 회귀 없음, 전체 201 테스트 통과.
-> **운영 flag 전환은 사용자 승인 후 진행.** 현재 `agent_enabled=false` 유지.
-> 상세: `docs/rag/phase_5_5/SMOKE_TEST.md`.
+> 스테이징 재검증(연도만/연간/분기누적/없는기간 각 4/4), 홀드아웃 회귀 없음.
+
+> ✅ **5.5-G 라이브 전환 완료 (2026-07-25)**: 운영 `AGENT_ENABLED=true` 적용·검증(agent=true,
+> 타 종목 혼입 0, broker_opinions 정화). legacy QueryPlan/FactsQaService 를 라이브 QA 경로에서
+> 제거하고 단일 Agent 경로로 일원화. Agent 미구성 시 503(조용한 규칙 fallback 금지).
+> QueryPlan/FactsQaService 파일은 평가 스크립트·단위테스트용으로 보존(deprecated 명시).
+> smoke 8항목(용어·재무·뉴스제외·리포트·복합·no_data·타종목·SSE순서) 전체 통과, 251 테스트 통과.
 
 ---
 
 ## Phase 5.5 종료 기록
 
 ```text
-상태:
-완료일:
-Agent 모델:
-LangChain 버전:
-LangGraph 버전:
-Tool 수:
-Tool 선택 평가:
-금융 Exact Match:
-부정·제외 평가:
-단순 P95:
-복합 P95:
-질문당 평균 비용:
-legacy QueryPlan 라이브 제거 여부:
-남은 위험:
-Phase 6 진행 가능 여부:
+상태:                          완료 (라이브 전환·legacy 제거)
+완료일:                        2026-07-25
+Agent 모델:                    gpt-4.1-mini-2025-04-14 (provider: openai, provider-agnostic)
+LangChain 버전:                langchain>=1.3.14,<1.4 (create_agent 표준 Tool-Calling Agent)
+LangGraph 버전:                LangChain v1 번들 런타임(별도 custom StateGraph 없음)
+Tool 수:                       6 (financials/terms/news/disclosures/get_disclosure_values/reports)
+Tool 선택 평가:                Recall 1.0/1.0, Forbidden 0%/0%, 모델 자율 선택 증명(하드코딩 없음)
+금융 Exact Match:              dev 2/2 · holdout 3/3 (기간·actual 전부 통과)
+부정·제외 평가:                치명 위반 0/0
+단순 P95:                      2~4s (콜드스타트 1회 예외)
+복합 P95:                      9.2s / 8.9s (≤10s 통과)
+질문당 평균 비용:              ~$0.0017~0.0019
+legacy QueryPlan 라이브 제거:  완료 — /qa·/qa/stream 단일 Agent, 미구성 시 503(fallback 금지).
+                               query_plan.py·rag_qa_facts.py 는 평가·테스트용 보존(deprecated).
+남은 위험:                     (1) 뉴스 등 임베딩 왕복 질문 콜드스타트 시 8s timeout 1회성(안전 처리).
+                               (2) official_information 은 Agent 경로 미채움(기존 제한, 회귀 아님).
+                               (3) 이 브랜치는 로컬 검증만 — 운영 배포·머지는 사용자 승인 필요.
+Phase 6 진행 가능 여부:        조건 충족하나 자동 진행 금지(사용자 승인 후).
 ```
 
 ---

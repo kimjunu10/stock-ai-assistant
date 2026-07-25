@@ -1,5 +1,12 @@
 """질문 계획(QueryPlan) — 규칙 기반 라우팅 (SPEC §9).
 
+⚠️ DEPRECATED (Phase 5.5-G): 라이브 QA 경로(app/api/routes/qa.py)에서 제거됨.
+   모든 정상 QA 요청은 단일 Agent(create_agent)가 Tool 을 스스로 선택해 처리한다.
+   이 모듈은 더 이상 프로덕션 라우트에서 import 되지 않는다. 현재 남은 사용처는
+   비교 채점용 평가 스크립트(scripts/evaluate_agent.py 의 legacy 비교)와 단위
+   테스트(tests/unit/test_query_plan.py)뿐이다. 새 코드에서 이 라우터를 QA
+   경로로 다시 끌어오지 말 것(키워드 라우터 부활 금지).
+
 하나의 질문을 단일 종류로 분류하지 않고, 여러 작업 플래그를 동시에 켠다.
 추가 LLM 호출 없이 신호어(규칙)로 판단한다. 특정 종목/항목 하드코딩 없음.
 """
