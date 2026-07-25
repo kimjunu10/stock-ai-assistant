@@ -67,6 +67,16 @@ class Settings(BaseSettings):
     toss_request_timeout_seconds: float = 15.0
     toss_market_data_cache_seconds: int = 15
 
+    # --- Phase 6 주가 Tool (SPEC §7.7·§8.7) ---
+    # Agent 주가 Tool 계층 캐시(초). 어댑터 통합 캐시(15s)와 별개로, 기간/일봉 조회
+    # 결과를 이 TTL 로 캐싱해 rate limit 를 완화한다. prompt.md §2 "30초 메모리 캐시".
+    stock_price_cache_seconds: int = 30
+    # 429(rate limit) 발생 시 제한된 재시도 횟수와 대기(초). 무제한 재시도 금지.
+    stock_price_rate_limit_retries: int = 2
+    stock_price_rate_limit_backoff_seconds: float = 1.5
+    # 장기 구간 일봉 페이징 시 최대 페이지 수(1페이지=200 거래일). 과도한 API 호출 방지.
+    stock_price_max_candle_pages: int = 4
+
     # --- RAG (Phase 2+) ---
     upstage_base_url: str = "https://api.upstage.ai/v1"
     rag_embedding_query_model: str = "solar-embedding-2-query"

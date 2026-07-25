@@ -237,5 +237,28 @@ def get_agent_qa_service() -> AgentQaService | None:
         facts=FactsService(client),
         retriever=retriever,
         reports=ResearchReportSearch(client, cfg, retriever),
+        prices=_build_stock_price_service(cfg),
     )
     return AgentQaService(cfg, services, api_key=api_key, base_url=base_url)
+
+
+def _build_stock_price_service(cfg: Settings):
+    """Phase 6 주가 Tool 서비스. 토스 자격증명이 있으면 실제 클라이언트를 재사용한다.
+
+    자격증명이 없으면 None 을 넣고, Tool 은 컨텍스트 오류로 안전히 error 를 반환한다
+    (Agent 경로 전체를 막지 않는다).
+    """
+    from app.services.stock_prices import StockPriceService
+
+    if not (cfg.toss_client_id and cfg.toss_client_secret):
+        return None
+    # 프로세스 공유 TossInvestClient(토큰·캐시 공유)를 재사용한다(중복 클라이언트 금지).
+    from app.api.routes.stocks import get_toss_client
+
+    return StockPriceService(
+        get_toss_client(),
+        cache_seconds=cfg.stock_price_cache_seconds,
+        rate_limit_retries=cfg.stock_price_rate_limit_retries,
+        rate_limit_backoff_seconds=cfg.stock_price_rate_limit_backoff_seconds,
+        max_candle_pages=cfg.stock_price_max_candle_pages,
+    )

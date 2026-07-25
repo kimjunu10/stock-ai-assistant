@@ -34,6 +34,12 @@ from app.agent.tools.disclosures import (
 )
 from app.agent.tools.financials import FinancialFactsInput, run_get_financial_facts
 from app.agent.tools.news import SearchNewsInput, run_search_news
+from app.agent.tools.prices import (
+    CalculateEventReturnInput,
+    GetStockPricesInput,
+    run_calculate_event_return,
+    run_get_stock_prices,
+)
 from app.agent.tools.reports import SearchResearchReportsInput, run_search_research_reports
 from app.agent.tools.terms import FinancialTermInput, run_lookup_financial_term
 from app.core.config import Settings
@@ -53,7 +59,10 @@ def _services(runtime: ToolRuntime[QaRuntimeContext]):
 
 
 def build_tools() -> list:
-    """6개 read-only Tool 을 LangChain @tool 로 반환. 실제 조회는 기존 Service 재사용."""
+    """8개 read-only Tool 을 LangChain @tool 로 반환. 실제 조회는 기존 Service 재사용.
+
+    Phase 6 에서 get_stock_prices·calculate_event_return(실제 주가)를 추가(6→8).
+    """
 
     @tool
     def get_financial_facts(
@@ -185,6 +194,70 @@ def build_tools() -> list:
         )
         return _dump(run_search_research_reports(svc.reports, inp))
 
+    @tool
+    def get_stock_prices(
+        stock_code: str,
+        runtime: ToolRuntime[QaRuntimeContext],
+        lookback: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        include_daily: bool = False,
+    ) -> str:
+        """종목의 **실제 주가**(현재가·전일 대비 등락·일봉·기간 가격)를 조회한다.
+
+        이것은 시장에서 거래된 실제 가격이다. 증권사가 제시한 목표주가(전망)가 아니다.
+        목표주가·투자의견은 search_research_reports 를 쓴다(이 Tool 이 아님).
+        - 기간 미지정: 현재가 + 전일 대비 등락률(백엔드 계산).
+        - lookback("1w"|"2w"|"1m"|"3m"|"6m"|"1y"): 그 기간의 실제 수익률(백엔드 계산).
+        - start_date/end_date(YYYY-MM-DD): 지정 구간 수익률. 휴장일은 거래일로 스냅된다.
+        수익률·등락률은 결과에 이미 계산돼 있다. 직접 산술하지 말고 결과 값을 그대로 쓴다.
+        데이터가 없으면 no_data 이며 다른 날짜·종목으로 대체하지 않는다.
+        """
+        svc, err = _services(runtime)
+        if err:
+            return _dump(err)
+        if svc.prices is None:
+            return _dump(error("주가 조회가 현재 구성되어 있지 않습니다."))
+        inp = GetStockPricesInput(
+            stock_code=stock_code,
+            lookback=lookback,
+            start_date=start_date,
+            end_date=end_date,
+            include_daily=include_daily,
+        )
+        return _dump(run_get_stock_prices(svc.prices, inp))
+
+    @tool
+    def calculate_event_return(
+        stock_code: str,
+        runtime: ToolRuntime[QaRuntimeContext],
+        event_date: str | None = None,
+        window: str = "5d",
+        lookback: str | None = None,
+    ) -> str:
+        """특정일/뉴스·공시 발표 전후 또는 기간의 **실제 주가 수익률**을 백엔드가 계산해 반환한다.
+
+        "이 뉴스 발표 전후로 주가가 얼마나 움직였어?", "최근 한 달 수익률" 같은 질문에 쓴다.
+        - event_date(YYYY-MM-DD) + window("1d"|"3d"|"5d"|"10d"): 사건 전후 거래일 수익률.
+          event_date 는 관련 뉴스·공시의 발표일을 넣는다(그 시점 리포트 목표주가가 아님).
+        - event_date 없이 lookback: 최근 기간 수익률.
+        시작가·종료가·수익률·실제 사용한 거래일이 결과에 이미 계산돼 있다. Agent 는
+        가격이나 수익률을 다시 계산하지 않는다. 인과("때문에")를 단정하지 말고 시간적
+        관계("이후")만 표현한다. 데이터가 부족하면 no_data 다.
+        """
+        svc, err = _services(runtime)
+        if err:
+            return _dump(err)
+        if svc.prices is None:
+            return _dump(error("주가 조회가 현재 구성되어 있지 않습니다."))
+        inp = CalculateEventReturnInput(
+            stock_code=stock_code,
+            event_date=event_date,
+            window=window,
+            lookback=lookback,
+        )
+        return _dump(run_calculate_event_return(svc.prices, inp))
+
     return [
         get_financial_facts,
         lookup_financial_term,
@@ -192,6 +265,8 @@ def build_tools() -> list:
         search_disclosures,
         get_disclosure_values,
         search_research_reports,
+        get_stock_prices,
+        calculate_event_return,
     ]
 
 

@@ -151,6 +151,12 @@ def _evaluate_set(name: str, cases: list, agent, facts) -> dict:
         req = set(c.get("required_tools", []))
         req_hit += len(req & used_set)
         req_total += len(req)
+        # required_tools_any: 나열된 Tool 중 하나라도 호출되면 1점(대체 가능 경로).
+        any_req = c.get("required_tools_any")
+        if any_req:
+            req_total += 1
+            if set(any_req) & used_set:
+                req_hit += 1
         forb = set(c.get("forbidden_tools", []))
         viol = forb & used_set
         if viol:
@@ -248,8 +254,25 @@ def main() -> int:
     from app.agent.context import ToolServices
 
     facts = FactsService(client)
+    # Phase 6: 주가 Tool 서비스도 주입(토스 자격증명 있을 때). 없으면 None → 주가 Tool
+    # 은 안전 error 를 반환하고 나머지 평가는 그대로 진행된다.
+    prices = None
+    if cfg.toss_client_id and cfg.toss_client_secret:
+        from app.api.routes.stocks import get_toss_client
+        from app.services.stock_prices import StockPriceService
+
+        prices = StockPriceService(
+            get_toss_client(),
+            cache_seconds=cfg.stock_price_cache_seconds,
+            rate_limit_retries=cfg.stock_price_rate_limit_retries,
+            rate_limit_backoff_seconds=cfg.stock_price_rate_limit_backoff_seconds,
+            max_candle_pages=cfg.stock_price_max_candle_pages,
+        )
     services = ToolServices(
-        facts=facts, retriever=retriever, reports=ResearchReportSearch(client, cfg, retriever)
+        facts=facts,
+        retriever=retriever,
+        reports=ResearchReportSearch(client, cfg, retriever),
+        prices=prices,
     )
     agent = AgentQaService(cfg, services, api_key=api_key, base_url=base_url)
 
