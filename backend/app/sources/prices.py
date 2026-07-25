@@ -150,6 +150,56 @@ class TossInvestClient:
             )
         return overview
 
+    # ── Phase 6 주가 Tool 용 read-only raw fetch ──────────────────────────
+    # 인증·토큰 갱신·timeout·401 재시도는 기존 _request_json/_get_access_token 를
+    # 그대로 재사용한다(중복 클라이언트 아님). 정규화·계산은 상위 서비스가 담당한다.
+
+    def fetch_current_price(self, stock_code: str) -> dict[str, Any]:
+        """단일 종목 현재가 원본(symbol/timestamp/lastPrice/currency)을 반환한다.
+
+        토스 /prices 는 미존재 종목에 대해 빈 result 를 주므로, 그 경우 빈 dict 를
+        반환한다(호출부가 no_data 로 처리; 여기서 예외를 던지지 않는다).
+        """
+        payload = self._request_json("GET", "/api/v1/prices", params={"symbols": stock_code})
+        try:
+            for row in payload["result"]:
+                if row.get("symbol") == stock_code:
+                    return row
+        except (KeyError, TypeError) as exc:
+            raise TossApiError("토스증권 현재가 응답을 변환하지 못했습니다.") from exc
+        return {}
+
+    def fetch_daily_candles_raw(
+        self, stock_code: str, *, count: int = 200, before: str | None = None, adjusted: bool = True
+    ) -> dict[str, Any]:
+        """일봉 원본 페이지 1개(result.candles + nextBefore)를 반환한다.
+
+        count 는 토스 제한(1~200)을 따른다. before 는 nextBefore 커서(그 시각 이전).
+        미존재 종목이면 토스가 404 를 주며 _request_json 이 TossApiError 로 변환한다.
+        """
+        if not 1 <= count <= 200:
+            raise ValueError("count 는 1 이상 200 이하여야 합니다.")
+        params: dict[str, Any] = {
+            "symbol": stock_code,
+            "interval": "1d",
+            "count": count,
+            "adjusted": "true" if adjusted else "false",
+        }
+        if before:
+            params["before"] = before
+        payload = self._request_json("GET", "/api/v1/candles", params=params)
+        try:
+            result = payload["result"]
+            if not isinstance(result.get("candles"), list):
+                raise TossApiError("토스증권 일봉 응답을 변환하지 못했습니다.")
+        except (KeyError, TypeError) as exc:
+            raise TossApiError("토스증권 일봉 응답을 변환하지 못했습니다.") from exc
+        return result
+
+    def fetch_intraday_candles_raw(self, stock_code: str, quote_date: str) -> list[dict[str, Any]]:
+        """당일 1분봉 원본 목록을 반환한다(기존 nextBefore 페이지네이션 재사용)."""
+        return self._get_intraday_candles(stock_code, quote_date)["result"]["candles"]
+
     def get_stock_market_data(self, stock_code: str, *, candle_count: int = 130) -> StockMarketData:
         """현재가, 일봉, 1분봉, 호가와 가격 제한을 하나의 응답으로 반환한다."""
 
@@ -389,6 +439,14 @@ class TossInvestClient:
                         self._access_token = None
                         self._access_token_expires_at = 0.0
                     continue
+                # rate limit·미존재 종목은 상위(주가 서비스)가 백오프·no_data 로
+                # 구분 처리할 수 있게 전용 code 를 붙인다(기존 예외 흐름은 유지).
+                if response.status_code == 429:
+                    raise TossApiError("토스증권 요청 한도를 초과했습니다.", code="rate_limited")
+                if response.status_code == 404:
+                    raise TossApiError(
+                        "토스증권에서 종목을 찾을 수 없습니다.", code="stock_not_found"
+                    )
                 response.raise_for_status()
                 payload = response.json()
             except (requests.RequestException, TypeError, ValueError) as exc:

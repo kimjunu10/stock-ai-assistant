@@ -264,3 +264,67 @@ def test_extract_parses_tool_payload():
     assert tool_calls[0].status == "ok" and tool_calls[0].result_count == 1
     assert payloads and payloads[0]["sources"][0]["source_id"] == "S1"
     assert model_calls == 2
+
+
+# ── Phase 6: 주가 근거 수집·검증 ──────────────────────────────────
+def _price_payload(price=252500, prev=250000):
+    return {
+        "status": "ok",
+        "data": {
+            "quote": {
+                "stock_code": "005930",
+                "price": price,
+                "previous_close": prev,
+                "change_rate_pct": 1.0,
+                "currency": "KRW",
+                "trading_day": "2026-07-24",
+                "unit": "원",
+            },
+            "period": None,
+        },
+        "sources": [{"source_id": "price:005930:2026-07-24", "source_type": "price"}],
+    }
+
+
+def _price_return_payload(start=200000, end=250000):
+    return {
+        "status": "ok",
+        "data": {
+            "stock_code": "005930",
+            "start_close": start,
+            "end_close": end,
+            "return_pct": 25.0,
+            "start_trading_day": "2026-06-24",
+            "end_trading_day": "2026-07-24",
+            "note": "최근 1m",
+            "unit": "원",
+        },
+        "sources": [{"source_id": "price:005930:2026-06-24", "source_type": "price"}],
+    }
+
+
+def test_collect_price_evidence():
+    ev = collect_evidence([_price_payload()])
+    assert ev.has_price is True
+    assert "252500" in ev.price_numeric_cores
+    assert "250000" in ev.price_numeric_cores
+
+
+def test_price_number_supported_by_price_tool():
+    # 답변의 가격 숫자가 주가 Tool 근거에 있으면 통과(재무 근거 없이도).
+    ev = collect_evidence([_price_payload()])
+    res = validate_answer("삼성전자 현재 주가는 252,500원입니다.", ev)
+    assert res.ok, res.errors
+
+
+def test_price_return_numbers_supported():
+    ev = collect_evidence([_price_return_payload()])
+    res = validate_answer("시작가 200,000원에서 종료가 250,000원으로 올랐습니다.", ev)
+    assert res.ok, res.errors
+
+
+def test_price_number_without_evidence_flagged():
+    # 주가 근거가 없는데 큰 가격 숫자를 답하면 검출.
+    ev = collect_evidence([{"status": "no_data", "data": {}, "sources": []}])
+    res = validate_answer("현재 주가는 252,500원입니다.", ev)
+    assert not res.ok

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.rag.retrieval import HybridRetriever
     from app.services.facts import FactsService
     from app.services.research_reports import ResearchReportSearch
+    from app.services.stock_prices import StockPriceService
 
 
 @dataclass
@@ -26,6 +27,7 @@ class ToolServices:
     facts: FactsService
     retriever: HybridRetriever
     reports: ResearchReportSearch
+    prices: StockPriceService | None = None
 
 
 @dataclass

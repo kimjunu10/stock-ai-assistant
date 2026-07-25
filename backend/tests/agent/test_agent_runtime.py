@@ -1,6 +1,6 @@
 """Phase 5.5-C Agent 구현 단위 테스트 (LLM 실호출 없음).
 
-- Tool 6개 등록·이름 확인
+- Tool 8개 등록·이름 확인(Phase 6 주가 Tool 포함)
 - create_agent 조립 성공(더미 키, invoke 안 함)
 - DuplicateToolCallMiddleware: 동일 Tool+인자 반복 차단, 다른 인자는 허용
 - sanitize_tool_error: 내부 예외 비노출
@@ -19,7 +19,8 @@ from app.core.config import Settings
 from app.services.agent_qa import AgentQaService, get_agent_qa_service
 
 
-def test_six_tools_registered():
+def test_eight_tools_registered():
+    # Phase 6 에서 주가 Tool 2개를 추가(6→8).
     names = [t.name for t in build_tools()]
     assert names == [
         "get_financial_facts",
@@ -28,6 +29,8 @@ def test_six_tools_registered():
         "search_disclosures",
         "get_disclosure_values",
         "search_research_reports",
+        "get_stock_prices",
+        "calculate_event_return",
     ]
 
 

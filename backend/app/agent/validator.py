@@ -38,6 +38,9 @@ class ToolEvidence:
     brokers: set[str] = field(default_factory=set)  # Tool 이 반환한 증권사명
     stated_target_prices: set[int] = field(default_factory=set)  # status=stated 목표주가
     has_reports: bool = False  # 리포트 Tool 이 결과를 냈는가
+    # 주가 근거(Phase 6): 실제 가격·수익률은 주가 Tool 결과값만 인용 가능
+    has_price: bool = False  # 주가 Tool 이 결과를 냈는가
+    price_numeric_cores: set[str] = field(default_factory=set)  # 가격·시작/종료가 정수 문자열
 
 
 @dataclass
@@ -69,7 +72,11 @@ def collect_evidence(tool_payloads: list[dict[str, Any]]) -> ToolEvidence:
                 ev.value_kinds.add(str(vk))
             if s.get("source_type") == "financial":
                 ev.has_financial = True
+            if s.get("source_type") == "price":
+                ev.has_price = True
         data = p.get("data")
+        # 주가 Tool 결과: 가격·시작/종료가를 근거 숫자로 수집(정수부만).
+        _collect_price_numbers(data, ev)
         for fact in _iter_facts(data):
             val = fact.get("value_won")
             if val is not None:
@@ -174,6 +181,33 @@ def _iter_facts(data: Any):
                     yield item
 
 
+def _collect_price_numbers(data: Any, ev: ToolEvidence) -> None:
+    """주가 Tool 결과(quote/period)의 가격·시작/종료가를 근거 숫자로 수집한다.
+
+    수익률(return_pct·change_rate_pct)은 소수 %라 큰 숫자 검증 대상이 아니므로 제외.
+    가격은 정수부 문자열로 담아 답변의 '252,500원' 같은 주장과 대조한다.
+    """
+    if not isinstance(data, dict):
+        return
+
+    def _add(v: Any) -> None:
+        if isinstance(v, (int, float)):
+            ev.price_numeric_cores.add(str(int(v)))
+
+    quote = data.get("quote")
+    if isinstance(quote, dict):
+        for k in ("price", "previous_close"):
+            _add(quote.get(k))
+    period = data.get("period")
+    if isinstance(period, dict):
+        for k in ("start_close", "end_close"):
+            _add(period.get(k))
+    # calculate_event_return 은 data 최상위에 start_close/end_close 를 둔다.
+    for k in ("start_close", "end_close", "price", "previous_close"):
+        if k in data:
+            _add(data.get(k))
+
+
 def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
     """답변을 근거에 대해 검증한다(SPEC §12.2). 숫자를 고치지 않고 오류만 기록."""
     errors: list[str] = []
@@ -190,8 +224,9 @@ def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
     answer_nums = {m.replace(",", "") for m in _NUMBER_RE.findall(answer)}
     big_nums = {n for n in answer_nums if len(n) >= 4}
     tp_cores = {str(v) for v in evidence.stated_target_prices}
-    unsupported_big = big_nums - evidence.numeric_cores - tp_cores
-    if unsupported_big and not evidence.has_financial:
+    # 주가 Tool 결과의 가격도 정당한 숫자 근거로 인정한다.
+    unsupported_big = big_nums - evidence.numeric_cores - tp_cores - evidence.price_numeric_cores
+    if unsupported_big and not (evidence.has_financial or evidence.has_price):
         errors.append("답변에 재무성 숫자가 있으나 이를 뒷받침하는 숫자 Tool 근거가 없음")
 
     # 3) 증권사명 환각: 답변에 등장한 증권사가 리포트 Tool 근거에 없으면 위반(prompt.md §7)
