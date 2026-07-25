@@ -53,6 +53,9 @@
   --positive-ink: #137a4e;
   --negative-soft: #fff0f2;
   --negative-ink: #c43d4e;
+  --clay-highlight: rgba(255, 255, 255, 0.92);
+  --clay-shadow: rgba(55, 48, 0, 0.11);
+  --clay-shadow-deep: rgba(25, 25, 25, 0.09);
   color: var(--ink);
   background: var(--canvas);
   font-family: var(--font-sans);
@@ -83,6 +86,9 @@
   --positive-ink: #67d5a2;
   --negative-soft: #3a2025;
   --negative-ink: #ff8795;
+  --clay-highlight: rgba(255, 255, 255, 0.055);
+  --clay-shadow: rgba(0, 0, 0, 0.32);
+  --clay-shadow-deep: rgba(0, 0, 0, 0.46);
 }
 
 @layer base {

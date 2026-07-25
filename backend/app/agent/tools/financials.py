@@ -45,11 +45,13 @@ AccountName = Literal[
 
 class FinancialFactsInput(BaseModel):
     stock_code: str = Field(pattern=r"^[0-9]{6}$")
-    account_name: AccountName
+    account_name: AccountName | None = None
+    account_names: list[AccountName] = Field(default_factory=list, max_length=9)
     business_year: int | None = None
     report_period: Literal["q1", "half", "q3", "annual"] | None = None
     amount_type: Literal["quarter", "cumulative", "point_in_time"] | None = None
     fs_div: Literal["CFS", "OFS"] = "CFS"
+    period_mode: Literal["latest", "exact", "history"] = "latest"
 
 
 def _default_amount_type(account: str, report_period: str | None) -> str | None:
@@ -84,17 +86,29 @@ def _resolve_report_period(account: str, business_year: int | None, report_perio
 
 def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> ToolResult:
     """검증된 인자로 재무 1건(또는 소수)을 조회한다. 없으면 no_data."""
+    requested_accounts = list(dict.fromkeys(inp.account_names))
+    if inp.account_name and inp.account_name not in requested_accounts:
+        requested_accounts.insert(0, inp.account_name)
+    if not requested_accounts:
+        # 광범위한 "실적" 질문의 기본 공식 지표. 질문 문자열을 분기하지 않고
+        # Tool 입력이 비어 있을 때 적용하는 금융 도메인 계약이다.
+        requested_accounts = ["매출액", "영업이익", "당기순이익"]
+
     try:
         # 사업연도만 있고 보고기간 미지정이면 연간으로 확정 해석(일반 규칙, 질문 파싱 아님).
         report_period = _resolve_report_period(
-            inp.account_name, inp.business_year, inp.report_period
+            requested_accounts[0], inp.business_year, inp.report_period
         )
         reprt_code = PERIOD_TO_REPRT[report_period] if report_period else None
-        amount_type = inp.amount_type or _default_amount_type(inp.account_name, report_period)
+        default_types = {
+            _default_amount_type(account, report_period) for account in requested_accounts
+        }
+        default_types.discard(None)
+        amount_type = inp.amount_type or (default_types.pop() if len(default_types) == 1 else None)
 
         rows = facts.get_financials(
             inp.stock_code,
-            account_names=[inp.account_name],
+            account_names=requested_accounts,
             bsns_year=str(inp.business_year) if inp.business_year else None,
             reprt_code=reprt_code,
             amount_type=amount_type,
@@ -106,7 +120,7 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
         try:
             rows = facts.get_financials(
                 inp.stock_code,
-                account_names=[inp.account_name],
+                account_names=requested_accounts,
                 bsns_year=str(inp.business_year) if inp.business_year else None,
                 reprt_code=reprt_code,
                 amount_type=amount_type,
@@ -122,9 +136,32 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
         want = (
             f"{inp.business_year or '최근'} "
             f"{REPRT_LABEL.get(reprt_code, '(기간미지정)')} "
-            f"{inp.account_name} ({amount_type or '유형미지정'}, {inp.fs_div})"
+            f"{', '.join(requested_accounts)} ({amount_type or '유형미지정'}, {inp.fs_div})"
         )
         return no_data(f"요청한 재무 데이터가 없습니다: {want}. 다른 기간으로 대체하지 않았습니다.")
+
+    # 기간 미지정 최신 조회는 모델이 후보 중 하나를 고르게 두지 않는다. DART의 공식
+    # 보고기간 순서를 적용한 FactsService 첫 행을 기준으로 같은 최신 기간만 남긴다.
+    # 사용자가 기간을 지정했거나 history를 요청한 경우에는 입력 계약을 그대로 보존한다.
+    latest_selected = (
+        inp.period_mode == "latest" and inp.business_year is None and inp.report_period is None
+    )
+    if latest_selected:
+        latest = rows[0].extra
+        rows = [
+            row
+            for row in rows
+            if row.extra.get("bsns_year") == latest.get("bsns_year")
+            and row.extra.get("reprt_code") == latest.get("reprt_code")
+        ]
+        if inp.amount_type is None:
+            preferred = []
+            for row in rows:
+                preferred_type = "point_in_time" if row.label in BALANCE_ACCOUNTS else "cumulative"
+                if row.extra.get("amount_type") == preferred_type:
+                    preferred.append(row)
+            if preferred:
+                rows = preferred
 
     from app.rag.prompting import format_won
 
@@ -153,4 +190,13 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
                 locator={"source_type": f.source_type, "source_key": f.source_key},
             )
         )
-    return ok({"facts": data}, sources=sources)
+    return ok(
+        {
+            "facts": data,
+            "selection": {
+                "period_mode": inp.period_mode,
+                "latest_available_period": data[0]["period"] if latest_selected and data else None,
+            },
+        },
+        sources=sources,
+    )

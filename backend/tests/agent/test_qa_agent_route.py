@@ -26,7 +26,10 @@ class _FakeAgentResult:
 
 
 class _FakeAgentService:
+    last_kwargs = None
+
     def answer(self, q, **k):
+        self.last_kwargs = k
         return _FakeAgentResult()
 
 
@@ -84,3 +87,34 @@ def test_agent_stream_emits_sse_events_in_order(monkeypatch):
     order = ["agent_start", "tool_start", "tool_end", "sources", "delta", "done"]
     idxs = [text.index(f"event: {ev}") for ev in order]
     assert idxs == sorted(idxs), f"SSE 이벤트 순서 위반: {idxs}"
+
+
+def test_phase7_context_fields_are_accepted(monkeypatch):
+    service = _FakeAgentService()
+    monkeypatch.setattr(qa_route, "get_agent_qa_service", lambda: service)
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    app = FastAPI()
+    app.include_router(qa_route.router)
+    response = TestClient(app).post(
+        "/qa",
+        json={
+            "question": "이 페이지 목표주가 근거는?",
+            "stock_code": "005930",
+            "context_source_type": "research_report",
+            "context_source_id": "report-7",
+            "document_id": "document-7",
+            "report_page": 3,
+            "conversation_id": "conversation-7",
+        },
+    )
+    assert response.status_code == 200
+    assert service.last_kwargs == {
+        "stock_code": "005930",
+        "source_id": "report-7",
+        "source_type": "research_report",
+        "document_id": "document-7",
+        "report_page": 3,
+        "conversation_id": "conversation-7",
+    }

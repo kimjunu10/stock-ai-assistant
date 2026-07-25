@@ -60,6 +60,21 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
         stock={stock}
         issueBrief={news.issueBrief}
       />
+      <button
+        className="stock-rag-launcher"
+        onClick={() => onAsk({
+          stockCode: stock.code,
+          sourceType: 'stock',
+          sourceId: stock.code,
+          title: `${stock.name} 전체 자료`,
+        })}
+        type="button"
+      >
+        <span><Icon name="sparkles" size={17} /></span>
+        <strong>이 종목을 AI에게 질문</strong>
+        <small>뉴스·공시·리포트·주가를 함께 확인해요</small>
+        <Icon name="arrow-right" size={17} />
+      </button>
 
       <section className="stock-section chart-section">
         <PriceChart

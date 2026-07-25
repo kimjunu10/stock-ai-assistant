@@ -31,6 +31,7 @@ AMOUNT_TYPE_LABEL = {
     "cumulative": "누적",
     "point_in_time": "시점값",
 }
+REPRT_ORDER = {"11013": 1, "11012": 2, "11014": 3, "11011": 4}
 
 
 @dataclass
@@ -61,6 +62,7 @@ class FactsService:
         bsns_year: str | None = None,
         reprt_code: str | None = None,
         amount_type: str | None = None,
+        fs_div: str | None = None,
         limit: int = 50,
     ) -> list[NumericFact]:
         """financials 에서 실제 재무 수치를 조회한다. 연도/분기 미지정 시 최신 우선."""
@@ -74,13 +76,16 @@ class FactsService:
             q = q.eq("reprt_code", reprt_code)
         if amount_type:
             q = q.eq("amount_type", amount_type)
-        rows = (
-            q.order("bsns_year", desc=True)
-            .order("reprt_code", desc=True)
-            .limit(limit)
-            .execute()
-            .data
-            or []
+        if fs_div:
+            q = q.eq("fs_div", fs_div)
+        rows = q.order("bsns_year", desc=True).limit(limit).execute().data or []
+        # DART 보고서 코드는 숫자 순서와 시간 순서가 다르다.
+        rows.sort(
+            key=lambda r: (
+                int(r.get("bsns_year") or 0),
+                REPRT_ORDER.get(str(r.get("reprt_code")), 0),
+            ),
+            reverse=True,
         )
         facts: list[NumericFact] = []
         for r in rows:
@@ -101,7 +106,13 @@ class FactsService:
                         f"{r['stock_code']}/{r['bsns_year']}/{r['reprt_code']}/"
                         f"{r['fs_div']}/{r['account_nm']}/{r['amount_type']}"
                     ),
-                    extra={"frmtrm_amount": r.get("frmtrm_amount")},
+                    extra={
+                        "frmtrm_amount": r.get("frmtrm_amount"),
+                        "bsns_year": str(r.get("bsns_year") or ""),
+                        "reprt_code": str(r.get("reprt_code") or ""),
+                        "amount_type": r.get("amount_type"),
+                        "fs_div": r.get("fs_div"),
+                    },
                 )
             )
         return facts

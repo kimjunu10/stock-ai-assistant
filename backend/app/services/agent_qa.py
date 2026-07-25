@@ -19,6 +19,7 @@ from functools import lru_cache
 
 from app.agent.context import QaRuntimeContext, ToolServices
 from app.agent.runtime import build_agent
+from app.agent.time_context import SEOUL_TIMEZONE_NAME, current_seoul_datetime
 from app.agent.trace import AgentTrace, ToolTrace
 from app.agent.validator import (
     collect_evidence,
@@ -50,6 +51,9 @@ class AgentQaResult:
     output_tokens: int = 0
     # prompt.md §8: 증권사 의견 카드(구조화, stated 목표주가만). 답변과 분리 제공.
     report_opinions: list[dict] = field(default_factory=list)
+    sources: list[dict] = field(default_factory=list)
+    visualizations: list[dict] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
 
 class AgentQaService:
@@ -63,6 +67,7 @@ class AgentQaService:
     def _context(
         self, stock_code, source_type, source_id, document_id, report_page, conversation_id
     ):
+        request_now = current_seoul_datetime()
         return QaRuntimeContext(
             stock_code=stock_code,
             source_type=source_type,
@@ -70,6 +75,9 @@ class AgentQaService:
             document_id=document_id,
             report_page=report_page,
             conversation_id=conversation_id,
+            current_datetime=request_now.isoformat(timespec="seconds"),
+            current_date=request_now.date().isoformat(),
+            timezone=SEOUL_TIMEZONE_NAME,
             services=self._services,
         )
 
@@ -107,6 +115,7 @@ class AgentQaService:
                     except (ValueError, TypeError):
                         payload = None
                 if isinstance(payload, dict):
+                    payload["_tool_name"] = getattr(m, "name", None)
                     tool_payloads.append(payload)
                     # Tool 결과 status·result_count 를 마지막 동일이름 호출에 반영
                     name = getattr(m, "name", None)
@@ -177,6 +186,7 @@ class AgentQaService:
             validation.errors.append("근거 없는 증권사·목표주가 문장을 답변에서 제거함")
         # 증권사 의견 카드(구조화): Tool 이 확정한 stated 목표주가만. 답변과 분리 제공.
         report_opinions = collect_report_opinions(tool_payloads)
+        ui_sources, visualizations, warnings = _build_ui_payload(tool_payloads)
 
         total_ms = int((time.perf_counter() - t0) * 1000)
         trace = AgentTrace(
@@ -202,6 +212,9 @@ class AgentQaService:
             input_tokens=in_tok,
             output_tokens=out_tok,
             report_opinions=report_opinions,
+            sources=ui_sources,
+            visualizations=visualizations,
+            warnings=warnings,
         )
 
     def _failed(self, request_id: str, reason: str, message: str, t0: float) -> AgentQaResult:
@@ -262,3 +275,145 @@ def _build_stock_price_service(cfg: Settings):
         rate_limit_backoff_seconds=cfg.stock_price_rate_limit_backoff_seconds,
         max_candle_pages=cfg.stock_price_max_candle_pages,
     )
+
+
+def _build_ui_payload(tool_payloads: list[dict]) -> tuple[list[dict], list[dict], list[str]]:
+    """ToolResult를 공개 UI view model로 변환한다.
+
+    자연어 답변을 파싱하거나 값을 다시 계산하지 않는다. Tool이 확정해 반환한 data와
+    SourceRef만 복사하고, 출처가 없는 시각화는 만들지 않는다.
+    """
+    source_by_id: dict[str, dict] = {}
+    visualizations: list[dict] = []
+    warnings: list[str] = []
+
+    for payload in tool_payloads:
+        public_sources = [
+            source
+            for source in payload.get("sources", [])
+            if isinstance(source, dict) and source.get("source_id")
+        ]
+        for source in public_sources:
+            source_by_id.setdefault(source["source_id"], source)
+        source_ids = [source["source_id"] for source in public_sources]
+        if not source_ids or payload.get("status") != "ok":
+            warnings.extend(_public_warnings(payload.get("warnings")))
+            continue
+
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            continue
+        tool_name = payload.get("_tool_name")
+        view = _visualization_for_tool(tool_name, data, source_ids)
+        if view is not None:
+            visualizations.append(view)
+        warnings.extend(_public_warnings(payload.get("warnings")))
+
+    return list(source_by_id.values()), visualizations, list(dict.fromkeys(warnings))
+
+
+def _public_warnings(value) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    warnings: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip():
+            continue
+        if "내부 조회 오류" in item:
+            warnings.append("데이터를 불러오는 중 문제가 발생했습니다.")
+        elif (
+            "이 주제에 해당하는 근거는 답변에서 제외할 것" in item
+            or item.startswith("포함 요청 주제:")
+            or "target_price_status='stated'" in item
+        ):
+            continue
+        else:
+            warnings.append(item[:300])
+    return warnings
+
+
+def _visualization_for_tool(
+    tool_name: str | None, data: dict, source_ids: list[str]
+) -> dict | None:
+    """Tool 이름은 라우팅이 아니라 이미 실행된 typed 결과의 view 종류만 결정한다."""
+    if tool_name == "search_news" and isinstance(data.get("news"), list):
+        filters = data.get("applied_filters")
+        return {
+            "type": "news_cards",
+            "title": "최근 뉴스",
+            "data": {
+                "items": data["news"],
+                "date_from": filters.get("date_from") if isinstance(filters, dict) else None,
+                "date_to": filters.get("date_to") if isinstance(filters, dict) else None,
+            },
+            "source_ids": source_ids,
+        }
+
+    if tool_name == "get_stock_prices":
+        daily = data.get("daily")
+        if isinstance(daily, list) and len(daily) >= 2:
+            return {
+                "type": "price_line",
+                "title": "실제 주가 흐름",
+                "data": {
+                    "points": daily,
+                    "quote": data.get("quote"),
+                    "period": data.get("period"),
+                },
+                "source_ids": source_ids,
+            }
+        return {
+            "type": "price_snapshot",
+            "title": "실제 주가",
+            "data": {"quote": data.get("quote"), "period": data.get("period")},
+            "source_ids": source_ids,
+        }
+
+    if tool_name == "calculate_event_return":
+        return {
+            "type": "event_return",
+            "title": "발표 전후 주가 변화",
+            "data": data,
+            "source_ids": source_ids,
+        }
+
+    if tool_name == "get_financial_facts" and isinstance(data.get("facts"), list):
+        return {
+            "type": "financial_series",
+            "title": "DART 공식 재무정보",
+            "data": {"items": data["facts"]},
+            "source_ids": source_ids,
+        }
+
+    if tool_name == "get_disclosure_values" and isinstance(data.get("values"), list):
+        return {
+            "type": "disclosure_metrics",
+            "title": "공시 핵심 정보",
+            "data": {"items": data["values"]},
+            "source_ids": source_ids,
+        }
+
+    if tool_name == "search_research_reports" and isinstance(data.get("reports"), list):
+        targets = [
+            report
+            for report in data["reports"]
+            if isinstance(report, dict)
+            and report.get("target_price_status") == "stated"
+            and report.get("target_price") is not None
+        ]
+        if targets:
+            return {
+                "type": "broker_targets",
+                "title": "증권사 목표주가",
+                "data": {"items": targets},
+                "source_ids": source_ids,
+            }
+
+    if tool_name == "lookup_financial_term" and data.get("term"):
+        return {
+            "type": "term_definition",
+            "title": "금융용어",
+            "data": data,
+            "source_ids": source_ids,
+        }
+    return None

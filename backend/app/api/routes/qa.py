@@ -20,6 +20,8 @@ from app.schemas.qa import (
     BrokerOpinion,
     QaRequest,
     QaResponse,
+    Source,
+    Visualization,
 )
 from app.services.agent_qa import get_agent_qa_service
 
@@ -54,6 +56,9 @@ def ask(req: QaRequest) -> QaResponse:
         stock_code=req.stock_code,
         source_id=req.context_source_id,
         source_type=req.context_source_type,
+        document_id=req.document_id,
+        report_page=req.report_page,
+        conversation_id=req.conversation_id,
     )
     execution = AgentExecution(
         agent=True,
@@ -66,13 +71,18 @@ def ask(req: QaRequest) -> QaResponse:
         validation_errors=r.validation_errors,
         source_ids=r.source_ids,
     )
+    ui_sources = getattr(r, "sources", [])
+    visualizations = getattr(r, "visualizations", [])
+    warnings = getattr(r, "warnings", [])
     return QaResponse(
         answer=r.answer,
-        sources=[],
+        sources=[Source(**source) for source in ui_sources],
         invalid_citations=[],
         latency_ms={},
         execution=execution,
         broker_opinions=_broker_opinions_from_agent(getattr(r, "report_opinions", [])),
+        visualizations=[Visualization(**item) for item in visualizations],
+        warnings=warnings,
     )
 
 
@@ -94,11 +104,24 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
             stock_code=req.stock_code,
             source_id=req.context_source_id,
             source_type=req.context_source_type,
+            document_id=req.document_id,
+            report_page=req.report_page,
+            conversation_id=req.conversation_id,
         )
         for c in r.tool_calls:
             yield _sse("tool_start", {"name": c.name})
             yield _sse("tool_end", {"name": c.name, "status": c.status})
-        yield _sse("sources", {"sources": []})
+        ui_sources = getattr(r, "sources", [])
+        visualizations = getattr(r, "visualizations", [])
+        warnings = getattr(r, "warnings", [])
+        yield _sse(
+            "sources",
+            {
+                "sources": ui_sources,
+                "visualizations": visualizations,
+                "warnings": warnings,
+            },
+        )
         if r.error:
             yield _sse("error", {"message": r.error, "stop_reason": r.stop_reason})
             return
@@ -109,6 +132,8 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
                 "stop_reason": r.stop_reason,
                 "model_calls": r.model_calls,
                 "tool_calls": [c.name for c in r.tool_calls],
+                "visualizations": visualizations,
+                "warnings": warnings,
             },
         )
 

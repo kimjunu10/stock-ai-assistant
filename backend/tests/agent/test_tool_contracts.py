@@ -11,9 +11,12 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 from pydantic import ValidationError
 
+from app.agent.time_context import resolve_relative_date_range
 from app.agent.tools.common import (
     ToolResult,
     clamp_items,
@@ -129,6 +132,18 @@ def _fact(period="2025년 사업보고서(연간) 누적"):
     )
 
 
+def _dated_fact(year: str, reprt_code: str, amount_type: str, value: int):
+    fact = _fact(f"{year}년 테스트 기간")
+    fact.value = value
+    fact.extra = {
+        "bsns_year": year,
+        "reprt_code": reprt_code,
+        "amount_type": amount_type,
+        "fs_div": "CFS",
+    }
+    return fact
+
+
 def test_financial_annual_passes_correct_reprt_code():
     facts = _FakeFacts(rows=[_fact()])
     r = run_get_financial_facts(
@@ -168,6 +183,49 @@ def test_financial_balance_defaults_point_in_time():
         ),
     )
     assert facts.last_kwargs["amount_type"] == "point_in_time"
+
+
+def test_financial_latest_mode_returns_only_latest_official_period():
+    facts = _FakeFacts(
+        rows=[
+            _dated_fact("2026", "11013", "cumulative", 133),
+            _dated_fact("2025", "11014", "cumulative", 239),
+            _dated_fact("2024", "11014", "cumulative", 225),
+        ]
+    )
+    result = run_get_financial_facts(
+        facts,
+        FinancialFactsInput(stock_code="005930", account_name="매출액"),
+    )
+    assert result.status == "ok"
+    assert [item["value_won"] for item in result.data["facts"]] == [133]
+    assert result.data["selection"]["period_mode"] == "latest"
+    assert result.data["selection"]["latest_available_period"] == "2026년 테스트 기간"
+
+
+def test_financial_broad_request_uses_core_metrics_in_one_query():
+    facts = _FakeFacts(rows=[])
+    run_get_financial_facts(
+        facts,
+        FinancialFactsInput(stock_code="005930"),
+    )
+    assert facts.last_kwargs["account_names"] == ["매출액", "영업이익", "당기순이익"]
+
+
+def test_relative_date_ranges_use_server_reference_date():
+    reference = date(2026, 7, 25)
+    assert resolve_relative_date_range("recent", reference_date=reference) == (
+        "2026-07-23",
+        "2026-07-25",
+    )
+    assert resolve_relative_date_range("yesterday", reference_date=reference) == (
+        "2026-07-24",
+        "2026-07-24",
+    )
+    assert resolve_relative_date_range("last_7_days", reference_date=reference) == (
+        "2026-07-19",
+        "2026-07-25",
+    )
 
 
 # ── term ──
@@ -216,6 +274,8 @@ def test_search_news_surfaces_exclude_topics():
     assert r.status == "ok"
     assert any("제외" in w for w in r.warnings)
     assert r.data["applied_filters"]["exclude_topics"] == ["실적", "영업이익"]
+    assert r.data["news"][0]["source_id"] == "c1"
+    assert r.data["news"][0]["url"] == "http://x"
 
 
 # ── reports: source metadata + forecast 경고 ──

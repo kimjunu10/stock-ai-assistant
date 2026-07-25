@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
 import { getStock } from '../data/mockData'
 import type { AssistantContext } from '../types'
+import type { RagContext, RagSourceType } from '../types/qa'
 import { Icon } from './Icon'
+import { RagConversation } from './RagConversation'
 
 interface AssistantPanelProps {
   context: AssistantContext | null
@@ -9,17 +10,25 @@ interface AssistantPanelProps {
   open: boolean
 }
 
+const SOURCE_TYPES: Record<AssistantContext['sourceType'], RagSourceType | undefined> = {
+  news_cluster: 'news_event',
+  disclosure: 'dart_document',
+  report: 'research_report',
+  stock: undefined,
+}
+
 export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) {
-  const [input, setInput] = useState('')
-  const [question, setQuestion] = useState<string | null>(null)
   const stock = context ? getStock(context.stockCode) : undefined
   const dockedToNews = context?.presentation === 'news_detail'
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault()
-    if (!input.trim()) return
-    setQuestion(input.trim())
-    setInput('')
+  const ragContext: RagContext = {
+    stockCode: context?.stockCode,
+    stockName: stock?.name,
+    sourceType: context ? SOURCE_TYPES[context.sourceType] : undefined,
+    sourceId: context?.sourceId,
+    documentId: context?.documentId,
+    page: context?.page,
+    title: context?.title,
+    selectedText: context?.selectedText,
   }
 
   return (
@@ -31,69 +40,14 @@ export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) 
             <span className="assistant-symbol" aria-hidden="true">M</span>
             <div>
               <strong>Moa AI</strong>
-              <span>문서 근거로 답변해요</span>
+              <span>자료를 찾아 근거와 함께 답해요</span>
             </div>
           </div>
           <button aria-label="패널 닫기" className="icon-button" onClick={onClose} type="button">
             <Icon name="close" size={19} />
           </button>
         </header>
-
-        <div className="assistant-panel__content">
-          {context && (
-            <div className="context-card">
-              <span>{stock?.name ?? context.stockCode}에서 보고 있던 내용</span>
-              <strong>{context.title}</strong>
-              {context.selectedText && <q>{context.selectedText}</q>}
-              <small>이 문서를 우선 근거로 찾아볼게요.</small>
-            </div>
-          )}
-
-          <div className="chat-message chat-message--assistant">
-            <span className="chat-avatar" aria-hidden="true">M</span>
-            <div>
-              <p>이 내용에서 무엇이 궁금한가요?</p>
-              <p>어려운 용어, 실적 영향, 관련 공시를 쉽게 설명해 드릴게요.</p>
-            </div>
-          </div>
-
-          <div className="question-suggestions">
-            {['이 사건의 핵심이 뭐야?', '실적에는 어떤 영향이 있어?', '관련 공시도 찾아줘'].map((suggestion) => (
-              <button key={suggestion} onClick={() => setInput(suggestion)} type="button">
-                {suggestion}
-              </button>
-            ))}
-          </div>
-
-          {question && (
-            <>
-              <div className="chat-message chat-message--user"><p>{question}</p></div>
-              <div className="chat-message chat-message--assistant">
-                <span className="chat-avatar" aria-hidden="true">M</span>
-                <div>
-                  <p>현재는 UI 프로토타입이에요. 백엔드 연결 후 선택한 문서와 같은 종목의 자료만 근거로 답변이 표시됩니다.</p>
-                  <div className="source-chip"><Icon name="document" size={14} /> [1] 선택한 문서</div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <form className="assistant-composer" onSubmit={handleSubmit}>
-          <div>
-            <textarea
-              aria-label="질문 입력"
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="이 내용에 관해 질문해 보세요"
-              rows={2}
-              value={input}
-            />
-            <button aria-label="질문 보내기" disabled={!input.trim()} type="submit">
-              <Icon name="send" size={17} />
-            </button>
-          </div>
-          <p>투자 판단·매수/매도 추천은 제공하지 않아요.</p>
-        </form>
+        {context && <RagConversation context={ragContext} key={`${context.sourceType}:${context.sourceId}`} variant="panel" />}
       </aside>
     </>
   )
