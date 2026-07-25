@@ -40,9 +40,7 @@ def _svc() -> ResearchReportSearch:
 
 
 def _run_tool(svc, stock_code, query, time_context=None):
-    inp = SearchResearchReportsInput(
-        stock_code=stock_code, query=query, time_context=time_context
-    )
+    inp = SearchResearchReportsInput(stock_code=stock_code, query=query, time_context=time_context)
     return run_search_research_reports(svc, inp)
 
 
@@ -99,17 +97,17 @@ def main(stock_code: str) -> int:
     print(f"\n[broker_opinions 카드] {len(cards)}건")
     card_brokers = [c["broker"] for c in cards]
     for c in cards:
-        print(f"  {c['report_date']} {c['broker']} tp={c['target_price']} "
-              f"status={c['target_price_status']} src={c['source_id']} page={c['source_page']}")
+        print(
+            f"  {c['report_date']} {c['broker']} tp={c['target_price']} "
+            f"status={c['target_price_status']} src={c['source_id']} page={c['source_page']}"
+        )
     if any(c["target_price_status"] != "stated" for c in cards):
         fails.append("§5 위반: 카드에 stated 아닌 항목 포함")
     if len(card_brokers) != len(set(card_brokers)):
         fails.append("§5 위반: 카드에 증권사 중복")
 
     # ── history — 날짜별 개별값 유지 확인 ──
-    hits_history = svc.search(
-        "목표주가 변화 추이", stock_code=stock_code, time_context="history"
-    )
+    hits_history = svc.search("목표주가 변화 추이", stock_code=stock_code, time_context="history")
     _print_hits("history", hits_history)
     hist_tps = [h.target_price for h in hits_history if h.target_price is not None]
     print(f"  history 개별 목표주가 값: {sorted(hist_tps)}")
