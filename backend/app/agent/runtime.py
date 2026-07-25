@@ -163,11 +163,12 @@ def build_tools() -> list:
 
         목표주가 숫자는 결과의 target_price(target_price_status='stated')만 사용한다.
         snippet 안의 숫자를 목표주가로 인용하지 않는다.
-        time_context 로 검색의 시간 기준을 준다:
-          - "current": 최근 증권사 의견/목표주가(증권사별 최신 1건, 오래된 자료 표시)
+        time_context 로 검색의 시간 기준을 준다(생략하면 "current" 가 기본):
+          - "current"(기본): 최근 증권사 의견/목표주가(증권사별 최신 1건, 오래된 자료 표시).
+            '지금 목표주가/전망' 질문은 이 값을 쓴다(이력·타 종목 값이 섞이지 않음).
           - "historical_point": 특정 과거 시점의 의견 — date_from/date_to 로 범위 지정
           - "around_event": 공시·실적 발표 전후 — date_from/date_to 로 사건 전후 범위
-          - "history": 목표주가·투자의견 변동 이력(날짜별 개별값)
+          - "history": 목표주가·투자의견 '변동 이력'(날짜별 개별값) — 변화 추이 질문에만 쓴다.
         as_of_date(YYYY-MM-DD)는 current 기준일. 미지정 시 최신 리포트 기준.
         """
         svc, err = _services(runtime)
