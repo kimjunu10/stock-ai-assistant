@@ -123,6 +123,61 @@
       "expected_args": {},
       "is_answerable": false,
       "_note": "존재 불가한 미래값. Tool 호출 없이 없음을 밝혀도 정답(재무 Tool 강제 아님)."
+    },
+    {
+      "id": "price-current-1",
+      "type": "주가-현재가",
+      "question": "삼성전자 현재 주가 알려줘.",
+      "stock_code": "005930",
+      "required_tools": ["get_stock_prices"],
+      "forbidden_tools": ["search_research_reports", "get_financial_facts"],
+      "expected_args": {},
+      "is_answerable": true,
+      "_note": "실제 주가 → 주가 Tool. 목표주가(리포트)·재무 Tool 아님."
+    },
+    {
+      "id": "price-return-1",
+      "type": "주가-기간수익률",
+      "question": "삼성전자 최근 한 달 수익률 알려줘.",
+      "stock_code": "005930",
+      "required_tools_any": ["get_stock_prices", "calculate_event_return"],
+      "forbidden_tools": ["search_research_reports"],
+      "expected_args": {},
+      "is_answerable": true,
+      "_note": "기간 수익률은 두 주가 Tool 중 어느 쪽이든 백엔드 계산이면 정답. Agent 산술 금지."
+    },
+    {
+      "id": "price-not-target-1",
+      "type": "주가-실제아닌목표제외",
+      "question": "삼성전자 목표주가 말고 실제 주가가 최근 한 달 얼마나 움직였어?",
+      "stock_code": "005930",
+      "required_tools_any": ["get_stock_prices", "calculate_event_return"],
+      "forbidden_tools": ["search_research_reports"],
+      "expected_args": {},
+      "is_answerable": true,
+      "_note": "'목표주가 말고' → 리포트 Tool 호출 금지(핵심 검증). 실제 주가(주가 Tool)만."
+    },
+    {
+      "id": "price-compare-1",
+      "type": "주가-목표비교",
+      "question": "삼성전자 목표주가와 실제 주가를 비교해줘.",
+      "stock_code": "005930",
+      "required_tools": ["get_stock_prices", "search_research_reports"],
+      "forbidden_tools": [],
+      "expected_args": {},
+      "is_answerable": true,
+      "_note": "비교 → 실제(주가 Tool)+목표(리포트 Tool) 둘 다. 값 구분 필수."
+    },
+    {
+      "id": "price-event-1",
+      "type": "주가-사건전후",
+      "question": "삼성전자 2026년 5월 4일 발표 전후로 주가가 얼마나 움직였어?",
+      "stock_code": "005930",
+      "required_tools": ["calculate_event_return"],
+      "forbidden_tools": [],
+      "expected_args": {},
+      "is_answerable": true,
+      "_note": "발표일이 주어진 사건 전후 수익률 → calculate_event_return(백엔드 계산). 인과 단정 금지. (발표일 미상이면 뉴스·공시로 먼저 찾는 다단계는 별도 시나리오)."
     }
   ]
 }
