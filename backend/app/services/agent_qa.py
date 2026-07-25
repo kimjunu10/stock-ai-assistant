@@ -20,7 +20,7 @@ from functools import lru_cache
 from app.agent.context import QaRuntimeContext, ToolServices
 from app.agent.runtime import build_agent
 from app.agent.trace import AgentTrace, ToolTrace
-from app.agent.validator import collect_evidence, validate_answer
+from app.agent.validator import collect_evidence, sanitize_answer, validate_answer
 from app.core.config import Settings, settings
 
 
@@ -164,6 +164,10 @@ class AgentQaService:
         # ── 코드 검증(SPEC §12.2): 숫자를 고치지 않고 오류만 기록 ──
         evidence = collect_evidence(tool_payloads)
         validation = validate_answer(answer, evidence)
+        # 근거 없는 증권사·목표주가 문장은 제거(prompt.md §7). 숫자 재추측 없음.
+        answer, sanitized = sanitize_answer(answer, evidence)
+        if sanitized:
+            validation.errors.append("근거 없는 증권사·목표주가 문장을 답변에서 제거함")
 
         total_ms = int((time.perf_counter() - t0) * 1000)
         trace = AgentTrace(

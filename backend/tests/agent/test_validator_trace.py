@@ -9,7 +9,24 @@
 from __future__ import annotations
 
 from app.agent.trace import AgentTrace, ToolTrace
-from app.agent.validator import collect_evidence, validate_answer
+from app.agent.validator import collect_evidence, sanitize_answer, validate_answer
+
+
+def _report_payload(broker="하나증권", tp=480000, tp_status="stated"):
+    rp = {
+        "broker": broker,
+        "report_date": "2026-05-04",
+        "investment_opinion": "매수",
+        "snippet": "목표주가 상향. 본문 999,999",
+        "target_price_status": tp_status,
+    }
+    if tp_status == "stated":
+        rp["target_price"] = tp
+    return {
+        "status": "ok",
+        "data": {"reports": [rp]},
+        "sources": [{"source_id": "rc1", "source_type": "research_report"}],
+    }
 
 
 def _fin_payload():
@@ -62,6 +79,68 @@ def test_validate_does_not_mutate_numbers():
     # 검증기는 답변 문자열을 바꾸지 않는다(오류만 기록)
     assert answer == "매출 333,605,938,000,000원"
     assert not r.ok
+
+
+# ── 목표주가·증권사 환각 검증(prompt.md §7, 실제 버그 재현) ──
+def test_collect_report_evidence():
+    ev = collect_evidence([_report_payload(broker="하나증권", tp=480000)])
+    assert ev.has_reports is True
+    assert "하나증권" in ev.brokers
+    assert 480000 in ev.stated_target_prices
+
+
+def test_validate_flags_unknown_broker():
+    # 근거엔 하나증권만. 답변이 '유안타증권/대신증권'을 지어냄 → 위반
+    ev = collect_evidence([_report_payload(broker="하나증권", tp=480000)])
+    r = validate_answer("유안타증권 목표주가 33만원, 대신증권 7만4천원대입니다.", ev)
+    assert not r.ok
+    assert any("증권사" in e for e in r.errors)
+
+
+def test_validate_flags_hallucinated_target_price():
+    # 근거 stated=480000. 답변이 330,000 을 목표주가로 주장 → 위반
+    ev = collect_evidence([_report_payload(broker="하나증권", tp=480000)])
+    r = validate_answer("하나증권 목표주가 330,000원 제시.", ev)
+    assert not r.ok
+    assert any("목표주가" in e for e in r.errors)
+
+
+def test_validate_passes_matching_target_price():
+    ev = collect_evidence([_report_payload(broker="하나증권", tp=480000)])
+    r = validate_answer("하나증권 목표주가 480,000원.", ev)
+    assert r.ok
+
+
+def test_validate_target_price_han_man_unit():
+    # '48만원' 만원 단위도 stated=480000 과 일치로 인정
+    ev = collect_evidence([_report_payload(broker="하나증권", tp=480000)])
+    r = validate_answer("하나증권 목표주가 48만원.", ev)
+    assert r.ok
+
+
+def test_no_target_price_when_not_stated():
+    # not_stated 근거에서 목표주가 주장 → 위반(허용값 없음)
+    ev = collect_evidence([_report_payload(broker="하나증권", tp_status="not_stated")])
+    r = validate_answer("하나증권 목표주가 480,000원.", ev)
+    assert not r.ok
+
+
+def test_sanitize_removes_hallucinated_broker_sentence():
+    ev = collect_evidence([_report_payload(broker="하나증권", tp=480000)])
+    answer = (
+        "하나증권 목표주가 480,000원입니다. 유안타증권은 목표주가 330,000원을 제시했습니다."
+    )
+    cleaned, changed = sanitize_answer(answer, ev)
+    assert changed is True
+    assert "유안타" not in cleaned  # 환각 문장 제거
+    assert "480,000" in cleaned  # 근거 있는 문장 유지
+
+
+def test_sanitize_keeps_answer_when_all_supported():
+    ev = collect_evidence([_report_payload(broker="하나증권", tp=480000)])
+    answer = "하나증권 목표주가 480,000원입니다."
+    cleaned, changed = sanitize_answer(answer, ev)
+    assert changed is False and cleaned == answer
 
 
 def test_trace_log_dict_has_no_secrets():

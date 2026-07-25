@@ -20,6 +20,10 @@ from typing import Any
 _CITATION_RE = re.compile(r"\[(\d+)\]")
 # 답변 속 큰 숫자(천단위 콤마/조·억 단위 등) — 재무 주장 후보
 _NUMBER_RE = re.compile(r"\d[\d,]{2,}")
+# 증권사명 후보(답변에서 '○○증권' 형태를 뽑아 근거와 대조)
+_BROKER_RE = re.compile(r"([가-힣A-Za-z]{2,10}(?:투자)?증권)")
+# 목표주가 문맥의 금액(콤마형 또는 만원형) — 답변에서 목표가 주장 탐지
+_TP_CTX_RE = re.compile(r"목표\s*주?가[^\n.]{0,30}?(\d{1,3}(?:,\d{3})+|\d{1,4}\s*만)\s*원?")
 
 
 @dataclass
@@ -30,12 +34,24 @@ class ToolEvidence:
     numeric_cores: set[str] = field(default_factory=set)  # 콤마 제거 숫자 문자열
     value_kinds: set[str] = field(default_factory=set)  # actual/forecast/mixed 등
     has_financial: bool = False
+    # 증권사 리포트 근거(prompt.md §7)
+    brokers: set[str] = field(default_factory=set)  # Tool 이 반환한 증권사명
+    stated_target_prices: set[int] = field(default_factory=set)  # status=stated 목표주가
+    has_reports: bool = False  # 리포트 Tool 이 결과를 냈는가
 
 
 @dataclass
 class ValidationResult:
     ok: bool
     errors: list[str] = field(default_factory=list)
+
+
+def _tp_str_to_won(raw: str) -> int:
+    """답변 목표주가 표기('320,000' 또는 '48만')를 원 단위 정수로."""
+    raw = raw.strip()
+    if "만" in raw:
+        return int(raw.replace("만", "").strip()) * 10_000
+    return int(raw.replace(",", ""))
 
 
 def collect_evidence(tool_payloads: list[dict[str, Any]]) -> ToolEvidence:
@@ -61,6 +77,21 @@ def collect_evidence(tool_payloads: list[dict[str, Any]]) -> ToolEvidence:
             vk = fact.get("value_kind")
             if vk:
                 ev.value_kinds.add(str(vk))
+        # 리포트 근거: 증권사명·stated 목표주가 수집
+        if isinstance(data, dict):
+            reports = data.get("reports")
+            if isinstance(reports, list):
+                for rp in reports:
+                    if not isinstance(rp, dict):
+                        continue
+                    ev.has_reports = True
+                    b = rp.get("broker")
+                    if b:
+                        ev.brokers.add(str(b))
+                    if rp.get("target_price_status") == "stated":
+                        tp = rp.get("target_price")
+                        if isinstance(tp, int):
+                            ev.stated_target_prices.add(tp)
     return ev
 
 
@@ -83,10 +114,73 @@ def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
     if invalid:
         errors.append(f"존재하지 않는 인용 번호: {invalid} (근거 출처 {n_sources}개)")
 
-    # 2) 숫자 주장: 답변에 큰 숫자가 있는데 재무 Tool 근거가 전혀 없으면 경고
+    # 2) 숫자 주장: 답변에 큰 숫자가 있는데 재무 Tool 근거가 전혀 없으면 경고.
+    #    단, stated 목표주가는 정당한 숫자 근거이므로 재무 근거 취급한다.
     answer_nums = {m.replace(",", "") for m in _NUMBER_RE.findall(answer)}
     big_nums = {n for n in answer_nums if len(n) >= 4}
-    if big_nums and not evidence.has_financial and not evidence.numeric_cores:
+    tp_cores = {str(v) for v in evidence.stated_target_prices}
+    unsupported_big = big_nums - evidence.numeric_cores - tp_cores
+    if unsupported_big and not evidence.has_financial:
         errors.append("답변에 재무성 숫자가 있으나 이를 뒷받침하는 숫자 Tool 근거가 없음")
 
+    # 3) 증권사명 환각: 답변에 등장한 증권사가 리포트 Tool 근거에 없으면 위반(prompt.md §7)
+    if evidence.has_reports:
+        answer_brokers = set(_BROKER_RE.findall(answer))
+        unknown = sorted(b for b in answer_brokers if b not in evidence.brokers)
+        if unknown:
+            errors.append(f"Tool 결과에 없는 증권사를 답변에 생성함: {unknown}")
+
+    # 4) 목표주가 환각: 답변의 '목표주가 N원' 이 stated 근거값과 일치하지 않으면 위반
+    for m in _TP_CTX_RE.finditer(answer):
+        raw = m.group(1)
+        val = _tp_str_to_won(raw)
+        if val not in evidence.stated_target_prices:
+            errors.append(
+                f"답변의 목표주가 {val:,}원이 구조화 근거(stated)와 일치하지 않음 "
+                f"(허용값: {sorted(evidence.stated_target_prices) or '없음'})"
+            )
+
     return ValidationResult(ok=not errors, errors=errors)
+
+
+# 문장 분리(한국어 종결·줄바꿈·불릿 기준의 단순 분리).
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?。])\s+|\n+")
+
+
+def _is_hallucinated_sentence(sentence: str, evidence: ToolEvidence) -> bool:
+    """이 문장이 근거 없는 증권사/목표주가 주장을 담고 있으면 True."""
+    for b in _BROKER_RE.findall(sentence):
+        if b not in evidence.brokers:
+            return True
+    for m in _TP_CTX_RE.finditer(sentence):
+        raw = m.group(1)
+        val = _tp_str_to_won(raw)
+        if val not in evidence.stated_target_prices:
+            return True
+    return False
+
+
+def sanitize_answer(answer: str, evidence: ToolEvidence) -> tuple[str, bool]:
+    """근거 없는 증권사·목표주가 주장을 담은 문장을 제거한다(prompt.md §7).
+
+    숫자를 다시 추측하지 않는다. 전체 답변을 실패시키지 않고, 문제 문장만 걸러
+    검증된 내용만 남긴다. 목표주가 관련 문장이 지워지면 안내 문구를 덧붙인다.
+    반환: (정화된 답변, 변경 여부).
+    """
+    if not evidence.has_reports:
+        return answer, False
+    parts = _SENTENCE_SPLIT_RE.split(answer)
+    kept, removed_tp = [], False
+    for s in parts:
+        if s.strip() and _is_hallucinated_sentence(s, evidence):
+            if _TP_CTX_RE.search(s) or "목표" in s:
+                removed_tp = True
+            continue
+        kept.append(s)
+    if len(kept) == len(parts):
+        return answer, False
+    cleaned = " ".join(k.strip() for k in kept if k.strip())
+    if removed_tp:
+        cleaned = (cleaned + " 일부 증권사의 구조화된 목표주가를 확인할 수 없어 "
+                   "해당 수치는 제외했습니다.").strip()
+    return cleaned, True
