@@ -167,4 +167,6 @@ export interface AssistantContext {
   sourceId: string
   title: string
   presentation?: 'news_detail'
+  page?: number
+  documentId?: string
 }

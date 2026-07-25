@@ -559,19 +559,19 @@ Agent가 산술로 대체 0    → 0(모두 백엔드 StockPriceService 계산)
 
 # Phase 7. 프런트 연결
 
-- [ ] Agent SSE 이벤트
-- [ ] Tool 실행 상태 표시
-- [ ] 뉴스 현재 문맥
-- [ ] 공시 현재 문맥
-- [ ] 리포트 현재 문맥·페이지
-- [ ] 종목 코드
-- [ ] 출처 카드
-- [ ] numeric source
-- [ ] report source
-- [ ] 오류
-- [ ] 중단
-- [ ] 모바일
-- [ ] 내부 추론 미표시
+- [x] Agent SSE 이벤트
+- [x] Tool 실행 상태 표시
+- [x] 뉴스 현재 문맥
+- [x] 공시 현재 문맥
+- [x] 리포트 현재 문맥·페이지
+- [x] 종목 코드
+- [x] 출처 카드
+- [x] numeric source
+- [x] report source
+- [x] 오류
+- [x] 중단
+- [x] 모바일
+- [x] 내부 추론 미표시
 
 표시 예:
 
@@ -582,6 +582,21 @@ Agent가 산술로 대체 0    → 0(모두 백엔드 StockPriceService 계산)
 ```
 
 Tool 인자 전체나 내부 reasoning은 사용자에게 보여주지 않는다.
+
+완료 후보(2026-07-25):
+
+```text
+전역 /ask + 기존 모든 onAsk(뉴스/공시/리포트/종목) → 공통 /qa/stream 연결
+RuntimeContext: stock_code/source_type/source_id/document_id/report_page 전달
+typed UI payload: 공개 sources + source_ids 필수 visualization enum
+상태: idle/connecting/running/streaming/completed/error/aborted
+검증: frontend 7 tests·lint·build, backend 292 tests·ruff·format
+실제 Agent smoke: get_stock_prices → price_snapshot + 실제 price SourceRef, 4.0s
+브라우저: desktop 1440·mobile 390 overflow 0·종목 패널·오류 재시도 확인
+문서: phase_7/PHASE_7_FRONTEND_SURVEY.md, PHASE_7_UI_DATA_CONTRACT.md,
+      PHASE_7_COMPLETION.md
+미수행: 운영 배포·자동 머지·Phase 8
+```
 
 ---
 
