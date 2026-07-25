@@ -114,9 +114,7 @@ def test_extract_prefers_table_then_page():
 
 
 def test_extract_falls_back_to_page_when_table_has_no_matching_date():
-    tables = [
-        {"headers": ["목표주가 변동추이"], "rows": _mirae_history_rows(), "page_number": 10}
-    ]
+    tables = [{"headers": ["목표주가 변동추이"], "rows": _mirae_history_rows(), "page_number": 10}]
     pages = [{"page_number": 1, "plain_text": "목표주가 88,000원 제시"}]
     res = extract_target_price(tables, pages, date(2099, 1, 1))
     assert res.status == "stated" and res.value == 88_000 and res.source_page == 1

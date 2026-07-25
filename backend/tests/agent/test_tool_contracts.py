@@ -303,9 +303,7 @@ def test_reports_invalid_time_context_ignored():
     fake = _FakeReports()
     run_search_research_reports(
         fake,
-        SearchResearchReportsInput(
-            stock_code="005930", query="x", time_context="not_a_context"
-        ),
+        SearchResearchReportsInput(stock_code="005930", query="x", time_context="not_a_context"),
     )
     assert fake.last_kwargs["time_context"] is None  # 화이트리스트 밖이면 None
 

@@ -152,34 +152,55 @@ def run(argv: list[str]) -> int:
         if res.status == "stated" and old_tp != res.value:
             changes.append(
                 {
-                    "id": rid, "broker": b, "report_date": r.get("report_date"),
-                    "old": old_tp, "new": res.value,
+                    "id": rid,
+                    "broker": b,
+                    "report_date": r.get("report_date"),
+                    "old": old_tp,
+                    "new": res.value,
                     "effective_date": str(res.effective_date) if res.effective_date else None,
-                    "source_page": res.source_page, "reason": res.reason,
+                    "source_page": res.source_page,
+                    "reason": res.reason,
                 }
             )
         if res.status in ("ambiguous", "parse_failed"):
             review_needed.append(
-                {"id": rid, "broker": b, "report_date": r.get("report_date"),
-                 "status": res.status, "reason": res.reason}
+                {
+                    "id": rid,
+                    "broker": b,
+                    "report_date": r.get("report_date"),
+                    "status": res.status,
+                    "reason": res.reason,
+                }
             )
         details.append(
-            {"id": rid, "broker": b, "report_date": r.get("report_date"),
-             "status": res.status, "value": res.value, "reason": res.reason}
+            {
+                "id": rid,
+                "broker": b,
+                "report_date": r.get("report_date"),
+                "status": res.status,
+                "value": res.value,
+                "reason": res.reason,
+            }
         )
 
     # ── 리포트 출력 ──
     print("=" * 72)
-    print(f"목표주가 backfill {'APPLY' if args.apply else 'DRY-RUN'} "
-          f"— {len(reports)}건 (stock={args.stock_code or 'ALL'})")
+    print(
+        f"목표주가 backfill {'APPLY' if args.apply else 'DRY-RUN'} "
+        f"— {len(reports)}건 (stock={args.stock_code or 'ALL'})"
+    )
     print("=" * 72)
     print(f"상태 분포: {dict(status_counter)}")
-    print(f"  stated={status_counter['stated']} not_stated={status_counter['not_stated']} "
-          f"parse_failed={status_counter['parse_failed']} ambiguous={status_counter['ambiguous']}")
+    print(
+        f"  stated={status_counter['stated']} not_stated={status_counter['not_stated']} "
+        f"parse_failed={status_counter['parse_failed']} ambiguous={status_counter['ambiguous']}"
+    )
     print(f"변경 예정(값 갱신): {len(changes)}건")
     for c in changes[:20]:
-        print(f"  {c['report_date']} {c['broker']}: {c['old']} → {c['new']} "
-              f"(eff={c['effective_date']}, p{c['source_page']}, {c['reason']})")
+        print(
+            f"  {c['report_date']} {c['broker']}: {c['old']} → {c['new']} "
+            f"(eff={c['effective_date']}, p{c['source_page']}, {c['reason']})"
+        )
     if len(changes) > 20:
         print(f"  ... 외 {len(changes) - 20}건")
     print(f"검수 필요(ambiguous/parse_failed): {len(review_needed)}건")
@@ -190,9 +211,15 @@ def run(argv: list[str]) -> int:
     if args.json_out:
         with open(args.json_out, "w", encoding="utf-8") as f:
             json.dump(
-                {"summary": dict(status_counter), "changes": changes,
-                 "review_needed": review_needed, "details": details},
-                f, ensure_ascii=False, indent=2,
+                {
+                    "summary": dict(status_counter),
+                    "changes": changes,
+                    "review_needed": review_needed,
+                    "details": details,
+                },
+                f,
+                ensure_ascii=False,
+                indent=2,
             )
         print(f"\n상세 결과 저장: {args.json_out}")
 
@@ -203,9 +230,7 @@ def run(argv: list[str]) -> int:
         for r in reports:
             rid = r["id"]
             rdate = _parse_date(r.get("report_date"))
-            res = extract_target_price(
-                _fetch_tables(client, rid), _fetch_pages(client, rid), rdate
-            )
+            res = extract_target_price(_fetch_tables(client, rid), _fetch_pages(client, rid), rdate)
             payload: dict = {
                 "target_price_status": res.status,
                 "target_price_extractor_version": EXTRACTOR_VERSION,
@@ -223,8 +248,7 @@ def run(argv: list[str]) -> int:
             applied += 1
         print(f"[APPLY] 완료: {applied}건 갱신.")
     else:
-        print("\n(dry-run: 아무것도 쓰지 않았다. 적용하려면 승인 후 "
-              "--apply --yes-i-have-approval)")
+        print("\n(dry-run: 아무것도 쓰지 않았다. 적용하려면 승인 후 --apply --yes-i-have-approval)")
     return 0
 
 

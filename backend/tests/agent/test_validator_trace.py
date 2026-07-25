@@ -127,9 +127,7 @@ def test_no_target_price_when_not_stated():
 
 def test_sanitize_removes_hallucinated_broker_sentence():
     ev = collect_evidence([_report_payload(broker="하나증권", tp=480000)])
-    answer = (
-        "하나증권 목표주가 480,000원입니다. 유안타증권은 목표주가 330,000원을 제시했습니다."
-    )
+    answer = "하나증권 목표주가 480,000원입니다. 유안타증권은 목표주가 330,000원을 제시했습니다."
     cleaned, changed = sanitize_answer(answer, ev)
     assert changed is True
     assert "유안타" not in cleaned  # 환각 문장 제거

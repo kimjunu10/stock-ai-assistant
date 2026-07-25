@@ -130,8 +130,10 @@ def main() -> int:
         print(f"[3] 표본 상세 (최근 {n_detail}건) — 목표주가 페이지·표 원문")
         print("=" * 72)
         for r in reports[:n_detail]:
-            print(f"\n── {r.get('report_date')} | {r.get('broker')} | "
-                  f"opinion={r.get('investment_opinion')} | tp={r.get('target_price')}")
+            print(
+                f"\n── {r.get('report_date')} | {r.get('broker')} | "
+                f"opinion={r.get('investment_opinion')} | tp={r.get('target_price')}"
+            )
             pages = (
                 client.table("research_report_pages")
                 .select("page_number,plain_text")

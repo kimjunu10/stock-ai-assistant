@@ -223,6 +223,7 @@ def sanitize_answer(answer: str, evidence: ToolEvidence) -> tuple[str, bool]:
         return answer, False
     cleaned = " ".join(k.strip() for k in kept if k.strip())
     if removed_tp:
-        cleaned = (cleaned + " 일부 증권사의 구조화된 목표주가를 확인할 수 없어 "
-                   "해당 수치는 제외했습니다.").strip()
+        cleaned = (
+            cleaned + " 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다."
+        ).strip()
     return cleaned, True

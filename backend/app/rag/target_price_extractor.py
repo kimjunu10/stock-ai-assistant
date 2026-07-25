@@ -149,7 +149,10 @@ def extract_from_history_table(
         if len(exact) == 1:
             rd, v, ev = exact[0]
             return TargetPriceExtraction(
-                status="stated", value=v, effective_date=rd, evidence_text=ev,
+                status="stated",
+                value=v,
+                effective_date=rd,
+                evidence_text=ev,
                 reason="history_table:report_date_match",
             )
         if len(exact) > 1 and len({t[1] for t in exact}) > 1:
@@ -161,7 +164,10 @@ def extract_from_history_table(
         if len(exact) > 1:
             rd, v, ev = exact[0]
             return TargetPriceExtraction(
-                status="stated", value=v, effective_date=rd, evidence_text=ev,
+                status="stated",
+                value=v,
+                effective_date=rd,
+                evidence_text=ev,
                 reason="history_table:report_date_match_dedup",
             )
     # report_date 일치 행 없음 → 이 소스로는 현재값 확정 불가(호출부가 페이지 텍스트 시도)
@@ -194,7 +200,9 @@ def extract_from_page_text(
             if found:
                 v, _ = found
                 return TargetPriceExtraction(
-                    status="stated", value=v, source_page=p.get("page_number"),
+                    status="stated",
+                    value=v,
+                    source_page=p.get("page_number"),
                     effective_date=report_date,
                     evidence_text=txt[lm.start() : lm.end() + 40],
                     reason="page_text:label_adjacent",
@@ -204,9 +212,7 @@ def extract_from_page_text(
             status="ambiguous", reason="page_text:history_without_clear_current"
         )
     if saw_label:
-        return TargetPriceExtraction(
-            status="parse_failed", reason="page_text:label_without_value"
-        )
+        return TargetPriceExtraction(status="parse_failed", reason="page_text:label_without_value")
     return TargetPriceExtraction(status="not_stated", reason="page_text:no_label")
 
 
@@ -222,9 +228,7 @@ def extract_target_price(
     """
     # 1) 구조화 변동추이표
     for t in tables or []:
-        res = extract_from_history_table(
-            t.get("headers") or [], t.get("rows") or [], report_date
-        )
+        res = extract_from_history_table(t.get("headers") or [], t.get("rows") or [], report_date)
         if res is not None:
             if res.source_page is None:
                 res.source_page = t.get("page_number")

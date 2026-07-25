@@ -47,14 +47,18 @@ def main() -> int:
         print(f"  broker_opinions({len(bo)}):")
         for o in bo[:6]:
             tp = o.get("target_price")
-            print(f"    - {o.get('broker')} {o.get('report_date')} "
-                  f"opinion={o.get('investment_opinion')} "
-                  f"target_price={tp} status={o.get('target_price_status')} "
-                  f"stale={o.get('is_stale')}")
+            print(
+                f"    - {o.get('broker')} {o.get('report_date')} "
+                f"opinion={o.get('investment_opinion')} "
+                f"target_price={tp} status={o.get('target_price_status')} "
+                f"stale={o.get('is_stale')}"
+            )
         oi = d.get("official_information") or []
         if oi:
-            print(f"  official_information({len(oi)}): "
-                  f"{[(x.get('label'), x.get('value')) for x in oi[:3]]}")
+            print(
+                f"  official_information({len(oi)}): "
+                f"{[(x.get('label'), x.get('value')) for x in oi[:3]]}"
+            )
         print(f"  answer: {(d.get('answer') or '')[:300]}".replace("\n", " "))
     print("=" * 72)
     print(json.dumps({"checked": len(QUESTIONS), "stock": STOCK}, ensure_ascii=False))
