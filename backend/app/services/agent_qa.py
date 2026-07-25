@@ -20,7 +20,12 @@ from functools import lru_cache
 from app.agent.context import QaRuntimeContext, ToolServices
 from app.agent.runtime import build_agent
 from app.agent.trace import AgentTrace, ToolTrace
-from app.agent.validator import collect_evidence, sanitize_answer, validate_answer
+from app.agent.validator import (
+    collect_evidence,
+    collect_report_opinions,
+    sanitize_answer,
+    validate_answer,
+)
 from app.core.config import Settings, settings
 
 
@@ -43,6 +48,8 @@ class AgentQaResult:
     trace: dict = field(default_factory=dict)
     input_tokens: int = 0
     output_tokens: int = 0
+    # prompt.md §8: 증권사 의견 카드(구조화, stated 목표주가만). 답변과 분리 제공.
+    report_opinions: list[dict] = field(default_factory=list)
 
 
 class AgentQaService:
@@ -168,6 +175,8 @@ class AgentQaService:
         answer, sanitized = sanitize_answer(answer, evidence)
         if sanitized:
             validation.errors.append("근거 없는 증권사·목표주가 문장을 답변에서 제거함")
+        # 증권사 의견 카드(구조화): Tool 이 확정한 stated 목표주가만. 답변과 분리 제공.
+        report_opinions = collect_report_opinions(tool_payloads)
 
         total_ms = int((time.perf_counter() - t0) * 1000)
         trace = AgentTrace(
@@ -192,6 +201,7 @@ class AgentQaService:
             trace=trace.to_log_dict(),
             input_tokens=in_tok,
             output_tokens=out_tok,
+            report_opinions=report_opinions,
         )
 
     def _failed(self, request_id: str, reason: str, message: str, t0: float) -> AgentQaResult:

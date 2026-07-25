@@ -129,6 +129,7 @@ def _answer_agent(req: QaRequest) -> QaResponse | None:
         invalid_citations=[],
         latency_ms={},
         execution=execution,
+        broker_opinions=[BrokerOpinion(**o) for o in getattr(r, "report_opinions", [])],
     )
 
 

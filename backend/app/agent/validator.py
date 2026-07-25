@@ -95,6 +95,48 @@ def collect_evidence(tool_payloads: list[dict[str, Any]]) -> ToolEvidence:
     return ev
 
 
+def collect_report_opinions(tool_payloads: list[dict[str, Any]]) -> list[dict]:
+    """리포트 Tool 결과에서 증권사 의견 카드(구조화)를 모은다(prompt.md §8).
+
+    목표주가는 status='stated' 인 구조화 값만 싣는다. 답변 텍스트가 아니라 Tool 이
+    확정해 내려준 값이므로 환각 위험이 없다. source_id 는 sources 순서로 매핑.
+    """
+    out: list[dict] = []
+    for p in tool_payloads:
+        if not isinstance(p, dict):
+            continue
+        data = p.get("data")
+        if not isinstance(data, dict):
+            continue
+        reports = data.get("reports")
+        if not isinstance(reports, list):
+            continue
+        sources = p.get("sources") or []
+        for i, rp in enumerate(reports):
+            if not isinstance(rp, dict):
+                continue
+            stated = (
+                rp.get("target_price_status") == "stated" and rp.get("target_price") is not None
+            )
+            src = sources[i] if i < len(sources) else {}
+            out.append(
+                {
+                    "broker": rp.get("broker"),
+                    "report_date": rp.get("report_date"),
+                    "title": rp.get("title"),
+                    "investment_opinion": rp.get("investment_opinion"),
+                    "target_price": int(rp["target_price"]) if stated else None,
+                    "target_price_currency": rp.get("target_price_currency") if stated else None,
+                    "target_price_status": rp.get("target_price_status", "unknown"),
+                    "summary": rp.get("snippet"),
+                    "source_id": src.get("source_id") if isinstance(src, dict) else None,
+                    "source_page": rp.get("target_price_source_page") or rp.get("page"),
+                    "is_stale": bool(rp.get("is_stale", False)),
+                }
+            )
+    return out
+
+
 def _iter_facts(data: Any):
     if isinstance(data, dict):
         for key in ("facts", "reports", "values"):
