@@ -194,8 +194,9 @@ class FactsQaService:
 
         전망값(forecast)을 실제 실적으로 표현하지 않도록 표 value_kind 를 그대로 노출한다.
         """
-        return [
-            {
+        out = []
+        for h in reports:
+            src = {
                 "source_type": "research_report",
                 "title": h.title,
                 "broker": h.broker,
@@ -206,9 +207,15 @@ class FactsQaService:
                 "source_page": h.source_page,
                 "table_value_kinds": h.table_value_kinds,
                 "stock_code": h.stock_code,
+                "target_price_status": getattr(h, "target_price_status", "unknown"),
             }
-            for h in reports
-        ]
+            # 목표주가는 구조화 status='stated' 일 때만 노출(snippet 숫자 금지).
+            if getattr(h, "target_price_status", None) == "stated" and h.target_price is not None:
+                src["target_price"] = int(h.target_price)
+                src["target_price_currency"] = h.target_price_currency or "KRW"
+                src["target_price_effective_date"] = h.target_price_effective_date
+            out.append(src)
+        return out
 
     def answer(
         self,

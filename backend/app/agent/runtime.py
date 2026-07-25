@@ -156,8 +156,20 @@ def build_tools() -> list:
         broker: str | None = None,
         date_from: str | None = None,
         date_to: str | None = None,
+        time_context: str | None = None,
+        as_of_date: str | None = None,
     ) -> str:
-        """증권사 리포트를 검색한다(목표주가·투자의견·전망). 전망값은 예측치다."""
+        """증권사 리포트를 검색한다(목표주가·투자의견·전망). 전망값은 예측치다.
+
+        목표주가 숫자는 결과의 target_price(target_price_status='stated')만 사용한다.
+        snippet 안의 숫자를 목표주가로 인용하지 않는다.
+        time_context 로 검색의 시간 기준을 준다:
+          - "current": 최근 증권사 의견/목표주가(증권사별 최신 1건, 오래된 자료 표시)
+          - "historical_point": 특정 과거 시점의 의견 — date_from/date_to 로 범위 지정
+          - "around_event": 공시·실적 발표 전후 — date_from/date_to 로 사건 전후 범위
+          - "history": 목표주가·투자의견 변동 이력(날짜별 개별값)
+        as_of_date(YYYY-MM-DD)는 current 기준일. 미지정 시 최신 리포트 기준.
+        """
         svc, err = _services(runtime)
         if err:
             return _dump(err)
@@ -167,6 +179,8 @@ def build_tools() -> list:
             broker=broker,
             date_from=date_from,
             date_to=date_to,
+            time_context=time_context,
+            as_of_date=as_of_date,
         )
         return _dump(run_search_research_reports(svc.reports, inp))
 

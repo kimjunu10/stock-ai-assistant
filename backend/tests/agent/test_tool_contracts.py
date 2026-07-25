@@ -220,11 +220,18 @@ def test_search_news_surfaces_exclude_topics():
 
 # ── reports: source metadata + forecast 경고 ──
 class _FakeReports:
+    def __init__(self, tp=None, tp_status="unknown", is_stale=False):
+        self._tp = tp
+        self._tp_status = tp_status
+        self._is_stale = is_stale
+        self.last_kwargs = None
+
     def search(self, q, **kwargs):
+        self.last_kwargs = kwargs
         return [
             ReportHit(
                 chunk_id="rc1",
-                content="목표주가 상향",
+                content="목표주가 상향. 본문 숫자 999,999",
                 stock_code="005930",
                 report_id="r1",
                 title="메모리 천하",
@@ -236,6 +243,12 @@ class _FakeReports:
                 source_page=2,
                 table_value_kinds={"forecast": 3},
                 similarity=0.8,
+                target_price=self._tp,
+                target_price_currency="KRW",
+                target_price_status=self._tp_status,
+                target_price_effective_date="2026-05-04" if self._tp else None,
+                target_price_source_page=1 if self._tp else None,
+                is_stale=self._is_stale,
             )
         ]
 
@@ -249,6 +262,52 @@ def test_search_reports_source_metadata_and_forecast_warning():
     assert s.source_type == "research_report" and s.page == 2 and s.publisher == "IBK투자증권"
     assert any("예측치" in w for w in r.warnings)
     assert r.data["reports"][0]["table_value_kinds"] == {"forecast": 3}
+
+
+def test_reports_target_price_exposed_only_when_stated():
+    # stated → target_price 노출
+    r = run_search_research_reports(
+        _FakeReports(tp=460000, tp_status="stated"),
+        SearchResearchReportsInput(stock_code="005930", query="목표주가"),
+    )
+    item = r.data["reports"][0]
+    assert item["target_price"] == 460000 and item["target_price_status"] == "stated"
+    # snippet 숫자를 목표주가로 쓰지 말라는 경고가 존재
+    assert any("snippet" in w for w in r.warnings)
+
+
+def test_reports_target_price_hidden_when_not_stated():
+    # unknown/not_stated/ambiguous → target_price 키 자체를 노출하지 않는다
+    for st in ("unknown", "not_stated", "ambiguous", "parse_failed"):
+        r = run_search_research_reports(
+            _FakeReports(tp=999999, tp_status=st),
+            SearchResearchReportsInput(stock_code="005930", query="목표주가"),
+        )
+        item = r.data["reports"][0]
+        assert "target_price" not in item, f"{st} 인데 목표주가 노출됨"
+        assert item["target_price_status"] == st
+
+
+def test_reports_time_context_passed_through():
+    fake = _FakeReports(tp=460000, tp_status="stated")
+    run_search_research_reports(
+        fake,
+        SearchResearchReportsInput(
+            stock_code="005930", query="최근 목표주가", time_context="current"
+        ),
+    )
+    assert fake.last_kwargs["time_context"] == "current"
+
+
+def test_reports_invalid_time_context_ignored():
+    fake = _FakeReports()
+    run_search_research_reports(
+        fake,
+        SearchResearchReportsInput(
+            stock_code="005930", query="x", time_context="not_a_context"
+        ),
+    )
+    assert fake.last_kwargs["time_context"] is None  # 화이트리스트 밖이면 None
 
 
 def test_all_tool_results_are_toolresult():
