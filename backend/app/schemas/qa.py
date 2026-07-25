@@ -56,6 +56,23 @@ class AgentExecution(BaseModel):
     source_ids: list[str] = []
 
 
+class BrokerOpinion(BaseModel):
+    """증권사 전망 카드(prompt.md §8). 프런트가 공식 정보와 분리 표시할 수 있게 구조화."""
+
+    broker: str | None = None
+    report_date: str | None = None
+    title: str | None = None
+    investment_opinion: str | None = None
+    # 목표주가는 구조화 target_price_status='stated' 인 경우에만 채워진다.
+    target_price: int | None = None
+    target_price_currency: str | None = None
+    target_price_status: str = "unknown"
+    summary: str | None = None  # 핵심 전망 근거(snippet 요약)
+    source_id: str | None = None
+    source_page: int | None = None
+    is_stale: bool = False
+
+
 class QaResponse(BaseModel):
     answer: str
     sources: list[Source]
@@ -71,3 +88,6 @@ class QaResponse(BaseModel):
     execution: AgentExecution | None = None
     # deprecated: 결정론적 QueryPlan 판정. Agent 전환 완료 후 제거 예정(한 릴리스 유지).
     query_plan: dict | None = None
+    # prompt.md §8: 공식 정보와 증권사 의견 분리(비파괴 추가). 리포트 미사용 질문에선 빈 값.
+    official_information: list[dict] = []
+    broker_opinions: list[BrokerOpinion] = []

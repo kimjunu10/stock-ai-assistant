@@ -14,7 +14,13 @@ from app.db.client import get_supabase_client
 from app.ml.embeddings import UpstageEmbedder
 from app.ml.generation import SolarGenerator
 from app.rag.retrieval import HybridRetriever
-from app.schemas.qa import AgentExecution, AgentToolCallInfo, QaRequest, QaResponse
+from app.schemas.qa import (
+    AgentExecution,
+    AgentToolCallInfo,
+    BrokerOpinion,
+    QaRequest,
+    QaResponse,
+)
 from app.services.agent_qa import get_agent_qa_service
 from app.services.facts import FactsService
 from app.services.rag_qa import validate_citations
@@ -49,6 +55,48 @@ def _sse(event: str, data: dict | str) -> str:
     return f"event: {event}\ndata: {payload}\n\n"
 
 
+def _official_information(numeric_sources: list) -> list[dict]:
+    """공식 확인 정보(재무·공시 등 검증된 수치)를 broker 의견과 분리해 노출(prompt.md §8)."""
+    out = []
+    for ns in numeric_sources or []:
+        d = ns.model_dump() if hasattr(ns, "model_dump") else dict(ns)
+        out.append(
+            {
+                "label": d.get("label"),
+                "value": d.get("value"),
+                "unit": d.get("unit"),
+                "period": d.get("period"),
+                "basis": d.get("basis"),
+                "value_kind": d.get("value_kind"),
+                "source_type": d.get("source_type"),
+                "source_key": d.get("source_key"),
+            }
+        )
+    return out
+
+
+def _broker_opinions(report_sources: list[dict]) -> list[BrokerOpinion]:
+    """증권사 전망 카드. 목표주가는 구조화 status='stated' 인 경우만 실린다(prompt.md §8)."""
+    out = []
+    for r in report_sources or []:
+        stated = r.get("target_price_status") == "stated" and r.get("target_price") is not None
+        out.append(
+            BrokerOpinion(
+                broker=r.get("broker"),
+                report_date=r.get("report_date"),
+                title=r.get("title"),
+                investment_opinion=r.get("investment_opinion"),
+                target_price=int(r["target_price"]) if stated else None,
+                target_price_currency=r.get("target_price_currency") if stated else None,
+                target_price_status=r.get("target_price_status", "unknown"),
+                source_id=r.get("chunk_id") or r.get("source_id"),
+                source_page=r.get("source_page") or r.get("page_number"),
+                is_stale=bool(r.get("is_stale", False)),
+            )
+        )
+    return out
+
+
 def _answer_agent(req: QaRequest) -> QaResponse | None:
     """Agent 경로. feature flag(agent_enabled)가 켜져 있을 때만 동작.
 
@@ -81,6 +129,7 @@ def _answer_agent(req: QaRequest) -> QaResponse | None:
         invalid_citations=[],
         latency_ms={},
         execution=execution,
+        broker_opinions=[BrokerOpinion(**o) for o in getattr(r, "report_opinions", [])],
     )
 
 
@@ -111,6 +160,8 @@ def ask(req: QaRequest) -> QaResponse:
         invalid_citations=result.invalid_citations,
         latency_ms=result.latency_ms,
         query_plan=result.plan,  # deprecated: Agent 전환 완료 후 제거
+        official_information=_official_information(result.numeric_sources),
+        broker_opinions=_broker_opinions(result.report_sources),
     )
 
 

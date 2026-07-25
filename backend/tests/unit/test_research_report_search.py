@@ -151,3 +151,72 @@ def test_broker_filter():
     svc = _svc([_chunk("1", "h1", 1), _chunk("2", "h2", 1)], _db(reports, [], []))
     hits = svc.search("목표주가", stock_code="005930", broker="키움")
     assert len(hits) == 1 and hits[0].broker == "키움증권"
+
+
+def _report(rid, fh, broker, rdate, *, tp=None, tp_status="unknown", eff=None):
+    return {
+        "id": rid,
+        "file_hash": fh,
+        "stock_code": "005930",
+        "title": f"{broker} 리포트",
+        "broker": broker,
+        "report_date": rdate,
+        "investment_opinion": "매수",
+        "parse_status": "success",
+        "target_price": tp,
+        "target_price_currency": "KRW",
+        "target_price_status": tp_status,
+        "target_price_effective_date": eff,
+        "target_price_source_page": 1 if tp else None,
+    }
+
+
+def test_enrich_exposes_structured_target_price():
+    reports = [
+        _report(
+            "r1", "h1", "하나증권", "2026-05-04", tp=480000, tp_status="stated", eff="2026-05-04"
+        )
+    ]
+    svc = _svc([_chunk("1", "h1", 2)], _db(reports, [], []))
+    h = svc.search("목표주가", stock_code="005930")[0]
+    assert h.target_price == 480000 and h.target_price_status == "stated"
+    assert h.target_price_effective_date == "2026-05-04"
+
+
+def test_current_policy_latest_per_broker_no_bias():
+    # 같은 증권사(미래에셋) 3건 + 다른 증권사 1건 → 미래에셋은 최신 1건만, 편중 방지
+    reports = [
+        _report("r1", "h1", "미래에셋증권", "2026-05-04", tp=320000, tp_status="stated"),
+        _report("r2", "h2", "미래에셋증권", "2026-04-02", tp=300000, tp_status="stated"),
+        _report("r3", "h3", "미래에셋증권", "2026-01-30", tp=247000, tp_status="stated"),
+        _report("r4", "h4", "하나증권", "2026-05-01", tp=480000, tp_status="stated"),
+    ]
+    chunks = [
+        _chunk("1", "h1", 1),
+        _chunk("2", "h2", 1),
+        _chunk("3", "h3", 1),
+        _chunk("4", "h4", 1),
+    ]
+    svc = _svc(chunks, _db(reports, [], []))
+    hits = svc.search(
+        "목표주가", stock_code="005930", time_context="current", as_of_date="2026-05-05"
+    )
+    brokers = [h.broker for h in hits]
+    assert brokers.count("미래에셋증권") == 1  # 증권사별 최신 1건
+    assert set(brokers) == {"미래에셋증권", "하나증권"}
+    mirae = next(h for h in hits if h.broker == "미래에셋증권")
+    assert mirae.report_date == "2026-05-04" and mirae.target_price == 320000  # 최신 행
+
+
+def test_current_policy_marks_stale_beyond_90d():
+    reports = [
+        _report("r1", "h1", "키움증권", "2026-05-04", tp=560000, tp_status="stated"),
+        _report("r2", "h2", "대신증권", "2025-12-01", tp=155000, tp_status="stated"),
+    ]
+    svc = _svc([_chunk("1", "h1", 1), _chunk("2", "h2", 1)], _db(reports, [], []))
+    hits = svc.search(
+        "목표주가", stock_code="005930", time_context="current", as_of_date="2026-05-05"
+    )
+    stale = {h.broker: h.is_stale for h in hits}
+    assert stale["키움증권"] is False  # 90일 이내
+    assert stale["대신증권"] is True  # 90일 초과(오래된 자료)
