@@ -26,7 +26,7 @@
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
 | 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
 | 5.5 | 단일 Agentic RAG 전환 | [x] A~G 완료 (라이브 전환·legacy 제거, 2026-07-25) | [x] |
-| 6 | 주가 Tool | [ ] | [ ] |
+| 6 | 주가 Tool | [x] 구현·통합·평가 완료(2026-07-25, 배포·머지 전) | [ ] |
 | 7 | 프런트 연결 | [ ] | [ ] |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
 | 9 | 배포·발표 | [ ] | [ ] |
@@ -529,27 +529,31 @@ Phase 6 진행 가능 여부:        조건 충족하나 자동 진행 금지(�
 
 주가 조회와 사건 전후 수익률을 Agent가 사용할 수 있는 읽기 전용 Tool로 추가한다.
 
-- [ ] 토스증권 API 실제 범위 재확인
-- [ ] `get_stock_prices`
-- [ ] `calculate_event_return`
-- [ ] 거래일 처리
-- [ ] 휴장일
-- [ ] 데이터 누락
-- [ ] 30초 cache
-- [ ] 백엔드 계산
-- [ ] source metadata
-- [ ] Agent Tool 등록
-- [ ] 호출 limit
-- [ ] 인과 단정 금지
-- [ ] 평가셋 추가
+- [x] 토스증권 API 실제 범위 재확인 (Phase 6-A: count 200·주기 1d/1m·KST·429·페이징)
+- [x] `get_stock_prices` (현재가·전일대비·기간·명시구간·일봉요약)
+- [x] `calculate_event_return` (사건 전후·기간 수익률, 백엔드 계산)
+- [x] 거래일 처리 (시작=첫 거래일, 종료=마지막 거래일, base=직전/직후 명시 스냅)
+- [x] 휴장일 (빈틈 → 직전/직후 거래일 스냅, 실제 사용 거래일 표시)
+- [x] 데이터 누락 (no_data, 다른 날짜·종목 대체 금지)
+- [x] 30초 cache (StockPriceService 계층 TTL + fetch lock 동시 중복 방지)
+- [x] 백엔드 계산 (수익률·등락 단일 지점, Agent 산술 금지)
+- [x] source metadata (SourceRef source_type="price", publisher·거래일·locator)
+- [x] Agent Tool 등록 (6→8, 기존 호출제한·timeout 유지)
+- [x] 호출 limit (429 제한 재시도·백오프, 페이지 상한, 무제한 재시도 금지)
+- [x] 인과 단정 금지 (프롬프트·note: "이후"만, "때문에" 금지)
+- [x] 평가셋 추가 (devset 주가 5종, 실측 5/5 PASS)
 
-통과:
+통과(실측):
 
 ```text
-계산 Exact Match 100%
-Agent가 산술로 대체 0
-데이터 없음 추측 0
+계산 Exact Match 100%   → 주가 5/5, 수익률 전부 Tool 계산값(직접 산술 0)
+Agent가 산술로 대체 0    → 0(모두 백엔드 StockPriceService 계산)
+데이터 없음 추측 0        → 0(no_data 시 대체 금지, 회귀 답변불가 유지)
 ```
+
+완료: 상세는 `docs/rag/phase_6/PHASE_6A_PREFLIGHT.md`(사전 조사)·
+`docs/rag/phase_6/PHASE_6_COMPLETION.md`(구현·계약·평가·배포·rollback).
+전체 pytest 288 통과, ruff·format 통과. **운영 배포·머지는 사용자 승인 후.**
 
 ---
 
