@@ -1,0 +1,528 @@
+{
+  "note": "Phase 8 라벨 검토 결과. 정답은 DB 원본에서만 확정했다.",
+  "reviewed": 65,
+  "confirmed": 65,
+  "still_manual": 0,
+  "rows": [
+    {
+      "split": "devset",
+      "id": "news-01",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-02",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-03",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-04",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-05",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-06",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-07",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-08",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-09",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-10",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-11",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-12",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-13",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-14",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-15",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-16",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "news-17",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 2
+    },
+    {
+      "split": "devset",
+      "id": "news-18",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 2
+    },
+    {
+      "split": "devset",
+      "id": "news-19",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "devset",
+      "id": "report-01",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "devset",
+      "id": "report-02",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 4
+    },
+    {
+      "split": "devset",
+      "id": "report-03",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "devset",
+      "id": "report-04",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 4
+    },
+    {
+      "split": "devset",
+      "id": "report-05",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "devset",
+      "id": "report-06",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 2
+    },
+    {
+      "split": "devset",
+      "id": "report-07",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "devset",
+      "id": "report-08",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "devset",
+      "id": "report-09",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "devset",
+      "id": "report-10",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 4
+    },
+    {
+      "split": "devset",
+      "id": "report-11",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 4
+    },
+    {
+      "split": "devset",
+      "id": "report-12",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 2
+    },
+    {
+      "split": "devset",
+      "id": "report-13",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 2
+    },
+    {
+      "split": "devset",
+      "id": "report-14",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 4
+    },
+    {
+      "split": "devset",
+      "id": "report-15",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 4
+    },
+    {
+      "split": "devset",
+      "id": "mix-01",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-02",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-03",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-04",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-05",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-06",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-07",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-08",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-09",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-10",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-11",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-12",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-13",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-14",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "devset",
+      "id": "mix-15",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "holdout",
+      "id": "h-news-20",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "holdout",
+      "id": "h-news-21",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "holdout",
+      "id": "h-news-22",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "holdout",
+      "id": "h-news-23",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 2
+    },
+    {
+      "split": "holdout",
+      "id": "h-news-24",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "holdout",
+      "id": "h-news-25",
+      "type": "뉴스 사건·영향",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 1
+    },
+    {
+      "split": "holdout",
+      "id": "h-report-16",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "holdout",
+      "id": "h-report-17",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "holdout",
+      "id": "h-report-18",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 2
+    },
+    {
+      "split": "holdout",
+      "id": "h-report-19",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "holdout",
+      "id": "h-report-20",
+      "type": "증권사 리포트",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 3
+    },
+    {
+      "split": "holdout",
+      "id": "h-mix-16",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "holdout",
+      "id": "h-mix-17",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "holdout",
+      "id": "h-mix-18",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "holdout",
+      "id": "h-mix-19",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    },
+    {
+      "split": "holdout",
+      "id": "h-mix-20",
+      "type": "복수 기능 혼합",
+      "confirmed": true,
+      "reason": "",
+      "gold_count": 0
+    }
+  ]
+}
