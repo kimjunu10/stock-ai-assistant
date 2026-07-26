@@ -253,4 +253,4 @@ devset·gold label·임베딩·RRF·top-k·reranker·Agent 아키텍처(create_a
 
 ## PR
 
-(PR 생성 후 URL 기입)
+https://github.com/kimjunu10/stock-ai-assistant/pull/61
