@@ -11,6 +11,8 @@ QA 연결·Agentic·MCP 없음. 특정 종목/증권사 하드코딩 없음.
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 
@@ -25,6 +27,11 @@ TIME_CONTEXTS = ("current", "historical_point", "around_event", "history")
 CURRENT_PRIMARY_DAYS = 90  # 최근 90일 우선
 CURRENT_EXPAND_DAYS = 180  # 부족하면 180일까지 확대
 CURRENT_MIN_BROKERS = 2  # 이 미만이면 확대 시도
+
+
+def _norm_broker(text: str) -> str:
+    """증권사명 비교용 정규화(NFC 통일 + 공백 제거). 그 이상 느슨하게 하지 않는다."""
+    return re.sub(r"\s+", "", unicodedata.normalize("NFC", text))
 
 
 def _to_date(s: str | None) -> date | None:
@@ -107,7 +114,11 @@ class ResearchReportSearch:
         )
         hits = self._enrich(chunks, requested_stock_code=stock_code)
         if broker:
-            hits = [h for h in hits if h.broker and broker in h.broker]
+            # DB 의 broker 는 NFD(자모 분리)로 저장된 값이 있고 모델이 넘기는 값은 NFC 라
+            # 그냥 비교하면 같은 증권사도 걸러진다(운영 결함: "IBK투자증권 리포트"가
+            # 0건으로 나옴). 양쪽을 NFC 로 맞춘 뒤 부분 일치를 본다.
+            needle = _norm_broker(broker)
+            hits = [h for h in hits if h.broker and needle in _norm_broker(h.broker)]
 
         if effective_ctx == "current":
             hits = self._apply_current_policy(hits, as_of_date)

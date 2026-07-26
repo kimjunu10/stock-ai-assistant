@@ -158,6 +158,9 @@ class EvalCase(BaseModel):
     forbidden_tools: list[str] = Field(default_factory=list)
     expected_args: dict[str, dict[str, Any]] = Field(default_factory=dict)
     expected_financial: ExpectedFinancial | None = None
+    # 질문이 객관적으로 두 해석을 허용할 때만 쓴다(예: "3분기 영업이익" = 누적 | 3개월치).
+    # 점수를 올리려고 추가하지 않는다 — 두 해석 모두 DB 에 실재해야 하고 근거를 남긴다.
+    acceptable_financials: list[ExpectedFinancial] = Field(default_factory=list)
     is_answerable: bool = True
 
     # --- Phase 8 추가 라벨 ---

@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import date
-from typing import Literal
+from typing import Literal, get_args
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import (
@@ -25,6 +25,7 @@ from langchain.agents.middleware import (
 )
 from langchain.tools import ToolRuntime, tool
 from langchain_openai import ChatOpenAI
+from pydantic import ValidationError
 
 from app.agent.context import QaRuntimeContext
 from app.agent.middleware import DuplicateToolCallMiddleware, sanitize_tool_error
@@ -32,6 +33,7 @@ from app.agent.prompts import financial_agent_system_prompt
 from app.agent.time_context import RelativePeriod, resolve_relative_date_range
 from app.agent.tools.common import ToolResult, error, no_data
 from app.agent.tools.disclosures import (
+    DisclosureEventType,
     DisclosureValuesInput,
     SearchDisclosuresInput,
     run_get_disclosure_values,
@@ -135,9 +137,27 @@ def build_tools() -> list:
     ) -> str:
         """종목의 정확한 재무 수치(매출·영업이익·순이익·자산/부채/자본·현금흐름)를 조회한다.
 
-        report_period 는 q1/half/q3/annual, amount_type 은 quarter/cumulative/point_in_time.
-        광범위한 실적 질문은 account_name을 생략하면 매출·영업이익·순이익을 함께 조회한다.
-        여러 특정 항목은 account_names 한 번으로 조회한다.
+        특정 지표를 물으면 account_name 을 반드시 넣는다("영업이익", "매출액" 등).
+        광범위한 실적 질문만 account_name 을 생략한다(매출·영업이익·순이익을 함께 조회).
+        여러 특정 항목은 account_names 로 한 번에 조회한다.
+
+        report_period: q1 | half | q3 | annual
+          - "연간", "사업보고서", "N년 실적" → annual
+        amount_type: cumulative | quarter | point_in_time
+          - "누적" → cumulative
+          - "단독", "당기", "3개월", "분기 자체" → quarter
+          - 자산·부채·자본(재무상태표) → point_in_time
+          - 연간 손익 → cumulative
+
+        fs_div: CFS(연결, 기본) | OFS(별도)
+          - "별도 기준", "별도재무제표"라고 명시할 때만 OFS 를 쓴다.
+          - 주의: "단독 3분기 영업이익"의 '단독'은 별도재무제표가 아니라
+            누적이 아닌 3개월치라는 뜻이다 → amount_type=quarter, fs_div 는 CFS 유지.
+
+        "3분기 영업이익"처럼 누적/3개월이 모두 가능한 표현은 한쪽을 임의로 고르지 말고
+        amount_type 을 비워 호출한다. 이때 유형이 확정되지 않으면 no_data 가 오며,
+        그 경우 사용자에게 누적인지 3개월치인지 되묻는다.
+
         정확히 일치하는 기간·유형이 없으면 no_data 를 반환하며 다른 기간으로 대체하지 않는다.
         """
         svc, err = _services(runtime)
@@ -247,16 +267,35 @@ def build_tools() -> list:
     def get_disclosure_values(
         stock_code: str,
         runtime: ToolRuntime[QaRuntimeContext],
-        event_types: list[str] | None = None,
+        event_types: list[DisclosureEventType] | None = None,
     ) -> str:
-        """공시의 정확한 구조화 값(배당·증자·자기주식 등 금액/수량/날짜)을 조회한다."""
+        """공시의 정확한 구조화 값(배당·증자·자기주식 등 금액/수량/날짜)을 조회한다.
+
+        event_types 는 영문 코드만 허용한다(한국어 금지). 사용자 표현 대응:
+        배당·주당배당금 → dividend_matter, 자사주 보유 → treasury_stock_status,
+        자사주 매입 → treasury_stock_acquisition, 자사주 처분 → treasury_stock_disposal,
+        발행주식수·상장주식수 → stock_total_status, 자본금 변동·증자/감자 →
+        capital_change_status, 유상증자 → paid_in_capital_increase,
+        해외상장 → overseas_listing / overseas_listing_decision.
+        생략하면 최신 구조화 공시를 유형 구분 없이 조회한다.
+        """
         svc, err = _services(runtime)
         if err:
             return _dump(err)
-        inp = DisclosureValuesInput(
-            stock_code=_resolve_stock_code(stock_code, runtime),
-            event_types=event_types or [],
-        )
+        try:
+            inp = DisclosureValuesInput(
+                stock_code=_resolve_stock_code(stock_code, runtime),
+                event_types=event_types or [],
+            )
+        except ValidationError:
+            # 허용되지 않은 값은 '데이터 없음'이 아니라 입력 오류로 알린다.
+            # no_data 로 뭉개면 모델이 "공시가 없다"고 잘못 답한다(운영 결함).
+            return _dump(
+                error(
+                    "event_types 에 허용되지 않은 값이 있습니다. 영문 코드만 사용하세요: "
+                    + ", ".join(get_args(DisclosureEventType))
+                )
+            )
         return _dump(run_get_disclosure_values(svc.facts, inp))
 
     @tool

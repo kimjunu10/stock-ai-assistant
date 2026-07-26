@@ -220,12 +220,20 @@ def main() -> int:
         )
 
     sev_count = Counter(s["severity"] for s in summary for _ in range(s["count"]))
+    # 중복 계수와 고유 문항 수를 구분한다 — 한 문항이 여러 오류를 가질 수 있어
+    # 합계만 보면 실제보다 심각해 보인다.
+    sev_unique: dict[str, set[str]] = defaultdict(set)
+    for kind, rows in groups.items():
+        sev = CATALOG.get(kind, ("일반", ""))[0]
+        for r in rows:
+            sev_unique[sev].add(r["id"])
     out = {
         "note": "baseline 실패 원인별 분류. 실제 수정은 하지 않았다.",
         "n_ran": len(recs_raw),
         "clean_cases": clean,
         "failed_cases": len(recs_raw) - clean,
         "severity_totals": dict(sev_count),
+        "severity_unique_cases": {k: len(v) for k, v in sev_unique.items()},
         "summary": summary,
         "details": groups,
     }
@@ -234,7 +242,8 @@ def main() -> int:
     )
 
     print(f"실행 {len(recs_raw)} / 무결점 {clean} / 실패 유형 발생 {len(recs_raw) - clean}")
-    print(f"치명도 합계(중복 계수): {dict(sev_count)}\n")
+    print(f"치명도 합계(중복 계수): {dict(sev_count)}")
+    print(f"치명도별 고유 문항 수:   {dict(sorted((k, len(v)) for k, v in sev_unique.items()))}\n")
     for s in summary:
         print(f"{s['count']:3}건  [{s['severity']:3}] {s['kind']:32} → {s['fix_layer']}")
         print(f"       유형: {s['by_type']}  예: {s['example_ids'][:3]}")
