@@ -1,0 +1,488 @@
+{
+  "note": "round3 남은 실패를 지정된 10개 계층으로 분류. 평가·분석만 수행했고 코드·프롬프트·라벨은 수정하지 않았다. '질문 명확화 필요'는 실패로 세지 않는다.",
+  "n": 120,
+  "clean_cases": 96,
+  "failed_cases": 24,
+  "by_layer": {
+    "Agent Tool 선택": {
+      "count": 5,
+      "unique_cases": 5,
+      "by_detail": {
+        "불필요 Tool 호출": 5
+      },
+      "example_ids": [
+        "na-01",
+        "na-04",
+        "na-06",
+        "na-08",
+        "news-10"
+      ]
+    },
+    "Tool 인자": {
+      "count": 0,
+      "unique_cases": 0,
+      "by_detail": {},
+      "example_ids": []
+    },
+    "뉴스 Retriever": {
+      "count": 7,
+      "unique_cases": 7,
+      "by_detail": {
+        "정답 청크 미검색": 7
+      },
+      "example_ids": [
+        "news-03",
+        "news-04",
+        "news-09",
+        "news-13",
+        "news-14"
+      ]
+    },
+    "리포트 Retriever": {
+      "count": 4,
+      "unique_cases": 4,
+      "by_detail": {
+        "정답 청크 미검색": 4
+      },
+      "example_ids": [
+        "report-06",
+        "report-08",
+        "report-09",
+        "report-15"
+      ]
+    },
+    "질문 명확화 필요": {
+      "count": 0,
+      "unique_cases": 0,
+      "by_detail": {},
+      "example_ids": []
+    },
+    "데이터·색인": {
+      "count": 0,
+      "unique_cases": 0,
+      "by_detail": {},
+      "example_ids": []
+    },
+    "Generation": {
+      "count": 4,
+      "unique_cases": 4,
+      "by_detail": {
+        "제외 조건 위반": 4
+      },
+      "example_ids": [
+        "disc-13",
+        "excl-05",
+        "na-05",
+        "report-10"
+      ]
+    },
+    "Validator": {
+      "count": 7,
+      "unique_cases": 5,
+      "by_detail": {
+        "근거 없는 숫자 차단": 3,
+        "답변 삭제(재확인 필요)": 2,
+        "증권사 환각 차단": 2
+      },
+      "example_ids": [
+        "mix-09",
+        "mix-15",
+        "na-02",
+        "report-08",
+        "report-09"
+      ]
+    },
+    "평가기·라벨": {
+      "count": 1,
+      "unique_cases": 1,
+      "by_detail": {
+        "정답 식별자 미확정": 1
+      },
+      "example_ids": [
+        "disc-11"
+      ]
+    },
+    "외부 환경": {
+      "count": 0,
+      "unique_cases": 0,
+      "by_detail": {},
+      "example_ids": []
+    }
+  },
+  "news_stale_index_check": {
+    "news_retriever_failures": 12,
+    "confirmed_stale_duplicate_cause": 11,
+    "rows": [
+      {
+        "case_id": "news-02",
+        "cluster_id": "7194",
+        "document_count": 12,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-03",
+        "cluster_id": "7189",
+        "document_count": 3,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-04",
+        "cluster_id": "6888",
+        "document_count": 1,
+        "has_stale_duplicate": false
+      },
+      {
+        "case_id": "news-06",
+        "cluster_id": "7192",
+        "document_count": 7,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-09",
+        "cluster_id": "6858",
+        "document_count": 4,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-11",
+        "cluster_id": "7168",
+        "document_count": 7,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-12",
+        "cluster_id": "7143",
+        "document_count": 15,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-13",
+        "cluster_id": "7182",
+        "document_count": 5,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-14",
+        "cluster_id": "6972",
+        "document_count": 7,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-15",
+        "cluster_id": "7159",
+        "document_count": 5,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-17",
+        "cluster_id": "7180",
+        "document_count": 5,
+        "has_stale_duplicate": true
+      },
+      {
+        "case_id": "news-19",
+        "cluster_id": "7117",
+        "document_count": 5,
+        "has_stale_duplicate": true
+      }
+    ]
+  },
+  "details": {
+    "뉴스 Retriever": [
+      {
+        "id": "news-03",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "삼성전자 갤럭시Z 폴드8 이슈 설명해줘",
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "삼성전자의 갤럭시Z 폴드8 관련 주요 이슈를 요약해 드리겠습니다.\n\n- 2026년 7월 22일 영국 런던에서 열리는 갤럭시 언팩 행사에서 갤럭시Z 폴드8, 폴드8 울트라, 플립8이 공개될 예정입니다.\n- 최근 공식 마케팅 이미지와 실물 사진이 유출되어 제품 디자인, 카메라 사양, 배터리"
+      },
+      {
+        "id": "news-04",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "두산에너빌리티 미국 원전 수주 관련 소식 알려줘",
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "두산에너빌리티의 미국 원전 수주 관련 최근 뉴스는 현재 확인되지 않습니다. 다만, 두산에너빌리티는 소형모듈원전(SMR)과 대형원전 분야에서 대규모 투자 계획을 논의 중이며, 이는 경남도의 첨단산업 발전 비전과 연계된 핵심 프로젝트로 추진되고 있습니다(2026년 7월 24일 보도).\n\n미"
+      },
+      {
+        "id": "news-09",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "두산에너빌리티 중부발전 관련 소식 알려줘",
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "두산에너빌리티와 중부발전 관련 최근 소식은 다음과 같습니다.\n\n1. 한국남부발전이 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS(배터리 저장장치)를 준공했으며, 두산에너빌리티가 이 사업에 참여했습니다. 이 설비는 출력 23MW, 배터리 용량 92MWh 규모로 재생에너지 출력 제어 "
+      },
+      {
+        "id": "news-13",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "삼성전자 구글과 협업한 AI 이슈 설명해줘",
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "삼성전자가 구글과 협업한 AI 관련 이슈로는 최근 갤럭시 언팩 2026에서 공개된 구글과 협업한 스마트안경 2종 개발이 있습니다. 삼성전자 MX사업부 XR 개발팀장은 스마트안경 개발 과정에서 선크림의 알코올 성분이 스피커에 영향을 주는 등 기술적 어려움을 겪었고, 초슬림 힌지 구조와 경"
+      },
+      {
+        "id": "news-14",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "한화오션 HJ중공업 관련 소식 알려줘",
+        "tools": [
+          "search_news",
+          "search_news"
+        ],
+        "answer_head": "한화오션(042660) 관련 최근 소식 요약입니다:\n\n1. 한화오션이 노란봉투법 관련 첫 행정소송을 제기했습니다. 사내 협력업체 웰리브 노조의 사용자성 판정에 불복해 서울행정법원에 판정 취소 소송과 집행정지를 신청했으며, 원청의 사용자성 인정 범위가 쟁점으로 부상하고 있습니다. (출처:"
+      },
+      {
+        "id": "news-15",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "SK하이닉스 SK 건은 어떤 내용이야?",
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "최근 SK하이닉스 관련 SK 건은 SK그룹 최태원 회장과 전 부인 노소영 관장 간의 이혼 재산분할 판결입니다. 서울고등법원은 최태원 회장이 노소영 관장에게 SK(주) 주식 분할 대가로 9440억원을 현금으로 지급하라고 판결했습니다. 이 판결은 1심과 2심 판결 사이의 중간 수준으로 결정"
+      },
+      {
+        "id": "news-19",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "SK하이닉스 최태원 관련 소식 알려줘",
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "최근 SK하이닉스와 관련해 최태원 대한상공회의소 회장과 관련된 주요 소식은 다음과 같습니다:\n\n1. 최태원 회장은 SK하이닉스의 성과급 논란에 대해 \"모두가 싫어하는 건 아니지만, 제도가 이해관계자에게 부정적 영향을 주면 손볼 필요가 있다\"며 상황을 좀 더 지켜봐야 한다고 밝혔습니다. "
+      }
+    ],
+    "Agent Tool 선택": [
+      {
+        "id": "news-10",
+        "type": "뉴스 사건·영향",
+        "detail": "불필요 Tool 호출",
+        "question": "한화오션 레이도스 깁스 앤 건은 어떤 내용이야?",
+        "tools": [
+          "search_news",
+          "search_disclosures"
+        ],
+        "answer_head": "한화오션은 미국 함정 설계 전문기업인 레이도스 깁스 앤 콕스(Laydos Gibbs & Cox)와 글로벌 전략 수송함(Global Fast Sealift) 공동 설계 계약을 체결했습니다. 이 협력은 평시에는 화물선, 전시에는 군수물자 수송이 가능한 전략 수송함을 공동 개발하는 것으로, "
+      },
+      {
+        "id": "na-01",
+        "type": "답변 불가능·모호",
+        "detail": "불필요 Tool 호출",
+        "question": "삼성전자 내년 매출 확정값 알려줘",
+        "tools": [
+          "get_financial_facts"
+        ],
+        "answer_head": "삼성전자의 내년(2027년) 연간 매출 확정값은 아직 공개된 데이터가 없습니다. 다른 기간이나 전망치가 필요하시면 알려주세요."
+      },
+      {
+        "id": "na-04",
+        "type": "답변 불가능·모호",
+        "detail": "불필요 Tool 호출",
+        "question": "삼성전자 2030년 영업이익 얼마야?",
+        "tools": [
+          "get_financial_facts"
+        ],
+        "answer_head": "삼성전자의 2030년 연간 영업이익 데이터는 아직 제공되지 않아 확인할 수 없습니다. 다른 기간이나 정보가 필요하시면 알려주세요."
+      },
+      {
+        "id": "na-06",
+        "type": "답변 불가능·모호",
+        "detail": "불필요 Tool 호출",
+        "question": "삼성전자 CEO 개인 연봉 얼마야?",
+        "tools": [
+          "search_disclosures"
+        ],
+        "answer_head": "삼성전자 CEO의 개인 연봉 정보는 2026년 7월 21일에 공시된 임원ㆍ주요주주특정증권등소유상황보고서에 포함되어 있을 가능성이 있습니다. 다만, 이 공시 문서들에는 구체적인 연봉 금액이 바로 요약되어 있지 않아, 상세한 연봉 수치는 해당 공시 원문을 직접 확인해야 합니다.\n\n공시 원문"
+      },
+      {
+        "id": "na-08",
+        "type": "답변 불가능·모호",
+        "detail": "불필요 Tool 호출",
+        "question": "한화오션 2026년 3분기 배당금 얼마야?",
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "한화오션의 2026년 3분기(2026년 3월 31일 결산 기준) 배당금에 관한 구체적인 현금배당금 총액 정보는 제공된 공시에서 확인되지 않습니다. 다만, 당기순이익과 주당순이익 등의 재무 정보는 다음과 같습니다.\n\n- 연결 기준 당기순이익: 500,037백만원\n- 별도 기준 당기순이익:"
+      }
+    ],
+    "평가기·라벨": [
+      {
+        "id": "disc-11",
+        "type": "공시 설명·구조화 값",
+        "detail": "정답 식별자 미확정",
+        "question": "SK하이닉스 해외상장 결정 공시 내용 알려줘",
+        "tools": [
+          "search_disclosures"
+        ],
+        "answer_head": "SK하이닉스의 해외상장 결정 관련 공시는 2026년 7월 13일에 발표된 \"주요사항보고서(해외증권시장주권등상장)\"입니다. 이 공시가 해외상장 결정 내용을 담고 있습니다.\n\n자세한 내용은 금융감독원 전자공시시스템(DART)에서 확인할 수 있습니다: \n[주요사항보고서(해외증권시장주권등상장)"
+      }
+    ],
+    "Generation": [
+      {
+        "id": "disc-13",
+        "type": "공시 설명·구조화 값",
+        "detail": "제외 조건 위반",
+        "question": "삼성전자 자기주식 취득 공시 알려줘",
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "삼성전자의 최근 자기주식 취득 공시는 다음과 같습니다.\n\n1. 2026년 3월 18일 결정된 공시\n   - 취득 예정 주식 수: 37,000,000주\n   - 취득 예정 금액: 약 7조 1,743억 원\n   - 취득 예정 기간: 2026년 3월 19일부터 6월 18일까지\n   - 취득 "
+      },
+      {
+        "id": "report-10",
+        "type": "증권사 리포트",
+        "detail": "제외 조건 위반",
+        "question": "IBK투자증권 SK하이닉스 리포트 전망 어때?",
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "IBK투자증권의 SK하이닉스 최신 리포트(2026년 7월 2일자)에서는 SK하이닉스를 \"Agent AI Ecosystem 중심에 서다\"라는 제목으로 다루고 있습니다. 이 리포트의 투자 의견은 '매수'이며, 목표주가는 4,000,000원으로 제시되었습니다. \n\n참고로, 증권사 목표주가와 "
+      },
+      {
+        "id": "excl-05",
+        "type": "부정·제외·대조",
+        "detail": "제외 조건 위반",
+        "question": "한화오션 최근 이슈 중에 실적 빼고 뭐 있어?",
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "한화오션의 최근 실적 외 주요 이슈는 다음과 같습니다:\n\n1. 노란봉투법 관련 첫 행정소송 제기: 한화오션이 사내 협력업체 웰리브 노조의 사용자성 판정에 불복해 서울행정법원에 판정 취소 소송을 냈습니다. (출처: news_cluster:7225)\n2. 글로벌 선급 인증 획득: 미국 AB"
+      },
+      {
+        "id": "na-05",
+        "type": "답변 불가능·모호",
+        "detail": "제외 조건 위반",
+        "question": "이 종목 사도 돼?",
+        "tools": [],
+        "answer_head": "투자 판단에 필요한 구체적인 정보(예: 재무 상태, 최근 뉴스, 증권사 전망 등)를 알려주시면 그에 맞는 데이터를 제공해 드릴 수 있습니다. 단, 직접적인 매수·매도 추천은 하지 않습니다. 어떤 정보를 알고 싶으신가요?"
+      }
+    ],
+    "리포트 Retriever": [
+      {
+        "id": "report-06",
+        "type": "증권사 리포트",
+        "detail": "정답 청크 미검색",
+        "question": "대신증권 SK하이닉스 리포트 전망 어때?",
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "SK하이닉스에 대한 최근 증권사 리포트 전망을 요약하면 다음과 같습니다.\n\n- 교보증권(2026-07-01): DRAM 가격 상승과 HBM4 기여도 확대 등으로 3~4분기 이익 모멘텀이 가속화될 전망이며, 2027년 HBM 가격 협상 결과에 따라 추가 상향 여지도 있음. 투자의견은 매수"
+      },
+      {
+        "id": "report-08",
+        "type": "증권사 리포트",
+        "detail": "정답 청크 미검색",
+        "question": "삼성전자에 대한 IBK투자증권 리포트 내용 요약해줘",
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "IBK투자증권의 삼성전자 리포트(2026년 5월 4일자)를 요약하면 다음과 같습니다.\n\n- 투자 의견: 매수\n- 목표주가: 350,000원\n- 2026년 예상 배당수익률: 0.8%\n- 최근 1개월, 6개월, 12개월 주가 상승률(상대기준): 0%, 31%, 54%\n- 2024~2028년"
+      },
+      {
+        "id": "report-09",
+        "type": "증권사 리포트",
+        "detail": "정답 청크 미검색",
+        "question": "SK증권에서 한화오션 목표주가 얼마로 봤어?",
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "SK증권에서 본 한화오션의 목표주가는 175,000원입니다(2026년 4월 14일 기준). 이 보고서에서는 현재 주가 120,100원 대비 약 45.7% 상승 여력이 있다고 평가했습니다."
+      },
+      {
+        "id": "report-15",
+        "type": "증권사 리포트",
+        "detail": "정답 청크 미검색",
+        "question": "2026-06-18에 나온 한화투자증권 현대차 투자의견 알려줘",
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "2026년 6월 18일에 나온 현대차(005380)의 투자의견을 확인하려 했으나, 내부 조회 오류로 인해 해당 날짜의 투자의견 정보를 제공받지 못했습니다. 다른 날짜나 최근 투자의견을 원하시면 알려주세요."
+      }
+    ],
+    "Validator": [
+      {
+        "id": "report-08",
+        "type": "증권사 리포트",
+        "detail": "근거 없는 숫자 차단",
+        "question": "삼성전자에 대한 IBK투자증권 리포트 내용 요약해줘",
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "IBK투자증권의 삼성전자 리포트(2026년 5월 4일자)를 요약하면 다음과 같습니다.\n\n- 투자 의견: 매수\n- 목표주가: 350,000원\n- 2026년 예상 배당수익률: 0.8%\n- 최근 1개월, 6개월, 12개월 주가 상승률(상대기준): 0%, 31%, 54%\n- 2024~2028년"
+      },
+      {
+        "id": "report-09",
+        "type": "증권사 리포트",
+        "detail": "근거 없는 숫자 차단",
+        "question": "SK증권에서 한화오션 목표주가 얼마로 봤어?",
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "SK증권에서 본 한화오션의 목표주가는 175,000원입니다(2026년 4월 14일 기준). 이 보고서에서는 현재 주가 120,100원 대비 약 45.7% 상승 여력이 있다고 평가했습니다."
+      },
+      {
+        "id": "mix-09",
+        "type": "복수 기능 혼합",
+        "detail": "답변 삭제(재확인 필요)",
+        "question": "두산에너빌리티 왜 이런 실적이 나왔고 전망은 어떤지 알려줘",
+        "tools": [
+          "get_financial_facts",
+          "search_research_reports",
+          "search_news"
+        ],
+        "answer_head": "두산에너빌리티의 최근 실적과 전망을 요약해 드리겠습니다. 1. 최근 실적 (2026년 1분기 누적, 연결 기준) - 매출액: 4.26조원 - 영업이익: 2,335.1억원 - 당기순이익: 602.3억원 2. 실적 배경 및 최근 뉴스 - 두산에너빌리티는 국내외 원전 및 에너지 사업에서 활발"
+      },
+      {
+        "id": "mix-09",
+        "type": "복수 기능 혼합",
+        "detail": "증권사 환각 차단",
+        "question": "두산에너빌리티 왜 이런 실적이 나왔고 전망은 어떤지 알려줘",
+        "tools": [
+          "get_financial_facts",
+          "search_research_reports",
+          "search_news"
+        ],
+        "answer_head": "두산에너빌리티의 최근 실적과 전망을 요약해 드리겠습니다. 1. 최근 실적 (2026년 1분기 누적, 연결 기준) - 매출액: 4.26조원 - 영업이익: 2,335.1억원 - 당기순이익: 602.3억원 2. 실적 배경 및 최근 뉴스 - 두산에너빌리티는 국내외 원전 및 에너지 사업에서 활발"
+      },
+      {
+        "id": "mix-15",
+        "type": "복수 기능 혼합",
+        "detail": "답변 삭제(재확인 필요)",
+        "question": "한화오션 목표주가 대비 현재 주가 수준 알려줘",
+        "tools": [
+          "search_research_reports",
+          "get_stock_prices"
+        ],
+        "answer_head": "현재 주가 정보는 내부 조회 오류로 확인이 어렵습니다. 다시 시도하거나 다른 방법으로 현재 주가를 확인해 보시길 권합니다. 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다."
+      },
+      {
+        "id": "mix-15",
+        "type": "복수 기능 혼합",
+        "detail": "증권사 환각 차단",
+        "question": "한화오션 목표주가 대비 현재 주가 수준 알려줘",
+        "tools": [
+          "search_research_reports",
+          "get_stock_prices"
+        ],
+        "answer_head": "현재 주가 정보는 내부 조회 오류로 확인이 어렵습니다. 다시 시도하거나 다른 방법으로 현재 주가를 확인해 보시길 권합니다. 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다."
+      },
+      {
+        "id": "na-02",
+        "type": "답변 불가능·모호",
+        "detail": "근거 없는 숫자 차단",
+        "question": "999999 종목 주가 알려줘",
+        "tools": [],
+        "answer_head": "999999 종목에 대해 확인해보니, 해당 종목 코드가 존재하지 않거나 조회할 수 없는 종목입니다.\n다른 종목 코드나 회사명을 알려주시면 다시 확인해드리겠습니다."
+      }
+    ]
+  }
+}
