@@ -258,6 +258,6 @@ strict 함수 위에 새 함수를 **추가**한 것이다.
 
 ## 16. PR 주소
 
-PR 생성 후 이 섹션에 URL을 채운다(아래 "최종 보고" 참고).
+https://github.com/kimjunu10/stock-ai-assistant/pull/65
 
 자동 머지 하지 않았다.
