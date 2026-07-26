@@ -117,4 +117,7 @@ def test_phase7_context_fields_are_accepted(monkeypatch):
         "document_id": "document-7",
         "report_page": 3,
         "conversation_id": "conversation-7",
+        # 사건 후속 질문 계약(§4). 이 요청은 사건 문맥을 보내지 않았으므로 비어 있다.
+        "event_context": [],
+        "selected_event_id": None,
     }

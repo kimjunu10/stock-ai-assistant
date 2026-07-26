@@ -24,6 +24,8 @@ _NUMBER_RE = re.compile(r"\d[\d,]{2,}")
 _BROKER_RE = re.compile(r"([가-힣A-Za-z]{2,10}(?:투자)?증권)")
 # 목표주가 문맥의 금액(콤마형 또는 만원형) — 답변에서 목표가 주장 탐지
 _TP_CTX_RE = re.compile(r"목표\s*주?가[^\n.]{0,30}?(\d{1,3}(?:,\d{3})+|\d{1,4}\s*만)\s*원?")
+# 문장 분리(한국어 종결·줄바꿈·불릿 기준의 단순 분리).
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?。])\s+|\n+")
 
 
 @dataclass
@@ -41,6 +43,15 @@ class ToolEvidence:
     # 주가 근거(Phase 6): 실제 가격·수익률은 주가 Tool 결과값만 인용 가능
     has_price: bool = False  # 주가 Tool 이 결과를 냈는가
     price_numeric_cores: set[str] = field(default_factory=set)  # 가격·시작/종료가 정수 문자열
+    # 사건 전후 주가 근거(prompt.md §6). "이 뉴스 이후" 주장의 필수 근거.
+    has_event_return: bool = False  # 사건 기준(basis="event") 계산 결과가 ok 로 있는가
+    event_ids: set[str] = field(default_factory=set)
+    event_dates: set[str] = field(default_factory=set)  # 발표일(YYYY-MM-DD)
+    event_trading_days: set[str] = field(default_factory=set)  # 실제 사용한 거래일
+    # 일반 기간 수익률 근거만 있는 상태(사건 이후 주장에 쓰면 위반)
+    has_period_return: bool = False
+    # 뉴스·공시 등 문서 근거가 있는가(문서 본문의 수치는 그 문서가 출처다).
+    has_documents: bool = False
 
 
 @dataclass
@@ -74,9 +85,12 @@ def collect_evidence(tool_payloads: list[dict[str, Any]]) -> ToolEvidence:
                 ev.has_financial = True
             if s.get("source_type") == "price":
                 ev.has_price = True
+            if s.get("source_type") in ("news_event", "dart_document", "structured_disclosure"):
+                ev.has_documents = True
         data = p.get("data")
         # 주가 Tool 결과: 가격·시작/종료가를 근거 숫자로 수집(정수부만).
         _collect_price_numbers(data, ev)
+        _collect_event_evidence(p, data, ev)
         for fact in _iter_facts(data):
             val = fact.get("value_won")
             if val is not None:
@@ -208,6 +222,97 @@ def _collect_price_numbers(data: Any, ev: ToolEvidence) -> None:
             _add(data.get(k))
 
 
+def _collect_event_evidence(payload: dict, data: Any, ev: ToolEvidence) -> None:
+    """사건 기준 주가 계산 결과의 근거를 수집한다(prompt.md §6).
+
+    basis="event" 이고 status="ok" 인 결과만 사건 근거로 인정한다. no_data(발표 후 거래일
+    없음·사건 미확정)는 근거가 아니다 — 그 상태로 '이 뉴스 이후 N% 올랐다'고 쓰면 위반.
+    """
+    if not isinstance(data, dict):
+        return
+    status = payload.get("status")
+    if data.get("basis") == "event":
+        if status == "ok" and data.get("has_post_data"):
+            ev.has_event_return = True
+            eid = data.get("event_id")
+            if eid:
+                ev.event_ids.add(str(eid))
+            edate = data.get("event_date")
+            if edate:
+                ev.event_dates.add(str(edate))
+            for key in ("baseline_trading_day", "start_trading_day", "end_trading_day"):
+                v = data.get(key)
+                if v:
+                    ev.event_trading_days.add(str(v))
+            for h in data.get("horizons") or []:
+                if isinstance(h, dict) and h.get("trading_day"):
+                    ev.event_trading_days.add(str(h["trading_day"]))
+        return
+    # 일반 기간 수익률(get_stock_prices 의 period / lookback).
+    if status == "ok":
+        period = data.get("period")
+        if isinstance(period, dict) and period.get("start_trading_day"):
+            ev.has_period_return = True
+
+
+# "이 뉴스 이후"류 사건 기반 주장 탐지(§6). 특정 인물·회사·질문 문장을 하드코딩하지 않는다.
+_EVENT_CLAIM_RE = re.compile(
+    r"(?:이|그|해당|본)\s*(?:뉴스|기사|소식|발표|공시|사건|이슈)\s*(?:가\s*나온\s*)?"
+    r"(?:이?후|뒤|다음)|발표\s*(?:이?후|뒤)|사건\s*(?:전후|이?후)"
+)
+# 수익률·등락 주장(퍼센트 또는 상승/하락 표현) — 사건 주장과 결합될 때만 검사.
+_MOVE_CLAIM_RE = re.compile(r"\d+(?:\.\d+)?\s*%|상승|하락|올랐|내렸|떨어졌|급등|급락")
+
+
+def _has_event_claim(answer: str) -> bool:
+    """답변이 '사건 이후 주가가 이렇게 됐다'는 의미를 주장하는가."""
+    for sentence in _SENTENCE_SPLIT_RE.split(answer):
+        if _EVENT_CLAIM_RE.search(sentence) and _MOVE_CLAIM_RE.search(sentence):
+            return True
+    return False
+
+
+def validate_event_grounding(answer: str, evidence: ToolEvidence) -> list[str]:
+    """사건 기반 주장에 필요한 근거가 모두 있는지 검증한다(prompt.md §6).
+
+    숫자를 고치거나 보충하지 않는다. 근거가 없으면 오류만 기록한다.
+    """
+    if not _has_event_claim(answer):
+        return []
+    if evidence.has_event_return:
+        errors: list[str] = []
+        if not evidence.event_dates:
+            errors.append("사건 이후 주가 주장에 사건 발표일 근거가 없음")
+        if not evidence.event_trading_days:
+            errors.append("사건 이후 주가 주장에 실제 사용 거래일 근거가 없음")
+        return errors
+    if evidence.has_period_return:
+        return [
+            "일반 기간 수익률만 근거로 있는데 답변이 '사건 이후 수익률'처럼 표현함"
+            "(사건 전후 계산 결과 없음)"
+        ]
+    return ["사건 이후 주가 주장에 사건 전후 주가 계산 근거가 없음"]
+
+
+# 날짜 표기(ISO·한국어). 연도 4자리가 재무 숫자로 오탐되지 않게 검사 전에 제거한다.
+_DATE_LIKE_RE = re.compile(
+    r"\d{4}\s*[-/.]\s*\d{1,2}(?:\s*[-/.]\s*\d{1,2})?"  # 2026-07-25 / 2026.7.25
+    r"|\d{4}\s*년(?:\s*\d{1,2}\s*월)?(?:\s*\d{1,2}\s*일)?"  # 2026년 7월 25일
+    r"|\d{4}\s*년\s*\d\s*분기"  # 2026년 3분기
+)
+
+
+# 종목코드 표기. 재무 주장이 아니므로 검사에서 제외한다. 6자리 가격(123456원)을 잘못
+# 지우지 않도록 '종목(코드)' 문맥이 있거나 0으로 시작하는 코드형만 제외한다.
+# 한국어 조사가 바로 붙으므로 \b 대신 숫자 인접만 배제한다.
+_STOCK_CODE_RE = re.compile(r"종목\s*코드\s*(?<![\d,.])\d{6}(?![\d,.])|(?<![\d,.])0\d{5}(?![\d,.])")
+
+
+def _strip_dates(answer: str) -> str:
+    """날짜·종목코드 표기를 지운 사본(숫자 근거 검증용). 원문 답변은 바꾸지 않는다."""
+    return _STOCK_CODE_RE.sub(" ", _DATE_LIKE_RE.sub(" ", answer))
+
+
 def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
     """답변을 근거에 대해 검증한다(SPEC §12.2). 숫자를 고치지 않고 오류만 기록."""
     errors: list[str] = []
@@ -221,12 +326,19 @@ def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
 
     # 2) 숫자 주장: 답변에 큰 숫자가 있는데 재무 Tool 근거가 전혀 없으면 경고.
     #    단, stated 목표주가는 정당한 숫자 근거이므로 재무 근거 취급한다.
-    answer_nums = {m.replace(",", "") for m in _NUMBER_RE.findall(answer)}
+    #    날짜(2026-07-25·2026년 7월)의 연도는 재무 주장이 아니므로 먼저 제거한다 —
+    #    사건 후보를 날짜와 함께 되묻는 답변이 오탐으로 실패하지 않게 한다.
+    answer_nums = {m.replace(",", "") for m in _NUMBER_RE.findall(_strip_dates(answer))}
     big_nums = {n for n in answer_nums if len(n) >= 4}
     tp_cores = {str(v) for v in evidence.stated_target_prices}
     # 주가 Tool 결과의 가격도 정당한 숫자 근거로 인정한다.
     unsupported_big = big_nums - evidence.numeric_cores - tp_cores - evidence.price_numeric_cores
-    if unsupported_big and not (evidence.has_financial or evidence.has_price):
+    # 뉴스·공시 본문에 실린 수치(지수 등락률·타사 주가 등)는 그 문서가 근거다. 재무·주가
+    # Tool 근거가 없다는 이유로 위반 처리하지 않는다(§10 "출처 없는 수치 0건"의 대상은
+    # 근거 문서 자체가 없는 경우다).
+    if unsupported_big and not (
+        evidence.has_financial or evidence.has_price or evidence.has_documents
+    ):
         errors.append("답변에 재무성 숫자가 있으나 이를 뒷받침하는 숫자 Tool 근거가 없음")
 
     # 3) 증권사명 환각: 답변에 등장한 증권사가 리포트 Tool 근거에 없으면 위반(prompt.md §7)
@@ -246,11 +358,10 @@ def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
                 f"(허용값: {sorted(evidence.stated_target_prices) or '없음'})"
             )
 
+    # 5) 사건 기반 주장 검증(prompt.md §6): "이 뉴스 이후 …% 올랐다"에 사건 근거 필수.
+    errors.extend(validate_event_grounding(answer, evidence))
+
     return ValidationResult(ok=not errors, errors=errors)
-
-
-# 문장 분리(한국어 종결·줄바꿈·불릿 기준의 단순 분리).
-_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?。])\s+|\n+")
 
 
 def _is_hallucinated_sentence(sentence: str, evidence: ToolEvidence) -> bool:

@@ -66,11 +66,22 @@ def ok(
     return ToolResult(status="ok", data=data, sources=sources or [], warnings=warnings or [])
 
 
-def no_data(reason: str, warnings: list[str] | None = None) -> ToolResult:
-    """정확히 일치하는 데이터가 없음(오류 아님). 다른 기간/문서로 대체하지 않는다."""
+def no_data(
+    reason: str,
+    warnings: list[str] | None = None,
+    *,
+    data: dict | list | None = None,
+) -> ToolResult:
+    """정확히 일치하는 데이터가 없음(오류 아님). 다른 기간/문서로 대체하지 않는다.
+
+    data 는 '왜 없는지'를 설명하는 구조화 상태만 담는다(예: 사건 발표일·baseline 거래일).
+    수치를 추정해 채우는 용도가 아니다 — 없는 값은 없는 채로 둔다.
+    """
     w = list(warnings or [])
     w.append(reason)
-    return ToolResult(status="no_data", data={}, sources=[], warnings=w)
+    return ToolResult(
+        status="no_data", data=data if data is not None else {}, sources=[], warnings=w
+    )
 
 
 def error(public_message: str) -> ToolResult:

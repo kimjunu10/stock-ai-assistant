@@ -7,12 +7,34 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
+class EventContext(BaseModel):
+    """후속 질문("그 뉴스 이후 …")이 가리키는 사건의 구조화 문맥.
+
+    직전 자연어 답변을 다시 파싱해 사건을 추측하지 않기 위한 계약이다. 값은 직전 응답의
+    Tool 결과(뉴스 카드) 또는 사용자가 직접 선택한 카드에서 그대로 온다. 프런트가 답변
+    텍스트에서 날짜·제목을 추출해 채우면 안 된다.
+    """
+
+    event_id: str  # 뉴스 사건/공시/리포트 출처 식별자(source_id)
+    stock_code: str | None = Field(default=None, pattern=r"^[0-9]{6}$")
+    # 발표 날짜 또는 발표 시각(ISO). 주가 계산 계층의 필수 입력.
+    published_at: str | None = None
+    title: str | None = None
+    source_type: str | None = None  # news_event | dart_document | research_report 등
+    # 사용자가 카드를 직접 선택했는가(자동 연결보다 항상 우선).
+    user_selected: bool = False
+
+
 class QaRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
     stock_code: str | None = Field(default=None, pattern=r"^[0-9]{6}$")
     # 현재 보고 있는 문맥(뉴스 사건 id 등). 있으면 해당 문서를 우선한다.
     context_source_id: str | None = None
     context_source_type: str | None = None
+    # 사건 후속 질문 계약(§4). 직전 응답에 사건이 정확히 1개이거나 사용자가 직접 고른
+    # 경우에만 채운다. 여러 사건 중 임의 선택 금지 — 비워 보내면 백엔드가 되묻는다.
+    event_context: list[EventContext] = Field(default_factory=list, max_length=10)
+    selected_event_id: str | None = None
     document_id: str | None = None
     report_page: int | None = Field(default=None, ge=1)
     conversation_id: str | None = Field(default=None, max_length=128)

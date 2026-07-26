@@ -8,21 +8,33 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
+import pytest
+from pydantic import ValidationError
+
 from app.agent.tools.prices import (
     CalculateEventReturnInput,
     GetStockPricesInput,
     run_calculate_event_return,
     run_get_stock_prices,
 )
-from app.services.stock_prices import DailyClose, PeriodReturn, PriceQuote
+from app.services.stock_prices import (
+    DailyClose,
+    EventHorizonReturn,
+    EventWindowReturn,
+    PeriodReturn,
+    PriceQuote,
+)
 
 
 class FakeSvc:
-    def __init__(self, quote=None, period=None, event=None, daily=None):
+    DEFAULT_EVENT_HORIZONS = (1, 3, 5)
+
+    def __init__(self, quote=None, period=None, event=None, daily=None, event_window=None):
         self._quote = quote
         self._period = period
         self._event = event
         self._daily = daily or []
+        self._event_window = event_window
 
     def get_current_quote(self, stock_code):
         return self._quote
@@ -32,6 +44,9 @@ class FakeSvc:
 
     def get_event_return(self, stock_code, *, event_date, pre_days, post_days, adjusted=True):
         return self._event
+
+    def get_event_window_return(self, stock_code, *, event_date, horizons=None, adjusted=True):
+        return self._event_window
 
     def get_daily_candles(self, stock_code, *, start, end, adjusted=True):
         return self._daily
@@ -135,56 +150,109 @@ def test_get_prices_daily_summary():
     assert r.data["daily"][0]["close"] == 100000.0
 
 
-# ── 사건 전후 수익률 ───────────────────────────────────────────────
-def test_calculate_event_return_contract():
-    ev = PeriodReturn(
+# ── 사건 전후 수익률 (fix/phase-7-exit-gate: 일반 기간 대체 차단) ──────
+def _event_window(horizons=(1, 3, 5), *, baseline=100000.0):
+    """발표 전 마지막 거래일 대비 발표 후 N거래일 결과."""
+    closes = {1: 103000.0, 3: 105000.0, 5: 98000.0}
+    days = {1: date(2026, 7, 23), 3: date(2026, 7, 27), 5: date(2026, 7, 29)}
+    return EventWindowReturn(
         stock_code="005930",
-        start_trading_day=date(2026, 7, 21),
-        end_trading_day=date(2026, 7, 23),
-        start_close=102000.0,
-        end_close=106000.0,
-        change=4000.0,
-        return_pct=3.92,
+        event_date=date(2026, 7, 22),
+        baseline_trading_day=date(2026, 7, 21),
+        baseline_close=baseline,
+        horizons=[
+            EventHorizonReturn(
+                horizon_days=h,
+                trading_day=days[h],
+                close=closes[h],
+                change=closes[h] - baseline,
+                return_pct=round((closes[h] - baseline) / baseline * 100, 2),
+            )
+            for h in horizons
+        ],
         currency="KRW",
         adjusted=True,
     )
+
+
+def test_calculate_event_return_contract():
+    """발표 전 마지막 거래일 기준 1·3·5거래일 결과와 실제 거래일·출처를 반환한다."""
     r = run_calculate_event_return(
-        FakeSvc(event=ev),
-        CalculateEventReturnInput(stock_code="005930", event_date="2026-07-22", window="1d"),
+        FakeSvc(event_window=_event_window()),
+        CalculateEventReturnInput(
+            stock_code="005930", event_date="2026-07-22", event_id="news:evt-1"
+        ),
     )
     assert r.status == "ok"
-    assert r.data["return_pct"] == 3.92
+    assert r.data["basis"] == "event"
+    assert r.data["event_id"] == "news:evt-1"
+    assert r.data["event_date"] == "2026-07-22"
+    assert r.data["baseline_trading_day"] == "2026-07-21"
+    assert [h["horizon_days"] for h in r.data["horizons"]] == [1, 3, 5]
+    assert r.data["horizons"][0]["return_pct"] == 3.0
+    assert r.data["horizons"][2]["return_pct"] == -2.0
+    # 실제 사용한 시작·종료 거래일
     assert r.data["start_trading_day"] == "2026-07-21"
-    assert r.data["end_trading_day"] == "2026-07-23"
-    assert "발표 전후" in r.data["note"]  # 인과 아님
-    assert len(r.sources) == 2
+    assert r.data["end_trading_day"] == "2026-07-29"
+    assert "발표 전 마지막 거래일" in r.data["note"]  # 인과 아님
+    # baseline 1건 + 지평 3건
+    assert len(r.sources) == 4
     assert all(s.source_type == "price" for s in r.sources)
 
 
-def test_calculate_event_return_lookback_fallback():
+def test_calculate_event_return_partial_horizons():
+    """확정된 거래일까지만 반환하고 나머지를 추정하지 않는다."""
     r = run_calculate_event_return(
-        FakeSvc(quote=_quote(), period=_period()),
-        CalculateEventReturnInput(stock_code="005930", lookback="1m"),
+        FakeSvc(event_window=_event_window(horizons=(1,))),
+        CalculateEventReturnInput(stock_code="005930", event_date="2026-07-22"),
     )
     assert r.status == "ok"
-    assert r.data["return_pct"] == 25.0
-    assert "최근 1m" in r.data["note"]
+    assert [h["horizon_days"] for h in r.data["horizons"]] == [1]
+    assert r.data["end_trading_day"] == "2026-07-23"
 
 
-def test_calculate_event_return_no_data():
+def test_calculate_event_return_no_post_trading_day():
+    """발표 이후 확정 거래일이 없으면 no_data — 다른 기간으로 대체하지 않는다."""
     r = run_calculate_event_return(
-        FakeSvc(event=None),
-        CalculateEventReturnInput(stock_code="005930", event_date="2026-07-22", window="5d"),
+        FakeSvc(event_window=_event_window(horizons=())),
+        CalculateEventReturnInput(stock_code="005930", event_date="2026-07-22"),
+    )
+    assert r.status == "no_data"
+    assert r.data["has_post_data"] is False
+    assert r.data["basis"] == "event"
+    # 상태 설명은 있어도 수익률 수치는 만들지 않는다.
+    assert "return_pct" not in r.data
+    assert any("확정 거래일 데이터가" in w for w in r.warnings)
+
+
+def test_calculate_event_return_no_baseline():
+    r = run_calculate_event_return(
+        FakeSvc(event_window=None),
+        CalculateEventReturnInput(stock_code="005930", event_date="2026-07-22"),
     )
     assert r.status == "no_data"
 
 
-def test_calculate_event_return_requires_event_or_lookback():
-    r = run_calculate_event_return(FakeSvc(), CalculateEventReturnInput(stock_code="005930"))
+def test_calculate_event_return_requires_event_date():
+    """event_date 없이는 Tool 입력 자체가 성립하지 않는다(기간 대체 차단)."""
+    with pytest.raises(ValidationError):
+        CalculateEventReturnInput(stock_code="005930")
+
+
+def test_calculate_event_return_rejects_lookback_field():
+    """일반 기간 인자(lookback)는 이 Tool 계약에서 제거됐다."""
+    assert "lookback" not in CalculateEventReturnInput.model_fields
+
+
+def test_calculate_event_return_bad_event_date():
+    r = run_calculate_event_return(
+        FakeSvc(event_window=_event_window()),
+        CalculateEventReturnInput(stock_code="005930", event_date="2026-13-99"),
+    )
     assert r.status == "error"
 
 
-# ── 잘못된 window / lookback ───────────────────────────────────────
+# ── 잘못된 window ─────────────────────────────────────────────────
 def test_bad_window_is_error():
     r = run_calculate_event_return(
         FakeSvc(),

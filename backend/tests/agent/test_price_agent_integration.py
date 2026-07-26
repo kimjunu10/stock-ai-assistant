@@ -17,7 +17,12 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
 from app.agent.context import QaRuntimeContext, ToolServices
-from app.services.stock_prices import PeriodReturn, PriceQuote
+from app.services.stock_prices import (
+    EventHorizonReturn,
+    EventWindowReturn,
+    PeriodReturn,
+    PriceQuote,
+)
 
 
 class ScriptedModel(GenericFakeChatModel):
@@ -36,8 +41,11 @@ def _tool_call(name, args):
 
 
 class FakePriceSvc:
-    def __init__(self):
+    DEFAULT_EVENT_HORIZONS = (1, 3, 5)
+
+    def __init__(self, *, no_post_data=False):
         self.calls = []
+        self.no_post_data = no_post_data
 
     def get_current_quote(self, stock_code):
         self.calls.append(("quote", stock_code))
@@ -80,6 +88,50 @@ class FakePriceSvc:
             adjusted=adjusted,
         )
 
+    def get_event_window_return(self, stock_code, *, event_date, horizons=None, adjusted=True):
+        self.calls.append(("event_window", stock_code, event_date.isoformat()))
+        if self.no_post_data:
+            return EventWindowReturn(
+                stock_code=stock_code,
+                event_date=event_date,
+                baseline_trading_day=date(2026, 7, 24),
+                baseline_close=100000.0,
+                horizons=[],
+                currency="KRW",
+                adjusted=adjusted,
+            )
+        return EventWindowReturn(
+            stock_code=stock_code,
+            event_date=event_date,
+            baseline_trading_day=date(2026, 7, 21),
+            baseline_close=100000.0,
+            horizons=[
+                EventHorizonReturn(
+                    horizon_days=1,
+                    trading_day=date(2026, 7, 23),
+                    close=103000.0,
+                    change=3000.0,
+                    return_pct=3.0,
+                ),
+                EventHorizonReturn(
+                    horizon_days=3,
+                    trading_day=date(2026, 7, 27),
+                    close=102000.0,
+                    change=2000.0,
+                    return_pct=2.0,
+                ),
+                EventHorizonReturn(
+                    horizon_days=5,
+                    trading_day=date(2026, 7, 29),
+                    close=98000.0,
+                    change=-2000.0,
+                    return_pct=-2.0,
+                ),
+            ],
+            currency="KRW",
+            adjusted=adjusted,
+        )
+
     def get_daily_candles(self, stock_code, *, start, end, adjusted=True):
         return []
 
@@ -93,8 +145,12 @@ class FakeReports:
         return []
 
 
-def _run(script, *, prices=None, reports=None):
-    """실제 build_agent 대신, runtime.build_tools() 를 create_agent 로 직접 조립한다."""
+def _run(script, *, prices=None, reports=None, event=None):
+    """실제 build_agent 대신, runtime.build_tools() 를 create_agent 로 직접 조립한다.
+
+    event 는 서버가 확정한 사건 문맥(dict). 사건 기준 Tool 은 이 문맥에서만 발표일을
+    가져오므로, 문맥 없이 호출하면 계산이 거부되는지도 이 헬퍼로 검증한다.
+    """
     from langchain.agents import create_agent
 
     from app.agent.runtime import build_tools
@@ -110,9 +166,19 @@ def _run(script, *, prices=None, reports=None):
         tools=build_tools(),
         context_schema=QaRuntimeContext,
     )
-    ctx = QaRuntimeContext(stock_code="005930", services=svc)
+    ctx = QaRuntimeContext(stock_code="005930", services=svc, **(event or {}))
     out = agent.invoke({"messages": [{"role": "user", "content": "q"}]}, context=ctx)
     return out
+
+
+def _tool_payload(out, name):
+    """해당 Tool 이 반환한 ToolResult(JSON) 를 파싱해 돌려준다."""
+    import json
+
+    for m in out["messages"]:
+        if getattr(m, "type", "") == "tool" and getattr(m, "name", None) == name:
+            return json.loads(m.content)
+    return None
 
 
 def _tool_names(out):
@@ -170,8 +236,38 @@ def test_actual_price_not_target_does_not_call_reports():
     assert reports.searched is False
 
 
-# ── 사건 전후 → calculate_event_return ─────────────────────────────
+# ── 사건 전후 → calculate_event_return (서버 확정 문맥 사용) ────────
+_RESOLVED_EVENT = {
+    "event_status": "resolved",
+    "event_id": "news:evt-1",
+    "event_date": "2026-07-22",
+    "event_title": "HBM 공급계약 체결",
+    "event_stock_code": "005930",
+}
+
+
 def test_event_return_uses_event_tool():
+    prices = FakePriceSvc()
+    script = [
+        AIMessage(
+            content="",
+            tool_calls=[_tool_call("calculate_event_return", {"stock_code": "005930"})],
+        ),
+        AIMessage(content="발표 이후 1거래일 3.0% 상승했습니다."),
+    ]
+    out = _run(script, prices=prices, event=_RESOLVED_EVENT)
+    assert "calculate_event_return" in _tool_names(out)
+    # 발표일은 문맥에서 왔다(모델이 넘긴 값이 아님).
+    assert ("event_window", "005930", "2026-07-22") in prices.calls
+    payload = _tool_payload(out, "calculate_event_return")
+    assert payload["status"] == "ok"
+    assert payload["data"]["basis"] == "event"
+    assert payload["data"]["event_id"] == "news:evt-1"
+    assert [h["horizon_days"] for h in payload["data"]["horizons"]] == [1, 3, 5]
+
+
+def test_event_tool_ignores_model_supplied_event_date():
+    """모델이 발표일을 만들어 넘겨도 문맥의 확정 발표일만 쓴다."""
     prices = FakePriceSvc()
     script = [
         AIMessage(
@@ -179,15 +275,90 @@ def test_event_return_uses_event_tool():
             tool_calls=[
                 _tool_call(
                     "calculate_event_return",
-                    {"stock_code": "005930", "event_date": "2026-07-22", "window": "1d"},
+                    {"stock_code": "005930", "event_date": "2020-01-01"},
                 )
             ],
         ),
-        AIMessage(content="발표 이후 3.92% 상승했습니다."),
+        AIMessage(content="발표 이후 1거래일 3.0% 상승했습니다."),
+    ]
+    _run(script, prices=prices, event=_RESOLVED_EVENT)
+    assert ("event_window", "005930", "2026-07-22") in prices.calls
+    assert not any(c[0] == "event_window" and c[2] == "2020-01-01" for c in prices.calls)
+
+
+def test_event_tool_blocked_without_event_context():
+    """사건 문맥이 없으면 계산을 거부하고 일반 기간으로 대체하지 않는다."""
+    prices = FakePriceSvc()
+    script = [
+        AIMessage(
+            content="",
+            tool_calls=[_tool_call("calculate_event_return", {"stock_code": "005930"})],
+        ),
+        AIMessage(content="어떤 뉴스를 말하는지 확인이 필요합니다."),
     ]
     out = _run(script, prices=prices)
-    assert "calculate_event_return" in _tool_names(out)
-    assert ("event", "005930") in prices.calls
+    payload = _tool_payload(out, "calculate_event_return")
+    assert payload["status"] == "no_data"
+    # 주가 계산 자체를 하지 않았다(기간 수익률 대체 없음).
+    assert prices.calls == []
+
+
+def test_event_tool_blocked_when_ambiguous():
+    """서로 다른 사건이 여러 개면 임의 선택하지 않고 후보를 돌려준다."""
+    from app.agent.event_reference import EventCandidate
+
+    prices = FakePriceSvc()
+    script = [
+        AIMessage(
+            content="",
+            tool_calls=[_tool_call("calculate_event_return", {"stock_code": "005930"})],
+        ),
+        AIMessage(content="어떤 사건 기준인지 알려주세요."),
+    ]
+    out = _run(
+        script,
+        prices=prices,
+        event={
+            "event_status": "ambiguous",
+            "event_candidates": [
+                EventCandidate("news:a", "HBM 공급계약", "2026-07-22T09:00:00+09:00", "005930"),
+                EventCandidate("news:b", "관세 발표", "2026-07-18T09:00:00+09:00", "005930"),
+            ],
+        },
+    )
+    payload = _tool_payload(out, "calculate_event_return")
+    assert payload["status"] == "no_data"
+    assert payload["data"]["event_status"] == "ambiguous"
+    assert {c["event_id"] for c in payload["data"]["candidates"]} == {"news:a", "news:b"}
+    assert prices.calls == []
+
+
+def test_event_tool_no_post_trading_day_does_not_fall_back():
+    """발표 후 확정 거래일이 없으면 no_data — 다른 기간 값을 만들지 않는다."""
+    prices = FakePriceSvc(no_post_data=True)
+    script = [
+        AIMessage(
+            content="",
+            tool_calls=[_tool_call("calculate_event_return", {"stock_code": "005930"})],
+        ),
+        AIMessage(content="발표 이후 확정 거래일 데이터가 아직 없어 계산할 수 없습니다."),
+    ]
+    out = _run(script, prices=prices, event=_RESOLVED_EVENT)
+    payload = _tool_payload(out, "calculate_event_return")
+    assert payload["status"] == "no_data"
+    assert payload["data"]["has_post_data"] is False
+    assert "return_pct" not in payload["data"]
+    # 기간 수익률로 대체 조회하지 않았다.
+    assert not any(c[0] == "period" for c in prices.calls)
+
+
+def test_event_tool_has_no_lookback_parameter():
+    """Tool 스키마 수준에서 일반 기간 인자가 사라졌다(대체 경로 차단)."""
+    from app.agent.runtime import build_tools
+
+    tool = next(t for t in build_tools() if t.name == "calculate_event_return")
+    assert "lookback" not in tool.args
+    assert "event_date" not in tool.args  # 발표일은 문맥에서만 온다
 
 
 # ── 목표주가와 실제 주가 비교 → 두 Tool ────────────────────────────
