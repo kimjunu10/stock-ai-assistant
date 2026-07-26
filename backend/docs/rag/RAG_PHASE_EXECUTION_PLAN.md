@@ -705,21 +705,39 @@ PR #47 머지(`848eeed`) 후 운영 컨테이너가 해당 커밋 이미지로 �
 
 # Phase 8. 전체 평가·튜닝
 
-- [ ] 160개 평가셋
-- [ ] 홀드아웃
-- [ ] Agent trajectory
-- [ ] 검색
-- [ ] 숫자
-- [ ] 출처
-- [ ] 제외 조건
-- [ ] 답변 불가능
-- [ ] 지연
-- [ ] 비용
+- [x] 160개 평가셋 — 1단계 완료(개발 120 / 홀드아웃 40, 정적 검증 19/19)
+- [x] 홀드아웃 — 분리 완료(최종 평가 전까지 미사용)
+- [x] Agent trajectory — 지표 구현(필수·금지·불필요 호출, 입력 정확도, 복합 완료, 반복)
+- [x] 검색 — 지표 구현(Recall@K, Hit@1, MRR, 타종목 혼입, 리포트 페이지)
+- [x] 숫자 — 지표 구현(Exact Match, 단위, 기간, 거래일, 실제·전망 혼동)
+- [x] 출처 — 지표 구현(Citation Precision·Coverage, 존재하지 않는 출처)
+- [x] 제외 조건 — 지표 구현(문장 단위 부정 판정으로 오탐 방지)
+- [x] 답변 불가능 — 지표 구현(허위 답변 검출)
+- [x] 지연 — P50/P95 기록
+- [x] 비용 — 질문당 비용 기록
 - [ ] reranker A/B
-- [ ] 사람 평가 2인
+- [~] 사람 평가 2인 — 양식만 생성(실제 평가 미수행)
 - [ ] 치명적 오류 수정
 - [ ] 특정 질문 하드코딩 점검
 - [ ] 발표 질문 선정
+
+## Phase 8 1단계 — 평가 기반 구축 (2026-07-26)
+
+평가 데이터·정답 라벨·평가 실행기까지 구축했다. 운영 Agent 튜닝·reranker 실험·전체
+160문항 실행은 하지 않았다.
+
+- 산출물: `app/eval/`(스키마·지표·실행기·채점기·사람 양식),
+  `scripts/phase8_{build_dataset,validate_dataset,dryrun}.py`,
+  `docs/rag/phase_8/eval/{devset,holdout}.json`
+- 정답 라벨: 전부 실제 DB(`financials`·`research_reports`·`structured_disclosures`·
+  `news_clusters`·`rag_terms`)에서 생성. RAG 생성 답변을 정답으로 쓰지 않음
+- 재무 정답은 값을 라벨에 적지 않고 기준행만 지정 → 채점 시 DB 재조회(오타 방지)
+- 수동 검토 필요 라벨 65건(뉴스 25·리포트 20·혼합 20) — 정답 chunk 식별자 미확정
+- dry-run 9문항 실행, SSE 계약 확인. 평가 코드 결함 3건을 dry-run 이 잡아 수정
+- 단위 테스트 36개 통과. **운영 코드 무수정**
+- 상세: `docs/rag/phase_8/PHASE_8_STEP1_EVALUATION_FOUNDATION.md`
+
+미수행: 전체 160문항 실행·홀드아웃 실행·reranker·사람 평가 수행·운영 배포·Phase 9
 
 ---
 

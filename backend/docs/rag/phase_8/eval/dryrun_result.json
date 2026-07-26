@@ -1,0 +1,1256 @@
+{
+  "note": "실행기 검증용 dry-run. 최종 성능 수치가 아니다(문항 수 적음).",
+  "n": 9,
+  "metrics": {
+    "n": 9,
+    "agent": {
+      "required_tool_recall": 1.0,
+      "forbidden_tool_call_rate": 0.0,
+      "unnecessary_tool_call_rate": 0.0909,
+      "tool_argument_accuracy": 1.0,
+      "multistep_completion_rate": 1.0,
+      "duplicate_call_rate": 0.0
+    },
+    "retrieval": {
+      "recall_at_k": 0.6667,
+      "hit_at_1": 0.6667,
+      "mrr": 0.6667,
+      "other_stock_contamination_rate": 0.0,
+      "report_page_accuracy": 0.0
+    },
+    "numbers": {
+      "number_exact_match": 1.0,
+      "unit_accuracy": 1.0,
+      "period_accuracy": 1.0,
+      "trading_day_accuracy": null,
+      "value_kind_confusions": 0
+    },
+    "answer": {
+      "key_fact_coverage": 1.0,
+      "citation_precision": 1.0,
+      "citation_coverage": 1.0,
+      "nonexistent_citations": 0,
+      "unsupported_numbers": 1,
+      "exclusion_violations": 0,
+      "overclaim_cases": 0,
+      "false_answer_on_unanswerable": 0
+    },
+    "ops": {
+      "latency_ms_p50": 3549.0,
+      "latency_ms_p95": 6306.0,
+      "avg_tool_calls": 1.22,
+      "avg_model_calls": 2.11,
+      "cost_usd_per_query": 0.004708,
+      "cost_usd_total": 0.042373
+    }
+  },
+  "sse_contract": {
+    "ok": true,
+    "events": [
+      "agent_start",
+      "tool_start",
+      "tool_end",
+      "tool_start",
+      "tool_end",
+      "sources",
+      "delta",
+      "done"
+    ],
+    "missing": [],
+    "case_id": "mix-01"
+  },
+  "records": [
+    {
+      "case_id": "term-01",
+      "question": "공매도가 뭐야?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "공매도"
+          },
+          "status": "ok",
+          "latency_ms": 57
+        }
+      ],
+      "retrieved_ids": [
+        "term:공매도"
+      ],
+      "answer": "공매도는 주식을 보유하지 않은 상태에서 주가 하락을 예상하고, 금융기관으로부터 주식을 빌려 먼저 매도한 후 주가가 하락하면 시장에서 주식을 다시 사서 갚아 차익을 얻는 투자 방법입니다. 예를 들어, 주당 15,000원에 빌린 주식을 팔고 나중에 주가가 12,000원으로 떨어지면 12,000원에 사서 갚아 주당 3,000원의 수익을 얻는 방식입니다. 다만, 주가가 예상과 달리 상승하면 큰 손실이 발생할 수 있어 신중한 접근이 필요합니다. 공매도는 주식시장의 변동성을 키울 수 있어 각국에서 규제를 하고 있습니다. (출처: 한국은행 경제금융용어 800선)",
+      "sources": [
+        {
+          "source_id": "term:공매도",
+          "source_type": "term",
+          "title": "공매도",
+          "publisher": "한국은행",
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_title": "경제금융용어 800선",
+            "source_page": 29
+          }
+        }
+      ],
+      "numeric_sources": [],
+      "total_latency_ms": 3549,
+      "model_calls": 2,
+      "tool_call_count": 1,
+      "input_tokens": 8980,
+      "output_tokens": 204,
+      "cost_usd": 0.003918,
+      "stop_reason": "completed",
+      "validation_errors": [
+        "답변에 재무성 숫자가 있으나 이를 뒷받침하는 숫자 Tool 근거가 없음"
+      ],
+      "error": null
+    },
+    {
+      "case_id": "fin-01",
+      "question": "삼성전자 2025년 연간 누적 영업이익은 얼마야?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "account_name": "영업이익",
+            "business_year": 2025,
+            "report_period": "annual",
+            "amount_type": "cumulative"
+          },
+          "status": "ok",
+          "latency_ms": 27
+        }
+      ],
+      "retrieved_ids": [
+        "005930/2025/11011/CFS/영업이익/cumulative"
+      ],
+      "answer": "삼성전자의 2025년 연간 누적 영업이익은 43.60조원입니다.",
+      "sources": [
+        {
+          "source_id": "005930/2025/11011/CFS/영업이익/cumulative",
+          "source_type": "financial",
+          "title": "영업이익 · 2025년 사업보고서(연간) 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2025/11011/CFS/영업이익/cumulative"
+          }
+        }
+      ],
+      "numeric_sources": [
+        {
+          "source_id": "005930/2025/11011/CFS/영업이익/cumulative",
+          "source_type": "financial",
+          "title": "영업이익 · 2025년 사업보고서(연간) 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2025/11011/CFS/영업이익/cumulative"
+          }
+        }
+      ],
+      "total_latency_ms": 2066,
+      "model_calls": 2,
+      "tool_call_count": 1,
+      "input_tokens": 9018,
+      "output_tokens": 70,
+      "cost_usd": 0.003719,
+      "stop_reason": "completed",
+      "validation_errors": [],
+      "error": null
+    },
+    {
+      "case_id": "news-01",
+      "question": "SK하이닉스 이재용-올트먼 관련해서 무슨 일 있었어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "000660",
+            "query": "이재용 올트먼"
+          },
+          "status": "ok",
+          "latency_ms": 603
+        }
+      ],
+      "retrieved_ids": [
+        "172180f6-281d-4c33-b7e0-1ac5137c2c43",
+        "18bc1903-c227-4455-a232-e70baa59cbb0",
+        "71fdddab-6551-42ed-aa8b-1bea84849b7b",
+        "b71e589e-4dcf-4b0c-b8c2-52a65fa98d5d",
+        "ebcec16f-ce1d-4ea9-9da7-58b2f83e7c8c"
+      ],
+      "answer": "이재용 삼성전자 회장과 샘 올트먼 오픈AI CEO가 2026년 7월 25일 미국 샌프란시스코 오픈AI 본사에서 만나 AI 인프라 및 반도체 협력 방안을 논의했습니다. 양측은 HBM, D램, 첨단 파운드리 등 AI 인프라 분야 협력 확대 방안을 협의한 것으로 보이며, 삼성전자는 전 임직원 대상 챗GPT와 코덱스 도입도 추진 중입니다.\n\n이 협력은 지난해 10월 체결한 전략적 파트너십의 연장선으로, 오픈AI는 한국 정부, 삼성전자, SK하이닉스 등과의 협력 체계를 아시아·태평양 지역 최초의 국가 단위 전략적 파트너십으로 평가하고 있습니다. \n\n요약하면, 이재용 회장과 올트먼 CEO는 AI와 반도체 분야에서 협력을 강화하기 위해 만난 것입니다. \n\n(출처: 2026-07-26 뉴스)",
+      "sources": [
+        {
+          "source_id": "71fdddab-6551-42ed-aa8b-1bea84849b7b",
+          "source_type": "news_event",
+          "title": "이재용-올트먼, 오픈AI 본사에서 AI·반도체 협력 논의",
+          "publisher": null,
+          "published_at": "2026-07-26T07:16:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7201",
+            "document_id": "7557c820-6d1b-4777-94e5-fb91a067e9d5"
+          }
+        },
+        {
+          "source_id": "172180f6-281d-4c33-b7e0-1ac5137c2c43",
+          "source_type": "news_event",
+          "title": "AI 깐부 회동, 李 대통령 '우리는 식구' 건배",
+          "publisher": null,
+          "published_at": "2026-07-26T08:21:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7165",
+            "document_id": "048bd458-754f-498f-abd0-dc8a5ff60956"
+          }
+        },
+        {
+          "source_id": "b71e589e-4dcf-4b0c-b8c2-52a65fa98d5d",
+          "source_type": "news_event",
+          "title": "이재용 대통령, 젠슨 황 엔비디아 CEO와 5000억 달러 규모 파트너십 발표",
+          "publisher": null,
+          "published_at": "2026-07-26T06:28:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7010",
+            "document_id": "57964cd5-30e0-4da9-9b8a-6c7b0cc8724a"
+          }
+        },
+        {
+          "source_id": "18bc1903-c227-4455-a232-e70baa59cbb0",
+          "source_type": "news_event",
+          "title": "이재용·최태원·이해진, 24일 미국서 젠슨 황 엔비디아 CEO와 라운드테이블 회동 추진",
+          "publisher": null,
+          "published_at": "2026-07-23T07:19:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "6768",
+            "document_id": "5ee22836-9b2b-4475-a96a-abec8ea974cc"
+          }
+        },
+        {
+          "source_id": "ebcec16f-ce1d-4ea9-9da7-58b2f83e7c8c",
+          "source_type": "news_event",
+          "title": "최태원 SK 회장, 주식평가액 10조원 돌파…이재용 삼성전자 회장 60조원 육박",
+          "publisher": null,
+          "published_at": "2026-07-18T02:38:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "3898",
+            "document_id": "6b2dbd4a-ad9a-4d74-86af-5b01d66c421a"
+          }
+        }
+      ],
+      "numeric_sources": [],
+      "total_latency_ms": 4447,
+      "model_calls": 2,
+      "tool_call_count": 1,
+      "input_tokens": 11723,
+      "output_tokens": 256,
+      "cost_usd": 0.005099,
+      "stop_reason": "completed",
+      "validation_errors": [],
+      "error": null
+    },
+    {
+      "case_id": "disc-01",
+      "question": "SK하이닉스 배당 얼마나 줬어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "search_disclosures",
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_disclosures",
+          "args": {
+            "stock_code": "000660",
+            "query": "배당",
+            "latest_only": true
+          },
+          "status": "ok",
+          "latency_ms": 28
+        },
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "000660",
+            "event_types": [
+              "배당"
+            ]
+          },
+          "status": "no_data",
+          "latency_ms": 29
+        }
+      ],
+      "retrieved_ids": [
+        "20260713000324",
+        "20260715000004",
+        "20260715800045",
+        "20260715800456",
+        "20260716000582"
+      ],
+      "answer": "SK하이닉스의 최근 배당에 대한 구조화된 공시 데이터는 현재 확인되지 않습니다. 다른 기간이나 구체적인 배당 관련 공시가 필요하면 알려주세요.",
+      "sources": [
+        {
+          "source_id": "20260716000582",
+          "source_type": "dart_document",
+          "title": "임원ㆍ주요주주특정증권등소유상황보고서",
+          "publisher": null,
+          "published_at": "2026-07-16T00:00:00+00:00",
+          "page": null,
+          "url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260716000582",
+          "value_kind": null,
+          "locator": {
+            "rcept_no": "20260716000582"
+          }
+        },
+        {
+          "source_id": "20260715000004",
+          "source_type": "dart_document",
+          "title": "증권발행실적보고서",
+          "publisher": null,
+          "published_at": "2026-07-15T00:00:00+00:00",
+          "page": null,
+          "url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260715000004",
+          "value_kind": null,
+          "locator": {
+            "rcept_no": "20260715000004"
+          }
+        },
+        {
+          "source_id": "20260715800456",
+          "source_type": "dart_document",
+          "title": "기업설명회(IR)개최(안내공시)              ",
+          "publisher": null,
+          "published_at": "2026-07-15T00:00:00+00:00",
+          "page": null,
+          "url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260715800456",
+          "value_kind": null,
+          "locator": {
+            "rcept_no": "20260715800456"
+          }
+        },
+        {
+          "source_id": "20260715800045",
+          "source_type": "dart_document",
+          "title": "유상증자또는주식관련사채등의발행결과(자율공시)              ",
+          "publisher": null,
+          "published_at": "2026-07-15T00:00:00+00:00",
+          "page": null,
+          "url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260715800045",
+          "value_kind": null,
+          "locator": {
+            "rcept_no": "20260715800045"
+          }
+        },
+        {
+          "source_id": "20260713000324",
+          "source_type": "dart_document",
+          "title": "주요사항보고서(해외증권시장주권등상장)",
+          "publisher": null,
+          "published_at": "2026-07-13T00:00:00+00:00",
+          "page": null,
+          "url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260713000324",
+          "value_kind": null,
+          "locator": {
+            "rcept_no": "20260713000324"
+          }
+        }
+      ],
+      "numeric_sources": [],
+      "total_latency_ms": 2860,
+      "model_calls": 3,
+      "tool_call_count": 2,
+      "input_tokens": 15195,
+      "output_tokens": 93,
+      "cost_usd": 0.006227,
+      "stop_reason": "completed",
+      "validation_errors": [],
+      "error": null
+    },
+    {
+      "case_id": "report-01",
+      "question": "미래에셋증권에서 SK하이닉스 목표주가 얼마로 봤어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "000660",
+            "query": "목표주가",
+            "time_context": "current"
+          },
+          "status": "ok",
+          "latency_ms": 737
+        }
+      ],
+      "retrieved_ids": [
+        "0b313113-487c-4340-8d48-a7496380cc8d",
+        "24a5cff9-6c83-410d-9777-b6b65d866b7e",
+        "301b74ab-df0b-45fa-bd31-c7cb9d61e6a7",
+        "6f2b3eff-b393-4704-8d5d-b28dfdeef78c",
+        "ea20cc3e-11a0-42be-8372-05e4a35ce223"
+      ],
+      "answer": "이 목표주가는 2026년 7월 14일 기준으로 제시된 것입니다. 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다.",
+      "sources": [
+        {
+          "source_id": "301b74ab-df0b-45fa-bd31-c7cb9d61e6a7",
+          "source_type": "research_report",
+          "title": "시선을 약간만 아래로",
+          "publisher": "미래에셋증권",
+          "published_at": "2026-07-14",
+          "page": 8,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "18f336cf-2f29-44fb-a626-b56ed9088db7",
+            "page_number": 9,
+            "pdf_page": 8,
+            "source_page": null,
+            "target_price_source_page": 1,
+            "evidence": "나 상승 Trading Buy : 향후 12 개월 기준 절대수익률 10% 이상의 초과수익 예상 중립 : 향후 12 개월 기준업종지수상승률이 시장수익률 수준 중립 : 향후 12 개월 기준 절대수익률 - 10~10% 이내의 등락이 예상 비중축소 : 향후 12 개월 기준업종지수상승률이 시장수익률 대비 낮거나 악화 매도 : 향후 12 개월 기준 절대수익률 - 10% 이상의 주가하락이 예상 매수 ( ▲), Trading Buy( ■), 중립 ( ●), 매도 ( ◆), 주가 ( ─), 목표주가 ( ▬), Not covered( ■ ) 투자의견 비율 매수 ( 매수 ) Trading Buy( 매수 ) 중립 ( 중립 ) 매도 83.02% 0% 16.35% 0.63% * 2026 년 06 월 30 일기준으로 최근 1 년간금융투자상품에 대하여 공표한 최근일 투자등급의 비율 Compliance Notice - 당사는 자료 작성일 현재 SK 하이닉스 을 ( 를 ) 기초자산으로 하는주식워런트증권에 대해유동성…",
+            "investment_opinion": "매수",
+            "target_price": 4200000
+          }
+        },
+        {
+          "source_id": "24a5cff9-6c83-410d-9777-b6b65d866b7e",
+          "source_type": "research_report",
+          "title": "슈퍼 모멘텀",
+          "publisher": "대신증권",
+          "published_at": "2026-07-07",
+          "page": 6,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "b4d72099-bd79-4b86-b954-e575033a5a11",
+            "page_number": 6,
+            "pdf_page": 5,
+            "source_page": 6,
+            "target_price_source_page": 1,
+            "evidence": "Buy Buy Buy Buy 목표주가 3,900,000 3,400,000 2,500,000 1,700,000 1,450,000 1,250,000 괴리율(평균,%) (28.55) (18.80) (19.92) (33.71) (29.65) 괴리율(최대/최소,%) (14.15) (5.48) 10.59 (21.66) (24.08) 제시일자 26.01.13 26.01.02 25.11.19 25.10.29 25.10.20 25.10.10 투자의견 Buy Buy Buy Buy Buy Buy 목표주가 910,000 840,000 800,000 700,000 550,000 480,000 괴리율(평균,%) (14.09) (12.44) (29.89) (15.56) (8.94) (9.71) 괴리율(최대/최소,%) (0.11) (10.00) (18.63) (11.43) (2.73) (3.02) 제시일자 25.09.18 25.06.26 25.06.18 25.05.20 투자의견 Buy Buy Buy Buy 목표…",
+            "investment_opinion": "BUY",
+            "target_price": 3900000
+          }
+        },
+        {
+          "source_id": "6f2b3eff-b393-4704-8d5d-b28dfdeef78c",
+          "source_type": "research_report",
+          "title": "Agent AI Ecosystem 중심에 서다",
+          "publisher": "IBK투자증권",
+          "published_at": "2026-07-02",
+          "page": 0,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "2b8ed14b-b5fb-42cd-84d5-d089acba477c",
+            "page_number": 1,
+            "pdf_page": 0,
+            "source_page": null,
+            "target_price_source_page": 1,
+            "evidence": "매수 (유지) 실적 서프라이즈는 23년 4분기부터 11분기째 계속될 듯 SK하이닉스 분기 실적의 예상치 상회는 HBM이 본격화된 23년 4분기부터 26년 2분기까지 11분기째 이어질 전망이다. 26년 2분기 매출액은 26년 1분기 대비 50.2% 증가한 78조 9,680억원, 영업이익은 26년 1분기 대비 62.3% 증가한 61조원으로 예상한다. 시장은 메모리 수요를 ‘여전히’, 그리고 ‘아직도’ 지나치게 과소 평가 메모리는 시장은 3가지 동력을 통해서 가파르게 성장하고 있다. 첫째는 Agent AI 시장의 확산이다. Agent AI 모델은 Generative AI 대비 토큰을 10,000배 소요한다. Generative AI와는 달리 모델 수는 급격히 증가하는 추세이다. 이로 인해 10초만에 생성되는 전 세계 토큰량은 300억 개를 넘는다. 둘째는 CPU 역할이 부각되면서 DRAM 수요가 동반되고 있다. Agent AI는 Inference AI 보다 CPU 사용 비중이 높다. 셋째…",
+            "investment_opinion": "매수",
+            "target_price": 4000000
+          }
+        },
+        {
+          "source_id": "0b313113-487c-4340-8d48-a7496380cc8d",
+          "source_type": "research_report",
+          "title": "2Q26 Preview 컨센서스 부합",
+          "publisher": "교보증권",
+          "published_at": "2026-07-01",
+          "page": 3,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "6a806303-5c84-4db3-80a4-c9f2b6c94416",
+            "page_number": 4,
+            "pdf_page": 3,
+            "source_page": null,
+            "target_price_source_page": 1,
+            "evidence": "SK하이닉스 [000660] 2Q26 Preview 컨센서스 부합 4 Research Center 2026/07/01 SK하이닉스 최근 2년간 목표주가 변동추이 최근 2년간 목표주가 및 괴리율 추이 일자 투자의견 목표주가 괴리율 일자 투자의견 목표주가 괴리율 평균 최고/최저 평균 최고/최저 2023.05.09 매수 110,000 FALSE 2025.11.11 매수 900,000 (29.77) FALSE 2023.07.27 매수 160,000 (25.83) FALSE 2026.01.30 매수 1,100,000 (12.01) FALSE 2023.09.26 매수 160,000 (25.08) FALSE 2026.04.24 매수 1,900,000 9.07 FALSE 2023.10.27 매수 160,000 FALSE 2026.06.29 매수 4,000,000 FALSE 2023.01.26 매수 190,000 FALSE 2024.04.26 매수 220,000 (4.64) FALSE 2024.07…",
+            "investment_opinion": "Buy",
+            "target_price": 4000000
+          }
+        },
+        {
+          "source_id": "ea20cc3e-11a0-42be-8372-05e4a35ce223",
+          "source_type": "research_report",
+          "title": "P E 10배는 테크 주식의 기본 배수다",
+          "publisher": "한화투자증권",
+          "published_at": "2026-06-22",
+          "page": 7,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "b64cfa46-d8b2-4f17-a0ee-13e1231e1bd2",
+            "page_number": 7,
+            "pdf_page": 6,
+            "source_page": 7,
+            "target_price_source_page": 1,
+            "evidence": "6/06 (원) 종가 목표주가",
+            "investment_opinion": "Buy",
+            "target_price": 4300000
+          }
+        }
+      ],
+      "numeric_sources": [],
+      "total_latency_ms": 2860,
+      "model_calls": 2,
+      "tool_call_count": 1,
+      "input_tokens": 13623,
+      "output_tokens": 79,
+      "cost_usd": 0.005576,
+      "stop_reason": "completed",
+      "validation_errors": [
+        "Tool 결과에 없는 증권사를 답변에 생성함: ['미래에셋증권']",
+        "근거 없는 증권사·목표주가 문장을 답변에서 제거함"
+      ],
+      "error": null
+    },
+    {
+      "case_id": "mix-01",
+      "question": "삼성전자 실적이랑 최근 뉴스 같이 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "get_financial_facts",
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 33
+        },
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005930",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 32
+        }
+      ],
+      "retrieved_ids": [
+        "005930/2026/11013/CFS/당기순이익/cumulative",
+        "005930/2026/11013/CFS/매출액/cumulative",
+        "005930/2026/11013/CFS/영업이익/cumulative",
+        "news_cluster:7002",
+        "news_cluster:7004",
+        "news_cluster:7104",
+        "news_cluster:7149",
+        "news_cluster:7220"
+      ],
+      "answer": "삼성전자의 최신 실적(2026년 1분기 누적, 연결 기준)은 다음과 같습니다:\n- 매출액: 133.87조원\n- 영업이익: 57.23조원\n- 당기순이익: 47.23조원\n\n최근 뉴스 주요 내용은 삼성전자와 SK하이닉스가 미국 빅테크 기업들과 9500억 달러 규모의 반도체 장기 공급 및 AI 데이터센터 투자 협약을 체결한 것입니다. 구체적으로 삼성전자는 브로드컴과 5년간 2000억 달러 규모의 첨단 메모리 반도체 공급 및 AI 칩 생산 협력 계약을 맺었고, AI 데이터센터 투자와 글로벌 협력 체계가 구체화되고 있습니다.\n\n더 자세한 뉴스는 다음과 같습니다:\n- 이재용 삼성전자 회장 등 국내 주요 기업 총수들이 미국 샌프란시스코 AI 서밋에 참석해 글로벌 빅테크 CEO들과 협력 방안을 논의했습니다.\n- 삼성전자-브로드컴 간 5년간 2000억 달러 규모 AI 반도체 파운드리 협력 업무협약이 공식 발표되었습니다.\n- 신도기연이 라미네이팅 기술로 반도체 패키징 시장에 본격 진출하는 소식도 있습니다.\n\n필요하면 특정 뉴스에 대해 더 알려드릴 수 있습니다.",
+      "sources": [
+        {
+          "source_id": "005930/2026/11013/CFS/매출액/cumulative",
+          "source_type": "financial",
+          "title": "매출액 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/매출액/cumulative"
+          }
+        },
+        {
+          "source_id": "005930/2026/11013/CFS/영업이익/cumulative",
+          "source_type": "financial",
+          "title": "영업이익 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/영업이익/cumulative"
+          }
+        },
+        {
+          "source_id": "005930/2026/11013/CFS/당기순이익/cumulative",
+          "source_type": "financial",
+          "title": "당기순이익 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/당기순이익/cumulative"
+          }
+        },
+        {
+          "source_id": "news_cluster:7104",
+          "source_type": "news_event",
+          "title": "삼성전자·SK하이닉스, 미국 빅테크와 9500억 달러 규모 반도체 장기 공급 및 AI 데이터센터 투자 협약 체결",
+          "publisher": null,
+          "published_at": "2026-07-24T11:10:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7104",
+            "document_id": "news_cluster:7104"
+          }
+        },
+        {
+          "source_id": "news_cluster:7004",
+          "source_type": "news_event",
+          "title": "이재용·정의선·최태원·이해진 등 총수 동행, AI 서밋서 9500억 달러 규모 반도체·데이터센터 협력 발표",
+          "publisher": null,
+          "published_at": "2026-07-24T04:42:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7004",
+            "document_id": "news_cluster:7004"
+          }
+        },
+        {
+          "source_id": "news_cluster:7002",
+          "source_type": "news_event",
+          "title": "이재용·젠슨 황 등 글로벌 AI 리더 10명, 샌프란시스코서 피시앤칩스 만찬",
+          "publisher": null,
+          "published_at": "2026-07-24T04:40:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7002",
+            "document_id": "news_cluster:7002"
+          }
+        },
+        {
+          "source_id": "news_cluster:7220",
+          "source_type": "news_event",
+          "title": "신도기연, 라미네이팅 기술로 반도체 패키징 시장 진출 본격화",
+          "publisher": null,
+          "published_at": "2026-07-26T08:17:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7220",
+            "document_id": "news_cluster:7220"
+          }
+        },
+        {
+          "source_id": "news_cluster:7149",
+          "source_type": "news_event",
+          "title": "삼성전자-브로드컴, 5년간 2000억달러 규모 AI 반도체 파운드리 협력 체결",
+          "publisher": null,
+          "published_at": "2026-07-25T04:02:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7149",
+            "document_id": "news_cluster:7149"
+          }
+        }
+      ],
+      "numeric_sources": [
+        {
+          "source_id": "005930/2026/11013/CFS/매출액/cumulative",
+          "source_type": "financial",
+          "title": "매출액 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/매출액/cumulative"
+          }
+        },
+        {
+          "source_id": "005930/2026/11013/CFS/영업이익/cumulative",
+          "source_type": "financial",
+          "title": "영업이익 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/영업이익/cumulative"
+          }
+        },
+        {
+          "source_id": "005930/2026/11013/CFS/당기순이익/cumulative",
+          "source_type": "financial",
+          "title": "당기순이익 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/당기순이익/cumulative"
+          }
+        }
+      ],
+      "total_latency_ms": 6306,
+      "model_calls": 2,
+      "tool_call_count": 2,
+      "input_tokens": 12188,
+      "output_tokens": 373,
+      "cost_usd": 0.005472,
+      "stop_reason": "completed",
+      "validation_errors": [],
+      "error": null
+    },
+    {
+      "case_id": "excl-01",
+      "question": "최근 뉴스에서 삼성전자 호재 있어? 실적 관련은 제외해.",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005930",
+            "sentiment": "positive",
+            "query": null,
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 54
+        }
+      ],
+      "retrieved_ids": [
+        "news_cluster:7104",
+        "news_cluster:7149",
+        "news_cluster:7181",
+        "news_cluster:7197",
+        "news_cluster:7220"
+      ],
+      "answer": "최근 삼성전자 관련 호재 뉴스는 다음과 같습니다. 실적 관련 내용은 제외하고 주요 호재만 요약하면,\n\n1. 삼성전자와 SK하이닉스가 미국 빅테크 기업들과 9500억 달러 규모의 반도체 장기 공급 및 AI 데이터센터 투자 협약을 체결했습니다. (출처: news_cluster:7104)\n2. 삼성전자와 브로드컴이 5년간 2000억 달러 규모의 AI 반도체 파운드리 협력 업무협약을 맺었습니다. (출처: news_cluster:7149)\n3. 삼성전자가 연내 출시 예정인 AI 글래스 '인텔리전트 아이웨어'를 공개했는데, 안경처럼 가볍고 편안한 착용감을 구현한 신제품입니다. (출처: news_cluster:7181)\n\n이 외에도 반도체 패키징 기술 관련 신도기연의 진출 소식 등이 있으나, 삼성전자 직접 호재는 위 세 가지가 핵심입니다. 필요하면 더 자세한 내용도 알려드릴 수 있습니다.",
+      "sources": [
+        {
+          "source_id": "news_cluster:7104",
+          "source_type": "news_event",
+          "title": "삼성전자·SK하이닉스, 미국 빅테크와 9500억 달러 규모 반도체 장기 공급 및 AI 데이터센터 투자 협약 체결",
+          "publisher": null,
+          "published_at": "2026-07-24T11:10:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7104",
+            "document_id": "news_cluster:7104"
+          }
+        },
+        {
+          "source_id": "news_cluster:7220",
+          "source_type": "news_event",
+          "title": "신도기연, 라미네이팅 기술로 반도체 패키징 시장 진출 본격화",
+          "publisher": null,
+          "published_at": "2026-07-26T08:17:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7220",
+            "document_id": "news_cluster:7220"
+          }
+        },
+        {
+          "source_id": "news_cluster:7149",
+          "source_type": "news_event",
+          "title": "삼성전자-브로드컴, 5년간 2000억달러 규모 AI 반도체 파운드리 협력 체결",
+          "publisher": null,
+          "published_at": "2026-07-25T04:02:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7149",
+            "document_id": "news_cluster:7149"
+          }
+        },
+        {
+          "source_id": "news_cluster:7181",
+          "source_type": "news_event",
+          "title": "삼성 AI 글래스, 안경처럼 가볍고 편안한 착용감 구현",
+          "publisher": null,
+          "published_at": "2026-07-25T23:00:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7181",
+            "document_id": "news_cluster:7181"
+          }
+        },
+        {
+          "source_id": "news_cluster:7197",
+          "source_type": "news_event",
+          "title": "SK하이닉스 2분기 사상 최대 실적 전망…영업이익률 TSMC 추월 가능성",
+          "publisher": null,
+          "published_at": "2026-07-26T01:50:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7197",
+            "document_id": "news_cluster:7197"
+          }
+        }
+      ],
+      "numeric_sources": [],
+      "total_latency_ms": 4322,
+      "model_calls": 2,
+      "tool_call_count": 1,
+      "input_tokens": 11469,
+      "output_tokens": 269,
+      "cost_usd": 0.005018,
+      "stop_reason": "completed",
+      "validation_errors": [],
+      "error": null
+    },
+    {
+      "case_id": "ctx-01",
+      "question": "어제 주가 어떻게 됐어?",
+      "context": {
+        "stock_code": "005930",
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "005930"
+          },
+          "status": "ok",
+          "latency_ms": 1515
+        }
+      ],
+      "retrieved_ids": [
+        "price:005930:2026-07-24"
+      ],
+      "answer": "어제(2026년 7월 24일) 삼성전자(005930) 주가는 273,000원에서 252,500원으로 7.51% 하락하여 20,500원 내렸습니다.",
+      "sources": [
+        {
+          "source_id": "price:005930:2026-07-24",
+          "source_type": "price",
+          "title": "005930 주가 · 2026-07-24",
+          "publisher": "토스증권 Open API",
+          "published_at": "2026-07-24",
+          "page": null,
+          "url": null,
+          "value_kind": "actual",
+          "locator": {
+            "stock_code": "005930",
+            "interval": "1d",
+            "provider": "toss",
+            "kind": "current",
+            "as_of": "2026-07-24T19:59:59+09:00"
+          }
+        }
+      ],
+      "numeric_sources": [
+        {
+          "source_id": "price:005930:2026-07-24",
+          "source_type": "price",
+          "title": "005930 주가 · 2026-07-24",
+          "publisher": "토스증권 Open API",
+          "published_at": "2026-07-24",
+          "page": null,
+          "url": null,
+          "value_kind": "actual",
+          "locator": {
+            "stock_code": "005930",
+            "interval": "1d",
+            "provider": "toss",
+            "kind": "current",
+            "as_of": "2026-07-24T19:59:59+09:00"
+          }
+        }
+      ],
+      "total_latency_ms": 4446,
+      "model_calls": 2,
+      "tool_call_count": 1,
+      "input_tokens": 8996,
+      "output_tokens": 68,
+      "cost_usd": 0.003707,
+      "stop_reason": "completed",
+      "validation_errors": [],
+      "error": null
+    },
+    {
+      "case_id": "na-01",
+      "question": "삼성전자 내년 매출 확정값 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "business_year": 2027,
+            "period_mode": "exact"
+          },
+          "status": "no_data",
+          "latency_ms": 67
+        }
+      ],
+      "retrieved_ids": [],
+      "answer": "삼성전자의 내년(2027년) 매출 확정값은 아직 공개된 데이터가 없습니다. 다른 기간이나 정보가 필요하시면 알려주세요.",
+      "sources": [],
+      "numeric_sources": [],
+      "total_latency_ms": 2284,
+      "model_calls": 2,
+      "tool_call_count": 1,
+      "input_tokens": 8828,
+      "output_tokens": 66,
+      "cost_usd": 0.003637,
+      "stop_reason": "completed",
+      "validation_errors": [],
+      "error": null
+    }
+  ],
+  "grades": [
+    {
+      "case_id": "term-01",
+      "type": "금융용어",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "lookup_financial_term.term_contains": true
+      },
+      "gold_source_hits": [
+        "term:공매도"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": []
+    },
+    {
+      "case_id": "fin-01",
+      "type": "정확한 재무 숫자",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_financial_facts.stock_code": true,
+        "get_financial_facts.account_name": true,
+        "get_financial_facts.business_year": true
+      },
+      "gold_source_hits": [
+        "005930/2025/11011/CFS/영업이익/cumulative"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": {
+        "exact": true,
+        "period_ok": true,
+        "unit_ok": true,
+        "value_kind_confused": false,
+        "gold_value_won": 43601051000000
+      },
+      "period_ok": true,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": []
+    },
+    {
+      "case_id": "news-01",
+      "type": "뉴스 사건·영향",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": []
+    },
+    {
+      "case_id": "disc-01",
+      "type": "공시 설명·구조화 값",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [
+        "20250515002103"
+      ],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": []
+    },
+    {
+      "case_id": "report-01",
+      "type": "증권사 리포트",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_research_reports.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": []
+    },
+    {
+      "case_id": "mix-01",
+      "type": "복수 기능 혼합",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_financial_facts.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": []
+    },
+    {
+      "case_id": "excl-01",
+      "type": "부정·제외·대조",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": []
+    },
+    {
+      "case_id": "ctx-01",
+      "type": "현재 화면 문맥",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_stock_prices.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 1,
+      "fact_total": 1,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": []
+    },
+    {
+      "case_id": "na-01",
+      "type": "답변 불가능·모호",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [
+        "get_financial_facts"
+      ],
+      "arg_results": {},
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": true,
+      "notes": []
+    }
+  ]
+}
