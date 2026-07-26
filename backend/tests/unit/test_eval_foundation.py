@@ -320,6 +320,50 @@ def test_grade_arguments_marks_wrong_stock_code():
     assert grade_arguments(case, rec)["search_news.stock_code"] is False
 
 
+def test_grade_arguments_skips_unused_alternative_tool():
+    """required_tools_any 에서 허용된 다른 Tool 로 답했으면 인자 채점 대상이 아니다.
+
+    라벨의 expected_args 는 대안 Tool 중 하나만 예시로 적을 수 있다. 부르지 않은
+    쪽의 인자를 틀렸다고 세면 제품 실패가 아닌데 실패로 잡힌다(disc-11 유형).
+    """
+    case = _case(
+        required_tools=[],
+        required_tools_any=["get_disclosure_values", "search_disclosures"],
+        expected_args={"get_disclosure_values": {"stock_code": "000660"}},
+    )
+    rec = _record(
+        tool_calls=[
+            {
+                "name": "search_disclosures",
+                "args": {"stock_code": "000660", "query": "해외상장"},
+                "status": "ok",
+                "latency_ms": 1,
+            }
+        ]
+    )
+    assert grade_arguments(case, rec) == {}
+
+
+def test_grade_arguments_still_fails_when_no_allowed_tool_used():
+    """대안 Tool 도 안 불렀으면 종전대로 실패로 센다(느슨해지지 않는다)."""
+    case = _case(
+        required_tools=[],
+        required_tools_any=["get_disclosure_values", "search_disclosures"],
+        expected_args={"get_disclosure_values": {"stock_code": "000660"}},
+    )
+    rec = _record(
+        tool_calls=[
+            {
+                "name": "search_news",
+                "args": {"stock_code": "000660"},
+                "status": "ok",
+                "latency_ms": 1,
+            }
+        ]
+    )
+    assert grade_arguments(case, rec)["get_disclosure_values.stock_code"] is False
+
+
 def test_grade_arguments_skipped_when_args_unobserved():
     """recorder 없이 실행하면 인자 채점을 건너뛴다(0점 처리하지 않음)."""
     case = _case(

@@ -39,6 +39,20 @@ class RetrievedChunk:
     source_locator: dict | None = None
 
 
+def _inclusive_end(date_to: str | None) -> str | None:
+    """종료일(YYYY-MM-DD)을 그 날 끝까지 포함하도록 보정한다.
+
+    상대 기간(resolve_relative_date_range)은 "양 끝을 포함하는" 날짜 범위를 주는데,
+    날짜만 있는 문자열은 timestamptz 로 해석될 때 그 날 00:00 이 되어 당일 자료가
+    통째로 잘린다. 뉴스 청크는 대부분 실제 발행 시각을 갖고 있어(자정이 아님)
+    "오늘까지" 검색이 오늘치를 하나도 못 찾는 결함이 된다.
+    시각이 이미 포함된 값은 사용자가 지정한 경계이므로 그대로 둔다.
+    """
+    if date_to and len(date_to) == 10:
+        return f"{date_to}T23:59:59+09:00"
+    return date_to
+
+
 def _first_topic(event_signature: object) -> str | None:
     """news_clusters.event_signature 에서 사람이 읽을 대표 주제를 뽑는다(제목 대체용)."""
     if isinstance(event_signature, dict):
@@ -141,7 +155,7 @@ class HybridRetriever:
                 "filter_stock_code": stock_code,
                 "filter_source_type": source_type,
                 "filter_from": date_from,
-                "filter_to": date_to,
+                "filter_to": _inclusive_end(date_to),
                 "filter_value_kind": value_kind,
             },
         ).execute()
@@ -236,8 +250,7 @@ class HybridRetriever:
             q = q.gte("last_active_at", date_from)
         if date_to:
             # date_to 는 날짜(YYYY-MM-DD)일 수 있으므로 종료일 끝까지 포함.
-            end = f"{date_to}T23:59:59+09:00" if len(date_to) == 10 else date_to
-            q = q.lte("first_published_at", end)
+            q = q.lte("first_published_at", _inclusive_end(date_to))
         if sentiment:
             q = q.eq("sentiment_label", sentiment)
         rows = (

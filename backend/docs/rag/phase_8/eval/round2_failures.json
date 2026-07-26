@@ -1,8 +1,8 @@
 {
   "note": "round2 남은 실패를 지정된 계층으로 분류. 재색인·정리는 하지 않았다.",
   "n": 120,
-  "clean_cases": 73,
-  "failed_cases": 47,
+  "clean_cases": 85,
+  "failed_cases": 35,
   "by_layer": {
     "Agent Tool 선택": {
       "count": 13,
@@ -21,17 +21,17 @@
       ]
     },
     "Tool 인자": {
-      "count": 7,
-      "unique_cases": 7,
+      "count": 6,
+      "unique_cases": 6,
       "by_detail": {
-        "인자 해석 오류": 7
+        "인자 해석 오류": 6
       },
       "example_ids": [
         "ctx-06",
-        "disc-11",
         "mix-06",
         "mix-07",
-        "mix-08"
+        "mix-08",
+        "mix-09"
       ]
     },
     "뉴스 Retriever": {
@@ -97,18 +97,14 @@
       ]
     },
     "평가기·라벨": {
-      "count": 16,
-      "unique_cases": 16,
+      "count": 2,
+      "unique_cases": 2,
       "by_detail": {
-        "정답 식별자 미확정": 2,
-        "검증기 삭제/과잉 라벨": 14
+        "정답 식별자 미확정": 2
       },
       "example_ids": [
         "disc-11",
-        "fin-10",
-        "news-18",
-        "report-01",
-        "report-02"
+        "fin-10"
       ]
     },
     "외부 환경": {
@@ -167,7 +163,7 @@
       {
         "case_id": "news-12",
         "cluster_id": "7143",
-        "document_count": 14,
+        "document_count": 15,
         "has_stale_duplicate": true
       },
       {
@@ -226,138 +222,12 @@
         ]
       },
       {
-        "id": "news-18",
-        "type": "뉴스 사건·영향",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "한화오션 한미 조선협력센터 워싱턴 이슈 설명해줘",
-        "tools": [
-          "search_news"
-        ]
-      },
-      {
         "id": "disc-11",
         "type": "공시 설명·구조화 값",
         "detail": "정답 식별자 미확정",
         "question": "SK하이닉스 해외상장 결정 공시 내용 알려줘",
         "tools": [
           "search_disclosures"
-        ]
-      },
-      {
-        "id": "report-01",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "미래에셋증권에서 SK하이닉스 목표주가 얼마로 봤어?",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-02",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "유진투자증권 현대차 리포트 전망 어때?",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-03",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "2026-07-08에 나온 iM증권 삼성전자 투자의견 알려줘",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-04",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "두산에너빌리티에 대한 유안타증권 리포트 내용 요약해줘",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-05",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "키움증권에서 한화오션 목표주가 얼마로 봤어?",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-07",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "2026-07-08에 나온 키움증권 현대차 투자의견 알려줘",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-09",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "SK증권에서 한화오션 목표주가 얼마로 봤어?",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-10",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "IBK투자증권 SK하이닉스 리포트 전망 어때?",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-11",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "2026-07-06에 나온 한화투자증권 현대차 투자의견 알려줘",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-12",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "삼성전자에 대한 대신증권 리포트 내용 요약해줘",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-13",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "대신증권에서 한화오션 목표주가 얼마로 봤어?",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-14",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "교보증권 SK하이닉스 리포트 전망 어때?",
-        "tools": [
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "report-15",
-        "type": "증권사 리포트",
-        "detail": "검증기 삭제/과잉 라벨",
-        "question": "2026-06-18에 나온 한화투자증권 현대차 투자의견 알려줘",
-        "tools": [
-          "search_research_reports"
         ]
       }
     ],
@@ -652,74 +522,6 @@
         ]
       }
     ],
-    "Tool 인자": [
-      {
-        "id": "disc-11",
-        "type": "공시 설명·구조화 값",
-        "detail": "인자 해석 오류",
-        "question": "SK하이닉스 해외상장 결정 공시 내용 알려줘",
-        "tools": [
-          "search_disclosures"
-        ]
-      },
-      {
-        "id": "mix-06",
-        "type": "복수 기능 혼합",
-        "detail": "인자 해석 오류",
-        "question": "삼성전자 영업이익이 왜 줄었고 증권사 전망은 어때?",
-        "tools": [
-          "search_research_reports",
-          "get_financial_facts"
-        ]
-      },
-      {
-        "id": "mix-07",
-        "type": "복수 기능 혼합",
-        "detail": "인자 해석 오류",
-        "question": "SK하이닉스 실적 부진 이유랑 증권가 시각 알려줘",
-        "tools": [
-          "search_research_reports",
-          "get_financial_facts"
-        ]
-      },
-      {
-        "id": "mix-08",
-        "type": "복수 기능 혼합",
-        "detail": "인자 해석 오류",
-        "question": "현대차 최근 실적 이슈랑 애널리스트 의견 정리해줘",
-        "tools": [
-          "search_research_reports",
-          "get_financial_facts"
-        ]
-      },
-      {
-        "id": "mix-09",
-        "type": "복수 기능 혼합",
-        "detail": "인자 해석 오류",
-        "question": "두산에너빌리티 왜 이런 실적이 나왔고 전망은 어떤지 알려줘",
-        "tools": [
-          "search_research_reports",
-          "get_financial_facts"
-        ]
-      },
-      {
-        "id": "mix-10",
-        "type": "복수 기능 혼합",
-        "detail": "인자 해석 오류",
-        "question": "한화오션 실적 배경이랑 증권사 평가 같이 알려줘",
-        "tools": [
-          "get_financial_facts",
-          "search_research_reports"
-        ]
-      },
-      {
-        "id": "ctx-06",
-        "type": "현재 화면 문맥",
-        "detail": "인자 해석 오류",
-        "question": "이 뉴스 나온 회사 주가 지금 얼마야?",
-        "tools": []
-      }
-    ],
     "리포트 Retriever": [
       {
         "id": "report-06",
@@ -805,6 +607,65 @@
           "search_research_reports",
           "get_financial_facts"
         ]
+      }
+    ],
+    "Tool 인자": [
+      {
+        "id": "mix-06",
+        "type": "복수 기능 혼합",
+        "detail": "인자 해석 오류",
+        "question": "삼성전자 영업이익이 왜 줄었고 증권사 전망은 어때?",
+        "tools": [
+          "search_research_reports",
+          "get_financial_facts"
+        ]
+      },
+      {
+        "id": "mix-07",
+        "type": "복수 기능 혼합",
+        "detail": "인자 해석 오류",
+        "question": "SK하이닉스 실적 부진 이유랑 증권가 시각 알려줘",
+        "tools": [
+          "search_research_reports",
+          "get_financial_facts"
+        ]
+      },
+      {
+        "id": "mix-08",
+        "type": "복수 기능 혼합",
+        "detail": "인자 해석 오류",
+        "question": "현대차 최근 실적 이슈랑 애널리스트 의견 정리해줘",
+        "tools": [
+          "search_research_reports",
+          "get_financial_facts"
+        ]
+      },
+      {
+        "id": "mix-09",
+        "type": "복수 기능 혼합",
+        "detail": "인자 해석 오류",
+        "question": "두산에너빌리티 왜 이런 실적이 나왔고 전망은 어떤지 알려줘",
+        "tools": [
+          "search_research_reports",
+          "get_financial_facts"
+        ]
+      },
+      {
+        "id": "mix-10",
+        "type": "복수 기능 혼합",
+        "detail": "인자 해석 오류",
+        "question": "한화오션 실적 배경이랑 증권사 평가 같이 알려줘",
+        "tools": [
+          "get_financial_facts",
+          "search_research_reports"
+        ]
+      },
+      {
+        "id": "ctx-06",
+        "type": "현재 화면 문맥",
+        "detail": "인자 해석 오류",
+        "question": "이 뉴스 나온 회사 주가 지금 얼마야?",
+        "tools": []
       }
     ]
   }

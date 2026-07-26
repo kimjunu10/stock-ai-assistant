@@ -72,8 +72,9 @@ def classify_layer(case, rec: RunRecord, grade) -> list[tuple[str, str]]:
                     hits.append(("리포트 Retriever", "정답 청크 미검색"))
                 else:
                     hits.append(("평가기·라벨", "정답 식별자 미확정"))
-            else:
-                hits.append(("평가기·라벨", "검증기 삭제/과잉 라벨"))
+            # else: 같은 정답 문서의 다른 청크를 반환했거나 검증기가 지운 경우.
+            # 이미 지표 집계에서 Retriever 실패로 세지 않는다(grader §4). 여기서도
+            # 실패로 세면 같은 사건을 두 번 계수하게 되므로 계층에 넣지 않는다.
     if grade.other_stock_sources:
         layer = "뉴스 Retriever" if case.type == "뉴스 사건·영향" else "리포트 Retriever"
         hits.append((layer, "타 종목 혼입"))
