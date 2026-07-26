@@ -25,7 +25,6 @@ final-dev 실행이 만든 raw record 를 읽어 다음을 한다.
 from __future__ import annotations
 
 import json
-import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -79,7 +78,9 @@ def corrected_document_retrieval(cases, records, grades) -> dict:
 
     for c, r, g in zip(cases, records, grades, strict=True):
         doc_gold = [
-            gs.source_id for gs in c.gold_sources if gs.source_id and gs.source_type in _DOC_SOURCE_TYPES
+            gs.source_id
+            for gs in c.gold_sources
+            if gs.source_id and gs.source_type in _DOC_SOURCE_TYPES
         ]
         if not doc_gold:
             continue
@@ -118,7 +119,9 @@ def news_report_split(cases, records, grades) -> dict:
     """뉴스/리포트 문서 검색을 분리해 recall/hit@1/mrr 를 재계산한다."""
     out = {}
     for label, type_name in (("뉴스", "뉴스 사건·영향"), ("리포트", "증권사 리포트")):
-        sub = [(c, r, g) for c, r, g in zip(cases, records, grades, strict=True) if c.type == type_name]
+        sub = [
+            (c, r, g) for c, r, g in zip(cases, records, grades, strict=True) if c.type == type_name
+        ]
         if not sub:
             out[label] = None
             continue
@@ -231,7 +234,6 @@ def pr61_regression_check(cases, records, grades) -> dict:
 
     devset 에 해당 유형 질문이 없으면 '검증됨'이라 주장하지 않고 구분해 기록한다.
     """
-    by_id = {c.id: c for c in cases}
     recs_by_id = {r.case_id: r for r in records}
     grades_by_id = {g.case_id: g for g in grades}
 
@@ -299,12 +301,18 @@ def pr61_regression_check(cases, records, grades) -> dict:
     unsupported_tp_blocked = sum(
         1
         for c in tp_cases
-        if any("목표주가" in e and "일치하지 않음" in e for e in (recs_by_id.get(c.id).validation_errors if recs_by_id.get(c.id) else []))
+        if any(
+            "목표주가" in e and "일치하지 않음" in e
+            for e in (recs_by_id.get(c.id).validation_errors if recs_by_id.get(c.id) else [])
+        )
     )
     answer_dropped = sum(
         1
         for c in tp_cases
-        if any("제거함" in e for e in (recs_by_id.get(c.id).validation_errors if recs_by_id.get(c.id) else []))
+        if any(
+            "제거함" in e
+            for e in (recs_by_id.get(c.id).validation_errors if recs_by_id.get(c.id) else [])
+        )
     )
     checks["목표주가_검증"] = {
         "devset_coverage": len(tp_cases),
@@ -390,7 +398,10 @@ def main() -> int:
     )
 
     print(f"실행 {len(cases)} / 무결점 {clean} / 고유 실패 {len(unique_failure_ids)}")
-    print("\n공식 aggregate() document_retrieval:", official_metrics["retrieval"]["document_retrieval"])
+    print(
+        "\n공식 aggregate() document_retrieval:",
+        official_metrics["retrieval"]["document_retrieval"],
+    )
     print("재계산(hit 기준) document_retrieval:", corrected_retrieval)
     print("\n뉴스/리포트 분리:", json.dumps(split_retrieval, ensure_ascii=False, indent=2))
     for layer in LAYERS:
