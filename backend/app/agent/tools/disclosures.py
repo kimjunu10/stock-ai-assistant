@@ -55,13 +55,17 @@ def run_search_disclosures(facts: FactsService, inp: SearchDisclosuresInput) -> 
                 "is_latest": r.get("is_latest"),
             }
         )
+        rcept_no = r.get("rcept_no")
+        # DART 공식 공개 뷰어 URL(비공개 경로·signed URL 아님). 접수번호가 있을 때만.
+        dart_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcept_no}" if rcept_no else None
         sources.append(
             SourceRef(
-                source_id=r.get("rcept_no", ""),
+                source_id=rcept_no or "",
                 source_type="dart_document",
                 title=r.get("title"),
                 published_at=iso(r.get("disclosed_at")),
-                locator={"rcept_no": r.get("rcept_no")},
+                url=dart_url,
+                locator={"rcept_no": rcept_no},
             )
         )
     return ok({"disclosures": data}, sources=sources)

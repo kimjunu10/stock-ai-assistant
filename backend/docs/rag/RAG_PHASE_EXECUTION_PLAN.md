@@ -24,10 +24,10 @@
 | 2 | 뉴스 RAG | [x] | [x] |
 | 3 | 하이브리드 검색 | [x] | [x] |
 | 4 | 재무·용어·혼합 QA | [x] 구현 완료, 정확성 보강 필요 | [x] |
-| 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [ ] |
+| 5 | 증권사 리포트 | [x] 적재·검색·QA 연결 완료 | [x] 5.5 단일 Agent로 라이브(운영 QA 경로에 포함) |
 | 5.5 | 단일 Agentic RAG 전환 | [x] A~G 완료 (라이브 전환·legacy 제거, 2026-07-25) | [x] |
 | 6 | 주가 Tool | [x] 구현·통합·평가·**운영 배포 검증 완료**(2026-07-25, PR #41=1df5d04) | [x] |
-| 7 | 프런트 연결 | [ ] | [ ] |
+| 7 | 프런트 연결 | [x] 구현·마무리 보완·감사 완료(2026-07-26, `phase/7-finalization`) | [ ] 운영 배포·검증 대기 |
 | 8 | 전체 평가·튜닝 | [ ] | [ ] |
 | 9 | 배포·발표 | [ ] | [ ] |
 | 선택 | MCP 노출 | [-] 기본 제외 | — |
@@ -641,6 +641,24 @@ _resolve_stock_code: stock_code 가 6자리 숫자 아니면 문맥(runtime.cont
 docstring: 3개 Tool 에 "stock_code=6자리 숫자, 회사명 금지" 명시
 검증: pytest 313 passed(+3), ruff·format, UI 20문 재현 error 0·내부노출 0
 문서: phase_7/PHASE_7_BUG_STOCKCODE_COMPANY_NAME.md
+미수행: 운영 배포·자동 머지·Phase 8
+```
+
+## Phase 7 마무리 — 통합 점검·부족 기능 보완(2026-07-26)
+
+브랜치 `phase/7-finalization`(main #44/#45 머지·운영 배포 완료 기준). 감사 후 데이터가
+이미 있는 부족 기능만 보완. 값·날짜 재계산·답변 파싱 없음.
+
+```text
+§4 뉴스 카드: item에 sentiment(호재/악재/중립)·stock_code 추가, 프런트 배지 렌더
+§5 출처 이동: 공시=DART 공식 URL, 리포트=내부 근거 보기(evidence·목표주가 인라인)
+§6 event_timeline: 뉴스+공시 함께 조회 시 발표시각 최신순 병합(신규 생성)
+§6 financial_comparison: 데이터 부족(리포트가 전망 실적 미구조화) → 미지원·사유 문서화
+§7 price_line: UI 전용 daily_full(최대 60거래일) 별도 제공, 모델 요약 daily 유지
+§8 스트리밍: 동기 invoke 제약 → 작업 중 일반 진행 라벨만(허위 상태 제거), 실시간은 후속
+검증: 백엔드 316 passed(+3)·ruff·format, Agent 평가 recall 1.0/forbidden 0.0,
+     프런트 tsc·oxlint·vitest 13(+4)·build, Agent 경유 §9 로컬 검증
+문서: phase_7/PHASE_7_CHANGELOG.md·PHASE_7_UI_DATA_CONTRACT.md·PHASE_7_COMPLETION.md
 미수행: 운영 배포·자동 머지·Phase 8
 ```
 

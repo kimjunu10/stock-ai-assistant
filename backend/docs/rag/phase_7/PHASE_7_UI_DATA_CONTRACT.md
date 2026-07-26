@@ -78,18 +78,58 @@
 }
 ```
 
-허용 enum:
+허용 enum(실제 생성 여부 표기, 2026-07-26 마무리 기준):
 
-- `news_cards`: 검증된 뉴스 목록, 조회 기간, 원문 링크
-- `price_snapshot`: 단일 현재가/기간 요약 카드
-- `price_line`: Tool이 제공한 복수 실제 거래일 점
-- `event_return`: 발표 전/후 거래일·가격·백엔드 계산 수익률
-- `broker_targets`: `target_price_status=stated`인 증권사 목표주가
-- `financial_series`: DART 공식 재무값
-- `financial_comparison`: 실제값/전망값 비교 확장용
-- `disclosure_metrics`: 구조화 공시 핵심 값
-- `event_timeline`: 사건 타임라인 확장용
-- `term_definition`: 금융용어 정의
+- `news_cards`(생성): 검증된 뉴스 목록, 조회 기간, 원문 링크. item에 `sentiment`
+  (호재/악재/중립, 사건 조회 경로에서만), `stock_code` 포함(있을 때만 배지 렌더).
+- `price_snapshot`(생성): 단일 현재가/기간 요약 카드
+- `price_line`(생성): 실제 거래일 점. UI 전용 `daily_full`(최대 60거래일) 우선, 없으면
+  요약 `daily`(6점). 프런트는 값을 재계산하지 않는다.
+- `event_return`(생성): 발표 전/후 거래일·가격·백엔드 계산 수익률
+- `broker_targets`(생성): `target_price_status=stated`인 증권사 목표주가
+- `financial_series`(생성): DART 공식 재무값
+- `disclosure_metrics`(생성): 구조화 공시 핵심 값
+- `event_timeline`(생성): 뉴스+공시가 함께 조회된 경우에만 발표시각 최신순 병합
+- `term_definition`(생성): 금융용어 정의
+- `financial_comparison`(**미생성 — 데이터 부족**): 실제/전망 실적 병렬 비교. 리포트
+  Tool이 추정 실적을 구조화된 값으로 반환하지 않아 현재 생성 경로 없음. 필요한 계약은
+  §"미지원 시각화" 참조. type은 스키마 enum에만 남겨 두되 payload는 만들지 않는다.
+
+### event_timeline payload
+
+```json
+{
+  "type": "event_timeline",
+  "title": "관련 사건 타임라인",
+  "data": {
+    "events": [
+      {"kind": "news|disclosure", "title": "...", "at": "2026-07-25T09:00:00+09:00",
+       "source_id": "...", "publisher": "...", "url": "https://... (뉴스만, 있을 때)"}
+    ]
+  },
+  "source_ids": ["..."]
+}
+```
+
+같은 답변에서 뉴스와 공시가 **둘 다** ok일 때만 만든다(단일 종류면 각자 카드). 확정된
+사건만 쓰고 발표시각 최신순으로 정렬한다(최대 12건). 새 조회·값 재계산은 없다.
+
+### 미지원 시각화와 필요한 백엔드 계약
+
+`financial_comparison`(실제 vs 전망 실적 비교)은 데이터가 없어 지원하지 않는다.
+실제 실적은 DART `financials`로 있으나, 증권사 리포트 Tool은 목표주가만 구조화하고
+추정 매출·영업이익·EPS 등 전망 재무수치를 구조화된 값으로 반환하지 않는다
+(`table_value_kinds`는 값이 아닌 카운트). 지원하려면 리포트 파서가 추정 실적 표를
+항목·기간·값(`forecast_financials`)으로 구조화해 반환하는 백엔드 계약이 필요하다.
+그 전까지는 지원한다고 표시하지 않고, 빈/환각 차트를 만들지 않는다.
+
+### 출처 이동(리포트·공시)
+
+- 공시(`dart_document`): `rcept_no`가 있으면 DART 공식 공개 뷰어 URL을 `url`에 실어
+  새 탭 이동. 비공개 경로·signed URL은 만들지 않는다.
+- 리포트(`research_report`): 원문 URL이 없으므로 `locator.evidence`(검증된 근거 문장),
+  `locator.target_price`(stated만), `locator.investment_opinion`을 실어 클릭 시 인라인
+  근거 보기를 제공한다(내부 근거 보기).
 
 규칙:
 

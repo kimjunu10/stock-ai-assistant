@@ -44,4 +44,57 @@ describe('RagVisualizations', () => {
     expect(screen.getByText('증권사 전망')).toBeTruthy()
     expect(screen.getByText('목표주가는 증권사의 전망이며 실제 시장 가격이나 확정값이 아닙니다.')).toBeTruthy()
   })
+
+  it('renders news sentiment badge and stock code', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'news_cards',
+      title: '최근 뉴스',
+      data: {
+        items: [{ source_id: 'n1', title: '악재 소식', publisher: '테스트', published_at: '2026-07-24T09:00:00+09:00', sentiment: 'negative', stock_code: '005930' }],
+      },
+      sourceIds: ['n1'],
+    }]} />)
+    expect(screen.getByText('악재')).toBeTruthy()
+    expect(screen.getByText('005930')).toBeTruthy()
+  })
+
+  it('renders event timeline merging news and disclosures newest-first', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'event_timeline',
+      title: '관련 사건 타임라인',
+      data: {
+        events: [
+          { kind: 'news', title: '최신 뉴스', at: '2026-07-25T09:00:00+09:00', source_id: 'n1', publisher: '테스트' },
+          { kind: 'disclosure', title: '공시 제목', at: '2026-07-21T09:00:00+09:00', source_id: 'd1', publisher: 'DART' },
+        ],
+      },
+      sourceIds: ['n1', 'd1'],
+    }]} />)
+    expect(screen.getByText('뉴스')).toBeTruthy()
+    expect(screen.getByText('공시')).toBeTruthy()
+    expect(screen.getByText('최신 뉴스')).toBeTruthy()
+  })
+
+  it('draws a price line from many trading-day points without recomputing', () => {
+    const points = Array.from({ length: 22 }, (_, i) => ({
+      trading_day: `2026-07-${String(i + 1).padStart(2, '0')}`,
+      close: 250000 + i * 1000,
+      currency: 'KRW',
+    }))
+    render(<RagVisualizations visualizations={[{
+      type: 'price_line',
+      title: '실제 주가 흐름',
+      data: { points, quote: { currency: 'KRW' }, period: { start_trading_day: '2026-07-01', end_trading_day: '2026-07-22', return_pct: 8.4 } },
+      sourceIds: ['price:x'],
+    }]} />)
+    expect(screen.getByText('실제값')).toBeTruthy()
+  })
+
+  it('ignores unknown visualization types safely', () => {
+    const { container } = render(<RagVisualizations visualizations={[{
+      // @ts-expect-error unknown type on purpose
+      type: 'unknown_kind', title: 'x', data: {}, sourceIds: ['s1'],
+    }]} />)
+    expect(container.querySelector('.rag-viz')).toBeNull()
+  })
 })

@@ -286,6 +286,7 @@ def _build_ui_payload(tool_payloads: list[dict]) -> tuple[list[dict], list[dict]
     source_by_id: dict[str, dict] = {}
     visualizations: list[dict] = []
     warnings: list[str] = []
+    timeline_inputs: list[tuple[str, dict, list[str]]] = []  # (tool_name, data, source_ids)
 
     for payload in tool_payloads:
         public_sources = [
@@ -307,9 +308,67 @@ def _build_ui_payload(tool_payloads: list[dict]) -> tuple[list[dict], list[dict]
         view = _visualization_for_tool(tool_name, data, source_ids)
         if view is not None:
             visualizations.append(view)
+        if tool_name in ("search_news", "search_disclosures"):
+            timeline_inputs.append((tool_name, data, source_ids))
         warnings.extend(_public_warnings(payload.get("warnings")))
 
+    # 사건 타임라인: 같은 답변에서 뉴스·공시가 함께 조회됐을 때만, 이미 확정된
+    # 사건(제목·발표시각)을 시간순으로 병합한다. 새 조회·재계산·답변 파싱 없음.
+    timeline = _event_timeline(timeline_inputs)
+    if timeline is not None:
+        visualizations.append(timeline)
+
     return list(source_by_id.values()), visualizations, list(dict.fromkeys(warnings))
+
+
+def _event_timeline(inputs: list[tuple[str, dict, list[str]]]) -> dict | None:
+    """뉴스 사건 + 공시를 발표시각 기준 최신순 타임라인으로 병합한다.
+
+    출처가 있는 확정 사건만 쓰고, 뉴스와 공시가 둘 다 있을 때만 만든다(단일 종류면
+    각자 카드로 충분). 값·날짜를 새로 만들지 않는다.
+    """
+    kinds = {name for name, _, _ in inputs}
+    if not ({"search_news", "search_disclosures"} <= kinds):
+        return None
+
+    events: list[dict] = []
+    all_source_ids: list[str] = []
+    for name, data, source_ids in inputs:
+        all_source_ids.extend(source_ids)
+        if name == "search_news":
+            for it in data.get("news", []) or []:
+                if isinstance(it, dict) and it.get("published_at"):
+                    events.append(
+                        {
+                            "kind": "news",
+                            "title": it.get("title"),
+                            "at": it.get("published_at"),
+                            "source_id": it.get("source_id"),
+                            "publisher": it.get("publisher"),
+                            "url": it.get("url"),
+                        }
+                    )
+        else:  # search_disclosures
+            for it in data.get("disclosures", []) or []:
+                if isinstance(it, dict) and it.get("disclosed_at"):
+                    events.append(
+                        {
+                            "kind": "disclosure",
+                            "title": it.get("title"),
+                            "at": it.get("disclosed_at"),
+                            "source_id": it.get("rcept_no"),
+                            "publisher": "DART",
+                        }
+                    )
+    if len({e["kind"] for e in events}) < 2:
+        return None  # 실제로 두 종류가 다 있을 때만 타임라인
+    events.sort(key=lambda e: e["at"], reverse=True)
+    return {
+        "type": "event_timeline",
+        "title": "관련 사건 타임라인",
+        "data": {"events": events[:12]},
+        "source_ids": list(dict.fromkeys(all_source_ids)),
+    }
 
 
 def _public_warnings(value) -> list[str]:
@@ -350,13 +409,16 @@ def _visualization_for_tool(
         }
 
     if tool_name == "get_stock_prices":
-        daily = data.get("daily")
-        if isinstance(daily, list) and len(daily) >= 2:
+        # UI 선그래프는 거래일별 전체(daily_full, 최대 60)를 우선 사용하고, 없으면 요약(daily).
+        points = data.get("daily_full")
+        if not (isinstance(points, list) and len(points) >= 2):
+            points = data.get("daily")
+        if isinstance(points, list) and len(points) >= 2:
             return {
                 "type": "price_line",
                 "title": "실제 주가 흐름",
                 "data": {
-                    "points": daily,
+                    "points": points,
                     "quote": data.get("quote"),
                     "period": data.get("period"),
                 },

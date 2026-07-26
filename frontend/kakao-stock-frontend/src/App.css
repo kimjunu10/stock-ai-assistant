@@ -970,6 +970,29 @@
   .rag-news-grid strong { @apply line-clamp-2 text-[14px] leading-6 font-extrabold text-ink; }
   .rag-news-grid p { @apply mt-1.5 mb-0 line-clamp-3 text-[12px] leading-5 font-medium text-muted; }
   .rag-news-grid small { @apply mt-3 flex items-center gap-1 text-[11px] font-bold text-brand-ink; }
+  .rag-news-sentiment { @apply shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-black not-italic; }
+  .rag-news-sentiment.is-positive { @apply bg-emerald-100 text-emerald-700; }
+  .rag-news-sentiment.is-negative { @apply bg-rose-100 text-rose-700; }
+  .rag-news-sentiment.is-neutral { @apply bg-slate-200 text-slate-600; }
+  .rag-news-code { @apply shrink-0 rounded-md bg-brand-soft px-1.5 py-0.5 text-[10px] font-extrabold text-brand-ink; }
+  .rag-viz--timeline .rag-timeline { @apply m-0 flex list-none flex-col gap-2 p-0; }
+  .rag-timeline > li > a, .rag-timeline > li > div { @apply grid grid-cols-[auto_auto_1fr] items-baseline gap-2 rounded-[12px] border border-line bg-surface px-3 py-2 no-underline transition; }
+  .rag-timeline > li > a:hover { @apply -translate-y-0.5 border-brand/40; }
+  .rag-timeline-kind { @apply shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-black; }
+  .rag-timeline-kind.is-news { @apply bg-brand-soft text-brand-ink; }
+  .rag-timeline-kind.is-disclosure { @apply bg-amber-100 text-amber-700; }
+  .rag-timeline > li time { @apply shrink-0 text-[11px] font-semibold text-faint; }
+  .rag-timeline > li strong { @apply col-start-3 line-clamp-2 text-[13px] font-extrabold text-ink; }
+  .rag-timeline > li small { @apply col-start-3 text-[11px] font-semibold text-muted; }
+  .rag-source-evidence summary { @apply flex cursor-pointer list-none flex-col items-start gap-1; }
+  .rag-source-evidence summary::-webkit-details-marker { display: none; }
+  .rag-source-more { @apply mt-2 flex items-center gap-1 text-[11px] font-bold text-brand-ink; }
+  .rag-source-evidence[open] > div { @apply mt-2 flex flex-col gap-2; }
+  .rag-source-tp { @apply m-0 flex flex-wrap items-center gap-2 text-[12px]; }
+  .rag-source-tp b { @apply font-extrabold text-ink; }
+  .rag-source-tp span { @apply font-bold text-brand-ink; }
+  .rag-source-tp em { @apply text-[10px] not-italic font-semibold text-faint; }
+  .rag-source-evidence blockquote { @apply m-0 rounded-[10px] border-l-2 border-brand/40 bg-subtle px-2.5 py-2 text-[12px] leading-5 text-muted; }
   .rag-metric-grid { @apply grid grid-cols-2 gap-2; }
   .rag-metric-grid > div { @apply flex min-w-0 flex-col rounded-xl border border-line bg-surface p-3; box-shadow: inset 1px 1px 1px var(--clay-highlight), 0 4px 8px var(--clay-shadow-deep); }
   .rag-metric-grid small { @apply text-[12px] font-bold text-faint; }
