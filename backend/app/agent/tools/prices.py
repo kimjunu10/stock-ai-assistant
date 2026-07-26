@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 
 from app.agent.tools.common import SourceRef, ToolResult, error, no_data, ok, sanitize_exception
 from app.services.stock_prices import (
+    EventWindowReturn,
     PeriodReturn,
     PriceQuote,
     StockPriceError,
@@ -54,11 +55,19 @@ class GetStockPricesInput(BaseModel):
 
 
 class CalculateEventReturnInput(BaseModel):
+    """사건 전후 수익률 입력.
+
+    event_date 는 필수다. 사건을 특정하지 못한 상태에서 일반 기간 수익률로 대체하는 것을
+    입력 계약 수준에서 차단한다(과거 결함: event_date 누락 → 최근 1개월 수익률 반환).
+    일반 기간 수익률이 필요하면 get_stock_prices(lookback=...)를 쓴다.
+    """
+
     stock_code: str = Field(pattern=r"^[0-9]{6}$")
-    # 사건 기준일(뉴스·공시 발표일). 미지정 시 lookback 기간 수익률로 대체.
-    event_date: str | None = None  # YYYY-MM-DD
-    window: str = "5d"  # EVENT_WINDOWS 키
-    lookback: str | None = None  # event_date 없을 때 기간 수익률(1w/1m 등)
+    # 사건 기준일(뉴스·공시 발표일). 필수 — 없으면 이 Tool 을 호출할 수 없다.
+    event_date: str  # YYYY-MM-DD
+    # 사건 식별자·출처(근거 추적용). 사건 문맥에서 전달된 값을 그대로 싣는다.
+    event_id: str | None = None
+    window: str = "5d"  # EVENT_WINDOWS 키(대칭 ±N거래일 보조 결과)
 
 
 def _parse_date(s: str | None) -> date | None:
@@ -197,41 +206,46 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
 def run_calculate_event_return(
     svc: StockPriceService, inp: CalculateEventReturnInput
 ) -> ToolResult:
-    """특정일/사건 전후 또는 기간 수익률을 반환한다(백엔드 계산)."""
+    """사건 발표 전후 주가를 반환한다(백엔드 계산).
+
+    계약(§5): 발표 전 마지막 확정 거래일 종가를 기준으로, 발표 후 1·3·5거래일 종가·수익률을
+    반환한다. 발표 이후 확정 거래일이 하나도 없으면 no_data 이며, 다른 기간(최근 1개월 등)
+    으로 절대 대체하지 않는다.
+    """
     try:
         event_date = _parse_date(inp.event_date)
-        if event_date is not None:
-            window = EVENT_WINDOWS.get(inp.window)
-            if window is None:
-                return error(f"지원하지 않는 window 입니다: {inp.window}")
-            pre_days, post_days = window
-            r = svc.get_event_return(
-                inp.stock_code,
-                event_date=event_date,
-                pre_days=pre_days,
-                post_days=post_days,
-            )
-            if r is None:
-                return no_data(
-                    f"{inp.stock_code} {event_date} 전후 거래일 데이터가 부족합니다. "
-                    "다른 기간으로 대체하지 않았습니다."
-                )
-            return _event_ok(inp.stock_code, r, note=f"{event_date} 발표 전후(±{pre_days}거래일)")
+        if event_date is None:
+            return error("event_date 형식이 올바르지 않습니다(YYYY-MM-DD).")
+        if inp.window not in EVENT_WINDOWS:
+            return error(f"지원하지 않는 window 입니다: {inp.window}")
 
-        # event_date 없으면 lookback 기간 수익률.
-        if not inp.lookback:
-            return error("event_date 또는 lookback 중 하나는 필요합니다.")
-        days = LOOKBACK_DAYS.get(inp.lookback)
-        if days is None:
-            return error(f"지원하지 않는 기간입니다: {inp.lookback}")
-        q = svc.get_current_quote(inp.stock_code)
-        if q is None:
-            return no_data(f"{inp.stock_code} 기준 현재가를 확인할 수 없습니다.")
-        start = q.trading_day - timedelta(days=days)
-        r = svc.get_period_return(inp.stock_code, start=start, end=q.trading_day)
-        if r is None:
-            return no_data(f"{inp.stock_code} 최근 {inp.lookback} 구간 데이터가 없습니다.")
-        return _event_ok(inp.stock_code, r, note=f"최근 {inp.lookback}")
+        ew = svc.get_event_window_return(
+            inp.stock_code,
+            event_date=event_date,
+            horizons=StockPriceService.DEFAULT_EVENT_HORIZONS,
+        )
+        if ew is None:
+            return no_data(
+                f"{inp.stock_code} {event_date.isoformat()} 기준 발표 전 확정 거래일 데이터를 "
+                "찾을 수 없습니다. 다른 기간으로 대체하지 않았습니다."
+            )
+        if not ew.has_post_data:
+            # 발표 이후 확정 거래일 미존재 — 데이터 부족 상태를 그대로 반환한다.
+            return no_data(
+                f"{inp.stock_code} {event_date.isoformat()} 발표 이후 확정 거래일 데이터가 "
+                "아직 없어 계산할 수 없습니다. 다른 기간으로 대체하지 않았습니다.",
+                data={
+                    "stock_code": inp.stock_code,
+                    "event_id": inp.event_id,
+                    "event_date": event_date.isoformat(),
+                    "basis": "event",
+                    "baseline_trading_day": ew.baseline_trading_day.isoformat(),
+                    "baseline_close": ew.baseline_close,
+                    "horizons": [],
+                    "has_post_data": False,
+                },
+            )
+        return _event_window_ok(inp, ew)
 
     except StockPriceError as e:
         return error(str(e))
@@ -243,23 +257,65 @@ def run_calculate_event_return(
         return error(sanitize_exception(e))
 
 
-def _event_ok(stock_code: str, r: PeriodReturn, *, note: str) -> ToolResult:
-    data = _return_payload(r)
-    data["note"] = note  # 인과 아님(시간적 관계만)
+def _event_window_ok(inp: CalculateEventReturnInput, ew: EventWindowReturn) -> ToolResult:
+    """사건 전후 결과를 계약 형태로 직렬화한다(수익률은 서비스 계산값 그대로)."""
+    last = ew.horizons[-1]
+    data = {
+        "stock_code": ew.stock_code,
+        "event_id": inp.event_id,
+        "event_date": ew.event_date.isoformat(),
+        "basis": "event",  # 일반 기간이 아니라 사건 기준임을 명시
+        "baseline_trading_day": ew.baseline_trading_day.isoformat(),
+        "baseline_close": ew.baseline_close,
+        "has_post_data": True,
+        "horizons": [
+            {
+                "horizon_days": h.horizon_days,
+                "trading_day": h.trading_day.isoformat(),
+                "close": h.close,
+                "change": h.change,
+                "return_pct": h.return_pct,
+            }
+            for h in ew.horizons
+        ],
+        # 실제 사용한 시작·종료 거래일(계약 필수 항목).
+        "start_trading_day": ew.baseline_trading_day.isoformat(),
+        "end_trading_day": last.trading_day.isoformat(),
+        "start_close": ew.baseline_close,
+        "end_close": last.close,
+        "change": last.change,
+        "return_pct": last.return_pct,
+        "currency": ew.currency,
+        "adjusted": ew.adjusted,
+        "unit": "원",
+        # 인과 아님(시간적 관계만).
+        "note": (
+            f"{ew.event_date.isoformat()} 발표 전 마지막 거래일"
+            f"({ew.baseline_trading_day.isoformat()}) 종가 기준, 발표 후 "
+            + "·".join(f"{h.horizon_days}거래일" for h in ew.horizons)
+        ),
+    }
     sources = [
         _price_source(
-            stock_code,
-            trading_day=r.start_trading_day,
-            as_of=r.start_trading_day.isoformat(),
-            extra={"kind": "return_start", "adjusted": r.adjusted},
-        ),
-        _price_source(
-            stock_code,
-            trading_day=r.end_trading_day,
-            as_of=r.end_trading_day.isoformat(),
-            extra={"kind": "return_end", "adjusted": r.adjusted},
-        ),
+            ew.stock_code,
+            trading_day=ew.baseline_trading_day,
+            as_of=ew.baseline_trading_day.isoformat(),
+            extra={"kind": "event_baseline", "adjusted": ew.adjusted},
+        )
     ]
+    sources.extend(
+        _price_source(
+            ew.stock_code,
+            trading_day=h.trading_day,
+            as_of=h.trading_day.isoformat(),
+            extra={
+                "kind": "event_horizon",
+                "horizon_days": h.horizon_days,
+                "adjusted": ew.adjusted,
+            },
+        )
+        for h in ew.horizons
+    )
     return ok(data, sources=sources)
 
 

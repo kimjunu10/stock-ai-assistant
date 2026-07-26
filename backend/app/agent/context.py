@@ -47,3 +47,12 @@ class QaRuntimeContext:
     current_date: str | None = None
     timezone: str = "Asia/Seoul"
     services: Any = field(default=None)  # ToolServices (직렬화 회피 위해 Any)
+    # 사건 후속 질문 계약(prompt.md §4). 요청 시점에 코드가 확정한 결과만 담는다.
+    # 모델이 사건을 고르지 않는다 — resolved 면 event_id·event_date 를 그대로 쓰고,
+    # ambiguous/none 이면 사건 기반 계산 Tool 자체가 거부된다.
+    event_status: str = "none"  # resolved | ambiguous | none
+    event_id: str | None = None
+    event_date: str | None = None  # YYYY-MM-DD (발표일)
+    event_title: str | None = None
+    event_stock_code: str | None = None
+    event_candidates: Any = field(default=None)  # list[EventCandidate] (명확화용)

@@ -196,3 +196,37 @@ FnGuide 라이선스, 현재 DART·리포트 데이터의 대체 가능성을 �
   보조정보 11px, 출처 제목 13px 확인
 - 390×844 모바일 렌더: viewport/body/scroll width 모두 390px, 가로 overflow 0,
   재무 카드 단일 열, console warning/error 0
+
+## fix/phase-7-exit-gate — 사건 후속 질문 기간 오류 근본 수정
+
+운영에서 "그 뉴스 이후 주가가 어떻게 됐어?"가 사건 발표일이 아닌 최근 1개월 수익률로
+답하던 결함을 수정했다. 상세 원인·계약은 `PHASE_7_BUG_EVENT_REFERENCE.md`,
+검증 결과는 `PHASE_7_EXIT_GATE.md` 참조.
+
+### 백엔드 계약 변경
+
+- `calculate_event_return`(파괴적): `event_date` 필수화, `lookback` 인자 제거.
+  발표일은 서버 확정 문맥에서만 오며 Agent가 넘긴 날짜는 무시한다. 사건 미확정·복수
+  사건이면 계산을 거부하고 후보를 반환한다. 결과는 발표 전 마지막 확정 거래일 기준
+  발표 후 1·3·5거래일 종가·수익률(확정된 지평만).
+- `StockPriceService.get_event_window_return` 추가(수익률 계산 단일 지점 유지).
+  발표 후 확정 거래일이 없으면 `has_post_data=False`로 데이터 부족을 그대로 표현한다.
+- `QaRequest.event_context` / `selected_event_id` 추가(비파괴적). 사건 식별자·발표일·
+  종목·사용자 선택 여부를 구조화해 전달한다. 서버 대화 상태는 만들지 않는다.
+- `app/agent/event_reference.py` 신규: 사용자 선택 우선 → 서로 다른 사건 1개면 자동
+  연결(같은 사건 기사 여러 건은 클러스터 하나) → 그 외 명확화.
+- `QaRuntimeContext`에 확정 사건 필드 추가, 시스템 프롬프트에 사건 문맥·기간 선택 규칙 주입.
+- `validate_event_grounding` 추가: "이 뉴스 이후" 주장에 사건 근거(식별자·발표일·거래일·
+  계산 결과)를 요구하고, 없으면 숫자를 고치지 않고 안전 답변으로 전환한다.
+
+### 함께 수정한 검증기 오탐 3건
+
+날짜 표기(`2026-07-25`), 종목코드(`999999`), 뉴스 기사 인용 수치가 "근거 없는 재무 숫자"로
+오탐되던 문제. 각각 회귀 테스트로 고정했다.
+
+### 검증
+
+- 백엔드 pytest 372 passed / 1 failed(`test_feature_flag_off_returns_none` — 로컬 `.env`
+  의존, `main`에서도 동일 실패), ruff check·format 통과
+- API 종료 게이트: `/qa` 20 시나리오, `/qa/stream` 17건 전부 통과. 사건 후속 반복 15회 편차 0
+- 필수 기능 호출률 100%, 금지 기능 호출 0%, 기간 대체 0건, 임의 사건 선택 0건

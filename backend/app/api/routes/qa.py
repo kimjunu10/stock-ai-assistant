@@ -59,6 +59,8 @@ def ask(req: QaRequest) -> QaResponse:
         document_id=req.document_id,
         report_page=req.report_page,
         conversation_id=req.conversation_id,
+        event_context=req.event_context,
+        selected_event_id=req.selected_event_id,
     )
     execution = AgentExecution(
         agent=True,
@@ -107,6 +109,8 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
             document_id=req.document_id,
             report_page=req.report_page,
             conversation_id=req.conversation_id,
+            event_context=req.event_context,
+            selected_event_id=req.selected_event_id,
         )
         for c in r.tool_calls:
             yield _sse("tool_start", {"name": c.name})

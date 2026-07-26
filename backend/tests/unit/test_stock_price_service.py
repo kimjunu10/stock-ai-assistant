@@ -181,6 +181,80 @@ def test_event_return_no_data_insufficient_window():
     assert r is None
 
 
+# ── 사건 발표 전후(1·3·5거래일) — fix/phase-7-exit-gate ─────────────
+def _event_candles():
+    """07-22 발표 기준: 이전 07-21, 이후 07-23/24/27/28/29 (주말 25·26 휴장)."""
+    days = [
+        "2026-07-20",
+        "2026-07-21",
+        "2026-07-23",
+        "2026-07-24",
+        "2026-07-27",
+        "2026-07-28",
+        "2026-07-29",
+    ]
+    prices = [99000, 100000, 103000, 104000, 102000, 101000, 98000]
+    return [_mk_candle(d, p) for d, p in zip(days, prices)]
+
+
+def test_event_window_return_1_3_5_trading_days():
+    """baseline=발표 전 마지막 거래일, 지평=발표 후 1·3·5번째 확정 거래일."""
+    r = _svc(FakeToss(_event_candles())).get_event_window_return(
+        "005930", event_date=date(2026, 7, 22)
+    )
+    assert r.baseline_trading_day == date(2026, 7, 21)
+    assert r.baseline_close == 100000.0
+    assert r.has_post_data is True
+    assert [h.horizon_days for h in r.horizons] == [1, 3, 5]
+    # 1거래일=07-23(103000) → +3.0%, 3거래일=07-27(102000) → +2.0%, 5거래일=07-29(98000) → -2.0%
+    assert r.horizons[0].trading_day == date(2026, 7, 23)
+    assert r.horizons[0].return_pct == pytest.approx(3.0, abs=0.01)
+    assert r.horizons[1].trading_day == date(2026, 7, 27)
+    assert r.horizons[1].return_pct == pytest.approx(2.0, abs=0.01)
+    assert r.horizons[2].trading_day == date(2026, 7, 29)
+    assert r.horizons[2].return_pct == pytest.approx(-2.0, abs=0.01)
+
+
+def test_event_window_baseline_excludes_event_day_close():
+    """발표 당일이 거래일이어도 baseline 은 발표 전 거래일(당일 종가는 사건 반영 가능)."""
+    days = ["2026-07-21", "2026-07-22", "2026-07-23"]
+    candles = [_mk_candle(d, p) for d, p in zip(days, [100000, 110000, 111000])]
+    r = _svc(FakeToss(candles)).get_event_window_return(
+        "005930", event_date=date(2026, 7, 22), horizons=(1,)
+    )
+    assert r.baseline_trading_day == date(2026, 7, 21)
+    assert r.baseline_close == 100000.0
+    # 발표 당일(07-22)이 발표 후 1거래일로 잡힌다.
+    assert r.horizons[0].trading_day == date(2026, 7, 22)
+    assert r.horizons[0].return_pct == pytest.approx(10.0, abs=0.01)
+
+
+def test_event_window_no_post_trading_day():
+    """발표 이후 확정 거래일이 없으면 has_post_data=False(다른 기간 대체 금지)."""
+    days = ["2026-07-20", "2026-07-21"]
+    candles = [_mk_candle(d, p) for d, p in zip(days, [99000, 100000])]
+    r = _svc(FakeToss(candles)).get_event_window_return("005930", event_date=date(2026, 7, 22))
+    assert r is not None
+    assert r.has_post_data is False
+    assert r.horizons == []
+    assert r.baseline_trading_day == date(2026, 7, 21)
+
+
+def test_event_window_partial_horizons_not_extrapolated():
+    """3·5거래일이 아직 없으면 그 지평은 만들지 않는다."""
+    days = ["2026-07-21", "2026-07-23", "2026-07-24"]
+    candles = [_mk_candle(d, p) for d, p in zip(days, [100000, 103000, 104000])]
+    r = _svc(FakeToss(candles)).get_event_window_return("005930", event_date=date(2026, 7, 22))
+    assert [h.horizon_days for h in r.horizons] == [1]
+
+
+def test_event_window_no_baseline_returns_none():
+    """발표 전 거래일이 전혀 없으면 None(추정 금지)."""
+    candles = [_mk_candle("2026-07-23", 100000)]
+    r = _svc(FakeToss(candles)).get_event_window_return("005930", event_date=date(2026, 7, 22))
+    assert r is None
+
+
 # ── 30초 캐시 ──────────────────────────────────────────────────────
 def test_daily_cache_hits_within_ttl():
     candles = [_mk_candle("2026-07-24", 100000), _mk_candle("2026-07-23", 99000)]

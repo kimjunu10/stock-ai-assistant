@@ -30,7 +30,7 @@ from app.agent.context import QaRuntimeContext
 from app.agent.middleware import DuplicateToolCallMiddleware, sanitize_tool_error
 from app.agent.prompts import financial_agent_system_prompt
 from app.agent.time_context import RelativePeriod, resolve_relative_date_range
-from app.agent.tools.common import ToolResult, error
+from app.agent.tools.common import ToolResult, error, no_data
 from app.agent.tools.disclosures import (
     DisclosureValuesInput,
     SearchDisclosuresInput,
@@ -79,6 +79,25 @@ def _resolve_stock_code(stock_code: str, runtime: ToolRuntime[QaRuntimeContext])
     return stock_code
 
 
+def _event_blocked(message: str, candidates) -> ToolResult:
+    """사건 미확정으로 계산을 거부한다. 숫자를 만들지 않고 상태만 알린다.
+
+    error 가 아니라 no_data 로 돌려 '시스템 오류'와 '근거 부족'을 구분한다(§10).
+    """
+    data: dict = {"basis": "event", "event_status": "unresolved"}
+    if candidates:
+        data["candidates"] = [
+            {
+                "event_id": c.event_id,
+                "title": c.title,
+                "published_at": c.published_at,
+            }
+            for c in list(candidates)[:5]
+        ]
+        data["event_status"] = "ambiguous"
+    return no_data(message, data=data)
+
+
 @dynamic_prompt
 def _runtime_prompt(request) -> str:
     """모든 모델 호출에 요청 시점의 서버 시간 기준을 주입한다."""
@@ -88,6 +107,10 @@ def _runtime_prompt(request) -> str:
         current_datetime=getattr(ctx, "current_datetime", None),
         current_date=getattr(ctx, "current_date", None),
         timezone=getattr(ctx, "timezone", "Asia/Seoul"),
+        event_status=getattr(ctx, "event_status", "none"),
+        event_title=getattr(ctx, "event_title", None),
+        event_date=getattr(ctx, "event_date", None),
+        event_candidates=getattr(ctx, "event_candidates", None),
     )
 
 
@@ -310,30 +333,60 @@ def build_tools() -> list:
     def calculate_event_return(
         stock_code: str,
         runtime: ToolRuntime[QaRuntimeContext],
-        event_date: str | None = None,
         window: str = "5d",
-        lookback: str | None = None,
     ) -> str:
-        """특정일/뉴스·공시 발표 전후 또는 기간의 **실제 주가 수익률**을 백엔드가 계산해 반환한다.
+        """특정 뉴스·공시 **발표 전후**의 실제 주가 변화를 백엔드가 계산해 반환한다.
 
-        "이 뉴스 발표 전후로 주가가 얼마나 움직였어?", "최근 한 달 수익률" 같은 질문에 쓴다.
-        - event_date(YYYY-MM-DD) + window("1d"|"3d"|"5d"|"10d"): 사건 전후 거래일 수익률.
-          event_date 는 관련 뉴스·공시의 발표일을 넣는다(그 시점 리포트 목표주가가 아님).
-        - event_date 없이 lookback: 최근 기간 수익률.
-        시작가·종료가·수익률·실제 사용한 거래일이 결과에 이미 계산돼 있다. Agent 는
-        가격이나 수익률을 다시 계산하지 않는다. 인과("때문에")를 단정하지 말고 시간적
-        관계("이후")만 표현한다. 데이터가 부족하면 no_data 다.
+        "이 뉴스 이후 주가가 어떻게 됐어?", "발표 후 1·3·5거래일 주가는?" 같은 사건 기준
+        질문에만 쓴다. 최근 한 달·일주일 같은 **일반 기간** 수익률은 이 Tool 이 아니라
+        get_stock_prices(lookback=...)를 쓴다.
+
+        사건 발표일은 서버 문맥에서 확정된 값을 사용한다. Agent 는 사건 날짜를 인자로
+        넘기지 않으며, 답변 텍스트나 기억으로 발표일을 추정하지 않는다. 사건이 확정되지
+        않았거나 여러 개면 이 Tool 은 계산을 거부하고 무엇이 필요한지 알려준다. 이때
+        일반 기간 수익률로 대체하지 말고 사용자에게 사건을 되묻는다.
+
+        결과는 발표 전 마지막 확정 거래일 종가 기준, 발표 후 1·3·5거래일 종가·수익률이다.
+        발표 이후 확정 거래일이 없으면 no_data 이며 다른 기간으로 대체하지 않는다.
+        수익률은 이미 계산돼 있다. 직접 산술하지 말고 결과 값과 거래일을 그대로 쓴다.
+        인과("때문에")를 단정하지 말고 시간적 관계("이후")만 표현한다.
         """
         svc, err = _services(runtime)
         if err:
             return _dump(err)
         if svc.prices is None:
             return _dump(error("주가 조회가 현재 구성되어 있지 않습니다."))
+
+        # 사건은 코드가 확정한 문맥에서만 온다(모델 선택·추정 차단).
+        ctx = runtime.context
+        status = getattr(ctx, "event_status", "none")
+        if status == "ambiguous":
+            return _dump(
+                _event_blocked(
+                    "서로 다른 사건이 여러 개라 어떤 사건인지 확정할 수 없습니다. "
+                    "사용자에게 사건을 되물어야 합니다. 임의로 하나를 고르거나 "
+                    "최근 기간 수익률로 대체하지 마십시오.",
+                    getattr(ctx, "event_candidates", None),
+                )
+            )
+        event_date = getattr(ctx, "event_date", None) if status == "resolved" else None
+        if not event_date:
+            return _dump(
+                _event_blocked(
+                    "사건 정보(발표일)가 문맥에 없어 사건 전후 주가를 계산할 수 없습니다. "
+                    "최근 한 달·일주일 수익률로 대체하지 말고, 어떤 뉴스·공시를 말하는지 "
+                    "사용자에게 확인해야 합니다.",
+                    None,
+                )
+            )
+
         inp = CalculateEventReturnInput(
-            stock_code=stock_code,
+            stock_code=_resolve_stock_code(
+                getattr(ctx, "event_stock_code", None) or stock_code, runtime
+            ),
             event_date=event_date,
+            event_id=getattr(ctx, "event_id", None),
             window=window,
-            lookback=lookback,
         )
         return _dump(run_calculate_event_return(svc.prices, inp))
 

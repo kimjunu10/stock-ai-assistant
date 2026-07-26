@@ -75,6 +75,42 @@ class PeriodReturn:
 
 
 @dataclass
+class EventHorizonReturn:
+    """사건 발표 후 N거래일 시점의 수익률 1건(백엔드 계산)."""
+
+    horizon_days: int  # 발표 후 몇 번째 확정 거래일인가(1·3·5)
+    trading_day: date
+    close: float
+    change: float
+    return_pct: float  # % , 소수 2자리
+
+
+@dataclass
+class EventWindowReturn:
+    """사건 발표 전후 주가 계산 결과(계약: 발표 전 마지막 거래일 → 발표 후 N거래일).
+
+    baseline 은 '발표 시점에 시장이 알고 있던 마지막 확정 종가'다. event_date 당일이
+    거래일이더라도, 발표 시각을 모르면 당일 종가에는 이미 사건이 반영됐을 수 있으므로
+    기본은 발표일 **이전** 마지막 거래일을 baseline 으로 쓴다(보수적).
+
+    horizons 는 발표 후 확정 거래일이 존재하는 만큼만 채운다. 하나도 없으면 빈 목록이며
+    (has_post_data=False), 호출부는 다른 기간으로 대체하지 않고 데이터 부족을 반환한다.
+    """
+
+    stock_code: str
+    event_date: date
+    baseline_trading_day: date
+    baseline_close: float
+    horizons: list[EventHorizonReturn]
+    currency: str
+    adjusted: bool
+
+    @property
+    def has_post_data(self) -> bool:
+        return bool(self.horizons)
+
+
+@dataclass
 class _CacheEntry:
     expires_at: float
     value: object
@@ -231,6 +267,12 @@ class StockPriceService:
         after = [c for c in candles if c.trading_day >= target]
         return min(after, key=lambda c: c.trading_day) if after else None
 
+    @staticmethod
+    def _snap_strictly_before(candles: list[DailyClose], target: date) -> DailyClose | None:
+        """target 미만(<)의 가장 최근 거래일. 사건 baseline 전용(당일 종가 제외)."""
+        prior = [c for c in candles if c.trading_day < target]
+        return max(prior, key=lambda c: c.trading_day) if prior else None
+
     # ── 공개 API ────────────────────────────────────────────────────
     def get_current_quote(self, stock_code: str) -> PriceQuote | None:
         """현재가 + 전일 대비(백엔드 계산). 미존재/데이터 없음이면 None(no_data)."""
@@ -363,6 +405,74 @@ class StockPriceService:
             change=change,
             return_pct=return_pct,
             currency=start_c.currency,
+            adjusted=adjusted,
+        )
+
+    # 사건 후속 질문의 기본 관측 지평(발표 후 N번째 확정 거래일).
+    DEFAULT_EVENT_HORIZONS = (1, 3, 5)
+
+    def get_event_window_return(
+        self,
+        stock_code: str,
+        *,
+        event_date: date,
+        horizons: tuple[int, ...] | list[int] = DEFAULT_EVENT_HORIZONS,
+        adjusted: bool = True,
+    ) -> EventWindowReturn | None:
+        """사건 발표 전 마지막 확정 거래일 대비, 발표 후 1·3·5거래일 수익률을 계산한다.
+
+        get_event_return(대칭 ±N거래일)과 달리 이 메서드는 사건 후속 질문의 계약이다:
+        - baseline = event_date **이전** 마지막 확정 거래일 종가(발표 전 마지막 확정값)
+        - horizons = event_date **이후** 1·3·5번째 확정 거래일(존재하는 것만)
+
+        발표 후 확정 거래일이 하나도 없으면 horizons 가 비어 has_post_data=False 다.
+        이 경우에도 baseline 은 채워 반환하므로 호출부가 "발표 이후 확정 거래일 데이터가
+        아직 없다"를 다른 기간으로 대체하지 않고 그대로 답할 수 있다.
+        기준 거래일 자체를 찾을 수 없으면(상장 전 등) None.
+        """
+        self._require_supported(stock_code)
+        wanted = sorted({int(h) for h in horizons if int(h) > 0})
+        if not wanted:
+            raise StockPriceError("관측 지평(horizons)이 비어 있습니다.")
+        lookback_days = max(wanted) * 2 + 30
+        candles = self._collect_daily(
+            stock_code, earliest=self._days_before(event_date, lookback_days), adjusted=adjusted
+        )
+        if not candles:
+            return None
+        # baseline: 발표일 '이전' 마지막 확정 거래일(당일 종가에는 사건이 반영됐을 수 있음).
+        baseline = self._snap_strictly_before(candles, event_date)
+        if baseline is None:
+            return None
+        base_idx = next(
+            (i for i, c in enumerate(candles) if c.trading_day == baseline.trading_day), None
+        )
+        if base_idx is None:
+            return None
+        # 발표일 이후(당일 포함) 확정 거래일만 지평 후보로 센다.
+        post = [c for c in candles[base_idx + 1 :] if c.trading_day >= event_date]
+        result_horizons: list[EventHorizonReturn] = []
+        for h in wanted:
+            if h > len(post):
+                break  # 아직 확정되지 않은 지평 — 추정하지 않는다.
+            c = post[h - 1]
+            change = c.close - baseline.close
+            result_horizons.append(
+                EventHorizonReturn(
+                    horizon_days=h,
+                    trading_day=c.trading_day,
+                    close=c.close,
+                    change=change,
+                    return_pct=_round2(change / baseline.close * 100) if baseline.close else 0.0,
+                )
+            )
+        return EventWindowReturn(
+            stock_code=stock_code,
+            event_date=event_date,
+            baseline_trading_day=baseline.trading_day,
+            baseline_close=baseline.close,
+            horizons=result_horizons,
+            currency=baseline.currency,
             adjusted=adjusted,
         )
 

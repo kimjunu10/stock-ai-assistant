@@ -662,6 +662,31 @@ docstring: 3개 Tool 에 "stock_code=6자리 숫자, 회사명 금지" 명시
 미수행: 운영 배포·자동 머지·Phase 8
 ```
 
+## Phase 7 후속 결함 수정 — 사건 후속 질문 기간 오류(2026-07-26)
+
+브랜치 `fix/phase-7-exit-gate`(main #46 머지·운영 배포 완료 기준). "그 뉴스 이후 주가가
+어떻게 됐어?"가 사건 발표일이 아닌 최근 1개월 수익률로 답하던 결함을 근본 수정하고
+백엔드 API 종료 게이트를 검증했다.
+
+```text
+원인: (1) calculate_event_return 이 event_date 없으면 lookback 기간 수익률로 대체
+      (2) 직전 응답의 사건 식별자·발표일을 다음 요청에 싣는 경로 부재
+      (3) 프롬프트가 "기간 없으면 최근 1개월" 을 사건 질문에도 적용
+      (4) 최종 검증에 사건 근거 검증 없음
+수정: event_date 필수화·lookback 제거, 발표일은 서버 확정 문맥에서만 주입
+      QaRequest.event_context/selected_event_id 추가(대화 저장 시스템 신설 없음)
+      app/agent/event_reference.py — 선택 우선 → 사건 1개면 자동 → 그 외 명확화
+      StockPriceService.get_event_window_return — 발표 전 마지막 거래일 대비 1·3·5거래일
+      validate_event_grounding — 근거 없으면 숫자 수정 없이 안전 답변으로 전환
+동반: 검증기 오탐 3건(날짜·종목코드·뉴스 인용 수치) 수정 + 회귀 테스트
+검증: 백엔드 372 passed·ruff·format, /qa 20 시나리오·/qa/stream 17건 통과,
+     사건 후속 반복 15회 편차 0, 필수 호출률 100%·금지 호출 0%·기간 대체 0건
+문서: phase_7/PHASE_7_BUG_EVENT_REFERENCE.md·PHASE_7_EXIT_GATE.md
+     ·PHASE_7_CHANGELOG.md·PHASE_7_COMPLETION.md
+판정: Phase 7 백엔드 완료 가능(미검증 필수 항목 없음)
+미수행: 운영 배포·자동 머지·Phase 8·프런트 event_context 연동
+```
+
 ---
 
 # Phase 8. 전체 평가·튜닝

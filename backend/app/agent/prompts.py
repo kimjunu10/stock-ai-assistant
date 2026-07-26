@@ -55,10 +55,23 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
   · "이 뉴스 발표 전후로 주가가 얼마나 움직였어" → calculate_event_return(사건 전후).
 - 가격·수익률은 주가 Tool 결과에 이미 계산된 값만 쓴다. 시작가·종료가로 수익률을 직접
   계산하거나 다시 산술하지 않는다. 결과의 거래일·기간·단위(원·%)를 그대로 표시한다.
-- 종목이 문맥으로 주어졌다면 실제 주가·수익률 질문에서 종목을 되묻지 않는다. 기간이
-  없으면 최근 1개월(lookback="1m")을 기본으로 주가 Tool 을 호출한다. "목표주가 말고
-  실제 주가" 처럼 목표주가를 제외하라는 표현이 있어도, 문맥 종목의 실제 주가를 조회한다
-  (리포트 Tool 은 부르지 않는다).
+- 종목이 문맥으로 주어졌다면 실제 주가·수익률 질문에서 종목을 되묻지 않는다.
+  "목표주가 말고 실제 주가" 처럼 목표주가를 제외하라는 표현이 있어도, 문맥 종목의 실제
+  주가를 조회한다(리포트 Tool 은 부르지 않는다).
+- 기간 기준을 고르는 규칙(사건 기준과 일반 기간을 절대 섞지 않는다):
+  · 특정 뉴스·공시·발표를 가리키는 질문("그 뉴스 이후", "이 발표 후", "그 사건 전후")은
+    calculate_event_return 만 쓴다. 사건 발표일은 서버 문맥에서 확정된 값이 쓰이며
+    Agent 가 날짜를 넘기거나 추정하지 않는다.
+  · 사용자가 기간을 명시한 질문("최근 한 달", "일주일", "올해")만 get_stock_prices 의
+    lookback 을 쓴다.
+  · 사건 기준 질문에서 사건을 확정할 수 없으면(Tool 이 사건 미확정·여러 사건이라고
+    알려주면) 최근 한 달·일주일 수익률로 대체하지 않는다. 임의로 사건을 하나 고르지도
+    않는다. 어떤 사건을 말하는지 제목·날짜 후보를 짧게 제시하고 사용자에게 되묻는다.
+  · 사건 전후 결과가 no_data(발표 이후 확정 거래일 없음)면 "발표 이후 확정 거래일
+    데이터가 아직 없어 계산할 수 없습니다"라고 답한다. 다른 기간의 주가 변화나 그래프를
+    대신 보여주지 않는다.
+  · 기간도 사건도 특정되지 않은 막연한 주가 질문에는 임의 기간을 가정하지 말고 현재가를
+    답하거나 어떤 기간을 원하는지 확인한다.
 - 주가 움직임을 "이 뉴스 때문에 상승·하락했다"처럼 인과로 단정하지 않는다. "발표 이후
   상승·하락했다"처럼 시간적 관계만 표현한다. 주가 데이터가 없으면 추측하지 않는다.
 - 한 질문에 여러 자료가 필요하면 필요한 Tool 을 모두 호출한다(예: 재무 + 뉴스 + 리포트).
@@ -81,15 +94,66 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
 """
 
 
-def financial_agent_system_prompt(
-    *, current_datetime: str | None, current_date: str | None, timezone: str
+def _event_context_block(
+    *,
+    event_status: str,
+    event_title: str | None,
+    event_date: str | None,
+    candidates: list | None,
 ) -> str:
-    """정적 원칙에 요청 시점의 서버 시간 컨텍스트를 결합한다."""
+    """확정된 사건 문맥을 프롬프트에 싣는다(발표일 추정 차단).
 
-    return FINANCIAL_AGENT_SYSTEM_PROMPT + (
-        "\n\n서버 런타임 시간 기준:\n"
-        f"- 현재 일시: {current_datetime or '확인 불가'}\n"
-        f"- 현재 날짜: {current_date or '확인 불가'}\n"
-        f"- 시간대: {timezone}\n"
-        "- 위 값은 서버가 요청 시점에 계산한 신뢰 가능한 값이다."
+    서버가 구조화 문맥으로 확정한 결과만 넣는다. 모델이 사건을 고르거나 날짜를 만들지
+    않게, 확정 상태에 따라 허용되는 행동을 명시한다.
+    """
+    if event_status == "resolved" and event_date:
+        title = (event_title or "").strip()
+        return (
+            "\n\n현재 사건 문맥(서버 확정):\n"
+            f"- 사건: {title or '제목 미상'}\n"
+            f"- 발표일: {event_date}\n"
+            "- 사용자가 이 사건을 가리켜 주가 변화를 물으면 calculate_event_return 을 쓴다.\n"
+            "- 발표일은 이미 확정돼 있다. 날짜를 다시 추측하거나 답변에서 바꾸지 않는다."
+        )
+    if event_status == "ambiguous":
+        lines = ["\n\n현재 사건 문맥(서버 확정): 서로 다른 사건이 여러 개다."]
+        for i, c in enumerate(list(candidates or [])[:5], start=1):
+            day = (getattr(c, "published_at", None) or "")[:10] or "발표일 미상"
+            title = (getattr(c, "title", None) or "제목 미상").strip()
+            lines.append(f"- 후보 {i}: {day} · {title}")
+        lines.append(
+            "- 임의로 하나를 고르지 않는다. 사건 기준 주가 질문이면 위 후보를 짧게 제시하고 "
+            "어떤 사건인지 되묻는다. 최근 기간 수익률로 대체하지 않는다."
+        )
+        return "\n".join(lines)
+    return ""
+
+
+def financial_agent_system_prompt(
+    *,
+    current_datetime: str | None,
+    current_date: str | None,
+    timezone: str,
+    event_status: str = "none",
+    event_title: str | None = None,
+    event_date: str | None = None,
+    event_candidates: list | None = None,
+) -> str:
+    """정적 원칙에 요청 시점의 서버 시간·사건 컨텍스트를 결합한다."""
+
+    return (
+        FINANCIAL_AGENT_SYSTEM_PROMPT
+        + (
+            "\n\n서버 런타임 시간 기준:\n"
+            f"- 현재 일시: {current_datetime or '확인 불가'}\n"
+            f"- 현재 날짜: {current_date or '확인 불가'}\n"
+            f"- 시간대: {timezone}\n"
+            "- 위 값은 서버가 요청 시점에 계산한 신뢰 가능한 값이다."
+        )
+        + _event_context_block(
+            event_status=event_status,
+            event_title=event_title,
+            event_date=event_date,
+            candidates=event_candidates,
+        )
     )

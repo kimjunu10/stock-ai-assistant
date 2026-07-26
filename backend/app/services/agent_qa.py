@@ -18,6 +18,12 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 
 from app.agent.context import QaRuntimeContext, ToolServices
+from app.agent.event_reference import (
+    EventResolution,
+    clarification_message,
+    event_date_of,
+    resolve_event,
+)
 from app.agent.runtime import build_agent
 from app.agent.time_context import SEOUL_TIMEZONE_NAME, current_seoul_datetime
 from app.agent.trace import AgentTrace, ToolTrace
@@ -65,9 +71,23 @@ class AgentQaService:
         self._agent = build_agent(cfg, api_key=api_key, base_url=base_url)
 
     def _context(
-        self, stock_code, source_type, source_id, document_id, report_page, conversation_id
+        self,
+        stock_code,
+        source_type,
+        source_id,
+        document_id,
+        report_page,
+        conversation_id,
+        event_resolution: EventResolution | None = None,
     ):
         request_now = current_seoul_datetime()
+        res = event_resolution or EventResolution(status="none")
+        event = res.event
+        event_day = event_date_of(event) if event is not None else None
+        # 사건은 확정됐지만 발표일을 확인할 수 없으면 사건 기준 계산을 할 수 없다.
+        # 날짜를 추정하지 않고 미확정으로 강등한다(§4 "정보가 불충분하면 호출하지 않기").
+        resolved = res.status == "resolved" and event is not None and event_day is not None
+        status = "resolved" if resolved else ("none" if res.status == "resolved" else res.status)
         return QaRuntimeContext(
             stock_code=stock_code,
             source_type=source_type,
@@ -79,6 +99,13 @@ class AgentQaService:
             current_date=request_now.date().isoformat(),
             timezone=SEOUL_TIMEZONE_NAME,
             services=self._services,
+            # 발표일을 확인할 수 없는 사건은 resolved 로 취급하지 않는다(날짜 추정 금지).
+            event_status=status,
+            event_id=event.event_id if resolved else None,
+            event_date=event_day.isoformat() if resolved else None,
+            event_title=event.title if resolved else None,
+            event_stock_code=event.stock_code if resolved else None,
+            event_candidates=res.candidates or None,
         )
 
     @staticmethod
@@ -142,9 +169,19 @@ class AgentQaService:
         report_page: int | None = None,
         conversation_id: str | None = None,
         request_id: str = "",
+        event_context: list | None = None,
+        selected_event_id: str | None = None,
     ) -> AgentQaResult:
+        # 사건 확정은 코드가 한다(§4). 모델은 사건을 고르지 않는다.
+        resolution = resolve_event(list(event_context or []), selected_event_id=selected_event_id)
         ctx = self._context(
-            stock_code, source_type, source_id, document_id, report_page, conversation_id
+            stock_code,
+            source_type,
+            source_id,
+            document_id,
+            report_page,
+            conversation_id,
+            resolution,
         )
         payload = {"messages": [{"role": "user", "content": question}]}
         # LangGraph 스텝 하드 상한: 모델·Tool loop 폭주를 그래프 레벨에서 차단(GraphRecursionError).
@@ -188,6 +225,15 @@ class AgentQaService:
         report_opinions = collect_report_opinions(tool_payloads)
         ui_sources, visualizations, warnings = _build_ui_payload(tool_payloads)
 
+        # 사건 근거가 없는 '사건 이후 수익률' 답변은 안전 답변으로 전환한다(§6).
+        # 숫자를 고치거나 보충하지 않는다 — 잘못된 기간의 답을 통째로 대체한다.
+        answer, switched = _safe_answer_for_unsupported_event_claim(
+            answer, validation.errors, resolution, tool_payloads
+        )
+        if switched:
+            # 잘못된 기간 근거로 만든 시각화도 함께 제거한다(데이터 없으면 시각화도 없음).
+            visualizations = [v for v in visualizations if v.get("type") != "event_return"]
+
         total_ms = int((time.perf_counter() - t0) * 1000)
         trace = AgentTrace(
             request_id=request_id,
@@ -217,12 +263,61 @@ class AgentQaService:
             warnings=warnings,
         )
 
+    @staticmethod
+    def _event_grounding_failed(errors: list[str]) -> bool:
+        return any("사건" in e and ("근거" in e or "표현함" in e) for e in errors)
+
     def _failed(self, request_id: str, reason: str, message: str, t0: float) -> AgentQaResult:
         total_ms = int((time.perf_counter() - t0) * 1000)
         trace = AgentTrace(request_id=request_id, stop_reason=reason, total_latency_ms=total_ms)
         return AgentQaResult(
             answer="", stop_reason=reason, error=message, trace=trace.to_log_dict()
         )
+
+
+def _safe_answer_for_unsupported_event_claim(
+    answer: str,
+    validation_errors: list[str],
+    resolution: EventResolution,
+    tool_payloads: list[dict],
+) -> tuple[str, bool]:
+    """사건 근거 없는 '사건 이후 수익률' 답변을 실제 상태에 맞는 안전 답변으로 바꾼다(§6).
+
+    검증기는 숫자를 수정·보충하지 않는다. 대신 근거 부족이 확인되면 답변 전체를 실제
+    상태(사건 미특정 / 여러 사건 / 발표 후 거래일 없음 / 계산 결과 없음)로 교체한다.
+    """
+    if not AgentQaService._event_grounding_failed(validation_errors):
+        return answer, False
+
+    # (1) 서로 다른 사건이 여러 개 → 선택 요청.
+    if resolution.status == "ambiguous" and resolution.candidates:
+        return clarification_message(resolution.candidates), True
+
+    # (2) 발표 이후 확정 거래일이 없음 → 데이터 부족을 그대로 안내.
+    for p in tool_payloads:
+        data = p.get("data") if isinstance(p, dict) else None
+        if not isinstance(data, dict) or data.get("basis") != "event":
+            continue
+        if p.get("status") == "no_data" and data.get("has_post_data") is False:
+            day = data.get("event_date") or "발표일"
+            return (
+                f"{day} 발표 이후 확정 거래일 데이터가 아직 없어 계산할 수 없습니다. "
+                "다른 기간의 주가 변화로 대체하지 않았습니다."
+            ), True
+
+    # (3) 사건 자체를 특정할 수 없음.
+    if resolution.status == "none":
+        return (
+            "어떤 뉴스·공시를 말하는지 특정할 수 없어 사건 이후 주가 변화를 계산하지 "
+            "못했습니다. 기준으로 삼을 뉴스를 선택해 주시면 발표 전후 주가를 확인해 "
+            "드리겠습니다. (최근 한 달·일주일 수익률로 대체하지 않았습니다.)"
+        ), True
+
+    # (4) 그 외 — 필요한 계산 결과·출처가 없음.
+    return (
+        "사건 전후 주가 계산 결과를 확보하지 못해 이 뉴스 이후의 주가 변화를 답변할 수 "
+        "없습니다. 다른 기간의 수익률로 대체하지 않았습니다."
+    ), True
 
 
 @lru_cache(maxsize=1)
