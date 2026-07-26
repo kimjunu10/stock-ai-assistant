@@ -231,4 +231,4 @@ grader/Validator 커버리지 문제(§6의 "공통 구현 오류" 목록)는 �
 14. **홀드아웃 실행 가능 여부**: 가능
 15. **비용과 지연시간**: 총 $0.6511, 문항당 $0.005426, P50 3766ms, P95 8038ms
 16. **테스트 결과**: `pytest tests/` 480 passed / 1 failed(사전 존재 결함, `.env` AGENT_ENABLED 설정 때문, 회귀 아님)
-17. **PR 주소**: (PR 생성 후 기입)
+17. **PR 주소**: https://github.com/kimjunu10/stock-ai-assistant/pull/62
