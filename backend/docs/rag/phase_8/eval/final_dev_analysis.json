@@ -1,0 +1,900 @@
+{
+  "note": "Phase 8 최종 개발셋 검증 — 평가·분석만 수행. 운영 코드·프롬프트·Validator·Grader·devset·gold label 수정 없음.",
+  "n": 120,
+  "clean_cases": 89,
+  "failed_cases_unique": 31,
+  "official_metrics": {
+    "n": 120,
+    "agent": {
+      "required_tool_recall": 0.9843,
+      "forbidden_tool_call_rate": 0.0083,
+      "unnecessary_tool_call_rate": 0.0355,
+      "tool_argument_accuracy": 0.9866,
+      "multistep_completion_rate": 1.0,
+      "duplicate_call_rate": 0.0
+    },
+    "retrieval": {
+      "document_retrieval": {
+        "recall_at_k": 0.0,
+        "hit_at_1": 0.0,
+        "mrr": 0.0,
+        "page_accuracy": 0.25
+      },
+      "structured_lookup": {
+        "row_hit_rate": 0.8222
+      },
+      "other_stock_contamination_rate": 0.0
+    },
+    "numbers": {
+      "number_exact_match": 1.0,
+      "unit_accuracy": 1.0,
+      "period_accuracy": 1.0,
+      "trading_day_accuracy": null,
+      "value_kind_confusions": 0
+    },
+    "answer": {
+      "key_fact_coverage": 0.4286,
+      "citation_precision": 1.0,
+      "citation_coverage": 0.9464,
+      "nonexistent_citations": 0,
+      "unsupported_numbers": 5,
+      "exclusion_violations": 2,
+      "overclaim_cases": 2,
+      "false_answer_on_unanswerable": 1
+    },
+    "ops": {
+      "latency_ms_p50": 3766.0,
+      "latency_ms_p95": 8038.0,
+      "avg_tool_calls": 1.18,
+      "avg_model_calls": 1.99,
+      "cost_usd_per_query": 0.005426,
+      "cost_usd_total": 0.651102
+    }
+  },
+  "corrected_document_retrieval": {
+    "recall_at_k": 0.1739,
+    "hit_at_1": 0.1765,
+    "mrr": 0.25,
+    "note": "gold_source_hits 유무만으로 재계산(grader.aggregate() 의 문서단위 제외 로직을 적용하지 않음). 공식 aggregate() 수치와 다르면 그 자체가 집계 결함의 증거.",
+    "known_aggregation_bug_cases": [
+      "news-01",
+      "news-03",
+      "news-07",
+      "news-08",
+      "news-16",
+      "report-05",
+      "report-08",
+      "report-10",
+      "report-11",
+      "report-13",
+      "report-14",
+      "report-15"
+    ]
+  },
+  "news_report_split_retrieval": {
+    "뉴스": {
+      "n_cases": 19,
+      "recall_at_k": 0.2381,
+      "hit_at_1": 0.0,
+      "mrr": 0.1184
+    },
+    "리포트": {
+      "n_cases": 15,
+      "recall_at_k": 0.1458,
+      "hit_at_1": 0.4,
+      "mrr": 0.4167
+    }
+  },
+  "by_layer": {
+    "Agent Tool 선택": {
+      "count": 7,
+      "unique_cases": 6,
+      "by_detail": {
+        "필수 Tool 누락": 2,
+        "금지 Tool 호출": 1,
+        "불필요 Tool 호출": 4
+      }
+    },
+    "Tool 인자": {
+      "count": 2,
+      "unique_cases": 2,
+      "by_detail": {
+        "인자 해석 오류": 2
+      }
+    },
+    "뉴스 Retriever": {
+      "count": 9,
+      "unique_cases": 9,
+      "by_detail": {
+        "정답 청크 미검색": 9
+      }
+    },
+    "리포트 Retriever": {
+      "count": 1,
+      "unique_cases": 1,
+      "by_detail": {
+        "정답 청크 미검색": 1
+      }
+    },
+    "구조화 조회": {
+      "count": 8,
+      "unique_cases": 8,
+      "by_detail": {
+        "정답 행 미확정": 8
+      }
+    },
+    "데이터·색인": {
+      "count": 0,
+      "unique_cases": 0,
+      "by_detail": {}
+    },
+    "Generation": {
+      "count": 3,
+      "unique_cases": 2,
+      "by_detail": {
+        "제외 조건 위반": 2,
+        "답변 불가 질문 허위 답변": 1
+      }
+    },
+    "Validator": {
+      "count": 11,
+      "unique_cases": 7,
+      "by_detail": {
+        "근거 없는 숫자 차단": 5,
+        "답변 삭제(재확인 필요)": 3,
+        "증권사 환각 차단": 3
+      }
+    },
+    "평가기·라벨": {
+      "count": 0,
+      "unique_cases": 0,
+      "by_detail": {}
+    },
+    "질문 자체의 모호성": {
+      "count": 0,
+      "unique_cases": 0,
+      "by_detail": {}
+    },
+    "외부 환경": {
+      "count": 0,
+      "unique_cases": 0,
+      "by_detail": {}
+    }
+  },
+  "pr61_regression_check": {
+    "공시_검색_정렬": {
+      "devset_coverage": 15,
+      "정상_문항": 8,
+      "비고": "결정성 자체(10회 반복 동일)는 PR#61 targeted regression에서 검증됨. 여기서는 이번 1회 실행의 정상 동작 여부만 재확인."
+    },
+    "리포트_broker_필터": {
+      "devset_coverage": 0,
+      "gold_적중": 0
+    },
+    "리포트_빈쿼리_목록": {
+      "devset_coverage": 2,
+      "비고": "devset 문항 중 실제로 query='' 로 호출된 케이스만 집계. 0건이면 devset에 순수 목록형 질문이 없다는 뜻 — targeted smoke test(§4-A)로 별도 확인됨."
+    },
+    "report_id_문맥_전달": {
+      "devset_coverage": 0,
+      "비고": "0건이면 devset에 document_id 문맥 케이스가 없다는 뜻 — targeted smoke test(D케이스)로 별도 확인됨. devset으로는 검증 못 함."
+    },
+    "목표주가_검증": {
+      "devset_coverage": 30,
+      "근거없는_목표주가_차단_건수": 3,
+      "답변_일부_삭제_건수": 3,
+      "비고": "삭제 발생 시 mix-09/mix-15 처럼 원본 trace 를 봐야 오탐 여부 확정 가능(§4-B)."
+    }
+  },
+  "details": {
+    "Agent Tool 선택": [
+      {
+        "id": "term-07",
+        "type": "금융용어",
+        "detail": "필수 Tool 누락",
+        "question": "상장지수펀드 쉽게 설명해줘",
+        "gold_sources": [
+          {
+            "type": "term",
+            "id": "term:상장지수펀드",
+            "ref": "상장지수펀드"
+          }
+        ],
+        "tools": [],
+        "answer_head": "상장지수펀드(ETF, Exchange Traded Fund)는 주식처럼 거래소에 상장되어 자유롭게 사고팔 수 있는 펀드입니다. 쉽게 말해, 여러 주식이나 채권 등 여러 자산을 한 바구니에 담아 놓고, 그 바구니 전체를 주식처럼 거래하는 투자 상품이에요.\n\n주요 특징은 다음과 같습니다:\n1. 주식처럼 거래소에서 실시간으로 사고팔 수 있어요.\n2. 여러 종목에"
+      },
+      {
+        "id": "news-11",
+        "type": "뉴스 사건·영향",
+        "detail": "필수 Tool 누락",
+        "question": "SK하이닉스 2분기 영업이익 64조원 관련해서 무슨 일 있었어?",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "74a4ef8f-2666-495a-a1d8-9520b9b4126f",
+            "ref": "SK하이닉스, 2분기 영업이익 64조원 전망…영업이익률 75% 돌파 가능성"
+          }
+        ],
+        "tools": [
+          "get_financial_facts"
+        ],
+        "answer_head": "SK하이닉스의 2026년 2분기(반기 누적) 영업이익 데이터는 아직 제공되지 않고 있습니다. 2분기 영업이익 64조원과 관련된 구체적인 재무 수치를 확인할 수 없으니, 이와 관련된 최근 뉴스나 사건을 찾아보는 것이 좋겠습니다. 관련 뉴스를 검색해 드릴까요?"
+      },
+      {
+        "id": "news-11",
+        "type": "뉴스 사건·영향",
+        "detail": "금지 Tool 호출",
+        "question": "SK하이닉스 2분기 영업이익 64조원 관련해서 무슨 일 있었어?",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "74a4ef8f-2666-495a-a1d8-9520b9b4126f",
+            "ref": "SK하이닉스, 2분기 영업이익 64조원 전망…영업이익률 75% 돌파 가능성"
+          }
+        ],
+        "tools": [
+          "get_financial_facts"
+        ],
+        "answer_head": "SK하이닉스의 2026년 2분기(반기 누적) 영업이익 데이터는 아직 제공되지 않고 있습니다. 2분기 영업이익 64조원과 관련된 구체적인 재무 수치를 확인할 수 없으니, 이와 관련된 최근 뉴스나 사건을 찾아보는 것이 좋겠습니다. 관련 뉴스를 검색해 드릴까요?"
+      },
+      {
+        "id": "na-01",
+        "type": "답변 불가능·모호",
+        "detail": "불필요 Tool 호출",
+        "question": "삼성전자 내년 매출 확정값 알려줘",
+        "gold_sources": [],
+        "tools": [
+          "get_financial_facts"
+        ],
+        "answer_head": "삼성전자의 내년(2027년) 연간 매출 확정값은 아직 공개된 데이터가 없습니다. 다른 기간이나 전망치가 필요하시면 알려주세요."
+      },
+      {
+        "id": "na-04",
+        "type": "답변 불가능·모호",
+        "detail": "불필요 Tool 호출",
+        "question": "삼성전자 2030년 영업이익 얼마야?",
+        "gold_sources": [],
+        "tools": [
+          "get_financial_facts"
+        ],
+        "answer_head": "삼성전자의 2030년 연간 영업이익 데이터는 아직 제공되지 않아 확인할 수 없습니다. 다른 기간이나 정보가 필요하시면 알려주세요."
+      },
+      {
+        "id": "na-06",
+        "type": "답변 불가능·모호",
+        "detail": "불필요 Tool 호출",
+        "question": "삼성전자 CEO 개인 연봉 얼마야?",
+        "gold_sources": [],
+        "tools": [
+          "search_disclosures",
+          "get_financial_facts"
+        ],
+        "answer_head": "삼성전자 CEO의 개인 연봉(임원 보수) 정보는 재무 수치 데이터에 포함되어 있지 않고, 임원 보수는 사업보고서 내 임원 보수 공시나 별도 공시 문서에서 확인할 수 있습니다. \n\n최근 2026년 7월 21일에 공시된 임원 보수 관련 보고서들이 있으니, 삼성전자 임원 보수 상세 내용은 아래 공시 문서에서 직접 확인하실 수 있습니다.\n- [임원ㆍ주요주주특정증권"
+      },
+      {
+        "id": "na-08",
+        "type": "답변 불가능·모호",
+        "detail": "불필요 Tool 호출",
+        "question": "한화오션 2026년 3분기 배당금 얼마야?",
+        "gold_sources": [],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "한화오션의 2026년 3분기(2026년 3월 31일 결산 기준) 배당금에 관한 구체적인 현금배당금 총액 정보는 제공된 공시에서 확인되지 않습니다. 다만, 당기순이익과 주당순이익 등의 재무 정보는 다음과 같습니다.\n\n- 연결 기준 당기순이익: 500,037백만원\n- 별도 기준 당기순이익: 521,859백만원\n- 연결 기준 주당순이익: 1,613원\n- 주당 액"
+      }
+    ],
+    "Tool 인자": [
+      {
+        "id": "term-07",
+        "type": "금융용어",
+        "detail": "인자 해석 오류",
+        "question": "상장지수펀드 쉽게 설명해줘",
+        "gold_sources": [
+          {
+            "type": "term",
+            "id": "term:상장지수펀드",
+            "ref": "상장지수펀드"
+          }
+        ],
+        "tools": [],
+        "answer_head": "상장지수펀드(ETF, Exchange Traded Fund)는 주식처럼 거래소에 상장되어 자유롭게 사고팔 수 있는 펀드입니다. 쉽게 말해, 여러 주식이나 채권 등 여러 자산을 한 바구니에 담아 놓고, 그 바구니 전체를 주식처럼 거래하는 투자 상품이에요.\n\n주요 특징은 다음과 같습니다:\n1. 주식처럼 거래소에서 실시간으로 사고팔 수 있어요.\n2. 여러 종목에"
+      },
+      {
+        "id": "news-11",
+        "type": "뉴스 사건·영향",
+        "detail": "인자 해석 오류",
+        "question": "SK하이닉스 2분기 영업이익 64조원 관련해서 무슨 일 있었어?",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "74a4ef8f-2666-495a-a1d8-9520b9b4126f",
+            "ref": "SK하이닉스, 2분기 영업이익 64조원 전망…영업이익률 75% 돌파 가능성"
+          }
+        ],
+        "tools": [
+          "get_financial_facts"
+        ],
+        "answer_head": "SK하이닉스의 2026년 2분기(반기 누적) 영업이익 데이터는 아직 제공되지 않고 있습니다. 2분기 영업이익 64조원과 관련된 구체적인 재무 수치를 확인할 수 없으니, 이와 관련된 최근 뉴스나 사건을 찾아보는 것이 좋겠습니다. 관련 뉴스를 검색해 드릴까요?"
+      }
+    ],
+    "구조화 조회": [
+      {
+        "id": "term-07",
+        "type": "금융용어",
+        "detail": "정답 행 미확정",
+        "question": "상장지수펀드 쉽게 설명해줘",
+        "gold_sources": [
+          {
+            "type": "term",
+            "id": "term:상장지수펀드",
+            "ref": "상장지수펀드"
+          }
+        ],
+        "tools": [],
+        "answer_head": "상장지수펀드(ETF, Exchange Traded Fund)는 주식처럼 거래소에 상장되어 자유롭게 사고팔 수 있는 펀드입니다. 쉽게 말해, 여러 주식이나 채권 등 여러 자산을 한 바구니에 담아 놓고, 그 바구니 전체를 주식처럼 거래하는 투자 상품이에요.\n\n주요 특징은 다음과 같습니다:\n1. 주식처럼 거래소에서 실시간으로 사고팔 수 있어요.\n2. 여러 종목에"
+      },
+      {
+        "id": "disc-01",
+        "type": "공시 설명·구조화 값",
+        "detail": "정답 행 미확정",
+        "question": "SK하이닉스 배당 얼마나 줬어?",
+        "gold_sources": [
+          {
+            "type": "structured_disclosure",
+            "id": "20250515002103",
+            "ref": "SK하이닉스 dividend_matter"
+          }
+        ],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "SK하이닉스는 2026년 3월 31일 결산 기준으로 주당순이익이 57,175원이고, 주당액면가액은 5,000원입니다. 현금배당금 총액은 265,765백만원입니다. \n\n더 구체적인 배당금(주당 배당금 등) 정보가 필요하면 알려주세요."
+      },
+      {
+        "id": "disc-02",
+        "type": "공시 설명·구조화 값",
+        "detail": "정답 행 미확정",
+        "question": "현대차 배당금 얼마야?",
+        "gold_sources": [
+          {
+            "type": "structured_disclosure",
+            "id": "20250814003906",
+            "ref": "현대차 dividend_matter"
+          }
+        ],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "현대자동차의 최근 배당금 관련 정보는 다음과 같습니다. 2026년 3월 31일 결산 기준으로 주당액면가액은 5,000원이며, 주당순이익은 8,897원입니다. 현금배당금 총액은 654,585백만원입니다. 추가로 궁금한 점 있으면 알려주세요."
+      },
+      {
+        "id": "disc-03",
+        "type": "공시 설명·구조화 값",
+        "detail": "정답 행 미확정",
+        "question": "삼성전자 주당 배당금 알려줘",
+        "gold_sources": [
+          {
+            "type": "structured_disclosure",
+            "id": "20241114002642",
+            "ref": "삼성전자 dividend_matter"
+          }
+        ],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "삼성전자의 최근 배당 관련 공시에 따르면, 2026년 3월 31일 결산 기준으로 주당 배당금에 대한 구체적인 수치는 구조화된 공시 데이터에 명확히 나타나 있지 않습니다. 다만, 주당순이익은 7,123원으로 확인되며, 현금배당금 총액은 2,453,316백만원입니다. 주당 배당금의 정확한 금액을 원하시면 추가로 확인할 수 있도록 알려주세요."
+      },
+      {
+        "id": "disc-04",
+        "type": "공시 설명·구조화 값",
+        "detail": "정답 행 미확정",
+        "question": "두산에너빌리티 자본금 변동 내역 있어?",
+        "gold_sources": [
+          {
+            "type": "structured_disclosure",
+            "id": "20240516002258",
+            "ref": "두산에너빌리티 capital_change_status"
+          }
+        ],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "두산에너빌리티의 자본금 변동 내역은 다음과 같습니다.\n\n- 2023년 3월 29일 전환권 행사로 보통주 2,253,113주가 발행되었고, 액면가는 5,000원입니다.\n- 2021년 10월 31일 신주인수권 행사로 보통주 744,065주가 발행되었고, 액면가는 5,000원입니다.\n- 2021년 4월 2일 현물출자로 보통주 47,843,956주가 발행되었고, "
+      },
+      {
+        "id": "disc-07",
+        "type": "공시 설명·구조화 값",
+        "detail": "정답 행 미확정",
+        "question": "현대차 총 발행주식수 알려줘",
+        "gold_sources": [
+          {
+            "type": "structured_disclosure",
+            "id": "20250515001159",
+            "ref": "현대차 stock_total_status"
+          }
+        ],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "현대자동차의 최근 공시 기준 발행주식총수는 6억 주입니다. (2025년 12월 31일 기준)"
+      },
+      {
+        "id": "disc-09",
+        "type": "공시 설명·구조화 값",
+        "detail": "정답 행 미확정",
+        "question": "두산에너빌리티 작년에 배당 얼마 나왔어?",
+        "gold_sources": [
+          {
+            "type": "structured_disclosure",
+            "id": "20251113001034",
+            "ref": "두산에너빌리티 dividend_matter"
+          }
+        ],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "두산에너빌리티는 작년(2025년 3월 31일 결산 기준)에 주당순이익이 132원, 당기순이익은 847억 6,200만원이었고, 주당액면가액은 5,000원이었습니다. 다만, 현금배당금 총액에 대한 구체적인 금액은 제공된 자료에 명시되어 있지 않습니다. 추가로 배당금 총액을 확인하려면 더 구체적인 공시나 자료가 필요합니다."
+      },
+      {
+        "id": "disc-14",
+        "type": "공시 설명·구조화 값",
+        "detail": "정답 행 미확정",
+        "question": "두산에너빌리티 발행주식 총수 얼마야?",
+        "gold_sources": [
+          {
+            "type": "structured_disclosure",
+            "id": "20251113001034",
+            "ref": "두산에너빌리티 stock_total_status"
+          }
+        ],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "두산에너빌리티의 발행주식 총수는 20억 주입니다. (2025년 12월 31일 기준)"
+      }
+    ],
+    "뉴스 Retriever": [
+      {
+        "id": "news-04",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "두산에너빌리티 미국 원전 수주 관련 소식 알려줘",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "9f2415d2-9286-4785-bb83-223655287ba7",
+            "ref": "두산에너빌리티, 미국 원전 수주 내년으로 이연…목표주가 14만원 하향"
+          }
+        ],
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "두산에너빌리티의 미국 원전 수주 관련 최근 뉴스는 현재 확인되지 않습니다. 다만, 최근 두산에너빌리티가 참여한 한국남부발전의 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS(배터리 저장장치) 준공 소식이 있습니다. 이 설비는 23MW 출력과 92MWh 용량으로 재생에너지 출력 제어 문제를 해결하고 전력계통 안정화에 기여하는 역할을 합니다(2026년 7월"
+      },
+      {
+        "id": "news-09",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "두산에너빌리티 중부발전 관련 소식 알려줘",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "45b83910-cb1d-4dff-9cd2-e7836b7b7752",
+            "ref": "중부발전, 함안복합발전소 건설현장 CEO 주관 특별 안전점검 실시"
+          }
+        ],
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "두산에너빌리티와 관련된 최근 소식으로, 한국남부발전이 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS(대형 배터리 저장장치)를 준공했습니다. 이 설비는 출력 23MW, 배터리 용량 92MWh 규모로, 재생에너지 출력 제어 문제를 해결하고 전력계통 안정화에 기여할 예정입니다. 이 사업에 두산에너빌리티가 참여했습니다. 준공식은 2026년 7월 16일에 열렸"
+      },
+      {
+        "id": "news-10",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "한화오션 레이도스 깁스 앤 건은 어떤 내용이야?",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "35311589-5a5e-4174-bb77-35286c6d4f7a",
+            "ref": "한화오션, 레이도스 깁스 앤 콕스와 글로벌 전략 수송함 공동 설계 계약 체결"
+          }
+        ],
+        "tools": [
+          "search_news",
+          "search_news"
+        ],
+        "answer_head": "한화오션은 최근 레이도스 깁스 앤 콕스와 조선업 협력 양해각서 2건을 체결했습니다. 이 협약은 함정 설계 및 조선 기술 협력을 위한 것으로, 레이도스 깁스 앤 콕스는 함정 설계 분야에서 전문성을 가진 업체입니다. 한화오션은 이번 협력을 통해 함정 설계 역량을 강화하고 향후 함정 건조 사업에 활용할 계획입니다. 다만, 구체적인 사업 일정이나 규모는 아직 확정"
+      },
+      {
+        "id": "news-11",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "SK하이닉스 2분기 영업이익 64조원 관련해서 무슨 일 있었어?",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "74a4ef8f-2666-495a-a1d8-9520b9b4126f",
+            "ref": "SK하이닉스, 2분기 영업이익 64조원 전망…영업이익률 75% 돌파 가능성"
+          }
+        ],
+        "tools": [
+          "get_financial_facts"
+        ],
+        "answer_head": "SK하이닉스의 2026년 2분기(반기 누적) 영업이익 데이터는 아직 제공되지 않고 있습니다. 2분기 영업이익 64조원과 관련된 구체적인 재무 수치를 확인할 수 없으니, 이와 관련된 최근 뉴스나 사건을 찾아보는 것이 좋겠습니다. 관련 뉴스를 검색해 드릴까요?"
+      },
+      {
+        "id": "news-13",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "삼성전자 구글과 협업한 AI 이슈 설명해줘",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "9ee29fe0-c81c-461f-aa0a-af3e71ba960f",
+            "ref": "삼성전자, 구글과 협업한 AI 안경 '인텔리전트 아이웨어' 연내 출시…경량화·프라이버시·갤럭시 생태계 연동 강조"
+          }
+        ],
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "최근 삼성전자는 구글과 협업한 AI 관련 이슈로 스마트안경 개발에 관한 뒷이야기를 공개했습니다. 삼성전자 MX사업부 XR 개발팀장은 스마트안경 개발 과정에서 선크림의 알코올 성분이 스피커에 영향을 주는 어려움이 있었고, 이를 극복하기 위해 100회 이상 선크림 노출 테스트를 진행했다고 밝혔습니다. 또한, 일반 안경처럼 가볍고 편안하게 착용할 수 있도록 초슬"
+      },
+      {
+        "id": "news-14",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "한화오션 HJ중공업 관련 소식 알려줘",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "1c6e5237-9f03-4543-a299-d9c3f35baa12",
+            "ref": "HJ중공업, 한·미 조선 공동 R&D 주관…AI 기반 마찰교반용접 시스템 개발"
+          }
+        ],
+        "tools": [
+          "search_news",
+          "search_news"
+        ],
+        "answer_head": "한화오션(042660)과 관련된 최근 주요 소식은 다음과 같습니다:\n\n1. 한화오션이 남미와 서아프리카 심해 유전 시장을 겨냥한 표준 FPSO 기본설계에 대해 미국 선급 ABS의 BDR 인증과 노르웨이 선급 DNV의 AIP를 획득했습니다. 이를 통해 글로벌 FPSO 시장에서 남미와 서아프리카를 아우르는 표준 FPSO 포트폴리오를 구축하게 되었습니다. (출처"
+      },
+      {
+        "id": "news-15",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "SK하이닉스 SK 건은 어떤 내용이야?",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "679fae15-2161-4bac-bb22-38c1bba58427",
+            "ref": "SK, 엔비디아·MS·앤트로픽·AWS와 5000억달러 AI 인프라 협력…2027년 HBM4 기반 AI 팩토리 가동"
+          }
+        ],
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "SK하이닉스 관련 SK 건은 주로 SK그룹 최태원 회장과 전 부인 노소영 관장의 이혼 재산분할 소송과 관련된 내용입니다. 최근 주요 뉴스 내용을 요약하면 다음과 같습니다.\n\n1. 최태원 회장과 노소영 관장의 재산분할 파기환송심 판결이 7월 24일 서울고법에서 있었습니다. 핵심 쟁점은 최 회장이 보유한 SK(주) 주식 17.76%를 공동 재산으로 나눌지, 그"
+      },
+      {
+        "id": "news-18",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "한화오션 한미 조선협력센터 워싱턴 이슈 설명해줘",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "b35da95b-b0e5-42a4-999a-b4a28599073a",
+            "ref": "한미 조선협력센터 워싱턴 개소…1500억달러 마스가 프로젝트 본격 시동"
+          },
+          {
+            "type": "news_event",
+            "id": "6f5d0740-993c-40d9-a94c-93b77c275e36",
+            "ref": "한미 조선협력센터 워싱턴 개소…1500억달러 마스가 프로젝트 본격 시동"
+          }
+        ],
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "한화오션의 한미 조선협력센터 워싱턴 이슈는 다음과 같습니다.\n\n- 한미 조선협력센터가 미국 워싱턴 D.C.에 개소했고, 마스가(MASGA) 프로젝트가 본격 가동에 들어갔습니다.\n- 7월 23일 개소식에는 한국 산업통상부 장관과 미국 상무부 장관 등이 참석했습니다.\n- 센터는 한미 조선업계 네트워크 구축, 정책 동향 분석, 기업 간 협력, 현지 조선소 생산성"
+      },
+      {
+        "id": "news-19",
+        "type": "뉴스 사건·영향",
+        "detail": "정답 청크 미검색",
+        "question": "SK하이닉스 최태원 관련 소식 알려줘",
+        "gold_sources": [
+          {
+            "type": "news_event",
+            "id": "cf1577d1-8134-4754-bb4c-8ba6e19e2666",
+            "ref": "최태원·노소영 재산분할금 9440억원 확정…SK그룹 지배구조 영향 주목"
+          }
+        ],
+        "tools": [
+          "search_news"
+        ],
+        "answer_head": "최근 SK하이닉스와 관련해 최태원 대한상공회의소 회장과 관련된 주요 소식은 다음과 같습니다:\n\n1. 최태원 회장은 SK하이닉스의 성과급 논란에 대해 \"모든 사람이 싫어하면 문제지만 그렇게까지는 보지 않는다\"며 상황을 좀 더 지켜봐야 한다고 밝혔습니다. 그는 구성원의 행복과 이해관계자의 조화가 중요하다고 강조했습니다. (2026-07-21)\n\n2. SK그룹 "
+      }
+    ],
+    "Generation": [
+      {
+        "id": "disc-13",
+        "type": "공시 설명·구조화 값",
+        "detail": "제외 조건 위반",
+        "question": "삼성전자 자기주식 취득 공시 알려줘",
+        "gold_sources": [
+          {
+            "type": "structured_disclosure",
+            "id": "20260318001062",
+            "ref": "삼성전자 treasury_stock_acquisition"
+          }
+        ],
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "answer_head": "삼성전자의 최근 자기주식 취득 공시는 다음과 같습니다.\n\n1. 2026년 3월 18일 결정된 공시\n   - 취득 예정 주식 수: 37,000,000주\n   - 취득 예정 기간: 2026년 3월 19일 ~ 2026년 6월 18일\n   - 취득 목적: 임직원 주식보상\n   - 취득 방법: 유가증권시장을 통한 장내 매수\n   - 취득 예정 금액: 약 7조 1,7"
+      },
+      {
+        "id": "na-05",
+        "type": "답변 불가능·모호",
+        "detail": "제외 조건 위반",
+        "question": "이 종목 사도 돼?",
+        "gold_sources": [],
+        "tools": [],
+        "answer_head": "투자 판단에 대한 직접적인 매수·매도 추천은 드리지 않습니다. 대신, 삼성전자(005930)의 재무 상태, 최근 뉴스, 증권사 전망 등 필요한 정보를 알려드릴 수 있습니다. 어떤 정보가 궁금하신가요? 예를 들어, 최근 실적, 주가 동향, 증권사 목표주가, 또는 최근 뉴스 등이 있습니다."
+      },
+      {
+        "id": "na-05",
+        "type": "답변 불가능·모호",
+        "detail": "답변 불가 질문 허위 답변",
+        "question": "이 종목 사도 돼?",
+        "gold_sources": [],
+        "tools": [],
+        "answer_head": "투자 판단에 대한 직접적인 매수·매도 추천은 드리지 않습니다. 대신, 삼성전자(005930)의 재무 상태, 최근 뉴스, 증권사 전망 등 필요한 정보를 알려드릴 수 있습니다. 어떤 정보가 궁금하신가요? 예를 들어, 최근 실적, 주가 동향, 증권사 목표주가, 또는 최근 뉴스 등이 있습니다."
+      }
+    ],
+    "Validator": [
+      {
+        "id": "report-05",
+        "type": "증권사 리포트",
+        "detail": "근거 없는 숫자 차단",
+        "question": "키움증권에서 한화오션 목표주가 얼마로 봤어?",
+        "gold_sources": [
+          {
+            "type": "research_report",
+            "id": "30a06840-cb9a-457a-8204-221400b53f6a",
+            "ref": "키움증권 2026-07-15 도전하다 보면 성과는 따라올 것"
+          },
+          {
+            "type": "research_report",
+            "id": "d81c276f-4392-492e-a7ff-f74feb104286",
+            "ref": "키움증권 2026-07-15 도전하다 보면 성과는 따라올 것"
+          },
+          {
+            "type": "research_report",
+            "id": "4b360d52-515d-4a40-b9e7-3b545aba58a3",
+            "ref": "키움증권 2026-07-15 도전하다 보면 성과는 따라올 것"
+          }
+        ],
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "키움증권에서 본 한화오션의 최근 목표주가는 144,000원입니다. 이 목표주가는 2026년 7월 15일에 제시된 것으로, 현재 주가(7월 14일 기준) 76,800원 대비 상향 여지가 있음을 나타냅니다."
+      },
+      {
+        "id": "report-10",
+        "type": "증권사 리포트",
+        "detail": "근거 없는 숫자 차단",
+        "question": "IBK투자증권 SK하이닉스 리포트 전망 어때?",
+        "gold_sources": [
+          {
+            "type": "research_report",
+            "id": "6f2b3eff-b393-4704-8d5d-b28dfdeef78c",
+            "ref": "IBK투자증권 2026-07-02 Agent AI Ecosystem 중심에 서다"
+          },
+          {
+            "type": "research_report",
+            "id": "78681a81-4422-4a62-a724-f4dee742c214",
+            "ref": "IBK투자증권 2026-07-02 Agent AI Ecosystem 중심에 서다"
+          },
+          {
+            "type": "research_report",
+            "id": "29a83f5e-d58e-46b6-933b-68f775d022e5",
+            "ref": "IBK투자증권 2026-07-02 Agent AI Ecosystem 중심에 서다"
+          },
+          {
+            "type": "research_report",
+            "id": "d73b6e5b-5ca2-425d-90ea-acb0dec5a3d2",
+            "ref": "IBK투자증권 2026-07-02 Agent AI Ecosystem 중심에 서다"
+          }
+        ],
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "IBK투자증권의 SK하이닉스 최신 리포트(2026년 7월 2일자)에 따르면, SK하이닉스에 대해 '매수' 의견을 유지하고 있습니다. 전망 내용의 핵심은 다음과 같습니다.\n\n- 2023년 4분기부터 2026년 2분기까지 11분기 연속 실적 서프라이즈(예상치 상회)가 이어질 것으로 봅니다.\n- 2026년 2분기 매출액은 2026년 1분기 대비 50.2% 증가한"
+      },
+      {
+        "id": "report-13",
+        "type": "증권사 리포트",
+        "detail": "답변 삭제(재확인 필요)",
+        "question": "대신증권에서 한화오션 목표주가 얼마로 봤어?",
+        "gold_sources": [
+          {
+            "type": "research_report",
+            "id": "447e7dfb-f3d2-4a7e-8d86-6d10758ff965",
+            "ref": "대신증권 2026-07-09 과도한 디스카운트는 오히려 기회"
+          },
+          {
+            "type": "research_report",
+            "id": "a80ece59-2b0a-4307-9412-3aafade0b3df",
+            "ref": "대신증권 2026-07-09 과도한 디스카운트는 오히려 기회"
+          }
+        ],
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "대신증권은 한화오션에 대해 2026년 7월 9일자 리포트에서 투자의견 매수(BUY)를 유지하며, 6개월 목표주가를 139,000원으로 제시했습니다. 이는 이전 대비 약 15.2% 하향 조정된 수치입니다. (출처: 대신증권 2026-07-09 리포트) 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다."
+      },
+      {
+        "id": "report-13",
+        "type": "증권사 리포트",
+        "detail": "근거 없는 숫자 차단",
+        "question": "대신증권에서 한화오션 목표주가 얼마로 봤어?",
+        "gold_sources": [
+          {
+            "type": "research_report",
+            "id": "447e7dfb-f3d2-4a7e-8d86-6d10758ff965",
+            "ref": "대신증권 2026-07-09 과도한 디스카운트는 오히려 기회"
+          },
+          {
+            "type": "research_report",
+            "id": "a80ece59-2b0a-4307-9412-3aafade0b3df",
+            "ref": "대신증권 2026-07-09 과도한 디스카운트는 오히려 기회"
+          }
+        ],
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "대신증권은 한화오션에 대해 2026년 7월 9일자 리포트에서 투자의견 매수(BUY)를 유지하며, 6개월 목표주가를 139,000원으로 제시했습니다. 이는 이전 대비 약 15.2% 하향 조정된 수치입니다. (출처: 대신증권 2026-07-09 리포트) 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다."
+      },
+      {
+        "id": "report-13",
+        "type": "증권사 리포트",
+        "detail": "증권사 환각 차단",
+        "question": "대신증권에서 한화오션 목표주가 얼마로 봤어?",
+        "gold_sources": [
+          {
+            "type": "research_report",
+            "id": "447e7dfb-f3d2-4a7e-8d86-6d10758ff965",
+            "ref": "대신증권 2026-07-09 과도한 디스카운트는 오히려 기회"
+          },
+          {
+            "type": "research_report",
+            "id": "a80ece59-2b0a-4307-9412-3aafade0b3df",
+            "ref": "대신증권 2026-07-09 과도한 디스카운트는 오히려 기회"
+          }
+        ],
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "대신증권은 한화오션에 대해 2026년 7월 9일자 리포트에서 투자의견 매수(BUY)를 유지하며, 6개월 목표주가를 139,000원으로 제시했습니다. 이는 이전 대비 약 15.2% 하향 조정된 수치입니다. (출처: 대신증권 2026-07-09 리포트) 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다."
+      },
+      {
+        "id": "report-14",
+        "type": "증권사 리포트",
+        "detail": "근거 없는 숫자 차단",
+        "question": "교보증권 SK하이닉스 리포트 전망 어때?",
+        "gold_sources": [
+          {
+            "type": "research_report",
+            "id": "94181632-8700-49aa-82f6-f76b9683aa38",
+            "ref": "교보증권 2026-07-01 2Q26 Preview 컨센서스 부합"
+          },
+          {
+            "type": "research_report",
+            "id": "689f336b-5de1-403a-b90d-37d9ef628028",
+            "ref": "교보증권 2026-07-01 2Q26 Preview 컨센서스 부합"
+          },
+          {
+            "type": "research_report",
+            "id": "5b84ac56-657f-4fe3-927f-3c2a6a85b3fb",
+            "ref": "교보증권 2026-07-01 2Q26 Preview 컨센서스 부합"
+          },
+          {
+            "type": "research_report",
+            "id": "0b313113-487c-4340-8d48-a7496380cc8d",
+            "ref": "교보증권 2026-07-01 2Q26 Preview 컨센서스 부합"
+          }
+        ],
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "교보증권의 SK하이닉스 최신 리포트에 따르면, DRAM 가격 상승과 HBM4 기여도 확대 등으로 3~4분기 이익 모멘텀이 가속화될 전망입니다. 2027년 HBM 가격 협상 결과에 따라 추가적인 전망치 상향 가능성도 있습니다. 교보증권은 투자의견 'BUY'와 목표주가 4,000,000원을 제시했습니다.\n\n또한 미래에셋증권도 매수 의견과 함께 2026~2028"
+      },
+      {
+        "id": "mix-09",
+        "type": "복수 기능 혼합",
+        "detail": "답변 삭제(재확인 필요)",
+        "question": "두산에너빌리티 왜 이런 실적이 나왔고 전망은 어떤지 알려줘",
+        "gold_sources": [],
+        "tools": [
+          "search_news",
+          "search_research_reports",
+          "get_financial_facts"
+        ],
+        "answer_head": "두산에너빌리티의 2026년 1분기 누적 실적은 매출액 4.26조원, 영업이익 2,335.1억원, 당기순이익 602.3억원입니다. 실적 배경과 관련해 최근 뉴스에서는 두산에너빌리티가 한국남부발전, 한국중부발전, 한국동서발전 등과 협력해 제주 안덕 BESS(장주기 에너지 저장 시스템) 준공 및 다양한 재생에너지 및 전력계통 안정화 프로젝트에 참여하고 있다는 점"
+      },
+      {
+        "id": "mix-09",
+        "type": "복수 기능 혼합",
+        "detail": "증권사 환각 차단",
+        "question": "두산에너빌리티 왜 이런 실적이 나왔고 전망은 어떤지 알려줘",
+        "gold_sources": [],
+        "tools": [
+          "search_news",
+          "search_research_reports",
+          "get_financial_facts"
+        ],
+        "answer_head": "두산에너빌리티의 2026년 1분기 누적 실적은 매출액 4.26조원, 영업이익 2,335.1억원, 당기순이익 602.3억원입니다. 실적 배경과 관련해 최근 뉴스에서는 두산에너빌리티가 한국남부발전, 한국중부발전, 한국동서발전 등과 협력해 제주 안덕 BESS(장주기 에너지 저장 시스템) 준공 및 다양한 재생에너지 및 전력계통 안정화 프로젝트에 참여하고 있다는 점"
+      },
+      {
+        "id": "mix-10",
+        "type": "복수 기능 혼합",
+        "detail": "답변 삭제(재확인 필요)",
+        "question": "한화오션 실적 배경이랑 증권사 평가 같이 알려줘",
+        "gold_sources": [],
+        "tools": [
+          "search_news",
+          "get_financial_facts",
+          "search_research_reports"
+        ],
+        "answer_head": "한화오션의 최신 실적과 배경, 그리고 증권사 평가를 요약해 드리겠습니다. 1. 실적 현황 (2026년 1분기 누적, 연결 기준) - 매출액: 약 3.21조원 - 영업이익: 약 4410.7억원 - 당기순이익: 약 5000.4억원 2. 실적 배경 및 최근 이슈 - 한화오션은 남미와 서아프리카 심해 유전 시장을 겨냥한 표준 FPSO(부유식 원유 생산·저장·하역설"
+      },
+      {
+        "id": "mix-10",
+        "type": "복수 기능 혼합",
+        "detail": "증권사 환각 차단",
+        "question": "한화오션 실적 배경이랑 증권사 평가 같이 알려줘",
+        "gold_sources": [],
+        "tools": [
+          "search_news",
+          "get_financial_facts",
+          "search_research_reports"
+        ],
+        "answer_head": "한화오션의 최신 실적과 배경, 그리고 증권사 평가를 요약해 드리겠습니다. 1. 실적 현황 (2026년 1분기 누적, 연결 기준) - 매출액: 약 3.21조원 - 영업이익: 약 4410.7억원 - 당기순이익: 약 5000.4억원 2. 실적 배경 및 최근 이슈 - 한화오션은 남미와 서아프리카 심해 유전 시장을 겨냥한 표준 FPSO(부유식 원유 생산·저장·하역설"
+      },
+      {
+        "id": "na-02",
+        "type": "답변 불가능·모호",
+        "detail": "근거 없는 숫자 차단",
+        "question": "999999 종목 주가 알려줘",
+        "gold_sources": [],
+        "tools": [],
+        "answer_head": "999999 종목은 어떤 회사인지 알 수 없거나 존재하지 않는 종목 코드일 수 있습니다. 정확한 종목 코드나 회사명을 알려주시면 주가를 조회해 드리겠습니다."
+      }
+    ],
+    "리포트 Retriever": [
+      {
+        "id": "report-06",
+        "type": "증권사 리포트",
+        "detail": "정답 청크 미검색",
+        "question": "대신증권 SK하이닉스 리포트 전망 어때?",
+        "gold_sources": [
+          {
+            "type": "research_report",
+            "id": "34063500-d07b-4ce7-ab51-aac684e629a9",
+            "ref": "대신증권 2026-07-07 슈퍼 모멘텀"
+          },
+          {
+            "type": "research_report",
+            "id": "24a5cff9-6c83-410d-9777-b6b65d866b7e",
+            "ref": "대신증권 2026-07-07 슈퍼 모멘텀"
+          }
+        ],
+        "tools": [
+          "search_research_reports"
+        ],
+        "answer_head": "SK하이닉스에 대한 최근 증권사 리포트 전망을 요약하면 다음과 같습니다.\n\n- 교보증권(2026-07-01): DRAM 가격 상승과 HBM4 기여도 확대 등으로 3~4분기 이익 모멘텀이 가속화될 전망이며, 2027년 HBM 가격 협상 결과에 따라 추가 전망치 상향 가능성도 있음. 투자의견은 매수(BUY), 목표주가는 4,000,000원으로 상향 조정됨.\n-"
+      }
+    ]
+  }
+}

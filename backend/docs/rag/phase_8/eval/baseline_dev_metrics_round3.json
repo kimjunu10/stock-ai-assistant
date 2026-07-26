@@ -1,27 +1,27 @@
 {
   "note": "개발셋 baseline 자동 평가 결과. 홀드아웃 미실행. 측정 대상이 없는 지표는 null(미측정)이며 0 이 아니다.",
   "n_ran": 120,
-  "elapsed_sec": 528.7,
+  "elapsed_sec": 566.9,
   "environment_failures": [],
   "overall": {
     "n": 120,
     "agent": {
-      "required_tool_recall": 0.9843,
-      "forbidden_tool_call_rate": 0.0083,
-      "unnecessary_tool_call_rate": 0.0355,
-      "tool_argument_accuracy": 0.9866,
+      "required_tool_recall": 1.0,
+      "forbidden_tool_call_rate": 0.0,
+      "unnecessary_tool_call_rate": 0.0347,
+      "tool_argument_accuracy": 1.0,
       "multistep_completion_rate": 1.0,
-      "duplicate_call_rate": 0.0
+      "duplicate_call_rate": 0.0083
     },
     "retrieval": {
       "document_retrieval": {
         "recall_at_k": 0.0,
         "hit_at_1": 0.0,
         "mrr": 0.0,
-        "page_accuracy": 0.25
+        "page_accuracy": 0.3333
       },
       "structured_lookup": {
-        "row_hit_rate": 0.8222
+        "row_hit_rate": 0.9778
       },
       "other_stock_contamination_rate": 0.0
     },
@@ -35,30 +35,30 @@
     "answer": {
       "key_fact_coverage": 0.4286,
       "citation_precision": 1.0,
-      "citation_coverage": 0.9464,
+      "citation_coverage": 0.9554,
       "nonexistent_citations": 0,
-      "unsupported_numbers": 5,
-      "exclusion_violations": 2,
-      "overclaim_cases": 2,
-      "false_answer_on_unanswerable": 1
+      "unsupported_numbers": 3,
+      "exclusion_violations": 4,
+      "overclaim_cases": 1,
+      "false_answer_on_unanswerable": 0
     },
     "ops": {
-      "latency_ms_p50": 3766.0,
-      "latency_ms_p95": 8038.0,
-      "avg_tool_calls": 1.18,
+      "latency_ms_p50": 4101.0,
+      "latency_ms_p95": 7772.0,
+      "avg_tool_calls": 1.2,
       "avg_model_calls": 1.99,
-      "cost_usd_per_query": 0.005426,
-      "cost_usd_total": 0.651102
+      "cost_usd_per_query": 0.005337,
+      "cost_usd_total": 0.640442
     }
   },
   "by_type": {
     "금융용어": {
       "n": 11,
       "agent": {
-        "required_tool_recall": 0.9091,
+        "required_tool_recall": 1.0,
         "forbidden_tool_call_rate": 0.0,
         "unnecessary_tool_call_rate": 0.0,
-        "tool_argument_accuracy": 0.9091,
+        "tool_argument_accuracy": 1.0,
         "multistep_completion_rate": null,
         "duplicate_call_rate": 0.0
       },
@@ -70,7 +70,7 @@
           "page_accuracy": null
         },
         "structured_lookup": {
-          "row_hit_rate": 0.9091
+          "row_hit_rate": 1.0
         },
         "other_stock_contamination_rate": 0.0
       },
@@ -84,7 +84,7 @@
       "answer": {
         "key_fact_coverage": null,
         "citation_precision": 1.0,
-        "citation_coverage": 0.9091,
+        "citation_coverage": 1.0,
         "nonexistent_citations": 0,
         "unsupported_numbers": 0,
         "exclusion_violations": 0,
@@ -92,12 +92,12 @@
         "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 3309.0,
-        "latency_ms_p95": 5061.0,
-        "avg_tool_calls": 0.91,
-        "avg_model_calls": 1.91,
-        "cost_usd_per_query": 0.00445,
-        "cost_usd_total": 0.048954
+        "latency_ms_p50": 3751.0,
+        "latency_ms_p95": 6566.0,
+        "avg_tool_calls": 1.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.004554,
+        "cost_usd_total": 0.050097
       }
     },
     "정확한 재무 숫자": {
@@ -140,23 +140,23 @@
         "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 2350.0,
-        "latency_ms_p95": 5309.0,
+        "latency_ms_p50": 2636.0,
+        "latency_ms_p95": 3198.0,
         "avg_tool_calls": 1.0,
         "avg_model_calls": 2.0,
-        "cost_usd_per_query": 0.004577,
-        "cost_usd_total": 0.086959
+        "cost_usd_per_query": 0.004466,
+        "cost_usd_total": 0.084856
       }
     },
     "뉴스 사건·영향": {
       "n": 19,
       "agent": {
-        "required_tool_recall": 0.9474,
-        "forbidden_tool_call_rate": 0.0526,
-        "unnecessary_tool_call_rate": 0.0,
-        "tool_argument_accuracy": 0.9474,
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0435,
+        "tool_argument_accuracy": 1.0,
         "multistep_completion_rate": null,
-        "duplicate_call_rate": 0.0
+        "duplicate_call_rate": 0.0526
       },
       "retrieval": {
         "document_retrieval": {
@@ -180,20 +180,20 @@
       "answer": {
         "key_fact_coverage": null,
         "citation_precision": 1.0,
-        "citation_coverage": 0.9474,
+        "citation_coverage": 1.0,
         "nonexistent_citations": 0,
         "unsupported_numbers": 0,
         "exclusion_violations": 0,
-        "overclaim_cases": 2,
+        "overclaim_cases": 1,
         "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 5999.0,
-        "latency_ms_p95": 9271.0,
-        "avg_tool_calls": 1.11,
+        "latency_ms_p50": 6345.0,
+        "latency_ms_p95": 15360.0,
+        "avg_tool_calls": 1.21,
         "avg_model_calls": 2.0,
-        "cost_usd_per_query": 0.005965,
-        "cost_usd_total": 0.113338
+        "cost_usd_per_query": 0.00611,
+        "cost_usd_total": 0.116092
       }
     },
     "공시 설명·구조화 값": {
@@ -214,7 +214,7 @@
           "page_accuracy": null
         },
         "structured_lookup": {
-          "row_hit_rate": 0.5333
+          "row_hit_rate": 0.9333
         },
         "other_stock_contamination_rate": 0.0
       },
@@ -236,12 +236,12 @@
         "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 3373.0,
-        "latency_ms_p95": 8937.0,
-        "avg_tool_calls": 1.07,
-        "avg_model_calls": 2.07,
-        "cost_usd_per_query": 0.005366,
-        "cost_usd_total": 0.080497
+        "latency_ms_p50": 3419.0,
+        "latency_ms_p95": 9181.0,
+        "avg_tool_calls": 1.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.005002,
+        "cost_usd_total": 0.075033
       }
     },
     "증권사 리포트": {
@@ -259,7 +259,7 @@
           "recall_at_k": 0.0,
           "hit_at_1": 0.0,
           "mrr": 0.0,
-          "page_accuracy": 0.25
+          "page_accuracy": 0.3333
         },
         "structured_lookup": {
           "row_hit_rate": null
@@ -276,20 +276,20 @@
       "answer": {
         "key_fact_coverage": null,
         "citation_precision": 1.0,
-        "citation_coverage": 1.0,
+        "citation_coverage": 0.9333,
         "nonexistent_citations": 0,
-        "unsupported_numbers": 4,
-        "exclusion_violations": 0,
+        "unsupported_numbers": 2,
+        "exclusion_violations": 1,
         "overclaim_cases": 0,
         "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 3831.0,
-        "latency_ms_p95": 6449.0,
+        "latency_ms_p50": 3639.0,
+        "latency_ms_p95": 6736.0,
         "avg_tool_calls": 1.0,
         "avg_model_calls": 2.0,
-        "cost_usd_per_query": 0.0056,
-        "cost_usd_total": 0.083996
+        "cost_usd_per_query": 0.005705,
+        "cost_usd_total": 0.085578
       }
     },
     "복수 기능 혼합": {
@@ -332,12 +332,12 @@
         "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 6996.0,
-        "latency_ms_p95": 10499.0,
-        "avg_tool_calls": 2.47,
-        "avg_model_calls": 2.13,
-        "cost_usd_per_query": 0.007374,
-        "cost_usd_total": 0.110604
+        "latency_ms_p50": 5677.0,
+        "latency_ms_p95": 29159.0,
+        "avg_tool_calls": 2.6,
+        "avg_model_calls": 2.2,
+        "cost_usd_per_query": 0.007183,
+        "cost_usd_total": 0.107745
       }
     },
     "부정·제외·대조": {
@@ -375,17 +375,17 @@
         "citation_coverage": 0.9091,
         "nonexistent_citations": 0,
         "unsupported_numbers": 0,
-        "exclusion_violations": 0,
+        "exclusion_violations": 1,
         "overclaim_cases": 0,
         "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 5620.0,
-        "latency_ms_p95": 6653.0,
+        "latency_ms_p50": 5669.0,
+        "latency_ms_p95": 7772.0,
         "avg_tool_calls": 1.0,
         "avg_model_calls": 2.0,
-        "cost_usd_per_query": 0.005485,
-        "cost_usd_total": 0.060335
+        "cost_usd_per_query": 0.005382,
+        "cost_usd_total": 0.059197
       }
     },
     "현재 화면 문맥": {
@@ -428,12 +428,12 @@
         "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 2768.0,
-        "latency_ms_p95": 4967.0,
+        "latency_ms_p50": 2357.0,
+        "latency_ms_p95": 5841.0,
         "avg_tool_calls": 1.0,
         "avg_model_calls": 2.0,
-        "cost_usd_per_query": 0.005029,
-        "cost_usd_total": 0.035201
+        "cost_usd_per_query": 0.004898,
+        "cost_usd_total": 0.034284
       }
     },
     "답변 불가능·모호": {
@@ -473,15 +473,15 @@
         "unsupported_numbers": 1,
         "exclusion_violations": 1,
         "overclaim_cases": 0,
-        "false_answer_on_unanswerable": 1
+        "false_answer_on_unanswerable": 0
       },
       "ops": {
-        "latency_ms_p50": 2532.0,
-        "latency_ms_p95": 7878.0,
-        "avg_tool_calls": 0.62,
-        "avg_model_calls": 1.62,
-        "cost_usd_per_query": 0.003902,
-        "cost_usd_total": 0.031218
+        "latency_ms_p50": 1422.0,
+        "latency_ms_p95": 5428.0,
+        "avg_tool_calls": 0.5,
+        "avg_model_calls": 1.5,
+        "cost_usd_per_query": 0.003445,
+        "cost_usd_total": 0.02756
       }
     }
   },
@@ -639,16 +639,16 @@
     {
       "case_id": "term-07",
       "type": "금융용어",
-      "passed_required_tools": false,
+      "passed_required_tools": true,
       "forbidden_violated": [],
       "unnecessary_tools": [],
       "arg_results": {
-        "lookup_financial_term.term_contains": false
+        "lookup_financial_term.term_contains": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "term:상장지수펀드"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1448,10 +1448,10 @@
       "arg_results": {
         "search_news.stock_code": true
       },
-      "gold_source_hits": [
+      "gold_source_hits": [],
+      "gold_source_misses": [
         "63ed8a19-9055-41e0-b23e-7b64d917b241"
       ],
-      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1460,7 +1460,7 @@
       "period_ok": null,
       "trading_day_ok": null,
       "exclusion_violations": [],
-      "overclaim": true,
+      "overclaim": false,
       "unanswerable_handled": null,
       "notes": []
     },
@@ -1498,10 +1498,10 @@
       "arg_results": {
         "search_news.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "aaabd752-17af-46e9-96a0-ca56dcc44543"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1619,14 +1619,16 @@
       "type": "뉴스 사건·영향",
       "passed_required_tools": true,
       "forbidden_violated": [],
-      "unnecessary_tools": [],
+      "unnecessary_tools": [
+        "search_disclosures"
+      ],
       "arg_results": {
         "search_news.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "35311589-5a5e-4174-bb77-35286c6d4f7a"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1642,13 +1644,11 @@
     {
       "case_id": "news-11",
       "type": "뉴스 사건·영향",
-      "passed_required_tools": false,
-      "forbidden_violated": [
-        "get_financial_facts"
-      ],
+      "passed_required_tools": true,
+      "forbidden_violated": [],
       "unnecessary_tools": [],
       "arg_results": {
-        "search_news.stock_code": false
+        "search_news.stock_code": true
       },
       "gold_source_hits": [],
       "gold_source_misses": [
@@ -1826,11 +1826,11 @@
       "arg_results": {
         "search_news.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "b35da95b-b0e5-42a4-999a-b4a28599073a",
         "6f5d0740-993c-40d9-a94c-93b77c275e36"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1877,10 +1877,10 @@
       "arg_results": {
         "get_disclosure_values.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "20250515002103"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1902,10 +1902,10 @@
       "arg_results": {
         "get_disclosure_values.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "20250814003906"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1927,10 +1927,10 @@
       "arg_results": {
         "get_disclosure_values.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "20241114002642"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1952,10 +1952,10 @@
       "arg_results": {
         "get_disclosure_values.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "20240516002258"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -1999,7 +1999,9 @@
       "passed_required_tools": true,
       "forbidden_violated": [],
       "unnecessary_tools": [],
-      "arg_results": {},
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
       "gold_source_hits": [
         "20260713000324"
       ],
@@ -2025,10 +2027,10 @@
       "arg_results": {
         "get_disclosure_values.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "20250515001159"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -2075,10 +2077,10 @@
       "arg_results": {
         "get_disclosure_values.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "20251113001034"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -2122,13 +2124,11 @@
       "passed_required_tools": true,
       "forbidden_violated": [],
       "unnecessary_tools": [],
-      "arg_results": {
-        "get_disclosure_values.stock_code": true
-      },
-      "gold_source_hits": [
+      "arg_results": {},
+      "gold_source_hits": [],
+      "gold_source_misses": [
         "20260710000002"
       ],
-      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -2202,10 +2202,10 @@
       "arg_results": {
         "get_disclosure_values.stock_code": true
       },
-      "gold_source_hits": [],
-      "gold_source_misses": [
+      "gold_source_hits": [
         "20251113001034"
       ],
+      "gold_source_misses": [],
       "other_stock_sources": [],
       "fact_hits": 0,
       "fact_total": 0,
@@ -2307,11 +2307,12 @@
       "arg_results": {
         "search_research_reports.stock_code": true
       },
-      "gold_source_hits": [],
+      "gold_source_hits": [
+        "7be8e57d-5044-42e4-9eb0-f684190faa9a"
+      ],
       "gold_source_misses": [
         "7f8fde08-ccd1-4ade-8a37-5ad382e76dd9",
-        "d7954e45-cfe7-4535-afe3-5dbbc90884a3",
-        "7be8e57d-5044-42e4-9eb0-f684190faa9a"
+        "d7954e45-cfe7-4535-afe3-5dbbc90884a3"
       ],
       "other_stock_sources": [],
       "fact_hits": 0,
@@ -2362,10 +2363,9 @@
       "arg_results": {
         "search_research_reports.stock_code": true
       },
-      "gold_source_hits": [
-        "30a06840-cb9a-457a-8204-221400b53f6a"
-      ],
+      "gold_source_hits": [],
       "gold_source_misses": [
+        "30a06840-cb9a-457a-8204-221400b53f6a",
         "d81c276f-4392-492e-a7ff-f74feb104286",
         "4b360d52-515d-4a40-b9e7-3b545aba58a3"
       ],
@@ -2416,11 +2416,12 @@
       "arg_results": {
         "search_research_reports.stock_code": true
       },
-      "gold_source_hits": [],
+      "gold_source_hits": [
+        "96a26f4d-ca1e-449b-8b18-e7d9fae5c4ab"
+      ],
       "gold_source_misses": [
         "dd4daf6d-f400-42a8-9700-ff015f981565",
-        "a1ca1fd9-0424-46b6-b53d-6c6f9562dc21",
-        "96a26f4d-ca1e-449b-8b18-e7d9fae5c4ab"
+        "a1ca1fd9-0424-46b6-b53d-6c6f9562dc21"
       ],
       "other_stock_sources": [],
       "fact_hits": 0,
@@ -2443,10 +2444,9 @@
       "arg_results": {
         "search_research_reports.stock_code": true
       },
-      "gold_source_hits": [
-        "234fdce0-271c-467f-a4d2-7d87c5877af2"
-      ],
+      "gold_source_hits": [],
       "gold_source_misses": [
+        "234fdce0-271c-467f-a4d2-7d87c5877af2",
         "b4c51126-a9ad-4943-9fef-90467ebb88e3",
         "f6f5c4f2-2f82-4519-b94e-3bec593825f4"
       ],
@@ -2498,10 +2498,9 @@
       "arg_results": {
         "search_research_reports.stock_code": true
       },
-      "gold_source_hits": [
-        "6f2b3eff-b393-4704-8d5d-b28dfdeef78c"
-      ],
+      "gold_source_hits": [],
       "gold_source_misses": [
+        "6f2b3eff-b393-4704-8d5d-b28dfdeef78c",
         "78681a81-4422-4a62-a724-f4dee742c214",
         "29a83f5e-d58e-46b6-933b-68f775d022e5",
         "d73b6e5b-5ca2-425d-90ea-acb0dec5a3d2"
@@ -2513,7 +2512,9 @@
       "financial_grade": null,
       "period_ok": null,
       "trading_day_ok": null,
-      "exclusion_violations": [],
+      "exclusion_violations": [
+        "확정"
+      ],
       "overclaim": false,
       "unanswerable_handled": null,
       "notes": []
@@ -2583,10 +2584,10 @@
         "search_research_reports.stock_code": true
       },
       "gold_source_hits": [
-        "447e7dfb-f3d2-4a7e-8d86-6d10758ff965"
+        "a80ece59-2b0a-4307-9412-3aafade0b3df"
       ],
       "gold_source_misses": [
-        "a80ece59-2b0a-4307-9412-3aafade0b3df"
+        "447e7dfb-f3d2-4a7e-8d86-6d10758ff965"
       ],
       "other_stock_sources": [],
       "fact_hits": 0,
@@ -2638,13 +2639,12 @@
       "arg_results": {
         "search_research_reports.stock_code": true
       },
-      "gold_source_hits": [
-        "c1b5fdb7-4a28-4b5c-a8c0-772f40a36797"
-      ],
+      "gold_source_hits": [],
       "gold_source_misses": [
         "ff42e3dc-11f1-42a2-bbad-02a15413b014",
         "8c33a0ff-d40c-4863-8367-ad05feea8a6a",
-        "899c84ec-df3e-4ce8-ab25-c6924f5cd69e"
+        "899c84ec-df3e-4ce8-ab25-c6924f5cd69e",
+        "c1b5fdb7-4a28-4b5c-a8c0-772f40a36797"
       ],
       "other_stock_sources": [],
       "fact_hits": 0,
@@ -3113,7 +3113,9 @@
       "financial_grade": null,
       "period_ok": null,
       "trading_day_ok": null,
-      "exclusion_violations": [],
+      "exclusion_violations": [
+        "실적"
+      ],
       "overclaim": false,
       "unanswerable_handled": null,
       "notes": []
@@ -3525,7 +3527,7 @@
         "추천"
       ],
       "overclaim": false,
-      "unanswerable_handled": false,
+      "unanswerable_handled": true,
       "notes": []
     },
     {
@@ -3534,7 +3536,6 @@
       "passed_required_tools": true,
       "forbidden_violated": [],
       "unnecessary_tools": [
-        "get_financial_facts",
         "search_disclosures"
       ],
       "arg_results": {},
