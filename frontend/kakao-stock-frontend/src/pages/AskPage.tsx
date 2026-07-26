@@ -8,11 +8,16 @@ export function AskPage() {
 
   return (
     <main className="ask-page">
+      <div aria-hidden="true" className="ask-page__glow ask-page__glow--one" />
+      <div aria-hidden="true" className="ask-page__glow ask-page__glow--two" />
       <section className="global-chat">
         <header className="global-chat__header">
-          <div><div><strong>Moa AI</strong><span>금융 자료를 근거로 답합니다</span></div></div>
+          <div className="global-chat__identity">
+            <span aria-hidden="true" className="moa-chat-avatar">M</span>
+            <div><strong>Moa AI</strong><span>금융 자료를 근거로 답합니다</span></div>
+          </div>
           <label className="stock-select">
-            <span>종목</span>
+            <span>대화 종목</span>
             <select aria-label="질문할 종목" onChange={(event) => setStockCode(event.target.value)} value={stockCode}>
               {STOCKS.map((item) => <option key={item.code} value={item.code}>{item.name} · {item.code}</option>)}
             </select>

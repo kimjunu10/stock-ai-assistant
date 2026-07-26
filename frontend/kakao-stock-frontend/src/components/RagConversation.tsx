@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useRagConversation } from '../hooks/useRagConversation'
 import type { RagContext } from '../types/qa'
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 import { RagAnswer } from './RagAnswer'
 import { RagSources } from './RagSources'
 import { RagVisualizations } from './RagVisualizations'
@@ -12,11 +12,37 @@ interface RagConversationProps {
   variant: 'page' | 'panel'
 }
 
-function suggestions(context: RagContext) {
-  if (context.sourceType === 'news_event') return ['이 사건이 왜 중요해?', '발표 전후 주가는 어떻게 움직였어?', '관련된 공식 공시가 있어?', '후속 보도가 있었어?']
-  if (context.sourceType === 'dart_document' || context.sourceType === 'structured_disclosure') return ['이 공시 핵심 숫자만 알려줘', '투자자가 주의할 점은 뭐야?', '관련 뉴스가 있어?', '정정 전과 후 무엇이 달라졌어?']
-  if (context.sourceType === 'research_report') return ['이 리포트의 목표주가와 근거는?', '실제 실적과 전망치를 비교해줘', '다른 증권사 의견과 비교해줘', '회사 발표 내용만 알려줘']
-  return ['이 종목 지금 핵심만 정리해줘', '최근 주가가 어떻게 움직였어?', '최근 호재만 알려줘. 실적 관련은 제외해.', '실제 실적과 증권사 전망을 비교해줘.']
+interface StarterQuestion {
+  icon: IconName
+  label: string
+  question: string
+}
+
+function suggestions(context: RagContext): StarterQuestion[] {
+  if (context.sourceType === 'news_event') return [
+    { icon: 'info', label: '사건 해설', question: '이 사건이 왜 중요해?' },
+    { icon: 'chart', label: '주가 반응', question: '발표 전후 주가는 어떻게 움직였어?' },
+    { icon: 'document', label: '공식 자료', question: '관련된 공식 공시가 있어?' },
+    { icon: 'news', label: '후속 보도', question: '후속 보도가 있었어?' },
+  ]
+  if (context.sourceType === 'dart_document' || context.sourceType === 'structured_disclosure') return [
+    { icon: 'document', label: '핵심 숫자', question: '이 공시 핵심 숫자만 알려줘' },
+    { icon: 'info', label: '주의 사항', question: '투자자가 주의할 점은 뭐야?' },
+    { icon: 'news', label: '관련 뉴스', question: '관련 뉴스가 있어?' },
+    { icon: 'refresh', label: '변경 사항', question: '정정 전과 후 무엇이 달라졌어?' },
+  ]
+  if (context.sourceType === 'research_report') return [
+    { icon: 'chart', label: '목표주가', question: '이 리포트의 목표주가와 근거는?' },
+    { icon: 'stocks', label: '실적 비교', question: '실제 실적과 전망치를 비교해줘' },
+    { icon: 'document', label: '의견 비교', question: '다른 증권사 의견과 비교해줘' },
+    { icon: 'check', label: '공식 발표', question: '회사 발표 내용만 알려줘' },
+  ]
+  return [
+    { icon: 'message', label: '한눈에 요약', question: '이 종목 지금 핵심만 정리해줘' },
+    { icon: 'chart', label: '주가 흐름', question: '최근 주가가 어떻게 움직였어?' },
+    { icon: 'news', label: '뉴스 분석', question: '최근 호재만 알려줘. 실적 관련은 제외해.' },
+    { icon: 'document', label: '실적·전망', question: '실제 실적과 증권사 전망을 비교해줘.' },
+  ]
 }
 
 function contextLabel(context: RagContext) {
@@ -66,11 +92,23 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
 
         {messages.length === 0 ? (
           <div className="rag-empty">
-            <span>MOA</span>
+            <div className="rag-empty__identity">
+              <span aria-hidden="true" className="moa-chat-avatar moa-chat-avatar--large">M</span>
+              <div><strong>Moa AI</strong><span>무엇이든 물어보세요</span></div>
+              <i aria-hidden="true" />
+            </div>
             <h1>{emptyTitle ?? '무엇이 궁금한가요?'}</h1>
             <p>주가, 뉴스, 공시와 리포트를 한 번에 확인하세요.</p>
             <div className="rag-starters">
-              {starterQuestions.map((question) => <button key={question} onClick={() => void send(question)} type="button">{question}<Icon name="arrow-right" size={15} /></button>)}
+              {starterQuestions.map((item) => (
+                <button aria-label={item.question} key={item.question} onClick={() => void send(item.question)} type="button">
+                  <span className="rag-starter__leading">
+                    <span className="rag-starter__icon"><Icon name={item.icon} size={17} /></span>
+                    <span><small>{item.label}</small><strong>{item.question}</strong></span>
+                  </span>
+                  <Icon name="arrow-right" size={15} />
+                </button>
+              ))}
             </div>
           </div>
         ) : (
@@ -78,6 +116,12 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
             {messages.map((message) => (
               <article className={`rag-message rag-message--${message.role}${message.state ? ` is-${message.state}` : ''}`} key={message.id}>
                 <div>
+                  {message.role === 'assistant' && (
+                    <div className="rag-message__identity">
+                      <span aria-hidden="true" className="moa-chat-avatar">M</span>
+                      <strong>Moa AI</strong>
+                    </div>
+                  )}
                   {message.text
                     ? message.role === 'assistant' ? <RagAnswer text={message.text} /> : <p>{message.text}</p>
                     : message.state === 'pending' && <span className="rag-answer-placeholder">근거를 확인하고 있어요…</span>}

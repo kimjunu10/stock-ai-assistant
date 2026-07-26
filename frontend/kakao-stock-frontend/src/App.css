@@ -1301,3 +1301,176 @@
   }
 }
 }
+
+/* Chat workspace polish and collision-free news assistant docking. */
+@layer components {
+  .ask-page {
+    @apply relative h-[calc(100dvh-72px)] overflow-hidden px-6 py-[18px];
+    background:
+      radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--brand) 17%, transparent) 0, transparent 24%),
+      radial-gradient(circle at 84% 92%, color-mix(in srgb, var(--brand) 10%, transparent) 0, transparent 28%),
+      color-mix(in srgb, var(--canvas) 92%, var(--subtle));
+  }
+  .ask-page__glow {
+    @apply pointer-events-none absolute rounded-full opacity-50 blur-3xl;
+  }
+  .ask-page__glow--one { @apply -top-20 left-[8%] size-64 bg-brand/20; }
+  .ask-page__glow--two { @apply -right-24 -bottom-28 size-80 bg-brand/10; }
+
+  .global-chat {
+    @apply relative z-10 mx-auto grid h-full min-h-0 w-[min(1120px,100%)] grid-rows-[74px_minmax(0,1fr)] overflow-hidden rounded-[26px] border border-line-strong bg-surface;
+    box-shadow: 0 26px 70px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.04);
+  }
+  .global-chat::before {
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px content-[''];
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--brand) 70%, white), transparent);
+  }
+  .global-chat__header {
+    @apply min-h-[74px] border-b border-line bg-surface/90 px-7 py-3 backdrop-blur-xl;
+  }
+  .global-chat__identity { @apply flex items-center gap-3; }
+  .global-chat__identity > div { @apply flex flex-col; }
+  .global-chat__identity strong { @apply text-[15px] font-black tracking-[-0.2px]; }
+  .global-chat__identity span { @apply mt-0.5 text-[11px] font-medium text-faint; }
+
+  .moa-chat-avatar {
+    @apply relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-ink text-[13px] font-black text-brand;
+    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.18);
+  }
+  .moa-chat-avatar::after {
+    @apply absolute -right-1 -bottom-1 size-4 rounded-full border-2 border-surface bg-brand content-[''];
+  }
+  .moa-chat-avatar--large {
+    @apply size-12 rounded-[16px] text-[15px];
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.2);
+  }
+
+  .stock-select { @apply gap-2.5; }
+  .stock-select > span { @apply text-[10px] font-bold tracking-[0.2px] text-faint; }
+  .stock-select select {
+    @apply h-10 rounded-xl border-line-strong bg-subtle px-3.5 pr-9 text-[12px] font-extrabold;
+  }
+
+  .rag-conversation--page {
+    @apply relative bg-surface;
+    background-image: linear-gradient(180deg, color-mix(in srgb, var(--subtle) 58%, transparent), transparent 32%);
+  }
+  .rag-conversation--page .rag-thread { @apply px-8 pt-7 pb-10; }
+  .rag-conversation--page .rag-context-badge {
+    @apply mb-3 border-brand/20 bg-brand-soft px-3 py-1.5 font-extrabold text-brand-ink;
+  }
+  .rag-conversation--page .rag-empty {
+    @apply min-h-0 w-[min(820px,100%)] justify-center py-5;
+  }
+  .rag-empty__identity {
+    @apply mb-6 inline-flex items-center gap-3 rounded-[18px] border border-line bg-surface px-3.5 py-3 text-left;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+  }
+  .rag-empty__identity > div { @apply flex flex-col pr-3; }
+  .rag-empty__identity > div strong { @apply text-[13px] font-black text-ink; }
+  .rag-empty__identity > div span { @apply mt-0.5 text-[10px] font-semibold text-faint; }
+  .rag-empty__identity > i {
+    @apply mr-1 size-2 rounded-full bg-positive-ink;
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--positive-ink) 12%, transparent);
+  }
+  .rag-conversation--page .rag-empty h1 {
+    @apply max-w-[680px] text-[clamp(30px,3vw,42px)] leading-[1.25] tracking-[-1.6px];
+  }
+  .rag-conversation--page .rag-empty p { @apply mt-3 text-[14px] font-medium text-muted; }
+
+  .rag-conversation--page .rag-starters {
+    @apply mt-7 w-[min(800px,100%)] grid-cols-2 gap-3;
+  }
+  .rag-conversation--page .rag-starters button {
+    @apply min-h-[76px] rounded-[17px] border-line-strong bg-surface px-4 py-3.5 text-ink;
+    box-shadow: 0 7px 22px rgba(15, 23, 42, 0.055);
+  }
+  .rag-conversation--page .rag-starters button:hover {
+    @apply -translate-y-0.5 border-brand/45 bg-brand-soft/50;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
+  }
+  .rag-starter__leading { @apply flex min-w-0 items-center gap-3; }
+  .rag-starter__leading > span:last-child { @apply flex min-w-0 flex-col; }
+  .rag-starter__leading small {
+    @apply mb-0.5 text-[9px] font-extrabold tracking-[0.4px] text-brand-ink;
+  }
+  .rag-starter__leading strong {
+    @apply truncate text-[12px] leading-5 font-bold text-ink;
+  }
+  .rag-starter__icon {
+    @apply flex size-9 shrink-0 items-center justify-center rounded-[11px] bg-subtle text-muted;
+  }
+  .rag-conversation--page .rag-starters button:hover .rag-starter__icon {
+    @apply bg-brand text-[#191919];
+  }
+
+  .rag-conversation--page .rag-messages { @apply w-[min(820px,100%)]; }
+  .rag-message__identity { @apply mb-3 flex items-center gap-2.5; }
+  .rag-message__identity .moa-chat-avatar { @apply size-8 rounded-[10px] text-[11px]; }
+  .rag-message__identity strong { @apply text-[12px] font-black text-ink; }
+  .rag-message--assistant > div > :not(.rag-message__identity) { @apply ml-[42px]; }
+  .rag-message--user > div {
+    @apply rounded-[19px_19px_5px_19px] px-5 py-3.5;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.13);
+  }
+
+  .rag-conversation--page .rag-composer {
+    @apply w-[min(860px,calc(100%_-_48px))] bg-transparent pb-5;
+  }
+  .rag-conversation--page .rag-composer > div {
+    @apply min-h-[64px] rounded-[20px] border-line-strong px-4 pt-2.5 pb-2.5;
+    box-shadow: 0 13px 38px rgba(15, 23, 42, 0.13), 0 2px 5px rgba(15, 23, 42, 0.04);
+  }
+  .rag-conversation--page .rag-composer textarea { @apply min-h-[44px] text-[14px]; }
+  .rag-conversation--page .rag-composer > div > button {
+    @apply size-10 rounded-[13px] bg-ink text-white;
+  }
+  .rag-conversation--page .rag-composer footer { @apply px-2 pt-2; }
+
+  .assistant-panel--news {
+    @apply right-[max(16px,calc((100vw_-_1320px)/2))] h-[min(900px,92vh)] w-[420px] rounded-[24px];
+  }
+  body:has(.assistant-panel--news.is-open) .news-detail {
+    width: min(860px, calc(100vw - 472px));
+    transform: translateX(-220px) !important;
+  }
+}
+
+@media (max-width: 820px) {
+  @layer components {
+    .ask-page { @apply h-[calc(100dvh-62px)] p-0; }
+    .ask-page__glow { @apply hidden; }
+    .global-chat { @apply h-full w-full grid-rows-[62px_minmax(0,1fr)] rounded-none border-0 shadow-none; }
+    .global-chat__header { @apply min-h-[62px] px-4; }
+    .global-chat__identity .moa-chat-avatar { @apply size-9; }
+    .global-chat__identity > div > span, .stock-select > span { @apply hidden; }
+    .rag-conversation--page .rag-thread { @apply px-4 pt-5 pb-24; }
+    .rag-conversation--page .rag-empty { @apply justify-start pt-8; }
+    .rag-empty__identity { @apply mb-5; }
+    .rag-conversation--page .rag-empty h1 { @apply text-[29px] tracking-[-1px]; }
+    .rag-conversation--page .rag-starters { @apply grid-cols-1 gap-2; }
+    .rag-conversation--page .rag-starters button { @apply min-h-[64px]; }
+    .rag-message--assistant > div > :not(.rag-message__identity) { @apply ml-0; }
+    .rag-conversation--page .rag-composer { @apply w-[calc(100%_-_28px)] pb-[calc(10px+env(safe-area-inset-bottom))]; }
+    body:has(.assistant-panel--news.is-open) .news-detail {
+      width: 100%;
+      transform: none !important;
+    }
+    .assistant-panel--news {
+      @apply top-auto right-0 bottom-0 h-[min(780px,94dvh)] w-full translate-x-0 translate-y-[105%] rounded-[22px_22px_0_0];
+    }
+    .assistant-panel--news.is-open { @apply translate-y-0; }
+  }
+}
+
+@media (max-height: 760px) and (min-width: 821px) {
+  @layer components {
+    .ask-page { @apply py-3; }
+    .global-chat { @apply grid-rows-[66px_minmax(0,1fr)]; }
+    .global-chat__header { @apply min-h-[66px]; }
+    .rag-empty__identity { @apply mb-3 py-2; }
+    .rag-conversation--page .rag-empty h1 { @apply text-[30px]; }
+    .rag-conversation--page .rag-starters { @apply mt-4; }
+    .rag-conversation--page .rag-starters button { @apply min-h-[62px] py-2.5; }
+  }
+}
