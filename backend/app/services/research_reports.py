@@ -95,7 +95,11 @@ class ResearchReportSearch:
             질문 대다수가 '지금 값'을 원하므로 이력·타 종목 혼입을 막는 안전 기본값.
           - history: 변동추이 등 시계열 — 날짜별 개별값 유지(범위 합성 없음), 정렬만.
           - historical_point/around_event: date_from/date_to 로 시점 범위를 받아 그대로 필터.
-        broker 필터는 RPC 에 없으므로 검색 후 report 메타로 후처리 필터링한다.
+        broker 는 리포트 메타(research_reports.broker)에만 있고 청크 벡터 검색에는
+        반영되지 않는다. 증권사가 이미 특정된 이상 의미 검색으로 후보를 좁힐 필요가
+        없으므로, broker 가 있으면 임베딩 검색을 건너뛰고 stock_code+broker 로 그
+        증권사의 리포트만 메타에서 직접 가져온다(종목 전체 상위 top_k 안에 해당
+        증권사 청크가 없어 최신 리포트를 놓치던 결함 방지).
         """
         # promptv2 §1: Agent 가 time_context 를 생략해도 current 정책을 적용한다.
         # (질문 키워드 분기 없음 — 단순히 안전한 기본값을 준다.)
@@ -103,16 +107,31 @@ class ResearchReportSearch:
         base_k = top_k or self._cfg.rag_retrieval_top_k
         # current 는 증권사별 최신 1건을 뽑기 위해 후보를 넉넉히 가져온다.
         fetch_k = base_k * (4 if effective_ctx == "current" else (2 if broker else 1))
-        chunks = self._retriever.search(
-            question,
-            stock_code=stock_code,
-            source_type="research_report",
-            date_from=date_from,
-            date_to=date_to,
-            top_k=fetch_k,
-            expand_parent=False,
-        )
-        hits = self._enrich(chunks, requested_stock_code=stock_code)
+        if broker:
+            hits = self._list_recent_reports(
+                stock_code=stock_code,
+                date_from=date_from,
+                date_to=date_to,
+                limit=fetch_k,
+                broker=broker,
+            )
+        elif question and question.strip():
+            chunks = self._retriever.search(
+                question,
+                stock_code=stock_code,
+                source_type="research_report",
+                date_from=date_from,
+                date_to=date_to,
+                top_k=fetch_k,
+                expand_parent=False,
+            )
+            hits = self._enrich(chunks, requested_stock_code=stock_code)
+        else:
+            # 검색 주제 없음(목록·최근 리포트 요청) → 임베딩 호출 없이 리포트
+            # 메타로 최신순 목록을 만든다(search_news.list_recent_news 와 동일 원칙).
+            hits = self._list_recent_reports(
+                stock_code=stock_code, date_from=date_from, date_to=date_to, limit=fetch_k
+            )
         if broker:
             # DB 의 broker 는 NFD(자모 분리)로 저장된 값이 있고 모델이 넘기는 값은 NFC 라
             # 그냥 비교하면 같은 증권사도 걸러진다(운영 결함: "IBK투자증권 리포트"가
@@ -185,6 +204,205 @@ class ResearchReportSearch:
             d = _to_date(h.report_date)
             h.is_stale = bool(d and d < primary_cut)
         return chosen
+
+    def get_by_report_id(self, report_id: str, *, stock_code: str | None = None) -> list[ReportHit]:
+        """화면 문맥으로 이미 확정된 특정 리포트를 report_id 로 직접 조회한다.
+
+        검색(임베딩)을 거치지 않는다 — 어떤 리포트인지는 이미 정해져 있으므로.
+        목표주가 근거 페이지가 있으면 그 페이지 청크를, 없으면 1페이지를 대표로 준다.
+        stock_code 가 다른 종목 리포트면 목표주가를 신뢰값으로 반환하지 않는다
+        (promptv2 §2 종목 귀속 강제와 동일 원칙).
+        """
+        rows = (
+            self._db.table("research_reports")
+            .select(
+                "id,file_hash,stock_code,title,broker,report_date,"
+                "investment_opinion,parse_status,"
+                "target_price,target_price_currency,target_price_status,"
+                "target_price_effective_date,target_price_source_page"
+            )
+            .eq("id", report_id)
+            .eq("parse_status", "success")
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        if not rows:
+            return []
+        rep = rows[0]
+        mismatch = bool(stock_code) and rep.get("stock_code") != stock_code
+        doc = (
+            self._db.table("rag_documents")
+            .select("id")
+            .eq("source_type", "research_report")
+            .eq("is_current", True)
+            .eq("source_pk", rep.get("file_hash") or "")
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        if not doc:
+            return []
+        doc_id = doc[0]["id"]
+        target_page = rep.get("target_price_source_page")
+        crows = (
+            self._db.table("rag_chunks")
+            .select("id,content,source_locator")
+            .eq("document_id", doc_id)
+            .eq("is_active", True)
+            .order("id")
+            .execute()
+            .data
+            or []
+        )
+        if not crows:
+            return []
+        chosen = crows[0]
+        if target_page is not None:
+            for row in crows:
+                loc = row.get("source_locator") or {}
+                if loc.get("page_number") == target_page:
+                    chosen = row
+                    break
+        loc = chosen.get("source_locator") or {}
+        return [
+            ReportHit(
+                chunk_id=chosen["id"],
+                content=chosen.get("content") or "",
+                stock_code=rep.get("stock_code"),
+                report_id=rep["id"],
+                title=rep.get("title"),
+                broker=rep.get("broker"),
+                report_date=rep.get("report_date"),
+                investment_opinion=rep.get("investment_opinion"),
+                page_number=loc.get("page_number"),
+                pdf_page=loc.get("pdf_page"),
+                source_page=loc.get("source_page"),
+                target_price=None if mismatch else rep.get("target_price"),
+                target_price_currency=None if mismatch else rep.get("target_price_currency"),
+                target_price_status="ambiguous"
+                if mismatch
+                else (rep.get("target_price_status") or "unknown"),
+                target_price_effective_date=(
+                    None if mismatch else rep.get("target_price_effective_date")
+                ),
+                target_price_source_page=None if mismatch else rep.get("target_price_source_page"),
+            )
+        ]
+
+    def _list_recent_reports(
+        self,
+        *,
+        stock_code: str | None,
+        date_from: str | None,
+        date_to: str | None,
+        limit: int,
+        broker: str | None = None,
+    ) -> list[ReportHit]:
+        """검색 주제 없는 리포트 목록 조회. 임베딩 API 를 호출하지 않는다.
+
+        research_reports 메타만으로 최신순을 만들고, 대표 청크(1페이지)를
+        rag_chunks 에서 붙여 인용 가능한 source_id 를 준다.
+        broker 가 있으면 그 증권사만(NFC/NFD 정규화 후 부분 일치) 남긴다 —
+        증권사가 특정된 이상 벡터 검색으로 후보를 좁힐 필요가 없다.
+        """
+        q = (
+            self._db.table("research_reports")
+            .select(
+                "id,file_hash,stock_code,title,broker,report_date,"
+                "investment_opinion,parse_status,"
+                "target_price,target_price_currency,target_price_status,"
+                "target_price_effective_date,target_price_source_page"
+            )
+            .eq("parse_status", "success")
+        )
+        if stock_code:
+            q = q.eq("stock_code", stock_code)
+        if date_from:
+            q = q.gte("report_date", date_from)
+        if date_to:
+            q = q.lte("report_date", date_to[:10])
+        # broker 는 NFC/NFD 저장 차이가 있어 DB ILIKE 로 정확히 걸러지지 않을 수 있다.
+        # limit 이전에 후보를 넉넉히 받아 Python 에서 정규화 비교로 좁힌다(limit 경계에
+        # 걸려 그 증권사 리포트가 통째로 빠지는 것을 막는다).
+        fetch_limit = limit * 20 if broker else limit
+        reports = (
+            q.order("report_date", desc=True).order("id", desc=True).limit(fetch_limit).execute()
+        ).data or []
+        if broker:
+            needle = _norm_broker(broker)
+            reports = [
+                r for r in reports if r.get("broker") and needle in _norm_broker(r["broker"])
+            ]
+        reports = reports[:limit]
+        if not reports:
+            return []
+
+        file_hashes = [r["file_hash"] for r in reports if r.get("file_hash")]
+        docs = (
+            self._db.table("rag_documents")
+            .select("id,source_pk")
+            .eq("source_type", "research_report")
+            .eq("is_current", True)
+            .in_("source_pk", file_hashes)
+            .execute()
+            .data
+            or []
+        )
+        doc_by_hash = {d["source_pk"]: d["id"] for d in docs}
+        doc_ids = list(doc_by_hash.values())
+        rep_chunks: dict[str, dict] = {}
+        if doc_ids:
+            crows = (
+                self._db.table("rag_chunks")
+                .select("id,document_id,content,source_locator")
+                .in_("document_id", doc_ids)
+                .eq("is_active", True)
+                .order("id")
+                .execute()
+                .data
+                or []
+            )
+            for row in crows:
+                doc_id = row["document_id"]
+                loc = row.get("source_locator") or {}
+                page_no = loc.get("page_number")
+                # 문서당 가장 앞 페이지 청크 하나만 대표로 남긴다.
+                cur = rep_chunks.get(doc_id)
+                if cur is None or (page_no is not None and page_no < (cur["page_no"] or 10**9)):
+                    rep_chunks[doc_id] = {"row": row, "page_no": page_no}
+
+        hits: list[ReportHit] = []
+        for rep in reports:
+            doc_id = doc_by_hash.get(rep.get("file_hash") or "")
+            rc = rep_chunks.get(doc_id) if doc_id else None
+            if rc is None:
+                continue
+            row = rc["row"]
+            loc = row.get("source_locator") or {}
+            hits.append(
+                ReportHit(
+                    chunk_id=row["id"],
+                    content=row.get("content") or "",
+                    stock_code=rep.get("stock_code"),
+                    report_id=rep["id"],
+                    title=rep.get("title"),
+                    broker=rep.get("broker"),
+                    report_date=rep.get("report_date"),
+                    investment_opinion=rep.get("investment_opinion"),
+                    page_number=loc.get("page_number"),
+                    pdf_page=loc.get("pdf_page"),
+                    source_page=loc.get("source_page"),
+                    target_price=rep.get("target_price"),
+                    target_price_currency=rep.get("target_price_currency"),
+                    target_price_status=rep.get("target_price_status") or "unknown",
+                    target_price_effective_date=rep.get("target_price_effective_date"),
+                    target_price_source_page=rep.get("target_price_source_page"),
+                )
+            )
+        return hits
 
     def _enrich(
         self, chunks: list[RetrievedChunk], *, requested_stock_code: str | None = None

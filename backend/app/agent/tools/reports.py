@@ -35,12 +35,21 @@ class SearchResearchReportsInput(BaseModel):
     # 시간 문맥(Agent 가 질문 의미로 판단해 전달). None 이면 관련도 순 기본 검색.
     time_context: str | None = None
     as_of_date: str | None = None
+    # 화면 문맥으로 특정 리포트가 이미 확정된 경우("이 리포트"). 있으면 검색 없이
+    # 그 리포트만 반환한다.
+    report_id: str | None = None
     limit: int = Field(default=5, ge=1, le=12)
 
 
 def run_search_research_reports(
     svc: ResearchReportSearch, inp: SearchResearchReportsInput
 ) -> ToolResult:
+    if inp.report_id:
+        try:
+            hits = svc.get_by_report_id(inp.report_id, stock_code=inp.stock_code)
+        except Exception as e:  # noqa: BLE001
+            return error(sanitize_exception(e))
+        return _hits_to_result(hits, limit=inp.limit, time_context=None)
     # promptv2 §1: Agent 가 생략하면 current 를 기본값으로 쓴다(검색 계층과 동일 규칙).
     # 키워드 분기 없이 '안전한 기본값'만 제공한다.
     time_context = inp.time_context if inp.time_context in TIME_CONTEXTS else "current"
@@ -57,12 +66,16 @@ def run_search_research_reports(
         )
     except Exception as e:  # noqa: BLE001
         return error(sanitize_exception(e))
+    return _hits_to_result(hits, limit=inp.limit, time_context=time_context)
+
+
+def _hits_to_result(hits, *, limit: int, time_context: str | None = None) -> ToolResult:
     if not hits:
         return no_data("해당 조건의 증권사 리포트를 찾지 못했습니다.")
 
     data, sources = [], []
     any_stale = False
-    for h in clamp_items(hits, inp.limit):
+    for h in clamp_items(hits, limit):
         page = h.source_page if h.source_page is not None else h.pdf_page
         # 목표주가는 status='stated' 인 구조화 값만 노출. 그 외엔 값 대신 상태만 알린다.
         tp_stated = h.target_price_status == "stated" and h.target_price is not None

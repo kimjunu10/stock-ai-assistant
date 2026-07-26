@@ -134,7 +134,16 @@ class FactsService:
         )
         if event_types:
             q = q.in_("event_type", event_types)
-        return q.order("announced_at", desc=True).limit(limit).execute().data or []
+        # announced_at 동률(같은 날짜, NULL 포함) 시 DB 반환 순서가 임의라
+        # rcept_no 를 2차 정렬 키로 둬 실행마다 결과가 바뀌지 않게 한다.
+        return (
+            q.order("announced_at", desc=True)
+            .order("rcept_no", desc=True)
+            .limit(limit)
+            .execute()
+            .data
+            or []
+        )
 
     # -- 정정공시 최신본 -------------------------------------------------
     def get_latest_disclosures(
@@ -160,7 +169,16 @@ class FactsService:
             q = q.neq("correction_status", "original")
         if with_text:
             q = q.eq("parse_status", "success")
-        return q.order("disclosed_at", desc=True).limit(limit).execute().data or []
+        # disclosed_at 동률(같은 날짜에 여러 건) 시 DB 반환 순서가 임의라
+        # rcept_no 를 2차 정렬 키로 둬 limit 경계에서 실행마다 결과가 바뀌지 않게 한다.
+        return (
+            q.order("disclosed_at", desc=True)
+            .order("rcept_no", desc=True)
+            .limit(limit)
+            .execute()
+            .data
+            or []
+        )
 
     def get_correction_pair(self, rcept_no: str) -> dict[str, Any] | None:
         """정정본 rcept_no 로 정정 전(직전본)과 최신본을 함께 반환한다."""

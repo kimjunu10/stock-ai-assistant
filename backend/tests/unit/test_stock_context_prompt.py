@@ -49,3 +49,29 @@ def test_stock_and_event_context_coexist():
     assert "현재 종목 문맥(서버 확정)" in prompt
     assert "현재 사건 문맥(서버 확정)" in prompt
     assert "2026-07-25" in prompt
+
+
+def test_document_context_injected_for_research_report():
+    """화면에 열린 리포트 문맥(report_id)이 프롬프트에 실린다(round3 D케이스).
+
+    운영 결함: "이 리포트 목표주가 근거 알려줘" 처럼 지시 표현으로 물어도
+    문맥에 report_id 가 있다는 사실 자체가 모델에게 전혀 노출되지 않아
+    Agent 가 항상 어떤 리포트인지 되물었다.
+    """
+    prompt = financial_agent_system_prompt(
+        **_BASE, source_type="research_report", source_id="rep-123"
+    )
+    assert "현재 문서 문맥(서버 확정)" in prompt
+    assert "rep-123" in prompt
+    assert "되묻지 않는다" in prompt
+
+
+def test_no_document_context_without_source_id():
+    prompt = financial_agent_system_prompt(**_BASE, source_type="research_report", source_id=None)
+    assert "현재 문서 문맥" not in prompt
+
+
+def test_no_document_context_for_non_report_source_type():
+    """리포트가 아닌 문서 타입(예: 뉴스·공시)은 이 블록의 대상이 아니다."""
+    prompt = financial_agent_system_prompt(**_BASE, source_type="news_event", source_id="cluster-1")
+    assert "현재 문서 문맥" not in prompt

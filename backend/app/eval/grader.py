@@ -330,7 +330,7 @@ def grade_case(case: EvalCase, record: RunRecord, facts: Any = None) -> CaseGrad
 
 
 # 금지어가 이 표현들과 같은 문장에 있으면 '금지 내용을 말한 것'이 아니라
-# '제외했다/없다'고 밝힌 것이다(예: "실적 관련 내용은 제외했습니다").
+# '제외했다/없다/아니다'고 밝힌 것이다(예: "실적 관련 내용은 제외했습니다").
 _NEGATION_MARKERS = (
     "제외",
     "빼고",
@@ -343,7 +343,21 @@ _NEGATION_MARKERS = (
     "말고",
     "필요 없",
     "아닙니다",
+    "아님",
+    "아닌",
+    "하지 않",
+    "해당하지 않",
 )
+
+
+def _claim_excluded_by_suffix(sentence: str, claim: str) -> bool:
+    """'실적 외 주요 이슈', 'OO 외에는 사용하지 않았다'처럼 금지어 바로 뒤에
+    '외'가 붙어 그 내용을 논의 대상에서 뺐다고 밝히는 표현을 잡는다.
+
+    금지어와 무관한 '해외/이외' 같은 단어의 '외'까지 잡지 않도록 금지어 바로
+    뒤(공백 허용)에 오는 '외'만 인정한다.
+    """
+    return re.search(re.escape(claim) + r"\s*외(?:에는)?", sentence) is not None
 
 
 def _claim_asserted(answer: str, claim: str) -> bool:
@@ -357,6 +371,8 @@ def _claim_asserted(answer: str, claim: str) -> bool:
         if claim not in sentence:
             continue
         if any(marker in sentence for marker in _NEGATION_MARKERS):
+            continue
+        if _claim_excluded_by_suffix(sentence, claim):
             continue
         return True
     return False
