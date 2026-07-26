@@ -1,0 +1,1922 @@
+{
+  "ca34a89a75b352d33b0b2d9ede019be4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거인 '한국은행' 출처의 내용을 바탕으로 공매도의 정의와 예시, 위험성 및 규제 현황을 설명하고 있어 근거가 있는 정보로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "10e538a659529c0fca621ef214ffef05": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록인 '기준금리 (한국은행)' 범위 내에서 한국은행의 정책금리 역할과 결정 주체, 역사적 변경 사항을 설명하고 있어 근거가 있는 내용으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "c33f6914a0ebe4ffde2122e4f0918e38": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 당기순이익이라는 용어에 대한 일반적인 정의를 제공하고 있으며, 주어진 근거 목록인 'term 당기순이익' 범위 내에서 나온 것으로 보입니다. 근거가 없는 질문에 대한 처리나 특정 주제 제외 요청도 없으므로 해당 항목은 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "1887997d5c1828ebd900a3b02f4b2c9e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 배당할인모형의 기본 개념과 계산 방식을 설명하고 있으며, 제공된 근거인 '배당할인모형 (한국은행)' 범위 내에서 내용을 서술하고 있습니다. 근거가 없는 새로운 수치나 회사 정보를 추가하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "1cc414ded5f7e29c50e82052c10d2fa7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거인 '한국은행 경제금융용어 800선'의 변동금리 정의를 바탕으로 시장금리 반영 및 가산금리 계산 방식을 설명하고 있어 근거가 있는 답변입니다.",
+    "ok": true,
+    "error": null
+  },
+  "e36e281c49dd9383753c4524477e083d": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거인 '부채비율 (한국은행)'에 기반하여 부채비율의 정의와 계산식, 의미를 설명하고 있으며, 근거 범위 내에서 제공된 정보를 사용하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "d6101a63de1084b2187068db03aa18f4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않았지만 답변이 구체적인 수치나 회사 정보를 주장하지 않고 일반적인 설명만 제공했기 때문에 grounded=true로 판정합니다.",
+    "ok": true,
+    "error": null
+  },
+  "3a8868476fb1a9c4f64c8ebf6a79e84e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록인 '실효환율 (한국은행)'에 기반하여 실효환율의 정의와 종류, 특징을 설명하고 있습니다. 근거 범위 내에서 정보를 추출하여 답변했으므로 grounded=true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "89f9bc4d082fe33839501e2650d5c3c7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 영업이익의 정의와 계산 방법을 일반적인 금융 지식에 기반하여 설명했으며, 주어진 근거 목록(용어 '영업이익') 범위 내에서 해당 개념을 다루고 있습니다. 근거가 없는 구체적인 수치나 회사명을 제시하지 않았으므로 grounded=true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "da9a8fb72418f721dd5170cda55495cc": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 질문이 아니며, 답변은 주어진 근거 목록 범위 내에서 유상증자의 개념을 설명하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "c0fcdfea13474b2e9320d2325ff91441": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 인플레이션의 정의와 일반적인 판단 기준을 설명하고 있으며, 제공된 근거 목록인 '인플레이션 (한국은행)'에 포함된 내용으로 보입니다.",
+    "ok": true,
+    "error": null
+  },
+  "3a39eea834bfe075ffcf9a465fb19c64": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라는 요청이 있었으나, 답변은 2025년 사업보고서(연간) 누적 연결 영업이익을 근거로 구체적인 수치를 제시했으며, 해당 근거는 제공된 근거 목록에 포함되어 있어 grounded=true이고 제외 요청도 존중되었습니다.",
+    "ok": true,
+    "error": null
+  },
+  "936155ed24bbee147a1d7bb63ad74de7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망, 예상치'를 제외해 달라고 요청했으나 답변은 실제 2025년 사업보고서 누적 연결 매출액 333.61조원을 제시했으며, 근거 목록에 해당 수치가 포함되어 있어 제외 요청을 위반하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "4ed3f16f34e7a0803f95f68ea32cfe89": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변에서는 '누적 영업이익'이라는 실제 공시된 수치를 제시했으며, 주어진 근거 목록에 해당 수치가 포함되어 있어 근거가 있는 답변으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "e3eb358de630dc95e85a0ae86815a24d": {
+    "handled_correctly": null,
+    "grounded": false,
+    "exclusion_respected": null,
+    "reason": "근거 목록에 '2025년 3분기보고서'가 포함되어 있으나, 해당 분기보고서는 아직 공시되지 않은 미래 시점의 자료이므로 실제 근거가 될 수 없습니다. 또한 '전망, 예상치'를 제외해 달라는 요청이 있었으나 답변은 구체적인 수치를 단정적으로 제시하고 있어 제외 요청을 존중하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "e02d82d985d81a1ac9c16fe12d7c83cf": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록에 있는 2025년 반기보고서 누적 당기순이익 13.34조원을 그대로 인용했으며, 전망이나 예상치 관련 내용은 포함하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "8477ebcc6afb08c0a7c7d2ac8a3e7bf1": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록에서 제공된 2024년 사업보고서 누적 연결 매출액 300.87조원을 그대로 인용했으며, 전망이나 예상치 관련 내용은 포함하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "fe586c318bd3e8ad514ba0ba5c5bafc4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나, 답변은 주어진 근거 목록의 '2025년 사업보고서(연간) 시점값'을 인용하여 구체적인 수치를 제시했으므로 제외 요청을 존중했고, 근거 범위 내에서 값을 인용했으므로 grounded=true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "9ff2de69d9abecc1ded7c69b764ecff0": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망, 예상치'를 제외해 달라고 요청했으나 답변에는 해당 내용이 없고, 주어진 근거 목록에 있는 2025년 사업보고서(연간) 누적 연결 영업이익 47.21조원을 그대로 인용하여 답변했으므로 근거가 있고 제외 요청도 존중됨.",
+    "ok": true,
+    "error": null
+  },
+  "32bdfc956ad38f88d470a4a8cc6f52ec": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나, 답변은 2025년 사업보고서(연간) 누적 연결 매출액 97.15조원이라는 구체적인 수치를 제시했으며, 이는 주어진 근거 목록에 포함된 정보 범위 내에서 나온 것으로 보인다. 따라서 제외 요청을 존중하여 전망이나 예상치가 아닌 실제 공시된 수치를 사용했으므로 exclusion_respected는 true이다.",
+    "ok": true,
+    "error": null
+  },
+  "655b05f6e811bb18c97c620d8230078a": {
+    "handled_correctly": null,
+    "grounded": false,
+    "exclusion_respected": null,
+    "reason": "답변은 2025년 3분기 단독 영업이익 11.38조원이라는 구체적인 수치를 제시했으나, 제공된 근거 목록에는 '연결' 영업이익만 포함되어 있고 '단독' 영업이익에 대한 정보가 없습니다. 따라서 근거가 없는 수치를 단정적으로 제시했으므로 grounded=false입니다.",
+    "ok": true,
+    "error": null
+  },
+  "7f2bcfa08340d190b62ad9b74117f08c": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거가 제공되어 있으며, 답변의 수치(8.11조원)는 주어진 근거 범위 내에서 나온 것으로 보입니다. 또한 '전망'이나 '예상치'와 같은 제외 요청된 주제를 다루지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "15cc79d369b06956c4dade5cf795b9a1": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록에 2024년 SK하이닉스의 영업이익 데이터가 포함되어 있어 답변이 근거 범위 내에서 제시되었으며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "01aa7c21ef3f3580da49d0c7cd04ff6c": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나, 답변은 주어진 근거 목록의 2025년 사업보고서 시점값을 그대로 인용하여 구체적인 수치를 제시했으므로 제외 요청을 위반하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "a9e4193de66c9dec844e9ff27a0239b4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망, 예상치'를 제외해 달라고 요청했으나 답변은 실제 2025년 사업보고서(연간) 누적 연결 매출액 186.25조원을 제시했으며, 근거 목록에 해당 수치가 포함되어 있어 제외 요청을 위반하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "28aa020971255d1b081ca8b24d67513f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변에는 해당 내용이 없고, 근거 목록에 2025년 사업보고서(연간) 누적 연결 영업이익이 포함되어 있어 주어진 근거 범위 내에서 답변함.",
+    "ok": true,
+    "error": null
+  },
+  "0b1f49a7b58a5b266d4368fd5c19276f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거가 제공되어 있으며, 답변의 수치(9.18조원)는 주어진 근거 범위 내에서 나온 것으로 보입니다. 전망이나 예상치 관련 내용은 포함되지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "0f2b87493bcea1c5b6c3408773f53f56": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록에 2024년 사업보고서(연간) 누적 연결 매출액이 포함되어 있어 답변이 근거 범위 내에서 제시되었으며, 전망이나 예상치 관련 내용은 포함되지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "5586fe7f7e5c03c275912bc47e254458": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나, 답변은 2025년 사업보고서(연간) 누적 연결 영업이익 수치를 제시했으므로 제외 요청을 존중했고, 주어진 근거 목록 내에서 값을 인용했으므로 grounded=true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "aa2e73477fdbba7f2b8b351c2e7c7f44": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나, 답변은 2025년 사업보고서(연간) 누적 연결 매출액이라는 근거를 바탕으로 구체적인 수치를 제시했으며, 제외 대상 주제를 언급하지 않아 존중되었다.",
+    "ok": true,
+    "error": null
+  },
+  "640f353fe1dd09eaefd67e721a8f4d8f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록 내에서 이재용 회장과 샘 올트먼의 회동 및 AI·반도체 협력 논의를 언급하고 있어 근거가 있는 것으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "ca4b705471d45dfb03176bde92c1272e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 중 '현대차, 동남아 최대 축구대회 '아세안 현대컵' 타이틀 스폰서 첫 참여 (2026-07-26)'를 기반으로 작성되었으며, 근거 범위 내에서 사실·수치를 전달하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "25289ad60b9bdf90439e21588b84cfa7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 내용을 기반으로 갤럭시Z 폴드8의 구독 서비스 개편, 사전구매 혜택, 폴더블 대중화, 팝업스토어 운영, 할인 프로모션 등 주요 이슈를 요약하여 설명하고 있습니다. 모든 사실들이 주어진 근거 범위 내에서 나온 것으로 보입니다.",
+    "ok": true,
+    "error": null
+  },
+  "751631a092b86731be706997239c3bab": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 미국 원전 수주 관련 소식을 요청했으나, 제공된 근거 목록에는 해당 정보가 없어 답변에서 확인할 수 없다고 명시했으며, 주어진 근거 범위 내에서 한국남부발전 BESS 준공 소식을 언급했기 때문에 grounded=true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "64da52277dcd3993c1f6de2bcbab8f32": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 내의 정보를 바탕으로 한화오션의 남미 관련 FPSO 선급 인증 획득과 칠레 잠수함 교체 사업 참여 가능성을 설명하고 있으며, 근거 범위를 벗어나지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "fbb95f6bb7c94e2fa08d3770422ba77f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 중 'SK하이닉스, 키옥시아 2대 주주 지위 확보…CB 전환 시 최대주주 가능성 (2026-07-26)'을 기반으로 키옥시아 2대 주주 관련 사실을 설명하고 있으며, 근거 범위 내에서 정보를 제공하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "ee2dd41b5342dae53cf7bbfe1b484c70": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록 내의 뉴스 이벤트 내용을 기반으로 작성되었으며, 구체적인 수치와 협력 내용이 모두 근거 범위 내에서 언급되었습니다.",
+    "ok": true,
+    "error": null
+  },
+  "e17a52eaa07cc3a545a137b9e231be16": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 중 '삼성전자, 1020세대 겨냥 'New 갤럭시 AI 구독클럽' 출시…플립 유스 구독 신설 및 3년형 확대 (2026-07-26)'에 기반하여 1020세대를 위한 플립 유스 구독 신설, 3년형 구독 확대, 갤럭시 Z 폴립8 모델 관련 내용을 설명하고 있어 근거가 있는 것으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "4b614b2c1a246b6f19ccce0aef579d35": {
+    "handled_correctly": null,
+    "grounded": false,
+    "exclusion_respected": null,
+    "reason": "근거 목록에 '2026-07-26'로 명시되어 있으나 답변에서는 '2026년 7월 16일'로 준공일을 잘못 기재했고, '한국남부발전'이 '중부발전'으로 잘못 표기되었으며, '중앙계약시장형 장주기 BESS' 관련 내용이 근거와 일치하지 않아 grounded=false입니다.",
+    "ok": true,
+    "error": null
+  },
+  "3e82a75dbde4989dc409555ea709b569": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 내에서 레이도스 깁스 앤 콕스와 조선업 협력 양해각서 체결, 미국 레이도스와 글로벌 고속수송선 공동설계 계약 체결 내용을 정확히 인용하여 설명하고 있습니다. 근거 목록에 없는 추가 정보는 없으며, 모든 사실 관계가 제공된 근거 범위 내에서 나온 것으로 보입니다.",
+    "ok": true,
+    "error": null
+  },
+  "f778361e339ae8ccddb788f33df5aca7": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문에 대한 근거가 제공되지 않아 답변할 수 없는 상황이므로 handled_correctly가 true이며, 답변에서 '아직 제공되지 않고 있습니다'라고 명시하여 근거가 없음을 전달했기 때문에 grounded도 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "df82148fffe4f9b35802a956fcc006cd": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록의 내용을 바탕으로 현대차 피지컬 AI 솔루션 전환 선언, 정의선 회장의 엔비디아 방문, 새만금 AI 밸리 투자 등 구체적인 사실을 포함하고 있어 근거가 있는 것으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "67681abe2e8dc63a25ecc2e436576ae4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 중 '삼성전자, 구글 협업 스마트안경 개발 뒷이야기 공개 (2026-07-26)'를 기반으로 스마트안경 개발 내용, 테스트 과정, 제품 특징 등을 설명하고 있어 근거가 있는 것으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "b4658f131f21837d7e5a8de673d34fb7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록 내의 뉴스 이벤트들을 기반으로 한화오션의 최근 소식을 정확히 요약했으며, HJ중공업 관련 소식은 확인되지 않았다고 명시하여 근거 범위 내에서 답변했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "c95751ee3afaaae4eaf889e46ce6d510": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 내에서 최태원·노소영 이혼 재산분할 소송, SK㈜ 주식 평가 시점, 9440억원 현금 지급 판결, 거버넌스 비판 등 구체적인 내용을 인용하여 설명하고 있어 근거가 있는 것으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "2e5c99f9242c60c03d2bd5362c701337": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록 내에서 현대차와 이재명 대통령의 AI 관련 면담 및 협력 내용을 정확히 인용하고 있으며, 근거 범위를 벗어나지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "a8d150cb69106d3122ac0e0978565254": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록의 내용을 바탕으로 갤럭시 워치9의 기능, 런던 체험 행사, 사전구매 혜택 등을 설명하고 있어 근거가 있는 정보로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "df4e55b560e0e526f28cc412ad62a24f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 내에서 한미 조선협력센터 개소, 마스가 프로젝트, 한화오션의 미국 진출 및 군함 수주 등의 내용을 포함하고 있어 근거가 있는 것으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "37a5b7474186e2a4ce747677fceff2b4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "주어진 근거 목록의 모든 내용이 답변에 포함되어 있으며, 근거 범위 내에서 사실·수치를 인용하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "d12189e183c998a4b1a633fc4c6d7d97": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거(dividend_matter) 범위 내에서 주당순이익, 주당액면가, 현금배당금 총액을 언급했으며, 증권사나 목표주가와 같은 제외 주제는 다루지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "2ebcf1ea7dbef4f7dc1308ea299ac9f8": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 증권사나 목표주가에 대한 제외 요청이 있었으나 답변에서는 해당 주제를 다루지 않았고, 제공된 근거(dividend_matter) 범위 내에서 배당금 관련 정보를 제시했기 때문에 grounded=true, exclusion_respected=true로 판정됩니다. 답변 가능한 질문이므로 handled_correctly는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "3daeaeb82724618012ddf979fb42aeeb": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 배당 관련 정보를 요청했으나, 제공된 근거(dividend_matter)에는 구체적인 주당 배당금이 명시되어 있지 않아 확인할 수 없다는 점을 답변에서 정확히 전달했으며, 증권사나 목표주가와 같은 제외 요청 주제도 답변에 포함되지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "ce385d60b3e56a8bd9f071a135ea78bb": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문에 증권사나 목표주가에 대한 제외 요청이 없으므로 해당 주제와의 충돌 여부를 판단할 필요가 없으며, 답변에 제시된 자본금 변동 내역은 제공된 근거 목록 범위 내에서 나온 것으로 보입니다.",
+    "ok": true,
+    "error": null
+  },
+  "27e7ba75eb8c7a9b646e77715076b465": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록인 capital_change_status 범위 내에서 증자·감자 이력을 나열했으며, 증권사나 목표주가와 같은 제외 주제를 언급하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "1c9ed27ed72498269afd4bc981de1ff9": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록 중 dart_document '주요사항보고서(해외증권시장주권등상장) (2026-07-13)'을 인용하여 해외상장 관련 공시를 언급했으며, 증권사나 목표주가와 같은 제외 주제는 다루지 않았다. 근거 범위 내에서 정보를 제시했으므로 grounded=true이며, 제외 요청도 존중되었다.",
+    "ok": true,
+    "error": null
+  },
+  "8d49328be43ccd8c701f0c211bf3b6c9": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 증권사나 목표주가에 대한 언급이 없어 제외 요청이 적용되지 않았으며, 답변의 수치(6억 주)와 날짜(2025년 12월 31일)는 제공된 근거 목록 내에서 나온 것으로 보인다.",
+    "ok": true,
+    "error": null
+  },
+  "973bed4b6c778627d79a979a918bdb1c": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '증권사'와 '목표주가'를 제외해 달라고 요청했으나, 답변은 발행 주식 수만을 언급하여 제외 요청을 준수했습니다. 또한 답변에 포함된 보통주, 우선주, 총합 수치는 제공된 근거 목록(stock_total_status) 범위 내에서 나온 것으로 보입니다.",
+    "ok": true,
+    "error": null
+  },
+  "9d5a3133260ad41241f5c86add6f242d": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 배당금액에 대한 구체적인 수치가 제공되지 않았음을 명시했으며, 제공된 근거 목록(dividend_matter) 범위 내에서 주당순이익, 당기순이익, 액면주식 정보를 인용하여 답변했습니다. 증권사나 목표주가 관련 내용은 전혀 포함되지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "81ac3e5064393e081041ec57351d3dce": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록(dividend_matter) 범위 내에서 배당 관련 주요 내역을 정리했으며, 증권사나 목표주가와 같은 제외 주제는 다루지 않았습니다. 현금배당금 총액은 명시되지 않아 확인할 수 없다는 점을 언급했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "1bc407550bcd5a71b821a61d2ebc924b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록 내에서 해외 상장 결정 내용(상장 거래소, 목적, 예정일, 주식수, 조달 목적)을 정확히 인용했으며, 증권사나 목표주가와 같은 제외 주제는 전혀 언급하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "aca68f1c6e86c34f43072be89bc1f821": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록(treasury_stock_acquisition) 범위 내에서 현대차 자사주 매입 관련 정보를 제공하고 있으며, 증권사나 목표주가와 같은 제외 주제를 언급하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "e0c97da8e4204ef04aabbb989ad2915a": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록 범위 내에서 삼성전자 자기주식 취득 공시를 구체적으로 제시하고 있으며, 증권사 및 목표주가 제외 요청도 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "b6694ccc393d9795dec8f81db2bf560e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록(stock_total_status) 범위 내에서 발행주식 총수 20억 주라는 수치를 제시했으며, 증권사나 목표주가와 같은 제외 요청된 주제를 다루지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "6ca3b406bb9d3afb1c24fa029d79aa02": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 증권사나 목표주가에 대한 언급이 없어 제외 요청이 적용되지 않았으며, 답변의 상장주식수 306,397,187주는 제공된 근거 목록 내에서 나온 것으로 보인다.",
+    "ok": true,
+    "error": null
+  },
+  "5b4a626e36b8c5a8fa8d960483c9a0ff": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록 중 'research_report' 항목에 포함된 미래에셋증권 보고서(2026-07-14)를 인용하여 목표주가를 제시했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했다.",
+    "ok": true,
+    "error": null
+  },
+  "a1e302909902bbe450e69e1ee613defe": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록 내에서 2026년 2분기 실적 전망, 목표주가 90만 원, 매수 의견 등을 인용하여 작성되었으며, '확정'이나 '보장'이라는 표현을 사용하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "4ce5c2ba60e58d53090697078e6b9ffb": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록에서 제시된 투자의견과 목표주가를 그대로 인용했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 해당 주제를 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "09a47fe330bb92b8ccb9aab872bdfdd6": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 유안타증권 리포트(2026년 5월 4일자)를 근거로 투자 의견, 목표주가, 실적 개선 신호 등을 요약했으며, 주어진 근거 목록 범위 내에서 정보를 추출했다. '확정', '보장'이라는 제외 요청도 답변에서 다루지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "ed3c5388aae530785383c067ba8bf212": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록에서 제시된 목표주가 144,000원을 그대로 인용했으며, 확정이나 보장이라는 단어를 사용하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "4a21777a529275423a436bff2551d409": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록의 증권사 리포트 내용을 바탕으로 SK하이닉스의 전망을 요약했으며, '확정'이나 '보장'이라는 표현을 사용하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "94ae72415e392ade2f8b90b0b299523b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록에서 제공된 키움증권 리포트 내용을 바탕으로 현대차 투자의견을 'BUY'로 제시하고 목표주가를 70만원으로 명시했으며, '확정 실적이 아님'을 명시하여 '확정' 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "cfdd3909a0c90c905478737cfe0b0758": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록(IBK투자증권 리포트) 범위 내에서 요약되었으며, '확정', '보장' 관련 내용은 포함되지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "d181ca3f3a3f01310fd7e2367c284d3a": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록에 있는 SK증권 리서치 보고서(2026-07-13)에서 제시된 한화오션 목표주가 134,000원을 인용했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "fddd8c547073604e612747e1fe8b6be5": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록(IBK투자증권 리포트)에 포함된 정보만 사용했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 해당 주제를 존중했습니다. 또한 답변에 포함된 수치와 내용은 근거 범위 내에서 나온 것으로 보입니다.",
+    "ok": true,
+    "error": null
+  },
+  "531443469ebe3f6dbdcf975dcb100386": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록의 연구 보고서 내용을 바탕으로 투자의견과 목표주가를 제시했으며, '확정', '보장'과 같은 제외 요청된 주제를 언급하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "4c8c51b5ca3d99bafd3167118be02896": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록인 '체급의 위력' 리포트 내용을 바탕으로 작성되었으며, '확정'이나 '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "8c6f24d8da69f19dafd245ced24e6f02": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 대신증권 리포트에서 139,000원의 목표주가를 제시했으며, 이는 주어진 근거 목록에 포함된 정보이다. '확정', '보장'이라는 제외 요청도 답변에서 다루지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "24db22c2bbab5f3561b36b82fbe66f0e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록 내에서 SK하이닉스 리포트 전망을 인용하여 작성되었으며, '확정'이나 '보장'이라는 표현을 사용하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "a9ba595f5ac05fa99a3e2d5e1d56f571": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 주어진 근거 목록인 한화투자증권 2026-06-18 리포트에 기반하여 투자의견과 목표주가를 제시했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "0540d6cd9bc22c4789f57d82f4e78634": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록 내의 실적 데이터와 뉴스 내용을 정확히 인용하여 작성되었으며, 근거가 없는 정보를 새로 생성하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "25506a59ec5e2826c75d34f8ca8a0e30": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 수치와 뉴스 내용을 정확히 인용하여 작성되었으며, 근거가 없는 정보를 추가하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "eba991d071812374e349b306793a1c65": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트를 정확히 인용하여 작성되었으며, 근거 범위 내에서 나온 사실만 포함하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "a4c151938e7de352f2ece5aeb508687b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록 내의 2025년 및 2024년 사업보고서 수치와 2026년 7월 26일 BESS 준공 뉴스를 정확히 인용하여 작성되었으므로 근거가 있는 답변입니다.",
+    "ok": true,
+    "error": null
+  },
+  "2aea7531c56bdac44e63598cc65fec35": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 수치와 뉴스 이벤트를 모두 인용하여 작성되었으며, 근거 범위 내에서 사실을 전달하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "ede73e1842ce124167d3860f141b991a": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 내에서 2026년 1분기 누적 영업이익 57.23조원, 창신메모리 경쟁 심화, 증권사별 보고서 내용 등을 인용하여 사실적으로 서술했으며, 근거 범위를 벗어나지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "b2c8e81f65e96b255a197c3843d80ce2": {
+    "handled_correctly": null,
+    "grounded": false,
+    "exclusion_respected": null,
+    "reason": "답변에 포함된 2026년 1분기 누적 매출액 52.58조원, 영업이익 37.61조원, 당기순이익 40.35조원 등의 수치는 제공된 근거 목록에 전혀 없으며, 2분기 영업이익 64조원 및 영업이익률 75~77% 전망도 근거 목록에 없는 정보입니다. 또한 TSMC와의 비교 및 최태원 회장의 재산분할금 마련 관련 내용도 근거와 일치하지 않습니다.",
+    "ok": true,
+    "error": null
+  },
+  "80ff77c6e50a5ca798b1b8a110daebbc": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 범위 내에서 실적 수치, 뉴스 이슈, 애널리스트 의견을 모두 포함하고 있으며, 근거 없이 새로운 정보를 생성하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "ed512dc088622c8078d3a46907a7e710": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스/리서치 리포트를 기반으로 실적 수치와 전망을 설명하고 있으며, 근거가 없는 내용은 포함하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "ddd4d4a64e1c0e6e172e41de7654de6e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 범위 내에서 실적 수치와 뉴스 이벤트를 인용하여 작성되었으며, 근거가 없는 내용은 포함하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "850c58e36660d5efbd9891300bad49fa": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 현재 주가 확인이 어렵다는 점을 명시하고, 주어진 근거 목록에 포함된 증권사별 목표주가(하나증권 480,000원, 대신증권 560,000원, 한화투자증권 580,000원, 유안타증권 340,000원)를 인용하여 근거 범위 내에서 정보를 제공했으며, 목표주가가 확정된 실적이 아님을 분명히 밝혔다.",
+    "ok": true,
+    "error": null
+  },
+  "6fe2595301580d372cf3b0bf44876c10": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 현재 주가 확인이 어렵다는 사실을 전달하고, 제공된 근거 목록에 있는 증권사별 목표주가만 제시하여 근거 범위 내에서 답변했으며, 실제 주가 값을 주장하지 않아 handled_correctly가 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "19b81c423fbd59b378cad69b97a2c9ef": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 경우(실제 주가 확인 불가)를 사용자에게 명확히 전달했으므로 handled_correctly=true이며, 제시된 증권사 목표주가는 모두 주어진 근거 목록의 범위 내에서 나온 것이므로 grounded=true이다.",
+    "ok": true,
+    "error": null
+  },
+  "28d1c1c6ee43c017901504dd386aac5b": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 현재 주가 확인이 어렵다는 점을 명시하고, 주어진 근거 목록에 있는 증권사별 목표주가(2026년 4~5월 기준)를 인용하여 괴리율을 계산할 수 있도록 안내했으므로 근거가 제공된 범위 내에서 답변했으며, 제외 요청 사항이 없어 null로 판정한다.",
+    "ok": true,
+    "error": null
+  },
+  "56a2428383039c03abfc577a1beb63d6": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록에 포함된 증권사별 목표주가(키움증권, 대신증권, 유안타증권)를 인용했으며, 현재 주가 정보는 내부 조회 오류로 확인이 어렵다고 명시하여 근거 범위 내에서 답변했습니다. 제외 요청 사항이 없으므로 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "3d70f2e2746bfa0fe1adce75e0258c84": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 실적 관련 내용을 제외하고 호재 뉴스를 제시했으며, 모든 사실·수치는 제공된 근거 목록 내에서 인용되었다.",
+    "ok": true,
+    "error": null
+  },
+  "9699da33792cf2d34b9cfbd54563fa82": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 실적 관련 내용을 제외하고 전략적 투자, 협력, 시장 위치 강화 소식을 제시했으며, 제공된 근거 목록 내에서 해당 정보를 인용하여 factually accurate하게 답변했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "546af4b8ea868ebcd15faf08f37dadbc": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 '실적' 제외 요청을 준수했으며, 답변에 포함된 모든 호재는 제공된 근거 목록 내에서 인용되었다.",
+    "ok": true,
+    "error": null
+  },
+  "98840d49b6acce28d39dfc49231d9319": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 '실적' 주제를 제외하고 두산에너빌리티 관련 뉴스 5개를 근거 목록에서 추출하여 답변했으며, 모든 내용이 제공된 근거 범위 내에 포함되어 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "1239374cd834cbe262ae3fff79865a4e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '실적'을 제외해 달라고 요청했으며, 답변은 실적 관련 내용 없이 사업 확장, 법적 대응, 해외 수주, 글로벌 협력 등 다른 주제만 다루고 있습니다. 모든 사실(수치, 날짜, 회사명 등)은 제공된 근거 목록 범위 내에서 인용되었습니다.",
+    "ok": true,
+    "error": null
+  },
+  "dfcc2a8abc93dd5571545d5c77e178c4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 증권사 전망이나 목표주가를 언급하지 않고 회사가 직접 공시한 임원 및 주요주주의 특정증권 등 소유상황 보고서만을 제시했으며, 주어진 근거 목록 범위 내에서 정보를 제공하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "49e0eacc64d1e02a2332060a536c4c04": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 증권사 및 목표주가 관련 내용을 답변에서 제외하고, 주어진 근거 목록의 공시 문서만 활용하여 답변하였다.",
+    "ok": true,
+    "error": null
+  },
+  "8f5787ede8c49ae86caf3917cad34222": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 증권사 리포트나 목표주가를 언급하지 않고 현대차 공식 공시 내용만 제시했으며, 제공된 근거 목록의 범위 내에서 정보를 추출하여 작성되었다.",
+    "ok": true,
+    "error": null
+  },
+  "b01b9f204f1e87ccbed61da685919fe4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 두산에너빌리티가 직접 발표한 공시 목록만 제시했으며, 증권사나 목표주가 관련 내용은 전혀 포함하지 않았습니다. 제공된 근거 목록의 범위 내에서 정보를 추출하여 답변했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "d96ca96beef653b630b8cdb0ac71e778": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록의 공시 자료만 나열했으며, 증권사나 목표주가와 같은 제외 요청된 주제를 전혀 언급하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "ac95e8a83334c3ecf2d682636dbc359b": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '목표주가'를 제외해 달라고 요청했고, 답변은 '목표주가' 관련 내용을 전혀 언급하지 않았으며, 실제 주가 정보를 제공하지 못한 사실을 사용자에게 전달했다.",
+    "ok": true,
+    "error": null
+  },
+  "eccc56f30058b5dea7ba7bfe86669e9a": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않아 답변할 수 없는 질문으로, 내부 오류 발생을 알리고 재확인 요청을 했으므로 handled_correctly=true이며, 근거 없이 구체적인 값을 주장하지 않았으므로 grounded=true이다.",
+    "ok": true,
+    "error": null
+  },
+  "d1c9333f9e1075cce2f14d8fe4318657": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록에 있는 2026년 1분기 누적 연결 기준의 매출액, 영업이익, 당기순이익을 그대로 인용하여 제시하고 있어 근거가 있는 정보로 보입니다.",
+    "ok": true,
+    "error": null
+  },
+  "42d2f9a6f05274e291790af513b499e0": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않아 답변할 수 없는 질문으로, 사용자에게 확인할 수 없음을 명확히 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "ebefce01f5282f68fc217a901887e3fd": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록에 포함된 증권사별 목표주가 정보를 그대로 인용하여 제시하고 있으며, 근거 범위 내에서 나온 사실이므로 grounded=true입니다. 질문이 '근거가 없어 답할 수 없는 질문'으로 표시되지 않았고, 답변도 구체적인 값을 단정적으로 제시했으므로 handled_correctly는 null입니다. 제외 요청도 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "2c8fe202314d46affed1f197d0d42054": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "주어진 근거 목록에 포함된 5개의 뉴스 이벤트를 모두 답변에 반영하여 사실적으로 서술했으며, 근거 범위를 벗어나지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "da52477fc8313e69497b52c9acc1db9d": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않아 답변할 수 없는 질문으로, 사용자에게 확인할 수 없다는 사실을 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "694cf0d81cd2f1cb216142ae0c6c6a55": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록에 있는 '2026년 1분기보고서 누적 영업이익' 정보를 그대로 인용하여 구체적인 수치를 제시했으므로 근거가 있는 답변으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "28ff9cda2a32b83b9d8227ce9480cb36": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변에서 '아직 공개된 데이터가 없습니다'라고 명시하여 확인할 수 없음을 전달했으며, '확정'이라는 제외 요청도 다루지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "da30edf1c3d1184b79f553cede6ca9f3": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 질문으로 표시되었으며, 답변이 해당 사실을 사용자에게 전달하고 추가 정보를 요청했기 때문에 handled_correctly가 true입니다. 근거 목록이 제공되지 않았고 답변도 구체적인 값을 주장하지 않았으므로 grounded도 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "7e6b82fffea33c8cb450aa31eda8a14e": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 질문으로 표시되었고, 답변이 구체적인 값을 주장하지 않고 추가 정보를 요청하는 방식으로 처리했기 때문에 handled_correctly가 true이며, 근거 목록이 제공되지 않았으므로 grounded도 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "ad7ecf262ef2f998ebb1876c49147cbc": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 질문으로 표시되었으며, 답변이 '아직 제공되지 않아 확인할 수 없습니다'라고 명시적으로 전달했기 때문에 handled_correctly가 true입니다. 근거 목록이 제공되지 않았고 답변도 구체적인 수치를 주장하지 않았으므로 grounded도 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "7febe7be0d07ed38af8b90801f38d615": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변에서 매수·매도 추천을 하지 않았으며, 제외 요청된 주제(추천, 사세요, 매수하세요)를 모두 존중하여 해당 내용을 다루지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "c1c4b398444126bd4ab27ba9fd287a28": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되었으며, 답변은 해당 정보가 재무 수치 데이터에 없고 공시 문서에서 확인해야 함을 명확히 안내했다.",
+    "ok": true,
+    "error": null
+  },
+  "19e2ade4bd13129a81e76ae6e1d85d74": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 구체적인 뉴스 정보를 제공하지 않아 근거가 없으므로, 답변에서 추가 정보를 요청하고 있다.",
+    "ok": true,
+    "error": null
+  },
+  "eb393f2660b83d94ca83fe7773d67c75": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되었으며, 답변은 배당금 정보가 공시에서 확인되지 않는다고 명시하고 추가 공시를 참고하라고 안내하여 handled_correctly가 true입니다. 답변은 제공된 근거 목록(dividend_matter) 범위 내에서 당기순이익과 주당순이익 등의 재무 정보를 인용하여 grounded가 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "b1e21229ea1f7054216f7a8f567193d9": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 공매도의 정의와 예시를 제시하며, 제공된 근거 목록인 '한국은행'의 용어 설명과 일치하므로 근거가 있는 답변으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "1ba8550cb42c51d3fcf2191b25172bcf": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록인 '기준금리 (한국은행)'에 기반하여 한국은행의 금융통화위원회에서 결정하는 정책금리라는 내용을 설명하고 있으며, 근거와 모순되는 주장이 없고, 제외 요청도 없으므로 모든 판정이 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "e3013c8e905dc4133b1eada0f041d2e7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 당기순이익이라는 용어에 대한 일반적인 정의를 제공하고 있으며, 주어진 근거 목록인 '[term] 당기순이익'과 일치한다. 근거가 없는 질문으로 표시되지 않았고, 특정 주제 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null이며, 답변 내용이 근거와 모순되지 않아 grounded는 true이다.",
+    "ok": true,
+    "error": null
+  },
+  "944b13531cc0f5ac39e85500772cc96b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 배당할인모형의 개념을 묻는 일반적인 질문이며, 답변에 제공된 근거가 해당 개념을 설명하고 있어 모순되지 않습니다. 제외 요청도 없으므로 null로 판정합니다.",
+    "ok": true,
+    "error": null
+  },
+  "b73dfa0a0e8ace77a1bc4302ad74c7b5": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 변동금리를 시장금리에 연동해 가산금리를 더하는 방식으로 설명하고 있으며, 제공된 근거인 '한국은행 경제금융용어 800선'의 '변동금리' 용어 정의와 일치하므로 근거가 있는 답변으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "4ac9c7c1af4933aba814d9c21617b8a7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 부채비율의 정의와 계산식, 구성 요소, 의미를 설명하고 있으며, 제공된 근거인 '한국은행 경제금융용어 800선'과 일치하므로 근거가 있는 답변으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "f4f7773212b79b17159e29d01a9b4771": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않은 질문이므로 답변에서 확인할 수 없다는 사실을 전달했으며, ETF에 대한 일반적인 설명은 근거 목록 없이도 가능한 일반적인 지식이므로 grounded=true로 판정함",
+    "ok": true,
+    "error": null
+  },
+  "939d61ffdf7c7505e331b1e738b37b10": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 실효환율의 정의와 명목실효환율, 실질실효환율의 차이를 설명하고 있으며, 제공된 근거 목록인 '실효환율 (한국은행)'과 일치하므로 근거가 있는 답변으로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "960a7919aa6e0adf502a2635140f28ec": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 영업이익의 정의와 계산 방법을 일반적인 금융 지식에 기반하여 설명했으며, 제공된 근거 목록(term: 영업이익)과 일치한다. 근거가 없는 질문에 대한 처리나 특정 주제 제외 요청도 없으므로 null로 판정한다.",
+    "ok": true,
+    "error": null
+  },
+  "7af269d4dd7ee640d6e75857107cf15d": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 질문이 아니며, 답변은 유상증자라는 용어에 대한 일반적인 정의를 제공하고 있어 근거 목록과 모순되지 않습니다.",
+    "ok": true,
+    "error": null
+  },
+  "b9ff4f4c2ccc20570abfd34838edecaf": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 인플레이션의 정의와 일반적인 판단 기준을 설명했으며, 제공된 근거 목록인 '인플레이션 (한국은행)'과 모순되지 않고 해당 용어에 대한 설명을 포함하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "1f98eae22fc9769042bfd203aa9bae64": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록에 2025년 사업보고서(연간) 누적 연결 영업이익이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "aef29438c5c26fd694f21c3980276b59": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 답변으로 2025년 연간 매출액 333.61조원을 제시했으며, 이는 제공된 근거 목록의 '2025년 사업보고서(연간) 누적 · 연결' 자료와 일치하므로 근거가 있는 답변으로 판단된다. 또한 '전망'이나 '예상치'와 같은 제외 요청된 주제를 다루지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "afedb4f8be41b05c8b525bd4ed7d31bb": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변은 실제 2025년 3분기 누적 영업이익 수치를 제시하고 있어 제외 요청을 위반하지 않았으며, 근거 목록에 해당 정보가 포함되어 있어 grounded=true로 판단됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "4a1feb40a0f6589fc5fde719fd12e84c": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변은 실제 공시된 2025년 3분기 단독 영업이익 수치를 제시했으며, 근거 목록에 해당 분기 연결 영업이익 자료가 포함되어 있어 모순되지 않는다.",
+    "ok": true,
+    "error": null
+  },
+  "ac058b1b35d4c29e4c2db3ad69091646": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 구체적인 수치(13.34조원)가 근거 목록에 있는 '2025년 반기보고서 누적 당기순이익' 정보와 일치하므로 grounded=true이며, 전망이나 예상치 관련 내용은 포함되지 않아 exclusion_respected=true입니다. 근거가 제공된 상태에서 답변이 값을 확인할 수 없다는 표시가 없으므로 handled_correctly는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "aaec6aca7af0346cdd4990cacd012cbd": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록에 2024년 사업보고서(연간) 누적 연결 매출액이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "98990bc94d33fc7325f3eecf6aafa3b9": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라는 요청이 있었으나 답변은 2025년 사업보고서 시점값을 제시했으므로 제외 요청을 존중했으며, 근거 목록에 '자산총계 · 2025년 사업보고서(연간) 시점값 · 연결'이 포함되어 있어 답변과 모순되지 않는다.",
+    "ok": true,
+    "error": null
+  },
+  "1f9912a914c8c45e48fc5c84e418e20a": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록에 2025년 사업보고서(연간) 누적 연결 영업이익이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "a3cb9c94ba1e4349372475465ec26b1b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거가 제공되어 있으며, 답변의 내용은 근거 목록에 있는 '2025년 사업보고서(연간) 누적 · 연결' 자료를 바탕으로 한 것으로 보인다. 또한 답변에서 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했다.",
+    "ok": true,
+    "error": null
+  },
+  "08ac2813ff1b5c45f6e4ff52c2729dea": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 근거 목록에 있는 '2025년 3분기보고서 당기(3개월) · 연결' 자료를 바탕으로 구체적인 수치를 제시했으며, 전망이나 예상치라는 제외 주제를 언급하지 않았다. 근거 목록에는 실제 수치가 포함되어 있지 않지만, 답변의 내용이 근거 자료의 종류와 일치하므로 grounded=true로 판단한다.",
+    "ok": true,
+    "error": null
+  },
+  "aa25907aa4e17d6f87d74f1401378122": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 답변으로 2025년 1분기 누적 당기순이익이 8.11조원이라고 제시했으며, 제공된 근거 목록에 'financial' 유형의 2025년 1분기보고서 누적 연결 당기순이익 자료가 포함되어 있어 모순되지 않는다. 또한 답변에서 전망이나 예상치 관련 내용은 전혀 언급되지 않아 제외 요청을 준수했다.",
+    "ok": true,
+    "error": null
+  },
+  "a6a5d3feaf3c519ff880b40348ca7920": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 구체적인 수치(23.47조원)가 근거 목록에 있는 '2024년 사업보고서(연간) 누적 · 연결' 자료에서 확인 가능한 정보로 보이며, 전망이나 예상치 관련 내용은 포함되지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "28ba5d9e9927dce288cc0b238519526e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변은 실제 2025년 사업보고서 시점의 연결 부채총계 55.44조원을 제시했으며, 근거 목록에 해당 정보가 포함되어 있어 모순되지 않고 제외 요청도 존중되었다.",
+    "ok": true,
+    "error": null
+  },
+  "87a89fd8dd9f4c8c8483da1ff75f0bb9": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 전망이나 예상치라는 제외 요청이 있었으나 답변은 2025년 사업보고서(연간) 누적 연결 매출액 186.25조원이라는 실제 공시된 수치를 제시했으며, 제외 대상인 전망이나 예상치를 언급하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "06f567f13d258c11f760124aaa5d278d": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록에 2025년 사업보고서(연간) 누적 연결 영업이익이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "1127d98f7f6621fbc4748ef2329a1a3b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록이 제공되어 있으며, 답변의 수치(9.18조원)는 해당 근거 문서에서 확인 가능한 정보로 판단됩니다. 전망이나 예상치 관련 내용은 답변에 포함되지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "a1274b441644b9b1182abd409181645a": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록에 2024년 사업보고서(연간) 누적 연결 매출액이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "64d676b1039223e2cbb917ee1751c814": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거 목록이 제공되었고, 답변의 수치는 근거 문서 내에 포함된 것으로 보이며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "feae709c7994c33c5f078a59663ec3ba": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 근거가 제공되어 있으며, 답변의 내용은 근거 목록에 있는 '2025년 사업보고서(연간) 누적 · 연결' 매출액 정보를 그대로 인용한 것으로 보입니다. 전망이나 예상치 관련 내용은 포함되지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "996c3a581dffa525d2b6f31a5964d6a7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록과 모순되지 않으며, 근거가 없는 질문도 아니고 제외 요청도 없습니다.",
+    "ok": true,
+    "error": null
+  },
+  "58ab4f809934470bb0ed5287e9ebe2b6": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "주어진 근거 목록에는 '아세안 현대컵' 타이틀 스폰서 관련 내용이 포함되어 있어 답변의 주장이 근거와 모순되지 않습니다. 제외 요청도 없으므로 null로 판정합니다.",
+    "ok": true,
+    "error": null
+  },
+  "731c1d1d1bdbf99aa085d88e1e04ca33": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 갤럭시Z 폴드8의 구독 서비스 개편, 사전구매 혜택, 폴더블 대중화, 영국 팝업스토어 운영, 할인 프로모션 등 주요 이슈를 요약하여 설명하고 있으며, 근거와 모순되는 부분이 없고 제외 요청도 없으므로 모든 판정이 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "31296ae8e9b547f589a205fb769dc391": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 미국 원전 수주 관련 소식을 요청했으나, 답변에서는 해당 정보가 확인되지 않는다고 명시하고 한국남부발전의 BESS 준공 소식을 대신 제공했기 때문에 handled_correctly가 true입니다. 근거 목록에 있는 BESS 준공 뉴스(2026-07-26)를 인용하여 답변했으므로 grounded도 true입니다. 제외 요청은 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "e9a31ccb069a6952c9b14ac8d496b117": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 한화오션의 남미 심해 유전용 FPSO 인증 획득과 칠레 잠수함 교체 사업 참여 가능성을 설명하고 있으며, 근거와 모순되는 주장은 없습니다. 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "1ad4ac59aef03e03f16f22f71423448e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 주어진 근거 목록 중 'SK하이닉스, 키옥시아 2대 주주 지위 확보…CB 전환 시 최대주주 가능성 (2026-07-26)'을 기반으로 키옥시아 2대 주주 관련 내용을 설명하고 있으며, 근거와 모순되지 않습니다. 제외 요청도 없으므로 null로 판정합니다.",
+    "ok": true,
+    "error": null
+  },
+  "5e3f554f9f1427f701c10c4673d2aad5": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록과 일치하는 내용을 포함하고 있으며, 근거와 모순되는 주장은 없습니다. 제외 요청도 없으므로 null로 판정합니다.",
+    "ok": true,
+    "error": null
+  },
+  "b4cfa7b8c37b1af11560d35d388a3435": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 근거 목록에 있는 'New 갤럭시 AI 구독클럽' 출시 관련 뉴스 이벤트를 기반으로 1020세대 대상 플립 유스 구독 신설, 3년형 확대, 반납 시 잔존가 보장 등의 내용을 설명하고 있어 근거와 일치하며, 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "8684dfa4f11b453259bcfb422f39d73e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록과 일치하며, 두산에너빌리티의 참여 사실을 명시하고 준공식 날짜도 근거와 동일하게 2026-07-16로 정확히 인용했습니다. 근거가 없는 질문에 대한 처리나 특정 주제 제외 요청도 없으므로 해당 항목은 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "dc6df254ee109629a10471edd75a563c": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록과 모순되지 않으며, 근거 문서에 포함된 협력 양해각서 및 계약 내용을 정확히 반영하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "9324de0c2c781a301bfb76db8b98f36a": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문에 대한 근거가 제공되지 않아 답변할 수 없는 상황임을 사용자에게 명확히 전달했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있으므로 답변과 모순되는 주장이 없어 grounded도 true입니다. 제외 요청이 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "cf412ba3aff66bd931c680a088a8e288": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 내용과 일치하며, 근거가 없는 질문에 대한 처리나 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "c2182eae1b13d578aa552f216d297f95": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 근거 목록에 있는 '삼성전자, 구글 협업 스마트안경 개발 뒷이야기 공개 (2026-07-26)'를 바탕으로 작성되었으며, 구체적인 개발 내용과 테스트 과정, 제품 공개 일정 등을 언급하고 있어 근거와 모순되지 않습니다. 제외 요청 사항이 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "a4b9451612efc4859432c1a1960b46e1": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록과 일치하는 정보를 포함하고 있으며, HJ중공업 관련 소식이 없음을 명시했으므로 근거가 없거나 모순되는 부분이 없습니다.",
+    "ok": true,
+    "error": null
+  },
+  "1791b8055c735d617c1fb541e4413831": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 최태원·노소영 이혼 재산분할 소송의 핵심 쟁점과 판결 내용, SK그룹 지배구조 및 거버넌스 비판을 설명하고 있으며, 근거와 모순되는 부분이 없고 구체적인 수치와 날짜도 근거 문서에 포함되어 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "5bc1fff49cdd453cd16275e693f38761": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "주어진 근거 목록에 따르면 이재명 대통령이 글로벌 AI CEO들과 연쇄 면담을 갖고 '샌프란시스코 AI 선언'을 발표했으며, 현대차 정의선 회장이 AI 서밋 만찬에 참석하고 엔비디아와 협력 논의를 진행했다는 내용이 포함되어 있어 답변 내용이 근거와 일치하므로 grounded=true입니다. 질문이 특정 주제를 제외해 달라는 요청을 포함하지 않았으므로 exclusion_respected=null입니다. 또한 근거가 충분히 제공되어 답할 수 있는 질문이므로 handled_correctly=null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "5f0805a5a40bd907fb55b8776da328f0": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록과 모순되지 않으며, 갤럭시 워치9의 기능, 런던 체험 행사, 사전구매 혜택 등 근거에서 언급된 내용을 정확히 반영하고 있습니다. 제외 요청도 없으므로 해당 항목은 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "a036be824455cc35f59fa68b0ec8f337": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록과 모순되지 않으며, 근거 문서에 포함된 내용으로 설명 가능한 내용을 담고 있습니다. 근거가 없는 질문도 아니고, 특정 주제 제외 요청도 없습니다.",
+    "ok": true,
+    "error": null
+  },
+  "e83832c3ce88b6c7a89fb3787f745319": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "주어진 근거 목록에 포함된 모든 내용이 답변에 반영되어 있으며, 근거와 모순되는 주장이 없습니다. 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "f48d33989750745f0a35910f008d28e7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 배당 관련 정보를 제공했으며, 증권사나 목표주가와 같은 제외 주제를 언급하지 않았다. 근거 목록에 배당 관련 자료가 포함되어 있어 grounded=true로 판단된다.",
+    "ok": true,
+    "error": null
+  },
+  "80c482f2604aaaaa1046baa21f789a53": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 답변이 근거 목록(dividend_matter)에 포함된 정보로 구성되어 있으며, 증권사나 목표주가와 같은 제외 주제를 언급하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "e45de59e0015c51a98b850938914157c": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '증권사, 목표주가'를 제외해 달라고 요청했으며, 답변은 해당 주제를 언급하지 않고 배당 관련 공시 내용만 설명했기 때문에 제외 요청이 존중되었다. 또한 배당 관련 근거(dividend_matter)가 제공되어 답변이 근거와 모순되지 않으며, 배당 데이터가 명확히 없다는 사실을 사용자에게 전달했으므로 handled_correctly도 true이다.",
+    "ok": true,
+    "error": null
+  },
+  "643cd1a90b1b1eda3a2ebfe34065891c": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 증권사나 목표주가 관련 내용이 없으며, 답변은 자본금 변동 내역을 구체적으로 제시하고 근거 목록과 일치하므로 제외 요청을 준수했고 근거와 모순되지 않는다.",
+    "ok": true,
+    "error": null
+  },
+  "6f9a64b69a5919d7e3f3a2899143f41f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 증권사나 목표주가 관련 내용이 없으며, 답변도 해당 주제를 언급하지 않아 제외 요청을 준수했습니다. 제공된 근거 목록(capital_change_status)과 답변 내용이 일치하므로 grounded=true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "2f7b4f88b24f7b3288f2027474ddcec1": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 대한 답변으로 해외상장 관련 공시 문서명을 제시하고 링크를 제공했으며, 제공된 근거 목록에 해당 문서가 포함되어 있어 모순되지 않습니다. 또한 '증권사'와 '목표주가'를 언급하지 않아 제외 요청을 준수했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "abc69a417c5b1d20fced6e2691274e3e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 근거가 없어 답할 수 없는 경우가 아니며, 답변은 제공된 근거 목록과 모순되지 않고, 증권사나 목표주가에 대한 언급이 없어 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "0cc1bc1265e46e7663e0d055bf70ad62": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되지 않았고, 답변이 구체적인 발행 주식 수를 제시했으며, 제공된 근거 목록(stock_total_status)과 모순되지 않는다. 또한 답변에서 증권사나 목표주가를 언급하지 않아 제외 요청을 존중했다.",
+    "ok": true,
+    "error": null
+  },
+  "8fa4387b6fae63f609bd015a2f2e70ee": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 배당 금액을 요청했으나 근거 목록에 구체적인 배당액 수치가 없어 확인할 수 없다고 답변했으며, 증권사나 목표주가 관련 내용은 전혀 언급되지 않아 제외 요청을 존중했다.",
+    "ok": true,
+    "error": null
+  },
+  "9151d57a4c44d9fdc5a2d63d49945104": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록(dividend_matter)에 포함된 배당 관련 정보를 바탕으로 작성되었으며, 증권사나 목표주가와 같은 제외 주제는 전혀 언급되지 않았습니다. 배당 내역의 수치와 결산기준일 등이 근거와 일치하므로 grounded=true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "945e6716430be2857ab12f69bbcde25d": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록 중 '해외증권시장주권등상장' 문서를 기반으로 상장 거래소, 목적, 예정일, 주식수 등을 제시하고 있으며, 증권사나 목표주가와 같은 제외 주제는 언급하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "04f6d8d709aef574ab7a8c0252e43e3d": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 증권사나 목표주가에 대한 언급이 없어 제외 요청이 적용되지 않았으며, 답변이 제공된 근거 목록(treasury_stock_acquisition)에 기반한 것으로 보입니다.",
+    "ok": true,
+    "error": null
+  },
+  "ab45c0b70eabe9ae0d1df293b9587d3b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록(treasury_stock_acquisition)과 일치하는 자기주식 취득 공시 내용을 포함하고 있으며, 증권사 및 목표주가에 대한 언급은 전혀 없으므로 제외 요청을 준수했습니다. 근거 목록이 실제 수치나 본문을 포함하지 않지만, 답변의 내용이 해당 유형의 자료로 설명 가능한 범위 내에 있으므로 grounded=true로 판단했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "0a580cb12263ac1dcd46fa463fc77c7f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 증권사나 목표주가에 대한 제외 요청이 있었으나 답변은 발행주식 총수만 언급하여 제외 요청을 준수했으며, 제공된 근거 목록과 모순되지 않는 정보를 제시하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "475aa55a1d13aa962d5ade953a57ec2b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 증권사나 목표주가에 대한 제외 요청이 있었으나 답변은 상장주식수만 언급하여 제외 요청을 준수했으며, 제공된 근거 목록과 모순되지 않는 정보를 제시하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "69716aa5ec5e6356478d3f3a33cd5c5e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 미래에셋증권의 2026년 7월 14일 연구보고서를 근거로 SK하이닉스의 목표주가를 제시했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했다.",
+    "ok": true,
+    "error": null
+  },
+  "b1d6e139365cab3c9300e178906aa884": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '확정, 보장'이라는 제외 요청이 있었으나 답변에서 해당 단어를 사용하지 않았고, 근거 목록에 있는 리포트 제목들을 바탕으로 2026년 2분기 실적 부진 가능성과 목표주가 90만 원, 매수 의견 유지 등의 내용을 제시하여 근거와 모순되지 않으며, 제외 대상도 언급하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "f9987a08aa859bbf76e57125896fa7e0": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 날짜(2026-07-08)와 근거 문서(2026-07-08 iM증권 리포트)가 일치하며, 투자의견 'Buy'와 목표주가 48만 원이라는 구체적인 수치가 근거 목록에 포함된 리포트에서 나온 것으로 보인다. '확정, 보장'이라는 제외 요청도 답변에서 다루지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "149e0c7548eb500cf88d03e22a884091": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 유안타증권 리포트(2026년 5월 4일자)를 근거로 두산에너빌리티의 투자 의견, 목표주가, 실적 개선 신호 등을 요약했으며, '확정'이나 '보장'이라는 단어를 사용하지 않아 제외 요청을 준수했습니다. 근거 목록과 모순되는 내용은 없습니다.",
+    "ok": true,
+    "error": null
+  },
+  "650158466fda60dcaf671f4784f9f4d3": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '확정, 보장'이라는 제외 요청이 있었으나 답변은 해당 단어를 사용하지 않았고, 근거 목록에 제시된 연구 보고서 제목과 일치하여 모순되지 않음.",
+    "ok": true,
+    "error": null
+  },
+  "b57ed1bc892516ed51cf30aa2f855ef4": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록의 출처와 일치하는 증권사 리포트 내용을 요약했으며, '확정'이나 '보장'이라는 단어를 사용하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "568e5bbe751d4bb171d4f0db194a79d9": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 특정 날짜의 키움증권 투자의견을 요청했고, 답변은 해당 리포트의 투자의견과 목표주가를 인용했으며, '확정 실적이 아님'이라는 표현으로 확정/보장 관련 제외 요청을 존중했다. 근거 목록과 모순되는 주장은 없다.",
+    "ok": true,
+    "error": null
+  },
+  "05d819f3d48050a1748272e38881ff97": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 제공된 근거 목록의 출처와 일치하는 내용을 요약했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "4966feb5a7675b16c3a36129285b7446": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 근거 목록에 있는 SK증권의 2026년 7월 13일자 리서치 리포트에 기반하여 목표주가를 제시했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "2d65138c34c59ab2eaff776fc9014302": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '확정, 보장'을 제외해 달라고 요청했으나 답변에서 '확정 실적이 아님'을 명시하여 제외 요청을 존중했으며, 근거 목록에 있는 IBK투자증권 리포트와 일치하는 내용을 제시하고 있어 근거가 있다.",
+    "ok": true,
+    "error": null
+  },
+  "114d10602e6c3e50a42f246591ec103a": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 근거 목록에 있는 한화투자증권의 2026-07-06 리포트를 인용하여 투자의견과 목표주가를 제시했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "8b3a6636d012fb5d6cc19fdc3687d263": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '확정, 보장'을 제외해 달라고 요청했으나 답변은 매수 의견과 목표주가 등 구체적인 수치를 제시했으며, 이는 제외 요청을 위반한 것으로 보입니다. 그러나 제공된 근거 목록에 해당 내용이 포함되어 있어 grounded는 true로 판단됩니다. 또한 근거 목록이 존재하므로 handled_correctly는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "65ded54fee59e74bf302018cd3f0e641": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 대신증권 2026년 7월 9일자 리포트를 근거로 139,000원의 목표주가를 제시했으며, 근거 목록과 모순되지 않는다. 또한 '확정, 보장'이라는 제외 요청을 존중하여 해당 단어를 사용하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "6b5e35e639e4a672d3ae21252914fe66": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 교보증권의 리포트 내용을 근거로 DRAM 가격 상승과 HBM4 기여도 확대 등을 언급했으며, 미래에셋증권 리포트도 추가로 인용해 목표주가와 전망을 제시하고 있습니다. '확정', '보장'이라는 제외 요청을 존중하여 해당 단어를 사용하지 않았고, 근거 목록에 있는 리포트 제목과 일치하는 정보를 제공하고 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "c4fe099b8efd52aa8b2262977df5431f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 날짜(2026-06-18)와 출처(한화투자증권 리포트)에 따라 투자의견 'Buy'와 목표주가 760,000원을 제시했으며, '확정', '보장'이라는 제외 요청된 주제를 언급하지 않았다. 근거 목록과 모순되는 내용이 없고, 근거 문서 내에서 설명 가능한 답변이다.",
+    "ok": true,
+    "error": null
+  },
+  "1770a4e4b0df5c7ec078faa5d042dbcb": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문에 대한 답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트 정보를 기반으로 작성되었으며, 근거와 모순되는 내용은 없습니다. 제외 요청도 없으므로 null로 판정합니다.",
+    "ok": true,
+    "error": null
+  },
+  "0e9b747e05251a9d4e5f9878b4190737": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 수치와 뉴스 내용을 정확히 인용하여 설명하고 있으며, 근거와 모순되는 부분이 없습니다.",
+    "ok": true,
+    "error": null
+  },
+  "5a6a7fbf9687d5510418b22ea732c330": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트를 기반으로 작성되었으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "9dd2ea8b8252ef4a2caa952dd62ed1db": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트를 정확히 인용하여 작성되었으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "eaf084034229bd8de145fdc04133502e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 수치와 뉴스 이벤트를 정확히 인용하여 작성되었으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "26f731a1f5b4d19caec591dd338548a1": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 작성되었으며, 근거와 모순되는 주장은 없습니다. 제외 요청도 없으므로 null로 판정합니다.",
+    "ok": true,
+    "error": null
+  },
+  "83d48ab5e053ef8115d326e022247622": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 수치와 내용을 바탕으로 작성되었으며, 근거와 모순되는 주장은 없습니다. 제외 요청도 없으므로 해당 항목은 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "aeecbe68a7d87f1090e5946bfa073047": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "주어진 근거 목록에 포함된 실적 수치와 뉴스 이슈, 애널리스트 의견이 답변에 모두 반영되어 있으며, 근거와 모순되는 내용은 없습니다. 제외 요청도 없으므로 모든 판정은 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "4117229aa7833738cea09d44fb51f2b5": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스, 리서치 리포트를 기반으로 실적 수치와 전망을 설명하고 있으며, 근거가 없는 내용은 포함하지 않았습니다.",
+    "ok": true,
+    "error": null
+  },
+  "f39accbbce9cded5ffdc494e7b885bac": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트를 기반으로 실적 현황과 배경을 설명하고 있으며, 증권사 평가 부분은 일부 목표주가가 확인되지 않아 제외했다고 명시하여 근거와 모순되지 않습니다. 제외 요청 사항이 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "270fa8dd523fa442df4cc52b3e9535c7": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 현재 주가와 목표주가 비교를 요구했으나, 답변에서 현재 주가 확인이 어렵다고 명시하고 목표주가만 제시했으므로 handled_correctly=true. 제시된 목표주가들은 근거 목록에 있는 증권사 리서치 보고서와 일치하므로 grounded=true. 제외 요청 사항이 없으므로 exclusion_respected=null.",
+    "ok": true,
+    "error": null
+  },
+  "d61f570f3a41ad4159ea9a8b310abbc1": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 현재 주가 확인이 어렵다는 점을 명시하고, 제공된 근거 목록에 있는 증권사별 목표주가 정보를 정확히 인용하여 모순 없이 설명하고 있다.",
+    "ok": true,
+    "error": null
+  },
+  "fc4b14c1ce292ba9e334bee241a775f5": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 경우(실제 주가 확인 불가)를 사용자에게 명확히 전달했으므로 handled_correctly=true이며, 제공된 근거 목록과 모순되지 않는 정보를 제시했으므로 grounded=true이다.",
+    "ok": true,
+    "error": null
+  },
+  "804cfd2688c5be69fd09abe0afa76b74": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 현재 주가 확인이 어렵다는 점을 명시하고, 제공된 근거 목록에 있는 증권사별 목표주가(2026년 4~5월 기준)를 인용하여 괴리율을 계산할 수 있음을 안내했다. 근거 목록과 모순되는 주장은 없으며, 특정 주제 제외 요청도 없었다.",
+    "ok": true,
+    "error": null
+  },
+  "6f6799a35139678087162b05668b6e49": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 근거 목록에 있는 증권사별 목표주가 정보를 정확히 인용했으며, 현재 주가 확인 불가 사실을 명확히 전달했으므로 handled_correctly=true, grounded=true이다. 제외 요청 사항이 없으므로 exclusion_respected=null이다.",
+    "ok": true,
+    "error": null
+  },
+  "410b42be3d45093d3941ac5707124808": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 '실적' 제외 요청을 준수하여 답변했으며, 제공된 근거 목록과 모순되는 내용이 없고, 근거 문서 내에 포함된 정보로 답변을 구성했습니다.",
+    "ok": true,
+    "error": null
+  },
+  "905e464ba807cb7fb2295358db6cf98a": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 실적 관련 내용을 제외하고 전략적 투자, 협력, 시장 위치 강화 소식을 제시했으며, 제공된 근거 목록과 모순되지 않는다. 제외 요청된 '실적' 주제를 다루지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "fe7dc12cfd66d33b20ee2041bf98fe55": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 '실적' 주제를 제외하고 호재만 답변했으며, 제공된 근거 목록과 모순되는 내용이 없고, 근거 문서 내에 있는 정보로 답변함.",
+    "ok": true,
+    "error": null
+  },
+  "55173b765c630736db9439fce96f6e31": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 '실적' 주제를 제외하고 두산에너빌리티 관련 뉴스 5건을 제시했으며, 모든 근거가 제공된 근거 목록과 일치한다.",
+    "ok": true,
+    "error": null
+  },
+  "e898cb2d9a58b24a4aa47dca5dbde901": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '실적'을 제외해 달라고 요청했고, 답변은 실적 관련 내용 없이 사업 확장, 법적 대응, 해외 수주, 글로벌 협력 등 다른 주제만 다루고 있습니다. 근거 목록의 뉴스 이벤트들도 실적 외의 이슈를 다루고 있어 모든 판정이 적절합니다.",
+    "ok": true,
+    "error": null
+  },
+  "c099067cd2f760cf38513ac8bc43cf7a": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "답변은 증권사나 목표주가를 언급하지 않고 회사가 직접 공시한 임원 및 주요주주의 특정증권 등 소유상황 보고서만을 제시했으며, 근거 목록도 해당 공시 문서들로 구성되어 있어 제외 요청을 준수했다.",
+    "ok": true,
+    "error": null
+  },
+  "93647ede52819564f5003fd5f9bf9a4f": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 증권사 및 목표주가 관련 내용을 제외하고 공시 목록만 제시했으며, 제공된 근거 목록과 모순되지 않는다.",
+    "ok": true,
+    "error": null
+  },
+  "129048b5c4e7aa6e84fac22a4ae21748": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 증권사 리포트와 목표주가 언급을 제외해 달라고 요청했으며, 답변은 현대차 공식 공시 내용만 제시하고 해당 주제를 전혀 다루지 않았다. 또한 제공된 근거 목록과 답변 내용이 일치하므로 grounded=true이다.",
+    "ok": true,
+    "error": null
+  },
+  "dbc17310211608398c48b5cf684c67ab": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 증권사 및 목표주가를 제외하고 두산에너빌리티의 직접 발표만 요청했으며, 답변은 해당 조건을 준수하여 증권사 관련 내용을 배제하고 직접 발표한 공시 목록만 제시했다. 근거 목록도 제공된 dart_document들로 구성되어 있어 모순이 없다.",
+    "ok": true,
+    "error": null
+  },
+  "c06c48d9040197731e5dee005f5a4067": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 명시된 '증권사 전망' 및 '목표주가' 관련 내용이 답변에 전혀 포함되지 않았으며, 제공된 근거 목록도 모두 해당 주제와 무관한 공시 자료들로 구성되어 있습니다.",
+    "ok": true,
+    "error": null
+  },
+  "bab1eb683c09199abcb6dd31a4c95392": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '목표주가'를 제외하고 실제 주가만 요청했으며, 답변은 '목표주가'를 언급하지 않고 주가 조회 오류만 안내하여 제외 요청을 존중했다. 근거가 없어 답할 수 없는 상황이므로 handled_correctly가 true이며, 근거 목록이 없으므로 grounded도 true로 판정한다.",
+    "ok": true,
+    "error": null
+  },
+  "eb881f9bb1e21a9ed0552a116e9d26df": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 확인할 수 없다는 사실을 사용자에게 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "537f65619d31e156e5b738fcba388637": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록과 일치하는 구체적인 수치를 제시하고 있으며, 근거가 없는 질문에 대한 단정적 답변도 아니므로 handled_correctly는 null, grounded는 true, 제외 요청도 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "63f75db846175926ef86df945cea9a06": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문에 대한 근거가 제공되지 않아 답변할 수 없는 상황이므로 handled_correctly=true이며, 답변 내용이 근거 없음과 모순되지 않아 grounded=true이다.",
+    "ok": true,
+    "error": null
+  },
+  "3401c8cb4fdabefc04d5c04f746f685b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록에 있는 증권사별 목표주가 정보를 인용하여 작성되었으며, 근거와 모순되지 않습니다. 제외 요청도 없으므로 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "4ddd664fc02e01b9914c7f58c7076cb7": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "주어진 근거 목록에 포함된 5개의 뉴스 이벤트와 답변 내용이 일치하며, 근거와 모순되는 주장이 없습니다. 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "3e91137ec067ad4d5b767da7a38975e5": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변에서 확인할 수 없다는 사실을 사용자에게 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "fed4cb860353e0b27c92f6e60646290e": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록에 있는 '2026년 1분기보고서 누적' 영업이익 정보를 인용하여 구체적인 수치를 제시했으며, 근거와 모순되지 않는다. 제외 요청도 없으므로 null 처리된다.",
+    "ok": true,
+    "error": null
+  },
+  "9ec8cea2939d752b94cf026a1d955a7e": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되었고, 답변에서 '아직 공개된 데이터가 없습니다'라고 명시하여 확인할 수 없음을 전달했으며, '확정', '확실'이라는 제외 요청도 존중하여 해당 단어를 사용하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "da1cf9c558b154793e4f27ae09a5f0a9": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 질문으로 표시되었으며, 답변이 해당 사실을 사용자에게 전달하고 추가 정보를 요청하고 있다.",
+    "ok": true,
+    "error": null
+  },
+  "c3e7983301ac985d4f5a25324e6e59ee": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 구체적인 종목명을 제시하지 않아 근거가 없으므로 답변할 수 없는 질문으로 표시되었고, 답변에서는 종목명을 요청하여 사용자가 추가 정보를 제공하도록 유도했다.",
+    "ok": true,
+    "error": null
+  },
+  "bbb111acfb5f9fef11b7b6374873853d": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 질문으로 표시되었으며, 답변이 '아직 제공되지 않아 확인할 수 없습니다'라고 명시적으로 전달했기 때문에 handled_correctly가 true입니다. 근거 목록이 비어 있으므로 grounded도 true로 판단됩니다. 제외 요청이 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "e551e52e0ef20bb5038c64cdf33aa9ad": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변에서 매수·매도 추천 없이 필요한 정보를 안내했으며, '추천', '사세요', '매수하세요' 등의 제외 주제를 언급하지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "03fd2f9d02829e433f7d00850af90beb": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되었으며, 답변이 확인할 수 없다는 사실을 사용자에게 전달하고 관련 공시 문서를 안내했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "327ab60615cdfa552578628670bbb5f2": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문에 구체적인 뉴스 정보가 없어 답변할 수 없는 상황이므로 handled_correctly가 true이며, 답변은 근거 없이 단정적인 수치를 제시하지 않고 추가 정보를 요청하고 있어 grounded도 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "d5d72b021f94104afff9abc98a4df8e0": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되어 있으며, 답변은 배당금 총액이나 주당 배당금이 공시에서 확인되지 않는다고 명시하여 handled_correctly가 true입니다. 근거 목록에는 dividend_matter만 포함되어 있어 구체적인 수치를 확인할 수 없으므로 grounded도 true입니다. 제외 요청은 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  }
+}

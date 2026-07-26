@@ -1,0 +1,2756 @@
+{
+  "note": "저장된 final-dev 결과 재채점(Agent 미실행). 기존 키워드 채점 vs Solar LLM judge 비교. Retriever·Tool·Gold·devset 미변경. Tool·문서ID·숫자·기간 지표는 두 방식이 동일하다(코드 채점 유지) — 차이가 나는 것은 자연어 판정 항목뿐이다.",
+  "records_file": "baseline_dev_records_final.json",
+  "n": 120,
+  "summary": {
+    "judge_ok": 120,
+    "judge_failed": 0,
+    "disagreement_cases": [
+      "disc-13",
+      "na-05"
+    ],
+    "unanswerable": {
+      "n": 8,
+      "keyword_pass": 7,
+      "judge_pass": 8
+    },
+    "exclusion": {
+      "n": 62,
+      "keyword_violations": 2,
+      "judge_violations": 0
+    },
+    "grounded_false": [],
+    "aggregate_answer_keyword": {
+      "key_fact_coverage": 0.4286,
+      "citation_precision": 1.0,
+      "citation_coverage": 0.9464,
+      "nonexistent_citations": 0,
+      "unsupported_numbers": 5,
+      "exclusion_violations": 2,
+      "overclaim_cases": 2,
+      "false_answer_on_unanswerable": 1
+    },
+    "aggregate_answer_judge": {
+      "key_fact_coverage": 0.4286,
+      "citation_precision": 1.0,
+      "citation_coverage": 0.9464,
+      "nonexistent_citations": 0,
+      "unsupported_numbers": 5,
+      "exclusion_violations": 0,
+      "overclaim_cases": 2,
+      "false_answer_on_unanswerable": 0
+    }
+  },
+  "rows": [
+    {
+      "case_id": "term-01",
+      "type": "금융용어",
+      "question": "공매도가 뭐야?",
+      "answer": "공매도(Short Selling)는 주식을 보유하지 않은 상태에서 주가 하락을 예상해 금융기관으로부터 주식을 빌려 먼저 팔고, 주가가 하락하면 시장에서 주식을 다시 사서 갚아 차익을 얻는 투자 방법입니다. 예를 들어, 주당 15,000원에 빌린 주식을 팔고 나중에 12,000원에 사서 갚으면 주당 3,000원의 수익을 얻는 식입니다. 다만 주가가 예상과 달리 상승하면 큰 손실이 발생할 수 있어 신중한 접근이 필요합니다. 공매도는 주식시장의 변동성을 키울 수 있어 각국에서 규제를 하고 있습니다. (출처: 한국은행 경제금융용어 800선)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 공매도의 정의와 예시를 제시하며, 제공된 근거 목록인 '한국은행'의 용어 설명과 일치하므로 근거가 있는 답변으로 판단됩니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-02",
+      "type": "금융용어",
+      "question": "기준금리 쉽게 설명해줘",
+      "answer": "기준금리는 한국은행 금융통화위원회에서 결정하는 정책금리로, 한국은행과 금융기관 간 자금 거래 시 적용되는 기준 금리입니다. 2008년부터 기존의 콜금리 목표 방식에서 기준금리 방식으로 바뀌었는데, 이는 단기 금융시장의 자금 배분 기능을 개선하고 통화정책이 시장에 원활히 전달되도록 하기 위함입니다. 쉽게 말해, 기준금리는 한국은행이 경제 상황에 맞춰 금융시장에 영향을 주기 위해 정하는 중요한 금리 기준입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 주어진 근거 목록인 '기준금리 (한국은행)'에 기반하여 한국은행의 금융통화위원회에서 결정하는 정책금리라는 내용을 설명하고 있으며, 근거와 모순되는 주장이 없고, 제외 요청도 없으므로 모든 판정이 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-03",
+      "type": "금융용어",
+      "question": "당기순이익이 무슨 뜻이야?",
+      "answer": "당기순이익은 일정 기간 동안 회사가 벌어들인 모든 수익에서 모든 비용과 법인세까지 다 뺀 뒤 최종적으로 남은 이익을 말합니다. 쉽게 말해, 세금까지 다 내고 회사에 최종적으로 남은 돈이에요.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 당기순이익이라는 용어에 대한 일반적인 정의를 제공하고 있으며, 주어진 근거 목록인 '[term] 당기순이익'과 일치한다. 근거가 없는 질문으로 표시되지 않았고, 특정 주제 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null이며, 답변 내용이 근거와 모순되지 않아 grounded는 true이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-04",
+      "type": "금융용어",
+      "question": "주식 처음인데 배당할인모형 개념 알려줘",
+      "answer": "배당할인모형(Dividend Discount Model)은 주식투자에 따른 미래의 현금 흐름, 즉 배당금을 적절한 할인율로 현재가치로 환산해 주식의 현재가치를 평가하는 기본적인 모형입니다. 주식은 만기가 없는 영구 증권이므로, 각 기별 배당금을 투자자가 요구하는 수익률(할인율)로 할인한 현재가치의 합으로 주식 가치를 산정합니다. 이 모형은 주식 가격 형성의 핵심 요인을 보여주지만, 먼 미래 배당금을 정확히 추정하는 것은 어려운 점이 있습니다. (출처: 한국은행 경제금융용어 800선)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 배당할인모형의 개념을 묻는 일반적인 질문이며, 답변에 제공된 근거가 해당 개념을 설명하고 있어 모순되지 않습니다. 제외 요청도 없으므로 null로 판정합니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-05",
+      "type": "금융용어",
+      "question": "변동금리는 어떻게 계산해?",
+      "answer": "변동금리는 시장금리를 반영하여 일정 주기별로 약정금리가 변하는 금리입니다. 예를 들어, 변동주기가 3개월이고 약정금리가 CD금리+0.5%라면, 3개월마다 CD금리에 연동해 약정금리가 변하게 됩니다. 만기 1년, 변동주기 3개월, 약정금리가 CD금리+0.5%인 경우, CD금리가 최초 3.0%였다가 3개월 후 3.2%, 6개월 후 3.5%, 9개월 후 4.0%로 변하면, 약정금리는 각각 3.5%, 3.7%, 4.0%, 4.5%가 됩니다. 즉, 변동금리는 기준이 되는 시장금리에 일정 가산금리를 더해 계산합니다. \n\n(출처: 한국은행 경제금융용어 800선)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 변동금리를 시장금리에 연동해 가산금리를 더하는 방식으로 설명하고 있으며, 제공된 근거인 '한국은행 경제금융용어 800선'의 '변동금리' 용어 정의와 일치하므로 근거가 있는 답변으로 판단됩니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-06",
+      "type": "금융용어",
+      "question": "부채비율이 뭐야?",
+      "answer": "부채비율은 부채를 자기자본으로 나눈 비율로, 기업의 재무 안정성을 나타내는 대표적인 지표입니다. 이 비율이 낮을수록 재무구조가 건전하다고 판단할 수 있습니다. 부채비율은 다음과 같이 계산합니다.\n\n부채비율 = [(유동부채 + 비유동부채) / 자기자본] × 100\n\n여기서 부채에는 차입금, 회사채, 매입채무, 미지급금, 부채성충당금 등이 포함됩니다. 부채비율이 높으면 경기나 금리 변동에 취약할 수 있으니 주의가 필요합니다. (출처: 한국은행 경제금융용어 800선)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 부채비율의 정의와 계산식, 구성 요소, 의미를 설명하고 있으며, 제공된 근거인 '한국은행 경제금융용어 800선'과 일치하므로 근거가 있는 답변으로 판단됩니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-07",
+      "type": "금융용어",
+      "question": "상장지수펀드 쉽게 설명해줘",
+      "answer": "상장지수펀드(ETF, Exchange Traded Fund)는 주식처럼 거래소에 상장되어 자유롭게 사고팔 수 있는 펀드입니다. 쉽게 말해, 여러 주식이나 채권 등 여러 자산을 한 바구니에 담아 놓고, 그 바구니 전체를 주식처럼 거래하는 투자 상품이에요.\n\n주요 특징은 다음과 같습니다:\n1. 주식처럼 거래소에서 실시간으로 사고팔 수 있어요.\n2. 여러 종목에 분산 투자하는 효과가 있어 위험을 줄일 수 있어요.\n3. 보통 특정 지수(예: 코스피, 코스닥 등)를 따라가도록 설계되어 지수 수익률을 목표로 해요.\n4. 일반 펀드보다 수수료가 낮은 편이에요.\n\n즉, ETF는 주식처럼 편리하게 거래하면서도 여러 자산에 분산 투자할 수 있는 상품이라고 이해하면 됩니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "근거가 제공되지 않은 질문이므로 답변에서 확인할 수 없다는 사실을 전달했으며, ETF에 대한 일반적인 설명은 근거 목록 없이도 가능한 일반적인 지식이므로 grounded=true로 판정함",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-08",
+      "type": "금융용어",
+      "question": "실효환율이 무슨 뜻이야?",
+      "answer": "실효환율은 자국 통화와 주요 교역 상대국 통화 간의 환율을 무역 비중으로 가중평균하여 산출한 환율입니다. 이는 자국 상품의 종합적인 가격경쟁력 지표로 볼 수 있습니다. \n\n실효환율에는 두 가지 종류가 있는데요,\n- 명목실효환율: 국가 간 물가 변동을 고려하지 않고 주요 교역 대상국 환율 변동만을 종합한 것\n- 실질실효환율: 국가 간 물가 변동까지 고려한 환율입니다.\n\n즉, 단순 환율보다 더 포괄적으로 자국 통화의 대외 가치를 평가하는 지표입니다. (출처: 한국은행 경제금융용어 800선)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 실효환율의 정의와 명목실효환율, 실질실효환율의 차이를 설명하고 있으며, 제공된 근거 목록인 '실효환율 (한국은행)'과 일치하므로 근거가 있는 답변으로 판단됩니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-09",
+      "type": "금융용어",
+      "question": "주식 처음인데 영업이익 개념 알려줘",
+      "answer": "영업이익은 회사가 본업으로 벌어들인 이익을 말해요. 쉽게 말해, 매출액에서 제품을 만들고 판매하는 데 들어간 비용(매출원가)과 판매비·관리비를 뺀 금액입니다. 즉, 회사가 주된 사업 활동으로 얼마나 이익을 냈는지를 보여주는 중요한 지표입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 영업이익의 정의와 계산 방법을 일반적인 금융 지식에 기반하여 설명했으며, 제공된 근거 목록(term: 영업이익)과 일치한다. 근거가 없는 질문에 대한 처리나 특정 주제 제외 요청도 없으므로 null로 판정한다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-10",
+      "type": "금융용어",
+      "question": "유상증자는 어떻게 계산해?",
+      "answer": "유상증자는 기업이 새 주식을 발행하고 그 대금을 받아 자본금을 늘리는 것을 말합니다. 쉽게 말해, 회사가 새 주식을 팔아서 돈을 더 모으는 것이고, 이 과정에서 주식 수가 늘어나게 됩니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 근거가 없어 답할 수 없는 질문이 아니며, 답변은 유상증자라는 용어에 대한 일반적인 정의를 제공하고 있어 근거 목록과 모순되지 않습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "term-11",
+      "type": "금융용어",
+      "question": "인플레이션이 뭐야?",
+      "answer": "인플레이션은 물가수준이 지속적으로 상승하는 현상을 말합니다. 여기서 물가는 여러 상품의 가격을 평균하여 산출한 물가지수를 의미합니다. 일반적으로 연 4~5% 정도의 물가상승률이 관측되면 인플레이션이 발생했다고 판단합니다. (출처: 한국은행 경제금융용어 800선)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 인플레이션의 정의와 일반적인 판단 기준을 설명했으며, 제공된 근거 목록인 '인플레이션 (한국은행)'과 모순되지 않고 해당 용어에 대한 설명을 포함하고 있습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-01",
+      "type": "정확한 재무 숫자",
+      "question": "삼성전자 2025년 연간 누적 영업이익은 얼마야?",
+      "answer": "삼성전자의 2025년 연간 누적 영업이익은 43.60조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거 목록에 2025년 사업보고서(연간) 누적 연결 영업이익이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-02",
+      "type": "정확한 재무 숫자",
+      "question": "삼성전자(005930) 2025년 연간 매출액 알려줘",
+      "answer": "삼성전자의 2025년 연간 매출액은 연결 기준으로 333.61조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 답변으로 2025년 연간 매출액 333.61조원을 제시했으며, 이는 제공된 근거 목록의 '2025년 사업보고서(연간) 누적 · 연결' 자료와 일치하므로 근거가 있는 답변으로 판단된다. 또한 '전망'이나 '예상치'와 같은 제외 요청된 주제를 다루지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-03",
+      "type": "정확한 재무 숫자",
+      "question": "2025년 삼성전자 3분기 영업이익 얼마나 나왔어?",
+      "answer": "2025년 삼성전자의 3분기 누적 영업이익은 23.53조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변은 실제 2025년 3분기 누적 영업이익 수치를 제시하고 있어 제외 요청을 위반하지 않았으며, 근거 목록에 해당 정보가 포함되어 있어 grounded=true로 판단됩니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-04",
+      "type": "정확한 재무 숫자",
+      "question": "삼성전자 2025년 3분기 단독 영업이익은 얼마야?",
+      "answer": "삼성전자의 2025년 3분기 단독(3개월) 영업이익은 12.17조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변은 실제 공시된 2025년 3분기 단독 영업이익 수치를 제시했으며, 근거 목록에 해당 분기 연결 영업이익 자료가 포함되어 있어 모순되지 않는다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-05",
+      "type": "정확한 재무 숫자",
+      "question": "삼성전자(005930) 2025년 반기 당기순이익 알려줘",
+      "answer": "삼성전자의 2025년 반기 누적 당기순이익은 13.34조원(연결 기준)입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 구체적인 수치(13.34조원)가 근거 목록에 있는 '2025년 반기보고서 누적 당기순이익' 정보와 일치하므로 grounded=true이며, 전망이나 예상치 관련 내용은 포함되지 않아 exclusion_respected=true입니다. 근거가 제공된 상태에서 답변이 값을 확인할 수 없다는 표시가 없으므로 handled_correctly는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-06",
+      "type": "정확한 재무 숫자",
+      "question": "2024년 삼성전자 연간 매출액 얼마나 나왔어?",
+      "answer": "2024년 삼성전자의 연간 매출액은 연결 기준으로 300.87조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거 목록에 2024년 사업보고서(연간) 누적 연결 매출액이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-07",
+      "type": "정확한 재무 숫자",
+      "question": "삼성전자 2025년 연간 자산총계은 얼마야?",
+      "answer": "삼성전자의 2025년 연간 자산총계는 566.94조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 '전망'이나 '예상치'를 제외해 달라는 요청이 있었으나 답변은 2025년 사업보고서 시점값을 제시했으므로 제외 요청을 존중했으며, 근거 목록에 '자산총계 · 2025년 사업보고서(연간) 시점값 · 연결'이 포함되어 있어 답변과 모순되지 않는다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-08",
+      "type": "정확한 재무 숫자",
+      "question": "SK하이닉스(000660) 2025년 연간 영업이익 알려줘",
+      "answer": "SK하이닉스의 2025년 연간 영업이익은 연결 기준으로 47.21조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거 목록에 2025년 사업보고서(연간) 누적 연결 영업이익이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-09",
+      "type": "정확한 재무 숫자",
+      "question": "2025년 SK하이닉스 연간 매출액 얼마나 나왔어?",
+      "answer": "SK하이닉스의 2025년 연간 매출액은 연결 기준으로 97.15조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거가 제공되어 있으며, 답변의 내용은 근거 목록에 있는 '2025년 사업보고서(연간) 누적 · 연결' 자료를 바탕으로 한 것으로 보인다. 또한 답변에서 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-10",
+      "type": "정확한 재무 숫자",
+      "question": "SK하이닉스 2025년 3분기 단독 영업이익은 얼마야?",
+      "answer": "SK하이닉스의 2025년 3분기 단독 영업이익은 11.38조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 근거 목록에 있는 '2025년 3분기보고서 당기(3개월) · 연결' 자료를 바탕으로 구체적인 수치를 제시했으며, 전망이나 예상치라는 제외 주제를 언급하지 않았다. 근거 목록에는 실제 수치가 포함되어 있지 않지만, 답변의 내용이 근거 자료의 종류와 일치하므로 grounded=true로 판단한다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-11",
+      "type": "정확한 재무 숫자",
+      "question": "SK하이닉스(000660) 2025년 1분기 당기순이익 알려줘",
+      "answer": "SK하이닉스의 2025년 1분기 누적 당기순이익은 8.11조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 답변으로 2025년 1분기 누적 당기순이익이 8.11조원이라고 제시했으며, 제공된 근거 목록에 'financial' 유형의 2025년 1분기보고서 누적 연결 당기순이익 자료가 포함되어 있어 모순되지 않는다. 또한 답변에서 전망이나 예상치 관련 내용은 전혀 언급되지 않아 제외 요청을 준수했다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-12",
+      "type": "정확한 재무 숫자",
+      "question": "2024년 SK하이닉스 연간 영업이익 얼마나 나왔어?",
+      "answer": "2024년 SK하이닉스의 연간 영업이익은 23.47조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 구체적인 수치(23.47조원)가 근거 목록에 있는 '2024년 사업보고서(연간) 누적 · 연결' 자료에서 확인 가능한 정보로 보이며, 전망이나 예상치 관련 내용은 포함되지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-13",
+      "type": "정확한 재무 숫자",
+      "question": "SK하이닉스 2025년 연간 부채총계은 얼마야?",
+      "answer": "SK하이닉스의 2025년 연간 부채총계는 55.44조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변은 실제 2025년 사업보고서 시점의 연결 부채총계 55.44조원을 제시했으며, 근거 목록에 해당 정보가 포함되어 있어 모순되지 않고 제외 요청도 존중되었다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-14",
+      "type": "정확한 재무 숫자",
+      "question": "현대차(005380) 2025년 연간 매출액 알려줘",
+      "answer": "현대차의 2025년 연간 매출액은 연결 기준으로 186.25조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 전망이나 예상치라는 제외 요청이 있었으나 답변은 2025년 사업보고서(연간) 누적 연결 매출액 186.25조원이라는 실제 공시된 수치를 제시했으며, 제외 대상인 전망이나 예상치를 언급하지 않아 제외 요청을 존중했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-15",
+      "type": "정확한 재무 숫자",
+      "question": "2025년 현대차 연간 영업이익 얼마나 나왔어?",
+      "answer": "현대차의 2025년 연간 영업이익은 11.47조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거 목록에 2025년 사업보고서(연간) 누적 연결 영업이익이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-16",
+      "type": "정확한 재무 숫자",
+      "question": "현대차 2025년 3분기 누적 당기순이익은 얼마야?",
+      "answer": "현대차의 2025년 3분기 누적 당기순이익은 9.18조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거 목록이 제공되어 있으며, 답변의 수치(9.18조원)는 해당 근거 문서에서 확인 가능한 정보로 판단됩니다. 전망이나 예상치 관련 내용은 답변에 포함되지 않았습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-17",
+      "type": "정확한 재무 숫자",
+      "question": "현대차(005380) 2024년 연간 매출액 알려줘",
+      "answer": "현대차의 2024년 연간 매출액은 연결 기준으로 175.23조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거 목록에 2024년 사업보고서(연간) 누적 연결 매출액이 포함되어 있어 답변이 근거와 일치하며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-18",
+      "type": "정확한 재무 숫자",
+      "question": "2025년 두산에너빌리티 연간 영업이익 얼마나 나왔어?",
+      "answer": "2025년 두산에너빌리티의 연간 영업이익은 7,627.1억원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거 목록이 제공되었고, 답변의 수치는 근거 문서 내에 포함된 것으로 보이며, 전망이나 예상치 관련 내용은 언급되지 않아 제외 요청을 준수했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "fin-19",
+      "type": "정확한 재무 숫자",
+      "question": "두산에너빌리티 2025년 연간 누적 매출액은 얼마야?",
+      "answer": "두산에너빌리티의 2025년 연간 누적 매출액은 17.06조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "전망",
+        "예상치"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 근거가 제공되어 있으며, 답변의 내용은 근거 목록에 있는 '2025년 사업보고서(연간) 누적 · 연결' 매출액 정보를 그대로 인용한 것으로 보입니다. 전망이나 예상치 관련 내용은 포함되지 않았습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-01",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 이재용-올트먼 관련해서 무슨 일 있었어?",
+      "answer": "최근 이재용 삼성전자 회장과 샘 올트먼 오픈AI CEO가 미국 샌프란시스코 오픈AI 본사에서 만나 AI와 반도체 협력 방안을 논의했습니다. 양측은 HBM, D램, 첨단 파운드리 등 AI 인프라 분야에서 협력 확대를 모색했으며, 삼성전자는 사내 AI 도입도 추진 중입니다.\n\n이 회동은 지난해 10월 체결한 전략적 파트너십의 연장선으로, AI 반도체 공급과 차세대 AI 인프라 구축을 위한 협력 강화가 주요 내용입니다.\n\n요약하면, 이재용 회장과 올트먼 CEO는 AI 및 반도체 분야에서 협력 확대를 위해 최근 만나 구체적인 협력 방안을 논의했습니다. \n\n필요하면 더 자세한 내용이나 관련 뉴스도 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록과 모순되지 않으며, 근거가 없는 질문도 아니고 제외 요청도 없습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-02",
+      "type": "뉴스 사건·영향",
+      "question": "현대차 동남아 최대 축구대회 뉴스 어떻게 된 거야?",
+      "answer": "현대차가 동남아시아 최대 축구대회인 '아세안 현대컵'의 타이틀 스폰서로 처음 참여했습니다. 이로 인해 대회 명칭이 바뀌었고, 현대차는 2028년까지 총 10개 대회를 후원할 예정입니다.\n\n아세안 현대컵은 1996년 창설된 동남아시아 최고 권위의 국가대표 축구대회로, 격년마다 열리며 2024년 대회는 TV와 디지털 스트리밍을 합쳐 5억4000만명 이상의 누적 시청자 수를 기록했습니다. 이번 2026년 대회는 7월 24일 캄보디아 프놈펜에서 개막해 8월 26일까지 약 한 달간 진행되며, 아세안 11개국 대표팀이 우승컵을 놓고 경쟁합니다.\n\n현대차는 'Hyundai, Driving ASEAN as One' 슬로건 아래 인플루언서 협업, 차량 스티커 배포, 트로피 투어, 경기장 브랜딩 등 다양한 현장 마케팅 활동을 펼칠 계획입니다. \n\n(출처: 2026-07-26 뉴스)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "주어진 근거 목록에는 '아세안 현대컵' 타이틀 스폰서 관련 내용이 포함되어 있어 답변의 주장이 근거와 모순되지 않습니다. 제외 요청도 없으므로 null로 판정합니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-03",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 갤럭시Z 폴드8 이슈 설명해줘",
+      "answer": "삼성전자 갤럭시Z 폴드8 관련 최근 이슈를 요약해 드리겠습니다.\n\n1. 구독 서비스 개편: 삼성전자는 갤럭시Z 폴드8과 플립8 구독 서비스를 개편해 2년 사용 후 반납 시 잔존가를 최대 50%까지 보장하고, 어학 학습 앱 이용권도 제공하는 혜택을 내놓았습니다. 3년형 구독도 신설되어 파손·분실 보장과 무상 수리 서비스가 강화되었습니다.\n\n2. 사전구매 혜택: 7월 28일부터 8월 3일까지 갤럭시Z 폴드8, 폴드8 울트라, 플립8, 워치 울트라2, 워치9 사전구매가 진행되며, 저장용량 무료 업그레이드, 워치 반값 할인, 사전 개통 등의 다양한 혜택이 제공됩니다.\n\n3. 폴더블 대중화 선언: 갤럭시Z8 시리즈는 4대3 화면비를 적용한 폴드8을 포함해 폴드8 일반형과 울트라, 플립8 등 3종으로 라인업을 재편하고, 내구성을 개선하는 플렉스 티타늄 기술을 적용했습니다.\n\n4. 영국 런던 팝업스토어 운영: 삼성전자는 영국 런던 코벤트 가든에서 갤럭시Z 폴드8, 플립8, 워치9 등 신제품 체험 팝업스토어를 운영해 현지 소비자들이 직접 체험할 수 있도록 했습니다.\n\n5. 대규모 할인 프로모션: 삼성전자는 대규모 할인 행사로 국내 스마트폰 시장 점유율을 크게 높였으며, 갤럭시Z 폴드8 시리즈를 통해 시장 확대를 추진하고 있습니다.\n\n이상은 최근 2일 내 주요 뉴스 내용입니다. 더 자세한 내용이나 특정 부분에 대해 궁금하시면 말씀해 주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 갤럭시Z 폴드8의 구독 서비스 개편, 사전구매 혜택, 폴더블 대중화, 영국 팝업스토어 운영, 할인 프로모션 등 주요 이슈를 요약하여 설명하고 있으며, 근거와 모순되는 부분이 없고 제외 요청도 없으므로 모든 판정이 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-04",
+      "type": "뉴스 사건·영향",
+      "question": "두산에너빌리티 미국 원전 수주 관련 소식 알려줘",
+      "answer": "두산에너빌리티의 미국 원전 수주 관련 최근 뉴스는 현재 확인되지 않습니다. 다만, 최근 두산에너빌리티가 참여한 한국남부발전의 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS(배터리 저장장치) 준공 소식이 있습니다. 이 설비는 23MW 출력과 92MWh 용량으로 재생에너지 출력 제어 문제를 해결하고 전력계통 안정화에 기여하는 역할을 합니다(2026년 7월 26일 보도). \n\n미국 원전 수주 관련 구체적인 뉴스가 필요하면 다시 알려주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 미국 원전 수주 관련 소식을 요청했으나, 답변에서는 해당 정보가 확인되지 않는다고 명시하고 한국남부발전의 BESS 준공 소식을 대신 제공했기 때문에 handled_correctly가 true입니다. 근거 목록에 있는 BESS 준공 뉴스(2026-07-26)를 인용하여 답변했으므로 grounded도 true입니다. 제외 요청은 없으므로 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-05",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 남미 건은 어떤 내용이야?",
+      "answer": "한화오션의 남미 관련 주요 내용은 다음과 같습니다:\n\n1. 한화오션이 남미와 서아프리카 심해 유전 시장을 겨냥한 표준 FPSO(부유식 원유 생산 저장 하역 설비) 기본설계에 대해 미국 선급 ABS의 BDR 인증과 노르웨이 선급 DNV의 AIP 인증을 획득했습니다. 이 인증은 남미 지역 대형 FPSO 프로젝트에 최적화된 설계에 대한 것으로, 한화오션의 글로벌 해양플랜트 수주 경쟁력을 높이는 성과입니다. (출처: 2026-07-26)\n\n2. 칠레에서는 재래식 잠수함 교체 사업에 한화오션이 참여할 가능성이 커졌습니다. 칠레 상원에서 해군 잠수함 전력 세대교체를 요구하는 초당파적 결의안이 발의되었고, 한화오션 대표단이 이재명 대통령 순방에 동행해 협력 방안을 논의할 예정입니다. 이는 남미 방산 시장 진출 확대를 위한 전략적 기회로 평가됩니다. (출처: 2026-07-24)\n\n요약하면, 한화오션은 남미 심해 유전용 FPSO 설계 인증을 획득해 해양플랜트 시장에서 경쟁력을 강화하고 있으며, 칠레 잠수함 교체 사업 참여를 위한 협력도 추진 중입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 한화오션의 남미 심해 유전용 FPSO 인증 획득과 칠레 잠수함 교체 사업 참여 가능성을 설명하고 있으며, 근거와 모순되는 주장은 없습니다. 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-06",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 키옥시아 2대 주주 관련해서 무슨 일 있었어?",
+      "answer": "SK하이닉스가 일본 낸드플래시 업체 키옥시아의 2대 주주가 되었습니다. 베인캐피털이 보유하던 키옥시아 지분 대부분을 매각하면서 SK하이닉스는 특수목적회사(SPC)를 통해 약 14%의 지분을 확보해 2대 주주가 되었고, 전환사채(CB) 전환 시 최대주주가 될 가능성도 있습니다. 다만 아직 주식 전환 절차가 남아 있어 실제 의결권은 없는 상태입니다.\n\n요약하면,\n- SK하이닉스는 키옥시아 지분 약 14%를 보유한 2대 주주가 됨\n- 베인캐피털은 지분 대부분을 매각해 약 2조5000억엔 수익 실현\n- 도시바는 최대주주로 남아 있으나 지분 매각 중\n- SK하이닉스는 2018년 CB 형태로 3950억엔 투자\n- CB 전환 시 최대주주 가능성 있으나 아직 의결권은 없음\n\n이 내용은 2026년 7월 26일자 뉴스에서 확인되었습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 주어진 근거 목록 중 'SK하이닉스, 키옥시아 2대 주주 지위 확보…CB 전환 시 최대주주 가능성 (2026-07-26)'을 기반으로 키옥시아 2대 주주 관련 내용을 설명하고 있으며, 근거와 모순되지 않습니다. 제외 요청도 없으므로 null로 판정합니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-07",
+      "type": "뉴스 사건·영향",
+      "question": "현대차 엔비디아와 로봇 레퍼런스 뉴스 어떻게 된 거야?",
+      "answer": "현대차가 엔비디아와 협력해 '로봇 레퍼런스 플랫폼'을 공동 구축하기로 했습니다. 이 플랫폼은 대학과 스타트업의 로봇 개발을 지원하는 역할을 하며, 현대차는 새만금 AI 밸리에 투자해 AI와 로봇, 자율주행, 제조 데이터를 결합한 피지컬 AI 생태계를 확장할 계획입니다.\n\n주요 내용은 다음과 같습니다:\n- 현대차와 엔비디아가 로봇 개발 플랫폼을 공동 구축해 AI 로봇 개발을 지원\n- 새만금 AI 밸리에 9조원 규모 투자를 포함한 AI 생태계 조성\n- 자율주행, 로보틱스, 제조 AI 분야에서 협력 강화\n- 이번 협력은 9500억 달러 규모 반도체 공급 및 AI 데이터센터 구축 등 대형 프로젝트의 일환\n\n이 협력은 현대차가 전통적인 자동차 제조기업에서 AI와 로봇 중심의 피지컬 AI 솔루션 기업으로 전환하는 전략의 일환입니다. \n\n더 자세한 내용이나 특정 부분이 궁금하시면 알려주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록과 일치하는 내용을 포함하고 있으며, 근거와 모순되는 주장은 없습니다. 제외 요청도 없으므로 null로 판정합니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-08",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 1020세대 겨냥 'New 이슈 설명해줘",
+      "answer": "삼성전자가 1020세대를 겨냥해 'New 갤럭시 AI 구독클럽'을 출시했습니다. 주요 내용은 다음과 같습니다.\n\n- 1020세대를 위한 '플립 유스 구독'을 신설해 갤럭시 Z 플립8 자급제 모델 구매 후 2년형 구독 가입 시 반납 시 기준가의 최대 50% 잔존가를 보장합니다.\n- 기존 1·2년형 구독에 더해 3년형 구독도 추가되었으며, 3년형 가입자는 파손뿐 아니라 분실까지 보장하는 '삼성케어플러스 스마트폰 분실·파손' 서비스를 이용할 수 있습니다.\n- 갤럭시 Z 폴드8 울트라·폴드8·플립8 사전 판매를 앞두고 출시된 서비스입니다.\n\n이 구독클럽은 일정 기간 사용 후 기기를 반납하고 새 기기로 교체하는 구독형 서비스로, 1020세대의 부담을 줄이고 최신 스마트폰을 경험할 수 있도록 한 전략으로 보입니다. \n\n(출처: 2026-07-26 뉴스)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 근거 목록에 있는 'New 갤럭시 AI 구독클럽' 출시 관련 뉴스 이벤트를 기반으로 1020세대 대상 플립 유스 구독 신설, 3년형 확대, 반납 시 잔존가 보장 등의 내용을 설명하고 있어 근거와 일치하며, 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-09",
+      "type": "뉴스 사건·영향",
+      "question": "두산에너빌리티 중부발전 관련 소식 알려줘",
+      "answer": "두산에너빌리티와 관련된 최근 소식으로, 한국남부발전이 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS(대형 배터리 저장장치)를 준공했습니다. 이 설비는 출력 23MW, 배터리 용량 92MWh 규모로, 재생에너지 출력 제어 문제를 해결하고 전력계통 안정화에 기여할 예정입니다. 이 사업에 두산에너빌리티가 참여했습니다. 준공식은 2026년 7월 16일에 열렸습니다. \n\n필요하면 더 자세한 내용을 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록과 일치하며, 두산에너빌리티의 참여 사실을 명시하고 준공식 날짜도 근거와 동일하게 2026-07-16로 정확히 인용했습니다. 근거가 없는 질문에 대한 처리나 특정 주제 제외 요청도 없으므로 해당 항목은 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-10",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 레이도스 깁스 앤 건은 어떤 내용이야?",
+      "answer": "한화오션은 최근 레이도스 깁스 앤 콕스와 조선업 협력 양해각서 2건을 체결했습니다. 이 협약은 함정 설계 및 조선 기술 협력을 위한 것으로, 레이도스 깁스 앤 콕스는 함정 설계 분야에서 전문성을 가진 업체입니다. 한화오션은 이번 협력을 통해 함정 설계 역량을 강화하고 향후 함정 건조 사업에 활용할 계획입니다. 다만, 구체적인 사업 일정이나 규모는 아직 확정되지 않은 잠정 단계이며, 앞으로 세부 협의를 통해 협력 방안이 마련될 예정입니다.\n\n또한, 한화오션은 미국 레이도스와 글로벌 고속수송선(GFS) 공동설계를 위한 전문서비스 계약도 체결했습니다. 이 사업은 평시에는 상업용 화물선으로, 유사시에는 병력과 군사 장비를 신속하게 수송하는 이중용도 선박 설계에 관한 것으로, 미국 내 생산 기반을 활용해 국가안보 사업에 참여하기 위한 전략입니다. 레이도스 자회사 깁스앤콕스가 선박 설계와 기술 개발, 설계 품질 관리를 지원합니다.\n\n요약하면, 한화오션은 레이도스 깁스 앤 콕스와 함정 설계 협력 양해각서를 체결하고, 미국 레이도스 및 깁스앤콕스와 고속수송선 공동설계 계약을 맺어 조선 및 군함 설계 분야에서 협력을 강화하고 있습니다. \n\n(출처: 2026-07-25~26 뉴스)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록과 모순되지 않으며, 근거 문서에 포함된 협력 양해각서 및 계약 내용을 정확히 반영하고 있습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-11",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 2분기 영업이익 64조원 관련해서 무슨 일 있었어?",
+      "answer": "SK하이닉스의 2026년 2분기(반기 누적) 영업이익 데이터는 아직 제공되지 않고 있습니다. 2분기 영업이익 64조원과 관련된 구체적인 재무 수치를 확인할 수 없으니, 이와 관련된 최근 뉴스나 사건을 찾아보는 것이 좋겠습니다. 관련 뉴스를 검색해 드릴까요?",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문에 대한 근거가 제공되지 않아 답변할 수 없는 상황임을 사용자에게 명확히 전달했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있으므로 답변과 모순되는 주장이 없어 grounded도 true입니다. 제외 요청이 없으므로 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-12",
+      "type": "뉴스 사건·영향",
+      "question": "현대차 피지컬 AI 솔루션 뉴스 어떻게 된 거야?",
+      "answer": "현대차가 피지컬 AI 솔루션 기업으로 전환을 선언했습니다. 2026년 7월 24일 미국 샌프란시스코 AI 서밋에서 정의선 회장은 현대차그룹이 전통적인 자동차 제조기업에서 자율주행, 로보틱스, AI 팩토리 등을 아우르는 피지컬 AI 솔루션 기업으로 변신하겠다고 밝혔습니다. \n\n주요 내용은 다음과 같습니다:\n- 개별 디바이스 지능화에서 시작해 AI 팩토리, 도시 단위 통합 지능화까지 단계적으로 추진\n- 엔비디아, 웨이모, 구글 딥마인드 등 글로벌 빅테크와 협력 확대\n- 미국 샌프란시스코를 AI 전진기지로 삼고, 국내 새만금 AI 밸리에도 대규모 투자 계획\n- 로봇 레퍼런스 플랫폼 공동 구축 및 자율주행, 로봇, 제조 AI 분야 협력 강화\n- 새만금 AI 밸리에 9조원 투자해 AI 생태계 확장 및 글로벌 시장 진출 목표\n\n이와 함께 정의선 회장은 엔비디아 본사를 방문해 자율주행 제네시스 차량 공동개발과 로봇·제조 AI 협력 후속 논의를 진행했습니다.\n\n요약하면, 현대차는 자동차 제조를 넘어 AI와 로보틱스 기술을 융합한 피지컬 AI 기업으로 전환하며, 글로벌 빅테크와 협력해 미래 모빌리티와 스마트 도시 통합 지능화 비전을 추진하고 있습니다. \n\n(출처: 2026-07-26 뉴스)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 내용과 일치하며, 근거가 없는 질문에 대한 처리나 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-13",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 구글과 협업한 AI 이슈 설명해줘",
+      "answer": "최근 삼성전자는 구글과 협업한 AI 관련 이슈로 스마트안경 개발에 관한 뒷이야기를 공개했습니다. 삼성전자 MX사업부 XR 개발팀장은 스마트안경 개발 과정에서 선크림의 알코올 성분이 스피커에 영향을 주는 어려움이 있었고, 이를 극복하기 위해 100회 이상 선크림 노출 테스트를 진행했다고 밝혔습니다. 또한, 일반 안경처럼 가볍고 편안하게 착용할 수 있도록 초슬림 힌지 구조와 경량 소재를 적용했습니다. 이 스마트안경 2종은 갤럭시 언팩 2026에서 공개되었으며, 핸즈프리 AI 경험과 프라이버시 보호 기능 등을 포함하고 있습니다.\n\n요약하면, 삼성전자와 구글은 AI 기술을 접목한 스마트안경을 공동 개발 중이며, 제품의 착용감과 오디오 성능 개선에 많은 노력을 기울이고 있습니다. \n\n(출처: 2026-07-26 뉴스)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 근거 목록에 있는 '삼성전자, 구글 협업 스마트안경 개발 뒷이야기 공개 (2026-07-26)'를 바탕으로 작성되었으며, 구체적인 개발 내용과 테스트 과정, 제품 공개 일정 등을 언급하고 있어 근거와 모순되지 않습니다. 제외 요청 사항이 없으므로 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-14",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 HJ중공업 관련 소식 알려줘",
+      "answer": "한화오션(042660)과 관련된 최근 주요 소식은 다음과 같습니다:\n\n1. 한화오션이 남미와 서아프리카 심해 유전 시장을 겨냥한 표준 FPSO 기본설계에 대해 미국 선급 ABS의 BDR 인증과 노르웨이 선급 DNV의 AIP를 획득했습니다. 이를 통해 글로벌 FPSO 시장에서 남미와 서아프리카를 아우르는 표준 FPSO 포트폴리오를 구축하게 되었습니다. (출처: news_cluster:7190, 7229)\n\n2. 한화오션이 사내 협력업체 웰리브 노조의 사용자성 판정에 불복해 서울행정법원에 판정 취소 소송과 집행정지를 신청하는 등 노란봉투법 관련 첫 행정소송을 제기했습니다. (출처: news_cluster:7225)\n\n3. 태국 차세대 호위함 사업 7400억원 규모 수주 경쟁에서 한화오션이 유력 후보로 거론되고 있으며, 이달 중 최종 결과가 공개될 예정입니다. (출처: news_cluster:7228)\n\n4. 한화오션이 미국 레이도스와 글로벌 고속수송선(GFS) 공동설계를 위한 전문서비스 계약을 체결했습니다. (출처: news_cluster:7222)\n\nHJ중공업(042670) 관련 최근 뉴스는 확인되지 않았습니다. \n\n필요하시면 더 구체적인 소식이나 다른 기간의 뉴스도 찾아드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록과 일치하는 정보를 포함하고 있으며, HJ중공업 관련 소식이 없음을 명시했으므로 근거가 없거나 모순되는 부분이 없습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-15",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 SK 건은 어떤 내용이야?",
+      "answer": "SK하이닉스 관련 SK 건은 주로 SK그룹 최태원 회장과 전 부인 노소영 관장의 이혼 재산분할 소송과 관련된 내용입니다. 최근 주요 뉴스 내용을 요약하면 다음과 같습니다.\n\n1. 최태원 회장과 노소영 관장의 재산분할 파기환송심 판결이 7월 24일 서울고법에서 있었습니다. 핵심 쟁점은 최 회장이 보유한 SK(주) 주식 17.76%를 공동 재산으로 나눌지, 그리고 주식 가치를 언제 평가할지(2024년 4월 vs 2026년 6월)였습니다.\n\n2. 법원은 최태원 회장이 노소영 관장에게 9440억 원을 현금으로 지급하라고 판결했습니다. SK(주) 주식이 분할 대상에 포함되었고, 분할 비율은 최 회장 3분의 2, 노 관장 3분의 1로 정해졌습니다.\n\n3. 다만, 노태우 전 대통령의 300억 원 비자금은 불법 자금으로 간주되어 재산 형성 기여도에서 제외되었고, 최 회장이 혼인관계 파탄 전 경영권 유지를 위해 증여한 주식도 분할 대상에서 빠졌습니다.\n\n4. SK하이닉스 지분과 관련해 최태원 회장이 직접 지분은 없지만, 지주사 SK를 통해 손자회사인 SK하이닉스를 지배하고 있다는 비판도 있었습니다. 특히, 이사회 승인 없이 대규모 투자 계획을 독단적으로 발표한 점이 주주 권익 침해로 지적되었습니다.\n\n이 내용들은 SK하이닉스와 SK(주) 지분, 경영권, 재산분할 소송과 관련된 최근 주요 이슈입니다. 필요하면 더 구체적인 부분도 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 최태원·노소영 이혼 재산분할 소송의 핵심 쟁점과 판결 내용, SK그룹 지배구조 및 거버넌스 비판을 설명하고 있으며, 근거와 모순되는 부분이 없고 구체적인 수치와 날짜도 근거 문서에 포함되어 있습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-16",
+      "type": "뉴스 사건·영향",
+      "question": "현대차 이재명 대통령 관련해서 무슨 일 있었어?",
+      "answer": "최근 이재명 대통령은 미국 샌프란시스코에서 글로벌 AI 기업 CEO들과 연쇄 면담을 가졌습니다. 이 자리에서 '샌프란시스코 AI 선언'을 발표하며 한국을 AI 허브로 만들기 위한 협력과 투자를 요청했습니다. 현대차, LG, 네이버 등 한국 기업과 엔비디아, 오픈AI, 브로드컴 등 글로벌 빅테크가 약 1375조원 규모의 AI·반도체 협력을 추진하기로 합의했습니다.\n\n주요 내용은 다음과 같습니다:\n- 이재명 대통령이 엔비디아, 오픈AI, 브로드컴, 앤트로픽 CEO들과 만나 한국의 AI 생태계 구축과 투자 확대 요청\n- 젠슨 황 엔비디아 CEO는 한국을 'AI 황금기'로 평가하며 KAIST와 공동 AI 연구소 설립 계획 발표\n- 현대차 정의선 회장도 AI 서밋 만찬에 참석해 글로벌 AI 리더들과 교류하고, 엔비디아 본사 방문해 자율주행·로봇·제조 AI 협력 후속 논의\n- 9500억 달러(약 1375조원) 규모의 반도체·AI 협력 계획이 공개됨\n\n이와 관련해 현대차도 AI 및 반도체 분야에서 글로벌 협력에 적극 참여하고 있습니다. \n\n더 자세한 뉴스 출처는 필요하면 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "주어진 근거 목록에 따르면 이재명 대통령이 글로벌 AI CEO들과 연쇄 면담을 갖고 '샌프란시스코 AI 선언'을 발표했으며, 현대차 정의선 회장이 AI 서밋 만찬에 참석하고 엔비디아와 협력 논의를 진행했다는 내용이 포함되어 있어 답변 내용이 근거와 일치하므로 grounded=true입니다. 질문이 특정 주제를 제외해 달라는 요청을 포함하지 않았으므로 exclusion_respected=null입니다. 또한 근거가 충분히 제공되어 답할 수 있는 질문이므로 handled_correctly=null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-17",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 갤럭시 워치9 뉴스 어떻게 된 거야?",
+      "answer": "삼성전자 갤럭시 워치9 관련 최근 뉴스에 따르면, 런던에서 열린 체험 행사에서 갤럭시 워치9이 실시간 심박수와 페이스 코칭, 건강 지표 분석 기능을 선보였습니다. 이 워치는 달리면서 심박수와 속도를 실시간으로 알려주고, 운동 후에는 체력 수준과 부족한 부분을 분석해 개인 러닝 코치 역할을 합니다.\n\n또한, 영국 런던 코벤트 가든에서는 갤럭시 워치9과 함께 갤럭시 Z 폴드8, 플립8 등 신제품 체험 팝업스토어가 운영되어 현지 소비자들이 직접 제품을 체험할 수 있었습니다.\n\n사전구매 혜택도 발표되어 7월 28일부터 8월 3일까지 사전구매 신청을 받고, 저장용량 업그레이드, 워치 반값 할인 등 다양한 혜택이 제공됩니다.\n\n요약하면, 갤럭시 워치9은 최신 건강 관리 기능을 탑재해 운동 중 실시간 코칭이 가능하며, 런던에서 신제품 체험 행사와 사전구매 혜택 발표가 있었습니다. 필요하면 더 자세한 뉴스 목록도 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록과 모순되지 않으며, 갤럭시 워치9의 기능, 런던 체험 행사, 사전구매 혜택 등 근거에서 언급된 내용을 정확히 반영하고 있습니다. 제외 요청도 없으므로 해당 항목은 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-18",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 한미 조선협력센터 워싱턴 이슈 설명해줘",
+      "answer": "한화오션의 한미 조선협력센터 워싱턴 이슈는 다음과 같습니다.\n\n- 한미 조선협력센터가 미국 워싱턴 D.C.에 개소했고, 마스가(MASGA) 프로젝트가 본격 가동에 들어갔습니다.\n- 7월 23일 개소식에는 한국 산업통상부 장관과 미국 상무부 장관 등이 참석했습니다.\n- 센터는 한미 조선업계 네트워크 구축, 정책 동향 분석, 기업 간 협력, 현지 조선소 생산성 향상, 인력 양성 등을 지원하는 거점 역할을 합니다.\n- 1500억 달러 규모의 마스가 프로젝트 제도적 기반이 마련되면서 국내 조선사의 미국 진출이 가속화될 전망입니다.\n- 한화오션은 미국 현지 조선소인 한화필리조선소를 통해 군함 건조 시장에 진출했으며, 최근 해상 미사일 시험 계측선(MRIV)을 수주했습니다. 이 선박은 미국의 차세대 미사일 방어체계 '골든돔' 구축의 핵심 지원 자산으로 활용됩니다.\n\n이 이슈는 한미 양국 간 조선업 협력이 본격화되고, 한화오션이 미국 시장에서 군함 건조 사업을 확대하는 중요한 진전으로 평가됩니다. \n\n(출처: 2026-07-26 뉴스)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록과 모순되지 않으며, 근거 문서에 포함된 내용으로 설명 가능한 내용을 담고 있습니다. 근거가 없는 질문도 아니고, 특정 주제 제외 요청도 없습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "news-19",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 최태원 관련 소식 알려줘",
+      "answer": "최근 SK하이닉스와 관련해 최태원 대한상공회의소 회장과 관련된 주요 소식은 다음과 같습니다:\n\n1. 최태원 회장은 SK하이닉스의 성과급 논란에 대해 \"모든 사람이 싫어하면 문제지만 그렇게까지는 보지 않는다\"며 상황을 좀 더 지켜봐야 한다고 밝혔습니다. 그는 구성원의 행복과 이해관계자의 조화가 중요하다고 강조했습니다. (2026-07-21)\n\n2. SK그룹 최태원 회장과 노소영 관장의 재산분할 소송 파기환송심이 2026년 7월 24일 선고되며, 최 회장은 노 관장에게 위자료 20억원과 재산분할 1조3808억원을 지급해야 합니다. (2026-07-21)\n\n3. 최태원 회장은 미국 실리콘밸리에서 엔비디아 젠슨 황 CEO와 만나 AI 반도체 협력 방안을 논의하는 등 주요 기업 총수들과 AI 반도체 생태계 협력에 나섰습니다. (2026-07-22)\n\n4. 제주포럼에서 최태원 회장은 SK하이닉스 성과급 논란과 함께 한국 경제의 저성장 문제, 규제 개혁 필요성 등을 언급했습니다. (2026-07-19)\n\n5. SK하이닉스는 용인·호남 반도체 클러스터에 2기씩 총 4기의 반도체 생산 공장을 추가 조성할 계획을 발표했으며, 최태원 회장은 공급 능력 확대의 중요성을 강조했습니다. (2026-07-21)\n\n필요하시면 각 소식에 대해 더 자세히 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "주어진 근거 목록에 포함된 모든 내용이 답변에 반영되어 있으며, 근거와 모순되는 주장이 없습니다. 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-01",
+      "type": "공시 설명·구조화 값",
+      "question": "SK하이닉스 배당 얼마나 줬어?",
+      "answer": "SK하이닉스는 2026년 3월 31일 결산 기준으로 주당순이익이 57,175원이고, 주당액면가액은 5,000원입니다. 현금배당금 총액은 265,765백만원입니다. \n\n더 구체적인 배당금(주당 배당금 등) 정보가 필요하면 알려주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 배당 관련 정보를 제공했으며, 증권사나 목표주가와 같은 제외 주제를 언급하지 않았다. 근거 목록에 배당 관련 자료가 포함되어 있어 grounded=true로 판단된다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-02",
+      "type": "공시 설명·구조화 값",
+      "question": "현대차 배당금 얼마야?",
+      "answer": "현대자동차의 최근 배당금 관련 정보는 다음과 같습니다. 2026년 3월 31일 결산 기준으로 주당액면가액은 5,000원이며, 주당순이익은 8,897원입니다. 현금배당금 총액은 654,585백만원입니다. 추가로 궁금한 점 있으면 알려주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 답변이 근거 목록(dividend_matter)에 포함된 정보로 구성되어 있으며, 증권사나 목표주가와 같은 제외 주제를 언급하지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-03",
+      "type": "공시 설명·구조화 값",
+      "question": "삼성전자 주당 배당금 알려줘",
+      "answer": "삼성전자의 최근 배당 관련 공시에 따르면, 2026년 3월 31일 결산 기준으로 주당 배당금에 대한 구체적인 수치는 구조화된 공시 데이터에 명확히 나타나 있지 않습니다. 다만, 주당순이익은 7,123원으로 확인되며, 현금배당금 총액은 2,453,316백만원입니다. 주당 배당금의 정확한 금액을 원하시면 추가로 확인할 수 있도록 알려주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 '증권사, 목표주가'를 제외해 달라고 요청했으며, 답변은 해당 주제를 언급하지 않고 배당 관련 공시 내용만 설명했기 때문에 제외 요청이 존중되었다. 또한 배당 관련 근거(dividend_matter)가 제공되어 답변이 근거와 모순되지 않으며, 배당 데이터가 명확히 없다는 사실을 사용자에게 전달했으므로 handled_correctly도 true이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-04",
+      "type": "공시 설명·구조화 값",
+      "question": "두산에너빌리티 자본금 변동 내역 있어?",
+      "answer": "두산에너빌리티의 자본금 변동 내역은 다음과 같습니다.\n\n- 2023년 3월 29일 전환권 행사로 보통주 2,253,113주가 발행되었고, 액면가는 5,000원입니다.\n- 2021년 10월 31일 신주인수권 행사로 보통주 744,065주가 발행되었고, 액면가는 5,000원입니다.\n- 2021년 4월 2일 현물출자로 보통주 47,843,956주가 발행되었고, 액면가는 5,000원입니다.\n\n이 정보는 여러 공시에서 확인된 내용입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 증권사나 목표주가 관련 내용이 없으며, 답변은 자본금 변동 내역을 구체적으로 제시하고 근거 목록과 일치하므로 제외 요청을 준수했고 근거와 모순되지 않는다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-05",
+      "type": "공시 설명·구조화 값",
+      "question": "한화오션 증자·감자 이력 알려줘",
+      "answer": "한화오션의 증자·감자 이력은 다음과 같습니다.\n\n- 2024년 7월 11일: 유상증자(제3자배정)로 54,495주 발행, 액면가 5,000원, 발행가 40,350원 (결산기준일 2026-03-31 및 2025-12-31)\n- 2023년 11월 17일: 유상증자(주주배정)로 89,485,500주 발행, 액면가 5,000원, 발행가 16,730원 (결산기준일 2025-12-31)\n- 2023년 6월 2일: 유상증자(제3자배정)로 5,144,087주 발행, 액면가 5,000원, 발행가 27,467원 (결산기준일 2025-12-31)\n- 2023년 5월 24일: 유상증자(제3자배정)로 104,438,643주 발행, 액면가 5,000원, 발행가 19,150원 (결산기준일 2025-12-31)\n\n최근에는 감자 이력은 확인되지 않고 모두 유상증자 형태입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 증권사나 목표주가 관련 내용이 없으며, 답변도 해당 주제를 언급하지 않아 제외 요청을 준수했습니다. 제공된 근거 목록(capital_change_status)과 답변 내용이 일치하므로 grounded=true입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-06",
+      "type": "공시 설명·구조화 값",
+      "question": "SK하이닉스 해외상장 관련 공시 있어?",
+      "answer": "SK하이닉스의 해외상장 관련 최신 공시로는 2026년 7월 13일에 발표된 \"주요사항보고서(해외증권시장주권등상장)\"가 있습니다. 이 공시는 정정 공시이며 최신본입니다. 자세한 내용은 아래 링크에서 확인할 수 있습니다.\nhttps://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260713000324",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 대한 답변으로 해외상장 관련 공시 문서명을 제시하고 링크를 제공했으며, 제공된 근거 목록에 해당 문서가 포함되어 있어 모순되지 않습니다. 또한 '증권사'와 '목표주가'를 언급하지 않아 제외 요청을 준수했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-07",
+      "type": "공시 설명·구조화 값",
+      "question": "현대차 총 발행주식수 알려줘",
+      "answer": "현대자동차의 최근 공시 기준 발행주식총수는 6억 주입니다. (2025년 12월 31일 기준)",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 근거가 없어 답할 수 없는 경우가 아니며, 답변은 제공된 근거 목록과 모순되지 않고, 증권사나 목표주가에 대한 언급이 없어 제외 요청을 존중했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-08",
+      "type": "공시 설명·구조화 값",
+      "question": "삼성전자 주식 몇 주 발행돼 있어?",
+      "answer": "삼성전자의 발행 주식 수는 2025년 12월 31일 기준으로 보통주가 약 59억 1,963만 7,922주, 우선주가 약 8억 1,597만 4,664주이며, 총합은 약 250억 주입니다. 다만, 최신 결산 기준일은 2026년 3월 31일로 보이나, 그 시점의 구체적인 발행 주식 수 데이터는 제공되지 않았습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되지 않았고, 답변이 구체적인 발행 주식 수를 제시했으며, 제공된 근거 목록(stock_total_status)과 모순되지 않는다. 또한 답변에서 증권사나 목표주가를 언급하지 않아 제외 요청을 존중했다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-09",
+      "type": "공시 설명·구조화 값",
+      "question": "두산에너빌리티 작년에 배당 얼마 나왔어?",
+      "answer": "두산에너빌리티는 작년(2025년 3월 31일 결산 기준)에 주당순이익이 132원, 당기순이익은 847억 6,200만원이었고, 주당액면가액은 5,000원이었습니다. 다만, 현금배당금 총액에 대한 구체적인 금액은 제공된 자료에 명시되어 있지 않습니다. 추가로 배당금 총액을 확인하려면 더 구체적인 공시나 자료가 필요합니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 배당 금액을 요청했으나 근거 목록에 구체적인 배당액 수치가 없어 확인할 수 없다고 답변했으며, 증권사나 목표주가 관련 내용은 전혀 언급되지 않아 제외 요청을 존중했다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-10",
+      "type": "공시 설명·구조화 값",
+      "question": "한화오션 배당 내역 정리해줘",
+      "answer": "한화오션의 배당 관련 주요 내역은 다음과 같습니다.\n\n- 최근 결산기준일: 2026년 3월 31일\n- (연결) 당기순이익: 500,037백만원 (전기 1,245,922백만원, 전전기 528,213백만원)\n- (별도) 당기순이익: 521,859백만원 (전기 1,344,199백만원, 전전기 497,550백만원)\n- (연결) 주당순이익: 1,613원 (전기 4,007원, 전전기 1,648원)\n- 주당액면가액: 5,000원 (전기 및 전전기 동일)\n\n현금배당금 총액에 대한 구체적인 금액은 제공된 데이터에 명시되어 있지 않습니다.\n\n필요하면 더 구체적인 배당금 액수나 배당률 등 추가 정보를 알려주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 제공된 근거 목록(dividend_matter)에 포함된 배당 관련 정보를 바탕으로 작성되었으며, 증권사나 목표주가와 같은 제외 주제는 전혀 언급되지 않았습니다. 배당 내역의 수치와 결산기준일 등이 근거와 일치하므로 grounded=true입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-11",
+      "type": "공시 설명·구조화 값",
+      "question": "SK하이닉스 해외상장 결정 공시 내용 알려줘",
+      "answer": "SK하이닉스는 2026년 6월 24일에 해외 증권시장 주권등 상장 결정을 했습니다. 주요 내용은 다음과 같습니다.\n\n- 상장 거래소: 미국 나스닥 증권거래소(Nasdaq Global Select Market)\n- 상장 목적: 글로벌 투자자 기반 확장\n- 상장 예정일: 2026년 7월 10일경\n- 상장 주식수: 17,790,000주\n- 시설자금 조달 목적\n\n더 자세한 공시 내용은 접수번호 20260710000002에서 확인할 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 제공된 근거 목록 중 '해외증권시장주권등상장' 문서를 기반으로 상장 거래소, 목적, 예정일, 주식수 등을 제시하고 있으며, 증권사나 목표주가와 같은 제외 주제는 언급하지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-12",
+      "type": "공시 설명·구조화 값",
+      "question": "현대차 자사주 매입한 거 있어?",
+      "answer": "현대차는 2026년 1월 29일에 주주가치 제고를 목적으로 장내매수를 통해 자사주를 매입하기로 결정했습니다. 매입 예정 주식 수는 보통주 744,870주이며, 매입 예정 기간은 2026년 1월 30일부터 2026년 4월 27일까지입니다. 관련 공시는 접수번호 20260129000336에 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 증권사나 목표주가에 대한 언급이 없어 제외 요청이 적용되지 않았으며, 답변이 제공된 근거 목록(treasury_stock_acquisition)에 기반한 것으로 보입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-13",
+      "type": "공시 설명·구조화 값",
+      "question": "삼성전자 자기주식 취득 공시 알려줘",
+      "answer": "삼성전자의 최근 자기주식 취득 공시는 다음과 같습니다.\n\n1. 2026년 3월 18일 결정된 공시\n   - 취득 예정 주식 수: 37,000,000주\n   - 취득 예정 기간: 2026년 3월 19일 ~ 2026년 6월 18일\n   - 취득 목적: 임직원 주식보상\n   - 취득 방법: 유가증권시장을 통한 장내 매수\n   - 취득 예정 금액: 약 7조 1,743억 원\n   - 주관 증권사: 삼성증권, 신한투자증권, KB증권\n\n2. 2026년 1월 28일 결정된 공시\n   - 취득 예정 주식 수: 22,000,000주\n   - 취득 예정 기간: 2026년 1월 30일 ~ 2026년 4월 29일\n   - 취득 목적: 임직원 주식보상\n   - 취득 방법: 유가증권시장을 통한 장내 매수\n   - 취득 예정 금액: 약 3조 5,728억 원\n   - 주관 증권사: 삼성증권, 신한투자증권, KB증권\n\n3. 2026년 1월 7일 결정된 공시\n   - 취득 예정 주식 수: 18,000,000주\n   - 취득 예정 기간: 2026년 1월 8일 ~ 2026년 4월 7일\n   - 취득 목적: 임직원 주식보상\n   - 취득 방법: 유가증권시장을 통한 장내 매수\n   - 취득 예정 금액: 약 2조 5,002억 원\n   - 주관 증권사: 삼성증권, 신한투자증권, KB증권\n\n필요하시면 더 자세한 내용이나 다른 공시도 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": [
+          "증권사"
+        ]
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 제공된 근거 목록(treasury_stock_acquisition)과 일치하는 자기주식 취득 공시 내용을 포함하고 있으며, 증권사 및 목표주가에 대한 언급은 전혀 없으므로 제외 요청을 준수했습니다. 근거 목록이 실제 수치나 본문을 포함하지 않지만, 답변의 내용이 해당 유형의 자료로 설명 가능한 범위 내에 있으므로 grounded=true로 판단했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": [
+        "exclusion: keyword_violated=True judge_violated=False"
+      ]
+    },
+    {
+      "case_id": "disc-14",
+      "type": "공시 설명·구조화 값",
+      "question": "두산에너빌리티 발행주식 총수 얼마야?",
+      "answer": "두산에너빌리티의 발행주식 총수는 20억 주입니다. (2025년 12월 31일 기준)",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 증권사나 목표주가에 대한 제외 요청이 있었으나 답변은 발행주식 총수만 언급하여 제외 요청을 준수했으며, 제공된 근거 목록과 모순되지 않는 정보를 제시하고 있습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "disc-15",
+      "type": "공시 설명·구조화 값",
+      "question": "한화오션 상장주식수 알려줘",
+      "answer": "한화오션의 상장주식수(유통주식수)는 2025년 12월 31일 기준으로 306,397,187주입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 증권사나 목표주가에 대한 제외 요청이 있었으나 답변은 상장주식수만 언급하여 제외 요청을 준수했으며, 제공된 근거 목록과 모순되지 않는 정보를 제시하고 있습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-01",
+      "type": "증권사 리포트",
+      "question": "미래에셋증권에서 SK하이닉스 목표주가 얼마로 봤어?",
+      "answer": "미래에셋증권에서 본 SK하이닉스의 최신 목표주가는 4,200,000원입니다. 이 목표주가는 2026년 7월 14일에 제시된 것입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 미래에셋증권의 2026년 7월 14일 연구보고서를 근거로 SK하이닉스의 목표주가를 제시했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-02",
+      "type": "증권사 리포트",
+      "question": "유진투자증권 현대차 리포트 전망 어때?",
+      "answer": "유진투자증권의 현대차 최신 리포트 전망에 따르면, 2026년 2분기 실적은 다소 저조할 수 있으나 매수 의견을 유지하고 있습니다. 목표주가는 90만 원으로 제시되어 있습니다. \n\n요약하면:\n- 2분기 실적은 다소 부진할 수 있으나, 중장기적으로 긍정적 전망\n- 목표주가 90만 원, 매수 의견 유지\n\n더 자세한 내용이나 다른 증권사 전망도 필요하시면 말씀해 주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 '확정, 보장'이라는 제외 요청이 있었으나 답변에서 해당 단어를 사용하지 않았고, 근거 목록에 있는 리포트 제목들을 바탕으로 2026년 2분기 실적 부진 가능성과 목표주가 90만 원, 매수 의견 유지 등의 내용을 제시하여 근거와 모순되지 않으며, 제외 대상도 언급하지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-03",
+      "type": "증권사 리포트",
+      "question": "2026-07-08에 나온 iM증권 삼성전자 투자의견 알려줘",
+      "answer": "2026년 7월 8일에 나온 iM증권의 삼성전자 투자의견은 'Buy'입니다. 이 리포트에서 제시한 목표주가는 48만 원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 명시된 날짜(2026-07-08)와 근거 문서(2026-07-08 iM증권 리포트)가 일치하며, 투자의견 'Buy'와 목표주가 48만 원이라는 구체적인 수치가 근거 목록에 포함된 리포트에서 나온 것으로 보인다. '확정, 보장'이라는 제외 요청도 답변에서 다루지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-04",
+      "type": "증권사 리포트",
+      "question": "두산에너빌리티에 대한 유안타증권 리포트 내용 요약해줘",
+      "answer": "두산에너빌리티에 대한 유안타증권 리포트(2026년 5월 4일자)를 요약하면 다음과 같습니다.\n\n- 투자 의견은 'BUY'(매수)입니다.\n- 목표주가는 149,000원으로 제시되었습니다.\n- 리포트에서는 가스터빈 관련 실적과 지배순이익이 흑전하는 등 긍정적인 실적 개선 신호가 언급되었습니다.\n- 영업이익률과 지배순이익률이 전년 대비 개선된 점도 강조되었습니다.\n\n이 리포트는 두산에너빌리티의 가스터빈 사업이 아직 초기 단계이나 실적 개선과 수익성 향상이 기대된다는 점을 근거로 매수 의견과 목표주가를 제시하고 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 유안타증권 리포트(2026년 5월 4일자)를 근거로 두산에너빌리티의 투자 의견, 목표주가, 실적 개선 신호 등을 요약했으며, '확정'이나 '보장'이라는 단어를 사용하지 않아 제외 요청을 준수했습니다. 근거 목록과 모순되는 내용은 없습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-05",
+      "type": "증권사 리포트",
+      "question": "키움증권에서 한화오션 목표주가 얼마로 봤어?",
+      "answer": "키움증권에서 본 한화오션의 최근 목표주가는 144,000원입니다. 이 목표주가는 2026년 7월 15일에 제시된 것으로, 현재 주가(7월 14일 기준) 76,800원 대비 상향 여지가 있음을 나타냅니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 '확정, 보장'이라는 제외 요청이 있었으나 답변은 해당 단어를 사용하지 않았고, 근거 목록에 제시된 연구 보고서 제목과 일치하여 모순되지 않음.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-06",
+      "type": "증권사 리포트",
+      "question": "대신증권 SK하이닉스 리포트 전망 어때?",
+      "answer": "SK하이닉스에 대한 최근 증권사 리포트 전망을 요약하면 다음과 같습니다.\n\n- 교보증권(2026-07-01): DRAM 가격 상승과 HBM4 기여도 확대 등으로 3~4분기 이익 모멘텀이 가속화될 전망이며, 2027년 HBM 가격 협상 결과에 따라 추가 전망치 상향 가능성도 있음. 투자의견은 매수(BUY), 목표주가는 4,000,000원으로 상향 조정됨.\n- 미래에셋증권(2026-06-01): AI 확산에 따른 DRAM·NAND 수요 확대와 구조적 공급 부족이 2028년까지 지속되어 하반기 실적 개선이 예상됨. 투자의견 매수, 목표주가 3,800,000원.\n- 대신증권(2026-04-24): 주주환원 강화와 ADR 상장 등으로 기업가치 증진 기대. 투자의견 매수(BUY), 목표주가 1,700,000원.\n- DS투자증권(2026-04-09): 1분기 영업이익 39조원 전망, 투자의견 매수, 목표주가 1,300,000원.\n\n전반적으로 주요 증권사들은 SK하이닉스에 대해 매수 의견을 내고 있으며, 목표주가는 1,300,000원에서 4,000,000원까지 다양하지만 최근에는 4,000,000원까지 상향 조정된 리포트도 있습니다. 다만, 이 목표주가와 전망은 증권사의 예측치임을 참고하시기 바랍니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 제공된 근거 목록의 출처와 일치하는 증권사 리포트 내용을 요약했으며, '확정'이나 '보장'이라는 단어를 사용하지 않아 제외 요청을 존중했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-07",
+      "type": "증권사 리포트",
+      "question": "2026-07-08에 나온 키움증권 현대차 투자의견 알려줘",
+      "answer": "2026년 7월 8일 키움증권의 현대차 투자의견은 \"BUY\"입니다. 이 리포트에서 키움증권은 현대차의 본업 회복 가능성에 주목하며, 목표주가는 70만원으로 제시했습니다. 다만, 이는 증권사의 전망으로 확정 실적이 아님을 참고하시기 바랍니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 특정 날짜의 키움증권 투자의견을 요청했고, 답변은 해당 리포트의 투자의견과 목표주가를 인용했으며, '확정 실적이 아님'이라는 표현으로 확정/보장 관련 제외 요청을 존중했다. 근거 목록과 모순되는 주장은 없다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-08",
+      "type": "증권사 리포트",
+      "question": "삼성전자에 대한 IBK투자증권 리포트 내용 요약해줘",
+      "answer": "IBK투자증권의 삼성전자 최신 리포트(2026년 7월 8일자)를 요약하면 다음과 같습니다.\n\n- 2026년 2분기 잠정 매출액은 171조원으로 1분기 대비 27.9% 증가했고, 영업이익은 89.4조원으로 56.2% 증가해 이전 전망치를 상회했습니다.\n- DS(반도체) 사업부가 실적 성장을 주도했으며, DRAM과 NAND의 평균판매가격(ASP)이 크게 상승한 영향입니다.\n- MX(모바일) 사업부는 메모리 가격 상승 영향으로 영업적자 전환했습니다.\n- 디스플레이 사업은 세트 판매 부진으로 지난해 대비 부진할 것으로 예상됩니다.\n- MX와 네트워크 사업부는 2분기 이후 영업적자가 지속될 전망입니다.\n- VD(비디오)와 가전 부문은 하반기 가전 부진이 예상됩니다.\n- IBK투자증권은 삼성전자에 대해 매수 의견을 유지하며, 목표주가는 46만원으로 제시했습니다.\n\n이 리포트는 삼성전자의 반도체 사업부가 2분기 실적을 견인했고, 일부 사업부는 어려움이 있으나 전반적으로 긍정적인 전망을 담고 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 제공된 근거 목록의 출처와 일치하는 내용을 요약했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-09",
+      "type": "증권사 리포트",
+      "question": "SK증권에서 한화오션 목표주가 얼마로 봤어?",
+      "answer": "SK증권에서 본 한화오션의 목표주가는 134,000원입니다. 이 목표주가는 2026년 7월 13일에 제시된 최신 전망치입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 근거 목록에 있는 SK증권의 2026년 7월 13일자 리서치 리포트에 기반하여 목표주가를 제시했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-10",
+      "type": "증권사 리포트",
+      "question": "IBK투자증권 SK하이닉스 리포트 전망 어때?",
+      "answer": "IBK투자증권의 SK하이닉스 최신 리포트(2026년 7월 2일자)에 따르면, SK하이닉스에 대해 '매수' 의견을 유지하고 있습니다. 전망 내용의 핵심은 다음과 같습니다.\n\n- 2023년 4분기부터 2026년 2분기까지 11분기 연속 실적 서프라이즈(예상치 상회)가 이어질 것으로 봅니다.\n- 2026년 2분기 매출액은 2026년 1분기 대비 50.2% 증가한 약 78조 9,680억원, 영업이익은 62.3% 증가한 약 61조원으로 예상합니다.\n- 메모리 시장은 Agent AI 생태계 확산, CPU 역할 부각에 따른 DRAM 수요 증가 등 3가지 동력으로 가파르게 성장 중이라고 평가합니다.\n- IBK투자증권의 목표주가는 400만원으로 제시되었습니다.\n\n이 전망은 증권사의 예측치이며 확정 실적이 아님을 참고해 주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 '확정, 보장'을 제외해 달라고 요청했으나 답변에서 '확정 실적이 아님'을 명시하여 제외 요청을 존중했으며, 근거 목록에 있는 IBK투자증권 리포트와 일치하는 내용을 제시하고 있어 근거가 있다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-11",
+      "type": "증권사 리포트",
+      "question": "2026-07-06에 나온 한화투자증권 현대차 투자의견 알려줘",
+      "answer": "2026년 7월 6일 한화투자증권의 현대차 투자의견은 'Buy'입니다. 같은 날 제시된 목표주가는 760,000원입니다. 이 의견은 한화투자증권의 공식 리포트에 근거한 것입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 근거 목록에 있는 한화투자증권의 2026-07-06 리포트를 인용하여 투자의견과 목표주가를 제시했으며, '확정', '보장'이라는 제외 주제를 언급하지 않아 제외 요청을 존중했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-12",
+      "type": "증권사 리포트",
+      "question": "삼성전자에 대한 대신증권 리포트 내용 요약해줘",
+      "answer": "대신증권의 삼성전자 최신 리포트 요약입니다. 대신증권은 삼성전자에 대해 매수(BUY) 의견을 제시하고 있으며, 목표주가는 56만원입니다(2026년 7월 8일 기준). 리포트에서는 12개월 절대수익률과 상대수익률 그래프를 포함해 삼성전자의 주가 흐름과 코스피 대비 성과를 분석하고 있습니다. \n\n이 내용은 대신증권의 \"체급의 위력\" 보고서에서 확인할 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 '확정, 보장'을 제외해 달라고 요청했으나 답변은 매수 의견과 목표주가 등 구체적인 수치를 제시했으며, 이는 제외 요청을 위반한 것으로 보입니다. 그러나 제공된 근거 목록에 해당 내용이 포함되어 있어 grounded는 true로 판단됩니다. 또한 근거 목록이 존재하므로 handled_correctly는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-13",
+      "type": "증권사 리포트",
+      "question": "대신증권에서 한화오션 목표주가 얼마로 봤어?",
+      "answer": "대신증권은 한화오션에 대해 2026년 7월 9일자 리포트에서 투자의견 매수(BUY)를 유지하며, 6개월 목표주가를 139,000원으로 제시했습니다. 이는 이전 대비 약 15.2% 하향 조정된 수치입니다. (출처: 대신증권 2026-07-09 리포트) 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 대신증권 2026년 7월 9일자 리포트를 근거로 139,000원의 목표주가를 제시했으며, 근거 목록과 모순되지 않는다. 또한 '확정, 보장'이라는 제외 요청을 존중하여 해당 단어를 사용하지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-14",
+      "type": "증권사 리포트",
+      "question": "교보증권 SK하이닉스 리포트 전망 어때?",
+      "answer": "교보증권의 SK하이닉스 최신 리포트에 따르면, DRAM 가격 상승과 HBM4 기여도 확대 등으로 3~4분기 이익 모멘텀이 가속화될 전망입니다. 2027년 HBM 가격 협상 결과에 따라 추가적인 전망치 상향 가능성도 있습니다. 교보증권은 투자의견 'BUY'와 목표주가 4,000,000원을 제시했습니다.\n\n또한 미래에셋증권도 매수 의견과 함께 2026~2028년 매출과 영업이익이 크게 증가할 것으로 예상하며 목표주가 3,800,000원을 제시했습니다.\n\n요약하면, 주요 증권사들은 SK하이닉스의 실적 개선과 성장 모멘텀을 긍정적으로 보고 있으며, 목표주가도 1,300,000원에서 4,000,000원 사이로 상향 조정된 상태입니다. \n\n필요하면 특정 증권사 리포트나 더 자세한 전망 내용을 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 교보증권의 리포트 내용을 근거로 DRAM 가격 상승과 HBM4 기여도 확대 등을 언급했으며, 미래에셋증권 리포트도 추가로 인용해 목표주가와 전망을 제시하고 있습니다. '확정', '보장'이라는 제외 요청을 존중하여 해당 단어를 사용하지 않았고, 근거 목록에 있는 리포트 제목과 일치하는 정보를 제공하고 있습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "report-15",
+      "type": "증권사 리포트",
+      "question": "2026-06-18에 나온 한화투자증권 현대차 투자의견 알려줘",
+      "answer": "2026년 6월 18일에 나온 한화투자증권의 현대차 투자의견은 'Buy'입니다. 이 리포트에서 제시한 목표주가는 760,000원입니다. (출처: 한화투자증권 2026-06-18 리포트)",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "확정",
+        "보장"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 명시된 날짜(2026-06-18)와 출처(한화투자증권 리포트)에 따라 투자의견 'Buy'와 목표주가 760,000원을 제시했으며, '확정', '보장'이라는 제외 요청된 주제를 언급하지 않았다. 근거 목록과 모순되는 내용이 없고, 근거 문서 내에서 설명 가능한 답변이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-01",
+      "type": "복수 기능 혼합",
+      "question": "삼성전자 실적이랑 최근 뉴스 같이 알려줘",
+      "answer": "삼성전자의 최신 실적(2026년 1분기 누적, 연결 기준)은 다음과 같습니다:\n- 매출액: 133.87조원\n- 영업이익: 57.23조원\n- 당기순이익: 47.23조원\n\n최근 뉴스 주요 내용은 다음과 같습니다:\n1. 중국 최대 D램 업체 창신메모리(CXMT)가 상하이 과창판에 상장하며, 삼성전자와 SK하이닉스, 마이크론에 이은 4위 D램 업체로 성장했다는 소식이 있습니다.\n2. 이재용 삼성전자 회장 등 글로벌 AI 리더들이 샌프란시스코에서 만찬을 가지며 AI 협력 강화에 나섰습니다.\n3. 삼성전자는 갤럭시 스마트폰 대규모 할인 프로모션으로 판매가 20배 증가했고, 아이폰 점유율이 하락하는 추세입니다.\n4. 삼성전자는 브로드컴과 2000억 달러 규모 AI 칩 협력을 체결하며 1400조원 규모 AI 동맹을 맺었습니다.\n\n필요하면 더 자세한 뉴스 내용도 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문에 대한 답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트 정보를 기반으로 작성되었으며, 근거와 모순되는 내용은 없습니다. 제외 요청도 없으므로 null로 판정합니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-02",
+      "type": "복수 기능 혼합",
+      "question": "SK하이닉스 실적 어떻고 요즘 뉴스는 뭐 있어?",
+      "answer": "SK하이닉스의 최신 실적(2026년 1분기 누적, 연결 기준)은 다음과 같습니다.\n- 매출액: 52.58조원\n- 영업이익: 37.61조원\n- 당기순이익: 40.35조원\n\n최근 뉴스 주요 내용은 다음과 같습니다.\n1. SK하이닉스는 2026년 2분기 영업이익 64조원, 매출 84조원, 영업이익률 75~77%를 기록할 것으로 전망되며, 상반기 누적 영업이익은 100조원을 넘을 것으로 예상됩니다. AI 서버용 HBM 판매 확대와 메모리 가격 상승이 실적을 견인하고 있습니다.\n2. SK하이닉스가 키옥시아의 2대 주주가 되었으며, 전환사채(CB) 전환 시 최대주주가 될 가능성이 있습니다.\n3. SK그룹은 엔비디아, MS, AWS 등과 5000억달러 규모 AI 인프라 협력 계약을 체결해 SK하이닉스의 AI 메모리 사업 강화가 기대됩니다.\n4. 중국 최대 D램 업체 CXMT가 상하이 과창판에 상장해 125조원 규모 시가총액을 기록하며, D램 시장 점유율 8%로 SK하이닉스(29%)에 이어 3위를 차지했습니다.\n\n이 외에도 SK실트론 매각 검토 등 그룹 내 재무 이슈도 보도되고 있습니다. 필요하시면 특정 뉴스에 대해 더 자세히 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 수치와 뉴스 내용을 정확히 인용하여 설명하고 있으며, 근거와 모순되는 부분이 없습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-03",
+      "type": "복수 기능 혼합",
+      "question": "현대차 재무 상황이랑 최근 소식 정리해줘",
+      "answer": "현대차의 최신 재무 상황(2026년 1분기 기준)은 다음과 같습니다.\n- 자산총계: 383.83조원\n- 부채총계: 251.61조원\n- 자본총계: 132.23조원\n\n최근 뉴스 주요 내용은 다음과 같습니다.\n1. 현대차가 엔비디아와 AI 로봇 개발 지원 플랫폼을 공동 구축하기로 했습니다. (2026-07-26)\n2. 현대차가 피지컬 AI 솔루션 기업으로 전환을 선언하며 자율주행, 로보틱스, 도시 통합 지능화 비전을 제시했습니다. (2026-07-25)\n3. 동남아 최대 축구대회 '아세안 현대컵'의 타이틀 스폰서로 첫 참여했습니다. (2026-07-26)\n4. 글로벌 AI 리더 만찬에 정의선 회장 등 주요 인사들이 참석해 협력 관계를 재확인했습니다. (2026-07-24)\n5. 현대차 울산 생산 차량이 친환경 운반선 '아틱 테른'을 통해 평택항에 첫 입항했습니다. (2026-07-26)\n\n필요하면 각 뉴스에 대해 더 자세히 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트를 기반으로 작성되었으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-04",
+      "type": "복수 기능 혼합",
+      "question": "두산에너빌리티 실적하고 뉴스 한번에 보여줘",
+      "answer": "두산에너빌리티의 최신 연간 실적(2025년 사업보고서 기준)은 다음과 같습니다.\n- 매출액: 17.06조원\n- 영업이익: 7,627.1억원\n- 당기순이익: 2,051.6억원\n\n참고로 2024년 실적은 매출액 16.23조원, 영업이익 1.02조원, 당기순이익 3,946.9억원이었습니다.\n\n최근 뉴스로는 2026년 7월 26일에 한국남부발전이 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS를 준공했으며, 두산에너빌리티가 이 프로젝트에 협력사로 참여하고 있다는 소식이 있습니다. 이 설비는 재생에너지 확대에 따른 계통 안정화 문제 해결에 중요한 역할을 할 전망입니다.\n\n필요하면 더 자세한 뉴스나 다른 정보도 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트를 정확히 인용하여 작성되었으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-05",
+      "type": "복수 기능 혼합",
+      "question": "한화오션 요즘 실적이랑 이슈 같이 알려줘",
+      "answer": "한화오션의 최근 실적(2026년 1분기 누적, 연결 기준)은 다음과 같습니다.\n- 매출액: 3.21조원\n- 영업이익: 4410.7억원\n- 당기순이익: 5000.4억원\n\n최근 주요 이슈는 다음과 같습니다.\n1. 남미·서아프리카 시장 겨냥 표준 FPSO 기본설계에 대해 미국 ABS와 노르웨이 DNV 선급 인증을 획득해 글로벌 FPSO 시장에서 경쟁력을 강화하고 있습니다.\n2. 노란봉투법 관련해 사내 협력업체 웰리브 노조 사용자성 판정에 불복해 행정소송을 제기했습니다.\n3. 태국 차세대 호위함 사업 7400억원 규모 수주 경쟁에서 유력 후보로 거론되고 있으며, 결과가 이달 공개될 예정입니다.\n4. 미국 레이도스와 글로벌 고속수송선 공동설계 계약을 체결해 해상수송 능력 강화에 나서고 있습니다.\n\n이처럼 한화오션은 글로벌 인증 획득과 수주 경쟁, 법적 이슈 등 다양한 활동을 진행 중입니다. 필요하면 각 뉴스별 상세 내용을 더 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 수치와 뉴스 이벤트를 정확히 인용하여 작성되었으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-06",
+      "type": "복수 기능 혼합",
+      "question": "삼성전자 영업이익이 왜 줄었고 증권사 전망은 어때?",
+      "answer": "삼성전자의 최신 영업이익은 2026년 1분기 누적 기준으로 57.23조원입니다. 최근 영업이익이 줄어든 구체적인 이유는 뉴스에서 직접적으로 언급된 내용은 없으나, 경쟁 심화와 시장 상황 변화 등이 영향을 미쳤을 가능성이 있습니다. 예를 들어, 중국 최대 D램 업체 창신메모리(CXMT)가 시장 점유율을 확대하며 경쟁이 심화되고 있다는 소식이 있습니다.\n\n증권사 전망을 보면, 여러 증권사에서 삼성전자에 대해 긍정적인 시각을 유지하고 있습니다.\n- iM증권은 2026년 7월 8일 보고서에서 실적 전망치 상향 조정을 지속하며 매수 의견과 목표주가 48만원을 제시했습니다.\n- 대신증권은 6월 26일 보고서에서 단기 실적 변동성은 있으나 AI 시장 선점 기대 등으로 매수 의견과 목표주가 56만원을 유지하고 있습니다.\n- 키움증권은 5월 4일 보고서에서 3분기 영업이익 100조원 전망을 내놓으며 보유 의견을 제시했습니다.\n\n요약하면, 삼성전자의 영업이익은 최근 경쟁 심화 등으로 다소 줄었으나, 증권사들은 AI 시장 등 성장 동력과 견고한 이익 구조를 바탕으로 긍정적인 전망을 유지하고 있습니다. \n\n필요하면 더 구체적인 뉴스나 리포트 내용을 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 작성되었으며, 근거와 모순되는 주장은 없습니다. 제외 요청도 없으므로 null로 판정합니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-07",
+      "type": "복수 기능 혼합",
+      "question": "SK하이닉스 실적 부진 이유랑 증권가 시각 알려줘",
+      "answer": "SK하이닉스의 최신 실적(2026년 1분기 누적 기준)은 매출액 52.58조원, 영업이익 37.61조원, 당기순이익 40.35조원입니다. 최근 뉴스와 증권가 시각을 종합하면, SK하이닉스는 메모리 슈퍼사이클 장기화와 AI 서버용 HBM 판매 확대, 범용 D램·낸드 가격 상승으로 2분기 영업이익 64조원, 영업이익률 75~77%를 기록할 것으로 전망됩니다. 이는 2025년 연간 영업이익 47조원을 크게 웃도는 수치입니다.\n\n증권가에서는 SK하이닉스의 영업이익률이 제조업에서 사실상 불가능한 수준이라 평가하면서도, 3분기 연속 TSMC를 앞지를 것으로 보고 긍정적인 전망을 내놓고 있습니다. 또한, SK하이닉스는 AI 메모리 분야에서 엔비디아, MS 등과 협력하며 성장 동력을 확보하고 있습니다.\n\n요약하면, SK하이닉스 실적 부진은 현재로서는 확인되지 않고 있으며, 오히려 AI 수요 증가와 메모리 가격 상승에 힘입어 실적 개선과 고수익성이 기대되는 상황입니다.\n\n필요하면 더 구체적인 뉴스나 증권사 리포트 내용을 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 수치와 내용을 바탕으로 작성되었으며, 근거와 모순되는 주장은 없습니다. 제외 요청도 없으므로 해당 항목은 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-08",
+      "type": "복수 기능 혼합",
+      "question": "현대차 최근 실적 이슈랑 애널리스트 의견 정리해줘",
+      "answer": "현대차 최근 실적과 이슈, 애널리스트 의견을 정리해 드리겠습니다.\n\n1. 최근 실적 (2026년 1분기 누적, 연결 기준)\n- 매출액: 45.94조원\n- 영업이익: 2.51조원\n- 당기순이익: 2.58조원\n\n2. 최근 주요 뉴스 이슈\n- 현대차가 엔비디아와 AI 로봇 개발 지원 플랫폼을 공동 구축하며 AI 산업 생태계 강화에 나섰습니다.\n- 피지컬 AI 솔루션 기업으로 전환을 선언, 자율주행, 로보틱스, 도시 통합 지능화 비전을 제시했습니다.\n- 동남아 최대 축구대회 '아세안 현대컵' 타이틀 스폰서로 첫 참여하며 마케팅을 확대하고 있습니다.\n- 친환경 운반선 '아틱 테른'을 통한 차량 수출 확대 등 친환경 및 글로벌 공급망 강화 움직임도 있습니다.\n\n3. 애널리스트 의견 및 목표주가\n- 유진투자증권은 2분기 실적 저점 구간의 매수 기회로 보고 목표주가 90만원, 투자의견 매수를 제시했습니다.\n- 미래에셋증권은 1분기 실적을 넘어 신사업으로의 전환 기대를 반영하며 목표주가 64만원, 투자의견 매수를 유지했습니다.\n- 키움증권도 불확실성이 확대될수록 대장주를 찾는 관점에서 목표주가 65만원, 투자의견 BUY를 제시했습니다.\n\n요약하면, 현대차는 1분기 견조한 실적을 기록했고 AI 및 친환경 분야에서 전략적 협력과 신사업 전환을 추진 중입니다. 증권사들은 대체로 매수 의견과 64만~90만원 사이의 목표주가를 제시하며 긍정적인 전망을 내놓고 있습니다. \n\n필요하면 더 구체적인 뉴스나 리포트 내용을 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "주어진 근거 목록에 포함된 실적 수치와 뉴스 이슈, 애널리스트 의견이 답변에 모두 반영되어 있으며, 근거와 모순되는 내용은 없습니다. 제외 요청도 없으므로 모든 판정은 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-09",
+      "type": "복수 기능 혼합",
+      "question": "두산에너빌리티 왜 이런 실적이 나왔고 전망은 어떤지 알려줘",
+      "answer": "두산에너빌리티의 2026년 1분기 누적 실적은 매출액 4.26조원, 영업이익 2,335.1억원, 당기순이익 602.3억원입니다. 실적 배경과 관련해 최근 뉴스에서는 두산에너빌리티가 한국남부발전, 한국중부발전, 한국동서발전 등과 협력해 제주 안덕 BESS(장주기 에너지 저장 시스템) 준공 및 다양한 재생에너지 및 전력계통 안정화 프로젝트에 참여하고 있다는 점이 긍정적으로 작용하고 있습니다. 증권사들의 최신 리포트에 따르면 두산에너빌리티는 가스터빈, 원자력, 수소 및 신재생 에너지 부문에서 수주와 매출이 증가할 것으로 전망되며, 2026년 매출액은 약 18조원, 2027년에는 20조원 이상으로 성장할 것으로 예상됩니다. 요약하면, 두산에너빌리티는 1분기 견조한 실적을 기록했고, 재생에너지 및 원자력 등 신성장 동력 부문에서 수주 확대가 기대되어 향후 실적 개선과 성장 전망이 밝은 상황입니다. 필요하면 더 구체적인 뉴스나 리포트 내용을 알려드릴 수 있습니다. 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스, 리서치 리포트를 기반으로 실적 수치와 전망을 설명하고 있으며, 근거가 없는 내용은 포함하지 않았습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-10",
+      "type": "복수 기능 혼합",
+      "question": "한화오션 실적 배경이랑 증권사 평가 같이 알려줘",
+      "answer": "한화오션의 최신 실적과 배경, 그리고 증권사 평가를 요약해 드리겠습니다. 1. 실적 현황 (2026년 1분기 누적, 연결 기준) - 매출액: 약 3.21조원 - 영업이익: 약 4410.7억원 - 당기순이익: 약 5000.4억원 2. 실적 배경 및 최근 이슈 - 한화오션은 남미와 서아프리카 심해 유전 시장을 겨냥한 표준 FPSO(부유식 원유 생산·저장·하역설비) 기본설계에 대해 미국 ABS와 노르웨이 DNV 선급 인증을 획득하며 글로벌 FPSO 시장에서 경쟁력을 강화하고 있습니다. - 태국 차세대 호위함 사업(약 7400억원 규모) 수주 경쟁에서 유력 후보로 거론되고 있으며, 미국 레이도스와 글로벌 고속수송선 공동설계 계약도 체결하는 등 해양플랜트 및 방산 분야에서 수주 확대가 기대됩니다. - 다만, 노란봉투법 관련 행정소송 제기 등 노사 이슈도 있습니다. 3. 증권사 평가 및 목표주가 요약하면, 한화오션은 1분기 견조한 실적을 기록했고, 글로벌 FPSO 인증 획득과 주요 수주 기대 등으로 성장 모멘텀이 있습니다. 필요하면 더 구체적인 리포트 내용이나 뉴스도 알려드릴 수 있습니다. 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록의 재무 데이터와 뉴스 이벤트를 기반으로 실적 현황과 배경을 설명하고 있으며, 증권사 평가 부분은 일부 목표주가가 확인되지 않아 제외했다고 명시하여 근거와 모순되지 않습니다. 제외 요청 사항이 없으므로 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-11",
+      "type": "복수 기능 혼합",
+      "question": "삼성전자 목표주가랑 지금 주가 비교해줘",
+      "answer": "삼성전자의 현재 실제 주가 정보는 내부 조회 오류로 확인이 어렵습니다.\n\n다만, 최근 증권사들이 제시한 삼성전자의 목표주가는 다음과 같습니다(모두 2026년 7월 초 기준):\n- 하나증권: 480,000원\n- 대신증권: 560,000원\n- 한화투자증권: 580,000원\n- 유안타증권: 340,000원\n\n이 목표주가들은 증권사별 예측치이며 확정된 실적이 아닙니다. 현재 주가와 비교한 구체적인 수치는 제공해 드리지 못하는 점 양해 바랍니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 현재 주가와 목표주가 비교를 요구했으나, 답변에서 현재 주가 확인이 어렵다고 명시하고 목표주가만 제시했으므로 handled_correctly=true. 제시된 목표주가들은 근거 목록에 있는 증권사 리서치 보고서와 일치하므로 grounded=true. 제외 요청 사항이 없으므로 exclusion_respected=null.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-12",
+      "type": "복수 기능 혼합",
+      "question": "SK하이닉스 현재가가 목표주가 대비 어느 정도야?",
+      "answer": "현재 SK하이닉스의 실제 주가 정보는 내부 조회 오류로 확인이 어렵습니다.\n\n다만, 최근 증권사들이 제시한 SK하이닉스의 목표주가는 다음과 같습니다(모두 원화 기준):\n- 미래에셋증권: 4,200,000원 (2026-07-14)\n- 대신증권: 3,900,000원 (2026-07-07)\n- IBK투자증권: 4,000,000원 (2026-07-02)\n- 교보증권: 4,000,000원 (2026-07-01)\n- 한화투자증권: 4,300,000원 (2026-06-22)\n\n현재 주가가 확인되는 대로 목표주가 대비 어느 정도인지 다시 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 현재 주가 확인이 어렵다는 점을 명시하고, 제공된 근거 목록에 있는 증권사별 목표주가 정보를 정확히 인용하여 모순 없이 설명하고 있다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-13",
+      "type": "복수 기능 혼합",
+      "question": "현대차 증권사 목표가랑 실제 주가 차이 알려줘",
+      "answer": "현대차의 최근 증권사 목표주가는 다음과 같습니다.\n- 유진투자증권: 90만원 (2026-07-10)\n- 키움증권: 70만원 (2026-07-08)\n- 한화투자증권: 76만원 (2026-07-06)\n- 유안타증권: 69만원 (2026-06-16)\n- 대신증권: 66만원 (2026-04-24)\n\n한편, 현재 실제 주가 정보는 내부 조회 오류로 확인이 어렵습니다. 다시 시도하거나 다른 방법으로 확인할 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 근거가 없어 답할 수 없는 경우(실제 주가 확인 불가)를 사용자에게 명확히 전달했으므로 handled_correctly=true이며, 제공된 근거 목록과 모순되지 않는 정보를 제시했으므로 grounded=true이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-14",
+      "type": "복수 기능 혼합",
+      "question": "두산에너빌리티 지금 주가랑 목표주가 얼마나 벌어져 있어?",
+      "answer": "두산에너빌리티의 현재 주가 정보는 내부 조회 오류로 확인이 어렵습니다.\n\n다만, 최근 증권사들이 제시한 목표주가는 다음과 같습니다(모두 2026년 4~5월 기준):\n- 유안타증권: 149,000원\n- 하나증권: 165,000원\n- 대신증권: 156,000원\n- 유진투자증권: 150,000원\n- iM증권: 1,677원 (이 수치는 다른 목표주가와 차이가 크고, 아마 단위 오류 가능성 있음)\n\n현재 주가가 확인되면 목표주가와의 괴리율을 다시 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 현재 주가 확인이 어렵다는 점을 명시하고, 제공된 근거 목록에 있는 증권사별 목표주가(2026년 4~5월 기준)를 인용하여 괴리율을 계산할 수 있음을 안내했다. 근거 목록과 모순되는 주장은 없으며, 특정 주제 제외 요청도 없었다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "mix-15",
+      "type": "복수 기능 혼합",
+      "question": "한화오션 목표주가 대비 현재 주가 수준 알려줘",
+      "answer": "한화오션(042660)의 최근 증권사 목표주가는 다음과 같습니다.\n\n- 키움증권: 144,000원 (2026-07-15)\n- 대신증권: 139,000원 (2026-07-09)\n- 유안타증권: 179,000원 (2026-07-06)\n\n현재 주가 정보는 내부 조회 오류로 확인이 어렵습니다. 현재 주가를 다시 확인해 드릴까요?",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 근거 목록에 있는 증권사별 목표주가 정보를 정확히 인용했으며, 현재 주가 확인 불가 사실을 명확히 전달했으므로 handled_correctly=true, grounded=true이다. 제외 요청 사항이 없으므로 exclusion_respected=null이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-01",
+      "type": "부정·제외·대조",
+      "question": "최근 뉴스에서 삼성전자 호재 있어? 실적 관련은 제외해.",
+      "answer": "최근 삼성전자 관련 호재 뉴스 중 실적 관련을 제외하면 다음과 같은 주요 소식들이 있습니다:\n\n1. 삼성전자-브로드컴이 5년간 2000억 달러(약 290조 원) 규모의 AI 반도체 파운드리 협력 업무협약을 체결했습니다. 첨단 메모리와 AI 칩 생산을 위한 전략적 협력입니다. (출처: news_cluster:7149)\n2. 삼성전자가 갤럭시 스마트폰 대규모 할인 프로모션으로 국내 시장 점유율을 크게 높였고, 차세대 폴더블폰 '갤럭시Z 폴드8 시리즈'를 통해 시장 확대를 추진 중입니다. (출처: news_cluster:7230)\n3. 삼성전자가 연내 AI 글래스 '인텔리전트 아이웨어' 2종을 출시할 예정이며, 경량화와 착용감, 프라이버시 기술을 강조하고 있습니다. (출처: news_cluster:7181)\n\n이 외에도 중국 최대 D램 업체 창신메모리가 상장하며 삼성전자와 경쟁 구도에 대한 소식도 있습니다만, 이는 직접적인 호재라기보다는 시장 상황 관련 뉴스입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "실적"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 명시된 '실적' 제외 요청을 준수하여 답변했으며, 제공된 근거 목록과 모순되는 내용이 없고, 근거 문서 내에 포함된 정보로 답변을 구성했습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-02",
+      "type": "부정·제외·대조",
+      "question": "SK하이닉스 좋은 소식 있어? 실적 얘기는 빼고.",
+      "answer": "SK하이닉스 관련 좋은 소식으로는 다음과 같은 내용들이 있습니다.\n\n1. SK하이닉스가 키옥시아의 2대 주주가 되었고, 전환사채(CB) 전환 시 최대주주가 될 가능성이 제기되고 있습니다. (출처: news_cluster:7192)\n2. SK그룹이 엔비디아, 마이크로소프트(MS), 앤트로픽, 아마존웹서비스(AWS)와 5000억 달러 규모의 AI 인프라 협력 계약을 체결했습니다. SK하이닉스는 이 협력에서 차세대 AI 메모리 공동 개발과 장기 공급 협력을 강화할 예정입니다. (출처: news_cluster:7159)\n3. 중국 최대 D램 업체 CXMT가 상하이 과창판에 상장하며 125조 원 규모의 시가총액을 기록했는데, CXMT는 D램 시장 점유율 8%로 SK하이닉스(29%)에 이어 세계 3위에 올라 있습니다. (출처: news_cluster:7231)\n\n실적 관련 내용은 제외하고, 위와 같은 전략적 투자 및 협력, 시장 내 위치 강화 소식이 최근에 있었습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "실적"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 실적 관련 내용을 제외하고 전략적 투자, 협력, 시장 위치 강화 소식을 제시했으며, 제공된 근거 목록과 모순되지 않는다. 제외 요청된 '실적' 주제를 다루지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-03",
+      "type": "부정·제외·대조",
+      "question": "실적 관련 내용 말고 현대차 최근 호재만 알려줘",
+      "answer": "현대차의 최근 호재는 다음과 같습니다:\n\n1. 엔비디아와 AI 로봇 개발 지원 플랫폼을 공동 구축하기로 했습니다. 이 협력은 글로벌 AI 산업 생태계 구축의 일환입니다. (출처: news_cluster:7200)\n2. 동남아 최대 축구대회 '아세안 현대컵'의 타이틀 스폰서로 첫 참여하며 다양한 현장 마케팅과 프로모션을 진행합니다. (출처: news_cluster:7194)\n3. 울산공장에서 생산한 차량이 친환경 운반선 '아틱 테른'을 통해 평택항에서 수출되고, 관련 카보타지 규제가 3년 연장되었습니다. (출처: news_cluster:7221)\n4. 차세대 인포테인먼트 플랫폼 '플레오스'를 주요 볼륨 모델에 확대 적용하고, 내년부터 기아 전 차종에도 적용할 예정입니다. (출처: news_cluster:7213)\n\n필요하면 각 호재에 대해 더 자세히 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "실적"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 명시된 '실적' 주제를 제외하고 호재만 답변했으며, 제공된 근거 목록과 모순되는 내용이 없고, 근거 문서 내에 있는 정보로 답변함.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-04",
+      "type": "부정·제외·대조",
+      "question": "두산에너빌리티 뉴스 알려주는데 실적 기사는 제외해줘",
+      "answer": "두산에너빌리티 관련 최근 뉴스 중 실적 기사를 제외한 주요 내용은 다음과 같습니다.\n\n1. 한국남부발전이 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS를 준공했으며, 두산에너빌리티가 이 프로젝트에 협력사로 참여하고 있습니다. (2026-07-26)\n2. 인도 정부가 2033년까지 소형모듈원전(SMR) 5기 건설을 추진 중이며, 두산에너빌리티 등 국내 기업들이 SMR 공급망 진입 가능성이 제기되고 있습니다. (2026-07-24)\n3. 두산에너빌리티가 자회사 두산지오솔루션에 630억원을 출자해 해상풍력 발전사업 지분 투자와 운영자금 지원에 나섰습니다. (2026-07-24)\n4. 경남도에서 열린 투자유치자문위원회에서 두산에너빌리티의 소형모듈원전 및 대형원전 관련 메가투자 실행 방안이 논의되었습니다. (2026-07-24)\n5. 한울원자력본부가 13개 협력사와 ESG 봉사단을 결성했으며, 두산에너빌리티도 관련 활동에 참여하고 있습니다. (2026-07-23)\n\n필요하시면 각 뉴스의 상세 내용을 더 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "실적"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 명시된 '실적' 주제를 제외하고 두산에너빌리티 관련 뉴스 5건을 제시했으며, 모든 근거가 제공된 근거 목록과 일치한다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-05",
+      "type": "부정·제외·대조",
+      "question": "한화오션 최근 이슈 중에 실적 빼고 뭐 있어?",
+      "answer": "한화오션의 최근 실적 외 주요 이슈는 다음과 같습니다:\n\n1. 남미와 서아프리카 심해 유전 시장을 겨냥한 표준 FPSO 기본설계에 대해 미국 선급 ABS의 BDR 인증과 노르웨이 선급 DNV의 AIP를 획득해 글로벌 FPSO 시장에서 표준 FPSO 포트폴리오를 구축했습니다.\n2. 노란봉투법 관련해 사내 협력업체 웰리브 노조의 사용자성 인정 판정에 불복해 서울행정법원에 판정 취소 소송을 제기했습니다.\n3. 태국 차세대 호위함 사업 7400억원 규모 수주 경쟁에서 유력 후보로 거론되며, 이달 중 최종 결과가 공개될 예정입니다.\n4. 미국 레이도스와 글로벌 고속수송선(GFS) 공동설계를 위한 전문서비스 계약을 체결했습니다.\n\n이 이슈들은 한화오션의 사업 확장, 법적 대응, 해외 수주 경쟁, 그리고 글로벌 협력 강화와 관련된 내용입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "실적"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 '실적'을 제외해 달라고 요청했고, 답변은 실적 관련 내용 없이 사업 확장, 법적 대응, 해외 수주, 글로벌 협력 등 다른 주제만 다루고 있습니다. 근거 목록의 뉴스 이벤트들도 실적 외의 이슈를 다루고 있어 모든 판정이 적절합니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-06",
+      "type": "부정·제외·대조",
+      "question": "삼성전자 증권사 전망 말고 회사가 직접 공시한 내용만 알려줘",
+      "answer": "삼성전자가 최근 공시한 내용은 임원 및 주요주주의 특정증권 등 소유상황 보고서입니다. 2026년 7월 21일에 여러 건이 공시되었으며, 각각의 공시문은 다음 링크에서 확인할 수 있습니다.\n\n- [임원ㆍ주요주주특정증권등소유상황보고서 1](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260721001061)\n- [임원ㆍ주요주주특정증권등소유상황보고서 2](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260721001060)\n- [임원ㆍ주요주주특정증권등소유상황보고서 3](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260721001059)\n- [임원ㆍ주요주주특정증권등소유상황보고서 4](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260721001058)\n- [임원ㆍ주요주주특정증권등소유상황보고서 5](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260721001057)\n\n이 외에 다른 공시가 필요하시면 말씀해 주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "답변은 증권사나 목표주가를 언급하지 않고 회사가 직접 공시한 임원 및 주요주주의 특정증권 등 소유상황 보고서만을 제시했으며, 근거 목록도 해당 공시 문서들로 구성되어 있어 제외 요청을 준수했다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-07",
+      "type": "부정·제외·대조",
+      "question": "SK하이닉스 애널리스트 의견 빼고 공시만 보여줘",
+      "answer": "SK하이닉스의 최신 공시 목록입니다. 애널리스트 의견은 제외했습니다.\n\n1. 임원ㆍ주요주주특정증권등소유상황보고서 (2026-07-16)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260716000582)\n\n2. 기업설명회(IR)개최(안내공시) (2026-07-15)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260715800456)\n\n3. 유상증자또는주식관련사채등의발행결과(자율공시) (2026-07-15)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260715800045)\n\n4. 증권발행실적보고서 (2026-07-15)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260715000004)\n\n5. 주요사항보고서(해외증권시장주권등상장) (2026-07-13)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260713000324)\n\n필요한 공시를 클릭해 자세한 내용을 확인할 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 명시된 증권사 및 목표주가 관련 내용을 제외하고 공시 목록만 제시했으며, 제공된 근거 목록과 모순되지 않는다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-08",
+      "type": "부정·제외·대조",
+      "question": "증권사 리포트 말고 현대차 공식 공시 내용 알려줘",
+      "answer": "현대차의 최근 공식 공시 주요 내용은 다음과 같습니다.\n\n1. 2026년 7월 20일: 임원 및 주요주주의 특정증권 등 소유상황 보고서 공시\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260720000316)\n\n2. 2026년 7월 16일: 기업설명회(IR) 개최 안내 공시\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260716800634)\n\n3. 2026년 7월 13일: 생산중단 관련 공시\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260713800350)\n\n4. 2026년 7월 10일: 기업설명회(IR) 개최 안내 공시\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260710800714)\n\n5. 2026년 7월 10일: 특수관계인으로부터 기타 유가증권 매수 공시\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260710000577)\n\n필요한 공시를 클릭해 자세한 내용을 확인할 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 증권사 리포트와 목표주가 언급을 제외해 달라고 요청했으며, 답변은 현대차 공식 공시 내용만 제시하고 해당 주제를 전혀 다루지 않았다. 또한 제공된 근거 목록과 답변 내용이 일치하므로 grounded=true이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-09",
+      "type": "부정·제외·대조",
+      "question": "두산에너빌리티 회사가 직접 발표한 것만 알려줘, 증권사 건 빼고",
+      "answer": "두산에너빌리티가 직접 발표한 최근 공시는 다음과 같습니다.\n\n1. 2026-07-20: 기업설명회(IR)개최 안내공시  \n   [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260720800418)\n\n2. 2026-07-20: 결산실적공시예고 안내공시  \n   [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260720800415)\n\n3. 2026-07-10: 기업설명회(IR)개최 안내공시  \n   [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260710800328)\n\n4. 2026-07-10: 풍문또는보도에대한해명(미확정)  \n   [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260710800321)\n\n5. 2026-07-02: 기업설명회(IR)개최 안내공시  \n   [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260702800592)\n\n이 공시들은 모두 두산에너빌리티가 직접 발표한 공식 공시입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 증권사 및 목표주가를 제외하고 두산에너빌리티의 직접 발표만 요청했으며, 답변은 해당 조건을 준수하여 증권사 관련 내용을 배제하고 직접 발표한 공시 목록만 제시했다. 근거 목록도 제공된 dart_document들로 구성되어 있어 모순이 없다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-10",
+      "type": "부정·제외·대조",
+      "question": "한화오션 공시 자료만 알려줘. 증권사 전망은 필요 없어",
+      "answer": "한화오션의 최신 공시 자료는 다음과 같습니다.\n\n1. 임원ㆍ주요주주특정증권등소유상황보고서 (2026-07-16)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260716000581)\n\n2. 단일판매ㆍ공급계약체결 (2026-07-15)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260715800071)\n\n3. [기재정정]특수관계인에대한출자 (2026-07-14)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260714000462)\n\n4. 기업설명회(IR)개최(안내공시) (2026-07-13)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260713800416)\n\n5. 결산실적공시예고(안내공시) (2026-07-13)\n   - [공시 바로가기](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260713800412)\n\n필요한 공시를 클릭해 자세한 내용을 확인할 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "증권사",
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문에 명시된 '증권사 전망' 및 '목표주가' 관련 내용이 답변에 전혀 포함되지 않았으며, 제공된 근거 목록도 모두 해당 주제와 무관한 공시 자료들로 구성되어 있습니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "excl-11",
+      "type": "부정·제외·대조",
+      "question": "삼성전자 목표주가 말고 실제 주가 알려줘",
+      "answer": "현재 삼성전자의 실제 주가 정보를 조회하는 데 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주시겠어요?",
+      "is_answerable": true,
+      "forbidden_claims": [
+        "목표주가"
+      ],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 '목표주가'를 제외하고 실제 주가만 요청했으며, 답변은 '목표주가'를 언급하지 않고 주가 조회 오류만 안내하여 제외 요청을 존중했다. 근거가 없어 답할 수 없는 상황이므로 handled_correctly가 true이며, 근거 목록이 없으므로 grounded도 true로 판정한다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "ctx-01",
+      "type": "현재 화면 문맥",
+      "question": "어제 주가 어떻게 됐어?",
+      "answer": "어제 삼성전자(005930) 주가 정보를 조회하는 중에 내부 오류가 발생해 현재 확인이 어렵습니다. 잠시 후 다시 시도해 주시겠어요?",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 확인할 수 없다는 사실을 사용자에게 전달했기 때문이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "ctx-02",
+      "type": "현재 화면 문맥",
+      "question": "이 회사 최근 실적 알려줘",
+      "answer": "이 회사의 최근 실적(2026년 1분기 누적, 연결 기준)은 다음과 같습니다.\n- 매출액: 52.58조원\n- 영업이익: 37.61조원\n- 당기순이익: 40.35조원\n\n필요하면 더 구체적인 기간이나 항목도 알려주세요.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록과 일치하는 구체적인 수치를 제시하고 있으며, 근거가 없는 질문에 대한 단정적 답변도 아니므로 handled_correctly는 null, grounded는 true, 제외 요청도 없으므로 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "ctx-03",
+      "type": "현재 화면 문맥",
+      "question": "지금 주가 얼마야?",
+      "answer": "현재 삼성전자(005380)의 주가를 조회하는 중에 내부 오류가 발생해 정확한 가격 정보를 제공하지 못했습니다. 잠시 후 다시 시도해 주시겠어요?",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문에 대한 근거가 제공되지 않아 답변할 수 없는 상황이므로 handled_correctly=true이며, 답변 내용이 근거 없음과 모순되지 않아 grounded=true이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "ctx-04",
+      "type": "현재 화면 문맥",
+      "question": "이 종목 목표주가 얼마야?",
+      "answer": "이 종목(두산에너빌리티)의 최근 증권사 목표주가는 다음과 같습니다.\n\n- 유안타증권: 149,000원 (2026-05-04)\n- 하나증권: 165,000원 (2026-04-30)\n- 대신증권: 156,000원 (2026-04-30)\n- 유진투자증권: 150,000원 (2026-04-30)\n\n증권사별로 약간 차이가 있으나 대체로 14만~16만 원대 목표주가를 제시하고 있습니다.  \n(참고로 목표주가는 증권사 전망치이며 확정 실적이 아닙니다.)",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록에 있는 증권사별 목표주가 정보를 인용하여 작성되었으며, 근거와 모순되지 않습니다. 제외 요청도 없으므로 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "ctx-05",
+      "type": "현재 화면 문맥",
+      "question": "최근 뉴스 뭐 있어?",
+      "answer": "최근 한화오션 관련 주요 뉴스는 다음과 같습니다:\n\n1. 한화오션이 남미와 서아프리카 심해 유전 시장을 겨냥한 표준 FPSO 기본설계에 대해 미국과 노르웨이 선급 인증을 획득해 글로벌 FPSO 시장에서 표준 플랫폼 포트폴리오를 구축했습니다.\n2. 한화오션이 노란봉투법 관련 첫 행정소송을 제기해 사내 협력업체 웰리브 노조의 사용자성 판정 취소를 요구하고 있습니다.\n3. 글로벌 선급 인증을 기반으로 해양플랜트 시장 진출을 확대하고 있습니다.\n4. 태국 차세대 호위함 사업 7400억원 규모 수주 경쟁 결과가 이달 공개될 예정이며, 한화오션이 유력 후보로 거론되고 있습니다.\n5. 미국 레이도스와 글로벌 고속수송선 공동설계 계약을 체결해 군수지원함 설계 협력도 진행 중입니다.\n\n필요하면 특정 뉴스에 대해 더 자세히 알려드릴 수 있습니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "주어진 근거 목록에 포함된 5개의 뉴스 이벤트와 답변 내용이 일치하며, 근거와 모순되는 주장이 없습니다. 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "ctx-06",
+      "type": "현재 화면 문맥",
+      "question": "이 뉴스 나온 회사 주가 지금 얼마야?",
+      "answer": "죄송하지만, 현재 주가 정보를 조회하는 데 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주시겠어요?",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "근거가 없어 답할 수 없는 질문으로, 답변에서 확인할 수 없다는 사실을 사용자에게 전달했기 때문이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "ctx-07",
+      "type": "현재 화면 문맥",
+      "question": "이 회사 영업이익 알려줘",
+      "answer": "이 회사의 최신 영업이익은 2026년 1분기 누적 기준으로 37.61조원입니다.",
+      "is_answerable": true,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": null,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": null,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "답변은 제공된 근거 목록에 있는 '2026년 1분기보고서 누적' 영업이익 정보를 인용하여 구체적인 수치를 제시했으며, 근거와 모순되지 않는다. 제외 요청도 없으므로 null 처리된다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "na-01",
+      "type": "답변 불가능·모호",
+      "question": "삼성전자 내년 매출 확정값 알려줘",
+      "answer": "삼성전자의 내년(2027년) 연간 매출 확정값은 아직 공개된 데이터가 없습니다. 다른 기간이나 전망치가 필요하시면 알려주세요.",
+      "is_answerable": false,
+      "forbidden_claims": [
+        "확정",
+        "확실"
+      ],
+      "keyword": {
+        "unanswerable_handled": true,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되었고, 답변에서 '아직 공개된 데이터가 없습니다'라고 명시하여 확인할 수 없음을 전달했으며, '확정', '확실'이라는 제외 요청도 존중하여 해당 단어를 사용하지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "na-02",
+      "type": "답변 불가능·모호",
+      "question": "999999 종목 주가 알려줘",
+      "answer": "999999 종목은 어떤 회사인지 알 수 없거나 존재하지 않는 종목 코드일 수 있습니다. 정확한 종목 코드나 회사명을 알려주시면 주가를 조회해 드리겠습니다.",
+      "is_answerable": false,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": true,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 근거가 없어 답할 수 없는 질문으로 표시되었으며, 답변이 해당 사실을 사용자에게 전달하고 추가 정보를 요청하고 있다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "na-03",
+      "type": "답변 불가능·모호",
+      "question": "주가 알려줘",
+      "answer": "어떤 종목의 주가를 알려드릴까요? 종목명을 알려주시면 현재가와 전일 대비 등락률을 조회해 드리겠습니다.",
+      "is_answerable": false,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": true,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 구체적인 종목명을 제시하지 않아 근거가 없으므로 답변할 수 없는 질문으로 표시되었고, 답변에서는 종목명을 요청하여 사용자가 추가 정보를 제공하도록 유도했다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "na-04",
+      "type": "답변 불가능·모호",
+      "question": "삼성전자 2030년 영업이익 얼마야?",
+      "answer": "삼성전자의 2030년 연간 영업이익 데이터는 아직 제공되지 않아 확인할 수 없습니다. 다른 기간이나 정보가 필요하시면 알려주세요.",
+      "is_answerable": false,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": true,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 근거가 없어 답할 수 없는 질문으로 표시되었으며, 답변이 '아직 제공되지 않아 확인할 수 없습니다'라고 명시적으로 전달했기 때문에 handled_correctly가 true입니다. 근거 목록이 비어 있으므로 grounded도 true로 판단됩니다. 제외 요청이 없으므로 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "na-05",
+      "type": "답변 불가능·모호",
+      "question": "이 종목 사도 돼?",
+      "answer": "투자 판단에 대한 직접적인 매수·매도 추천은 드리지 않습니다. 대신, 삼성전자(005930)의 재무 상태, 최근 뉴스, 증권사 전망 등 필요한 정보를 알려드릴 수 있습니다. 어떤 정보가 궁금하신가요? 예를 들어, 최근 실적, 주가 동향, 증권사 목표주가, 또는 최근 뉴스 등이 있습니다.",
+      "is_answerable": false,
+      "forbidden_claims": [
+        "추천",
+        "사세요",
+        "매수하세요"
+      ],
+      "keyword": {
+        "unanswerable_handled": false,
+        "exclusion_violations": [
+          "추천"
+        ]
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": true,
+        "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변에서 매수·매도 추천 없이 필요한 정보를 안내했으며, '추천', '사세요', '매수하세요' 등의 제외 주제를 언급하지 않았다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": [
+        "unanswerable: keyword=False judge=True",
+        "exclusion: keyword_violated=True judge_violated=False"
+      ]
+    },
+    {
+      "case_id": "na-06",
+      "type": "답변 불가능·모호",
+      "question": "삼성전자 CEO 개인 연봉 얼마야?",
+      "answer": "삼성전자 CEO의 개인 연봉(임원 보수) 정보는 재무 수치 데이터에 포함되어 있지 않고, 임원 보수는 사업보고서 내 임원 보수 공시나 별도 공시 문서에서 확인할 수 있습니다. \n\n최근 2026년 7월 21일에 공시된 임원 보수 관련 보고서들이 있으니, 삼성전자 임원 보수 상세 내용은 아래 공시 문서에서 직접 확인하실 수 있습니다.\n- [임원ㆍ주요주주특정증권등소유상황보고서 (2026-07-21)](https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260721001061)\n\n공시 문서에서 CEO의 연봉(보수 총액)과 스톡옵션 등 보상 내역을 확인하실 수 있습니다. \n\n더 구체적인 연봉 금액을 원하시면 해당 공시 문서를 참고해 주세요.",
+      "is_answerable": false,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": true,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되었으며, 답변이 확인할 수 없다는 사실을 사용자에게 전달하고 관련 공시 문서를 안내했기 때문이다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "na-07",
+      "type": "답변 불가능·모호",
+      "question": "그 뉴스 이후 주가 어떻게 됐어?",
+      "answer": "어떤 뉴스 이후의 주가 변화를 말씀하시는지 뉴스 제목이나 날짜 등 구체적인 사건 정보를 알려주시면, 그 발표 전후 주가 변화를 확인해 드리겠습니다.",
+      "is_answerable": false,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": true,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문에 구체적인 뉴스 정보가 없어 답변할 수 없는 상황이므로 handled_correctly가 true이며, 답변은 근거 없이 단정적인 수치를 제시하지 않고 추가 정보를 요청하고 있어 grounded도 true입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    },
+    {
+      "case_id": "na-08",
+      "type": "답변 불가능·모호",
+      "question": "한화오션 2026년 3분기 배당금 얼마야?",
+      "answer": "한화오션의 2026년 3분기(2026년 3월 31일 결산 기준) 배당금에 관한 구체적인 현금배당금 총액 정보는 제공된 공시에서 확인되지 않습니다. 다만, 당기순이익과 주당순이익 등의 재무 정보는 다음과 같습니다.\n\n- 연결 기준 당기순이익: 500,037백만원\n- 별도 기준 당기순이익: 521,859백만원\n- 연결 기준 주당순이익: 1,613원\n- 주당 액면가액: 5,000원\n\n배당금 총액이나 주당 배당금에 대한 구체적인 수치는 공시에서 명확히 확인되지 않으니, 추가 공시나 회사 발표를 참고하시는 것이 좋겠습니다.",
+      "is_answerable": false,
+      "forbidden_claims": [],
+      "keyword": {
+        "unanswerable_handled": true,
+        "exclusion_violations": []
+      },
+      "judge": {
+        "handled_correctly": true,
+        "grounded": true,
+        "exclusion_respected": null,
+        "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되어 있으며, 답변은 배당금 총액이나 주당 배당금이 공시에서 확인되지 않는다고 명시하여 handled_correctly가 true입니다. 근거 목록에는 dividend_matter만 포함되어 있어 구체적인 수치를 확인할 수 없으므로 grounded도 true입니다. 제외 요청은 없으므로 exclusion_respected는 null입니다.",
+        "ok": true,
+        "error": null
+      },
+      "disagreement": []
+    }
+  ]
+}
