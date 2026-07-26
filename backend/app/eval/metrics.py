@@ -119,26 +119,41 @@ class AgentMetrics:
 
 @dataclass
 class RetrievalMetrics:
-    """검색 지표(§8 검색)."""
+    """검색 지표(§8 검색).
 
+    문서 검색(뉴스·리포트)과 구조화 조회(용어·재무·공시)를 섞으면 의미가 없다.
+    전자는 Retriever 순위 품질이고 후자는 DB 행을 정확히 집었는가의 문제다.
+    한 숫자로 합치면 어느 계층을 고쳐야 할지 알 수 없어 분리한다.
+    """
+
+    # 문서 검색(news_event / research_report)
     recall_hit: int = 0
     recall_total: int = 0
     hit_at_1: int = 0
     hit_at_1_total: int = 0
     rr_sum: float = 0.0
     rr_total: int = 0
-    other_stock_cases: int = 0
-    n: int = 0
     page_ok: int = 0
     page_total: int = 0
+    # 구조화 조회(term / financial / structured_disclosure)
+    lookup_hit: int = 0
+    lookup_total: int = 0
+    # 공통
+    other_stock_cases: int = 0
+    n: int = 0
 
     def as_dict(self) -> dict:
         return {
-            "recall_at_k": _ratio(self.recall_hit, self.recall_total),
-            "hit_at_1": _ratio(self.hit_at_1, self.hit_at_1_total),
-            "mrr": round(self.rr_sum / self.rr_total, 4) if self.rr_total else None,
+            "document_retrieval": {
+                "recall_at_k": _ratio(self.recall_hit, self.recall_total),
+                "hit_at_1": _ratio(self.hit_at_1, self.hit_at_1_total),
+                "mrr": round(self.rr_sum / self.rr_total, 4) if self.rr_total else None,
+                "page_accuracy": _ratio(self.page_ok, self.page_total),
+            },
+            "structured_lookup": {
+                "row_hit_rate": _ratio(self.lookup_hit, self.lookup_total),
+            },
             "other_stock_contamination_rate": _ratio(self.other_stock_cases, self.n),
-            "report_page_accuracy": _ratio(self.page_ok, self.page_total),
         }
 
 

@@ -516,7 +516,117 @@ def test_unmeasured_metric_is_none_not_zero():
     agg = aggregate([case], [rec], [grade_case(case, rec)])
     # 이 케이스엔 기대 숫자·정답 식별자가 없다 → 잰 적 없음
     assert agg["numbers"]["number_exact_match"] is None
-    assert agg["retrieval"]["mrr"] is None
+    assert agg["retrieval"]["document_retrieval"]["mrr"] is None
+
+
+def test_document_retrieval_and_structured_lookup_are_separated():
+    """문서 검색(순위)과 구조화 조회(정확 행)는 성격이 달라 따로 집계해야 한다."""
+    doc_case = _case(
+        id="d",
+        type="뉴스 사건·영향",
+        question="무슨 일 있었어?",
+        stock_code="005930",
+        required_tools=["search_news"],
+        gold_sources=[{"source_type": "news_event", "source_id": "chunk-1"}],
+    )
+    lookup_case = _case(
+        id="l",
+        gold_sources=[{"source_type": "term", "source_id": "term:PER"}],
+    )
+    doc_rec = _record(
+        case_id="d",
+        tool_calls=[{"name": "search_news", "args": {}, "status": "ok", "latency_ms": 1}],
+        retrieved_ids=["chunk-1"],
+        answer="사건 설명",
+        sources=[{"source_id": "chunk-1", "source_type": "news_event", "stock_code": "005930"}],
+    )
+    lookup_rec = _record(
+        case_id="l",
+        tool_calls=[{"name": "lookup_financial_term", "args": {}, "status": "ok", "latency_ms": 1}],
+        retrieved_ids=[],  # 정답 행을 못 집음
+        answer="설명",
+        sources=[],
+    )
+    cases = [doc_case, lookup_case]
+    recs = [doc_rec, lookup_rec]
+    grades = [grade_case(c, r) for c, r in zip(cases, recs, strict=True)]
+    agg = aggregate(cases, recs, grades)
+
+    # 문서 검색은 맞혔고, 구조화 조회는 틀렸다 — 한 숫자로 섞이지 않아야 한다.
+    assert agg["retrieval"]["document_retrieval"]["recall_at_k"] == 1.0
+    assert agg["retrieval"]["structured_lookup"]["row_hit_rate"] == 0.0
+
+
+def test_validator_dropped_answer_not_counted_as_retriever_failure():
+    """Tool 이 정답 문서를 반환했는데 검증기가 지운 경우는 검색 실패가 아니다(§4)."""
+    case = _case(
+        id="r",
+        type="증권사 리포트",
+        question="목표주가 얼마야?",
+        stock_code="005930",
+        required_tools=["search_research_reports"],
+        gold_sources=[{"source_type": "research_report", "source_id": "rc-1"}],
+    )
+    rec = _record(
+        case_id="r",
+        tool_calls=[
+            {"name": "search_research_reports", "args": {}, "status": "ok", "latency_ms": 1}
+        ],
+        retrieved_ids=["rc-other"],
+        answer="일부 목표주가를 확인할 수 없어 제외했습니다.",
+        sources=[{"source_id": "rc-other", "source_type": "research_report"}],
+        validation_errors=["근거 없는 증권사·목표주가 문장을 답변에서 제거함"],
+    )
+    agg = aggregate([case], [rec], [grade_case(case, rec)])
+    # 분모에 들어가지 않아 '미측정'이어야 한다(0.0 으로 검색 탓을 하지 않는다).
+    assert agg["retrieval"]["document_retrieval"]["recall_at_k"] is None
+
+
+def test_other_stock_source_still_counts_as_retrieval_failure():
+    """다른 종목을 반환한 경우는 계속 검색 실패로 남아야 한다."""
+    case = _case(
+        id="x",
+        type="뉴스 사건·영향",
+        question="무슨 일 있었어?",
+        stock_code="005930",
+        required_tools=["search_news"],
+        gold_sources=[{"source_type": "news_event", "source_id": "chunk-1"}],
+    )
+    rec = _record(
+        case_id="x",
+        tool_calls=[{"name": "search_news", "args": {}, "status": "ok", "latency_ms": 1}],
+        retrieved_ids=["chunk-9"],
+        answer="다른 종목 뉴스",
+        sources=[{"source_id": "chunk-9", "source_type": "news_event", "stock_code": "000660"}],
+        validation_errors=["근거 없는 증권사·목표주가 문장을 답변에서 제거함"],
+    )
+    agg = aggregate([case], [rec], [grade_case(case, rec)])
+    assert agg["retrieval"]["document_retrieval"]["recall_at_k"] == 0.0
+
+
+def test_period_check_does_not_require_words_absent_from_question():
+    """'연간 매출액' 질문에 '누적'을 쓰라고 요구하면 안 된다(채점기 오탐)."""
+    case = _case(
+        id="p",
+        type="정확한 재무 숫자",
+        question="삼성전자 2025년 연간 매출액 알려줘",
+        required_tools=["get_financial_facts"],
+        expected_period={"business_year": "2025", "amount_type": "누적"},
+    )
+    rec = _record(answer="삼성전자의 2025년 연간 매출액은 333.61조원입니다.")
+    assert grade_case(case, rec).period_ok is True
+
+
+def test_period_check_still_catches_wrong_year():
+    case = _case(
+        id="p2",
+        type="정확한 재무 숫자",
+        question="삼성전자 2025년 연간 매출액 알려줘",
+        required_tools=["get_financial_facts"],
+        expected_period={"business_year": "2025"},
+    )
+    rec = _record(answer="삼성전자의 2024년 연간 매출액은 300조원입니다.")
+    assert grade_case(case, rec).period_ok is False
 
 
 def test_aggregate_counts_validation_errors_as_metrics():

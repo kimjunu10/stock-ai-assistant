@@ -14,8 +14,21 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from typing import Any
+
+
+def _norm_name(text: str) -> str:
+    """기관명 비교용 정규화.
+
+    DB 의 publisher 는 NFD(자모 분리)로 저장된 값이 있고 모델 답변은 NFC 라,
+    같은 '미래에셋증권' 도 코드포인트가 달라 문자열 비교가 실패한다(운영 결함).
+    유니코드를 NFC 로 합치고 공백만 제거한다 — 그 이상 느슨하게 비교하지 않는다
+    (근거에 없는 증권사는 계속 차단해야 하므로).
+    """
+    return re.sub(r"\s+", "", unicodedata.normalize("NFC", text))
+
 
 _CITATION_RE = re.compile(r"\[(\d+)\]")
 # 답변 속 큰 숫자(천단위 콤마/조·억 단위 등) — 재무 주장 후보
@@ -108,7 +121,7 @@ def collect_evidence(tool_payloads: list[dict[str, Any]]) -> ToolEvidence:
                     ev.has_reports = True
                     b = rp.get("broker")
                     if b:
-                        ev.brokers.add(str(b))
+                        ev.brokers.add(_norm_name(str(b)))
                     if rp.get("target_price_status") == "stated":
                         tp = rp.get("target_price")
                         if isinstance(tp, int):
@@ -305,12 +318,38 @@ _DATE_LIKE_RE = re.compile(
 # 종목코드 표기. 재무 주장이 아니므로 검사에서 제외한다. 6자리 가격(123456원)을 잘못
 # 지우지 않도록 '종목(코드)' 문맥이 있거나 0으로 시작하는 코드형만 제외한다.
 # 한국어 조사가 바로 붙으므로 \b 대신 숫자 인접만 배제한다.
-_STOCK_CODE_RE = re.compile(r"종목\s*코드\s*(?<![\d,.])\d{6}(?![\d,.])|(?<![\d,.])0\d{5}(?![\d,.])")
+_STOCK_CODE_RE = re.compile(
+    # "종목코드 005930" / "005930 종목 코드" / 따옴표로 감싼 코드 / 0으로 시작하는 6자리.
+    r"종목\s*코드\s*[\"'”’]?(?<![\d,.])\d{6}(?![\d,.])"
+    r"|[\"'“”‘’](?<![\d,.])\d{6}(?![\d,.])[\"'”’]\s*(?:종목|코드)"
+    r"|(?<![\d,.])\d{6}(?![\d,.])\s*(?:종목\s*코드|코드)"
+    r"|(?<![\d,.])0\d{5}(?![\d,.])"
+)
+# 가정·예시 문맥의 숫자는 사실 주장이 아니다(용어 설명의 "예를 들어 15,000원에 …").
+# 이런 문장은 회사 실적·목표주가를 주장하지 않으므로 숫자 근거 검증 대상에서 뺀다.
+_EXAMPLE_CTX_RE = re.compile(r"(?:예를\s*들어|예시로|가령|만약|예:)")
+# 페이지·건수·개수처럼 금액이 아닌 수량 표현.
+_COUNT_CTX_RE = re.compile(r"\d[\d,]*\s*(?:페이지|쪽|건|개|명|회|번째)")
 
 
-def _strip_dates(answer: str) -> str:
-    """날짜·종목코드 표기를 지운 사본(숫자 근거 검증용). 원문 답변은 바꾸지 않는다."""
-    return _STOCK_CODE_RE.sub(" ", _DATE_LIKE_RE.sub(" ", answer))
+def _strip_non_claim_numbers(answer: str) -> str:
+    """사실 주장이 아닌 숫자를 지운 사본(숫자 근거 검증용). 원문 답변은 바꾸지 않는다.
+
+    검증 대상은 '회사 실적·목표주가·주가·금액을 사실로 주장하는 숫자'다.
+    날짜·연도·종목코드·페이지·건수, 그리고 가정 예시 문장의 숫자는 제외한다
+    (용어 설명의 "예를 들어 주당 15,000원에 빌린 주식을 …" 이 근거 없는 재무 숫자로
+    오탐되던 운영 결함).
+
+    Tool 결과에 없는 재무 숫자·목표주가는 계속 검증 대상으로 남는다.
+    """
+    kept = [s for s in _SENTENCE_SPLIT_RE.split(answer) if not _EXAMPLE_CTX_RE.search(s)]
+    text = " ".join(kept)
+    text = _COUNT_CTX_RE.sub(" ", text)
+    return _STOCK_CODE_RE.sub(" ", _DATE_LIKE_RE.sub(" ", text))
+
+
+# 이전 이름 유지(기존 테스트·호출부 호환).
+_strip_dates = _strip_non_claim_numbers
 
 
 def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
@@ -343,8 +382,9 @@ def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
 
     # 3) 증권사명 환각: 답변에 등장한 증권사가 리포트 Tool 근거에 없으면 위반(prompt.md §7)
     if evidence.has_reports:
-        answer_brokers = set(_BROKER_RE.findall(answer))
-        unknown = sorted(b for b in answer_brokers if b not in evidence.brokers)
+        # 답변도 NFC 로 맞춘 뒤 추출한다(정규식 [가-힣] 은 NFD 자모를 잡지 못한다).
+        answer_brokers = set(_BROKER_RE.findall(unicodedata.normalize("NFC", answer)))
+        unknown = sorted(b for b in answer_brokers if _norm_name(b) not in evidence.brokers)
         if unknown:
             errors.append(f"Tool 결과에 없는 증권사를 답변에 생성함: {unknown}")
 
@@ -366,8 +406,8 @@ def validate_answer(answer: str, evidence: ToolEvidence) -> ValidationResult:
 
 def _is_hallucinated_sentence(sentence: str, evidence: ToolEvidence) -> bool:
     """이 문장이 근거 없는 증권사/목표주가 주장을 담고 있으면 True."""
-    for b in _BROKER_RE.findall(sentence):
-        if b not in evidence.brokers:
+    for b in _BROKER_RE.findall(unicodedata.normalize("NFC", sentence)):
+        if _norm_name(b) not in evidence.brokers:
             return True
     for m in _TP_CTX_RE.finditer(sentence):
         raw = m.group(1)
@@ -386,6 +426,8 @@ def sanitize_answer(answer: str, evidence: ToolEvidence) -> tuple[str, bool]:
     """
     if not evidence.has_reports:
         return answer, False
+    # 문장 판정과 반환 문자열의 표기를 맞춘다(정규화 전후가 섞이면 비교가 어긋난다).
+    answer = unicodedata.normalize("NFC", answer)
     parts = _SENTENCE_SPLIT_RE.split(answer)
     kept, removed_tp = [], False
     for s in parts:

@@ -27,6 +27,9 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
   "연간/사업보고서"=report_period annual, "1분기"=q1, "반기/상반기"=half, "3분기"=q3.
   "누적"=amount_type cumulative, "단독/3개월/당기"=quarter, 자산·부채·자본=point_in_time.
   예: "3분기 누적"이면 report_period=q3, amount_type=cumulative 로 호출한다.
+  "단독"은 별도재무제표가 아니라 '누적이 아닌 3개월치'라는 뜻이다 → amount_type=quarter
+  로 호출하고 fs_div 는 CFS(연결) 그대로 둔다. fs_div=OFS 는 사용자가 "별도 기준",
+  "별도재무제표"라고 명시했을 때만 쓴다.
   결과가 no_data 면 다른 분기·유형으로 바꿔 대체 답변하지 않고, 그 값이 없다고 답한다.
   재무 금액을 조·억으로 말할 때는 Tool 결과의 value_display 를 그대로 쓴다(직접 변환하지 않는다).
 - 재무 질문에 연도가 있으면 그 business_year 를 Tool 인자로 반드시 전달한다.

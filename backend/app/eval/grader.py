@@ -27,6 +27,51 @@ from app.eval.schema import EvalCase
 _CITATION_ERR = "존재하지 않는 인용"
 _UNSUPPORTED_NUM_ERR = "재무성 숫자"
 
+# 순위 기반 문서 검색 대상 vs 정확 행 조회 대상.
+_DOC_SOURCE_TYPES = frozenset({"news_event", "research_report"})
+_LOOKUP_SOURCE_TYPES = frozenset({"term", "financial", "structured_disclosure"})
+
+
+def _doc_miss_is_not_retriever_fault(case: EvalCase, record: RunRecord, grade: CaseGrade) -> bool:
+    """이 문항의 문서 검색 실패를 Retriever 탓으로 볼 수 없는지 판정한다.
+
+    §4 가 Retriever 실패에서 빼라고 지정한 경우:
+      - Tool 은 정답 문서를 반환했는데 검증기가 답변을 삭제한 경우
+      - 라벨이 한 청크만 허용했지만 같은 정답 '문서'의 다른 유효 청크를 반환한 경우
+    단, 실제로 다른 종목·엉뚱한 문서를 반환한 경우는 계속 실패로 남긴다.
+    """
+    # 다른 종목이 섞였으면 명백한 검색 실패다.
+    if grade.other_stock_sources:
+        return False
+
+    # 검증기가 답변 문장을 지운 경우 — 검색은 성공했는데 답이 사라진 것.
+    if any("제거함" in e for e in record.validation_errors):
+        return True
+
+    # 같은 정답 문서의 다른 청크를 반환했는가.
+    # 라벨 note 에 원본 식별자(news_clusters.id / research_reports.id)가 있고,
+    # 실제 출처의 locator 가 같은 원본을 가리키면 문서 단위로는 맞힌 것이다.
+    want_docs = set()
+    for gs in case.gold_sources:
+        note = gs.note or ""
+        m = re.search(r"news_clusters\.id=(\d+)", note)
+        if m:
+            want_docs.add(("news", m.group(1)))
+        m = re.search(r"research_reports\.id=([0-9a-f-]{36})", note)
+        if m:
+            want_docs.add(("report", m.group(1)))
+    if not want_docs:
+        return False
+    for s in record.sources:
+        loc = s.get("locator") or {}
+        rid = loc.get("report_id")
+        if rid and ("report", str(rid)) in want_docs:
+            return True
+        pk = loc.get("source_pk")
+        if pk and ("news", str(pk)) in want_docs:
+            return True
+    return False
+
 
 @dataclass
 class CaseGrade:
@@ -111,14 +156,14 @@ def grade_arguments(case: EvalCase, record: RunRecord) -> dict[str, bool]:
     return results
 
 
-def resolve_expected_financial(facts: Any, case: EvalCase) -> dict | None:
+def resolve_expected_financial(facts: Any, case: EvalCase, spec: Any = None) -> dict | None:
     """expected_financial 명세로 DB 에서 정답 재무값을 가져온다.
 
     정답 숫자를 라벨에 적어두지 않는 이유는 오타가 정답이 되는 걸 막기 위해서다.
     Tool 과 같은 조회 경로를 써서 기준행을 읽는다(RAG 답변을 정답으로 쓰지 않음).
     facts 가 없으면(오프라인 채점) None 을 돌려 해당 항목을 건너뛴다.
     """
-    spec = case.expected_financial
+    spec = spec if spec is not None else case.expected_financial
     if spec is None or facts is None:
         return None
     from app.agent.tools.financials import FinancialFactsInput, run_get_financial_facts
@@ -227,15 +272,33 @@ def grade_case(case: EvalCase, record: RunRecord, facts: Any = None) -> CaseGrad
         )
 
     # --- 재무 정답(DB 기준값과 대조) ---
-    gold_fin = resolve_expected_financial(facts, case)
-    if gold_fin:
-        g.financial_grade = _grade_financial_answer(record.answer, gold_fin)
-        g.financial_grade["gold_value_won"] = gold_fin.get("value_won")
+    # 질문이 객관적으로 모호하면 허용 해석 중 하나라도 맞으면 정답으로 본다.
+    specs = [case.expected_financial, *case.acceptable_financials]
+    graded: list[dict] = []
+    for spec in [s for s in specs if s is not None]:
+        gold = resolve_expected_financial(facts, case, spec)
+        if not gold:
+            continue
+        got = _grade_financial_answer(record.answer, gold)
+        got["gold_value_won"] = gold.get("value_won")
+        graded.append(got)
+    if graded:
+        # 정답으로 인정되는 해석이 있으면 그것을, 없으면 첫 번째를 기록한다.
+        g.financial_grade = next((x for x in graded if x["exact"]), graded[0])
+        if len(graded) > 1:
+            g.financial_grade["accepted_interpretations"] = len(graded)
 
     # --- 기간·거래일 ---
     if case.expected_period:
         p = case.expected_period
-        tokens = [t for t in (p.business_year, p.report_period, p.amount_type) if t]
+        # 기간 정확도는 '틀린 기간을 말했는가'를 봐야 한다. 질문에 없는 낱말을
+        # 답변에 쓰라고 요구하면 안 된다 — "연간 매출액" 질문에 "누적"이라고
+        # 적지 않았다는 이유로 정답이 실패 처리되던 채점기 결함(fin-02 등 11건).
+        tokens = [
+            t
+            for t in (p.business_year, p.report_period, p.amount_type)
+            if t and (t in case.question or t in record.answer)
+        ]
         g.period_ok = all(t in record.answer for t in tokens) if tokens else None
         days = [d for d in (p.start_trading_day, p.end_trading_day, p.event_date) if d]
         if days:
@@ -348,17 +411,33 @@ def aggregate(cases: list[EvalCase], records: list[RunRecord], grades: list[Case
         if duplicate_call_count(used):
             agent.duplicate_cases += 1
 
-        # 검색
-        gold_ids = [gs.source_id for gs in case.gold_sources if gs.source_id]
-        if gold_ids:
-            retr.recall_total += len(gold_ids)
-            retr.recall_hit += len(g.gold_source_hits)
+        # 검색: 문서 검색과 구조화 조회를 나눠 집계한다(성격이 다른 실패다).
+        doc_gold = [
+            gs.source_id
+            for gs in case.gold_sources
+            if gs.source_id and gs.source_type in _DOC_SOURCE_TYPES
+        ]
+        lookup_gold = [
+            gs.source_id
+            for gs in case.gold_sources
+            if gs.source_id and gs.source_type in _LOOKUP_SOURCE_TYPES
+        ]
+        hits = set(g.gold_source_hits)
+
+        if doc_gold and not _doc_miss_is_not_retriever_fault(case, rec, g):
+            retr.recall_total += len(doc_gold)
+            retr.recall_hit += len([d for d in doc_gold if d in hits])
             retr.hit_at_1_total += 1
             first = rec.retrieved_ids[0] if rec.retrieved_ids else None
-            if first in gold_ids:
+            if first in doc_gold:
                 retr.hit_at_1 += 1
             retr.rr_total += 1
-            retr.rr_sum += _reciprocal_rank(rec.retrieved_ids, gold_ids)
+            retr.rr_sum += _reciprocal_rank(rec.retrieved_ids, doc_gold)
+
+        if lookup_gold:
+            # 구조화 조회는 순위가 아니라 '정확한 행을 집었는가'다.
+            retr.lookup_total += len(lookup_gold)
+            retr.lookup_hit += len([x for x in lookup_gold if x in hits])
         if g.other_stock_sources:
             retr.other_stock_cases += 1
         for gs in case.gold_sources:

@@ -765,11 +765,7 @@
       "expected_numbers": [],
       "expected_period": {
         "business_year": "2025",
-        "report_period": "3분기",
-        "amount_type": "누적",
-        "start_trading_day": null,
-        "end_trading_day": null,
-        "event_date": null
+        "report_period": "3분기"
       },
       "allowed_source_types": [
         "financial"
@@ -780,8 +776,19 @@
       ],
       "no_data_expectation": null,
       "review_status": "confirmed",
-      "label_basis": "financials 실제 행(thstrm_amount=23527391000000)",
-      "split": "dev"
+      "label_basis": "financials 실제 행(thstrm_amount=23527391000000) || 모호 질문으로 재분류: '3분기 영업이익'은 누적(23,527,391,000,000)과 3개월치(12,166,062,000,000) 두 해석이 모두 성립하며 둘 다 financials 에 실재한다. 한쪽을 강제하지 않고 다중 정답을 허용한다(점수 조정 목적 아님). amount_type 을 답변 표현으로 강제하던 expected_period 검사도 완화했다.",
+      "split": "dev",
+      "acceptable_financials": [
+        {
+          "stock_code": "005930",
+          "account_name": "영업이익",
+          "business_year": "2025",
+          "report_period": "q3",
+          "amount_type": "quarter",
+          "fs_div": "CFS",
+          "value_kind": "actual"
+        }
+      ]
     },
     {
       "id": "fin-04",
