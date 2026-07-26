@@ -197,3 +197,26 @@ def test_agent_qa_exception_returns_safe_error():
 def test_feature_flag_off_returns_none():
     get_agent_qa_service.cache_clear()
     assert get_agent_qa_service() is None  # 기본 agent_enabled=False
+
+
+def test_all_stock_code_tools_use_context_fallback():
+    """종목코드를 받는 Tool 은 전부 문맥 폴백을 거쳐야 한다.
+
+    운영 결함 회귀: get_stock_prices·get_financial_facts·get_disclosure_values 가
+    _resolve_stock_code 를 쓰지 않아, 화면에서 종목이 선택돼 있어도 모델이 코드를
+    빠뜨리면 조회가 실패했다. 새 Tool 추가 시 폴백 누락을 여기서 잡는다.
+    """
+    import inspect
+
+    from app.agent import runtime as rt
+
+    src = inspect.getsource(rt.build_tools)
+    all_tools = [t.name for t in build_tools()]
+    # 종목코드를 인자로 받는 Tool (lookup_financial_term 은 용어만 받으므로 제외)
+    stock_tools = [t for t in all_tools if t != "lookup_financial_term"]
+    starts = {t: src.index(f"def {t}(") for t in all_tools}
+    for name in stock_tools:
+        # 각 Tool 함수 본문만 잘라 검사한다(다음 Tool 정의 직전까지).
+        later = [s for s in starts.values() if s > starts[name]]
+        body = src[starts[name] : min(later)] if later else src[starts[name] :]
+        assert "_resolve_stock_code(" in body, f"{name} 이 문맥 종목 폴백을 쓰지 않음"

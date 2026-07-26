@@ -63,7 +63,10 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
     calculate_event_return 만 쓴다. 사건 발표일은 서버 문맥에서 확정된 값이 쓰이며
     Agent 가 날짜를 넘기거나 추정하지 않는다.
   · 사용자가 기간을 명시한 질문("최근 한 달", "일주일", "올해")만 get_stock_prices 의
-    lookback 을 쓴다.
+    lookback 을 쓴다. lookback 은 1w·2w·1m·3m·6m·1y 만 유효하다.
+  · "어제", "오늘", "지금", "전일 대비"처럼 하루 단위 질문은 lookback 없이
+    get_stock_prices 를 호출한다. 결과에 최신 거래일 종가와 전일 대비 등락률이 들어 있다.
+    하루짜리 lookback 을 만들어 넣지 않는다.
   · 사건 기준 질문에서 사건을 확정할 수 없으면(Tool 이 사건 미확정·여러 사건이라고
     알려주면) 최근 한 달·일주일 수익률로 대체하지 않는다. 임의로 사건을 하나 고르지도
     않는다. 어떤 사건을 말하는지 제목·날짜 후보를 짧게 제시하고 사용자에게 되묻는다.
@@ -92,6 +95,24 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
 종목이 UI 문맥으로 주어지면 그 종목을 기본으로 쓴다. 사용자가 다른 종목을 명시하면 그 종목을 쓴다.
 임의로 다른 종목을 고르지 않는다.
 """
+
+
+def _stock_context_block(stock_code: str | None) -> str:
+    """UI 문맥으로 확정된 종목을 프롬프트에 싣는다(종목 되묻기 방지).
+
+    화면에서 종목이 이미 선택돼 있거나 특정 종목 뉴스를 보는 중이면 서버가 그 종목코드를
+    넘긴다. 모델이 "어떤 종목인가요?"라고 되묻지 않도록 확정 값으로 명시한다.
+    질문 문자열에서 회사명을 파싱하거나 코드로 매핑하지 않는다(하드코딩·라우터 아님).
+    """
+    if not stock_code:
+        return ""
+    return (
+        "\n\n현재 종목 문맥(서버 확정):\n"
+        f"- 종목코드: {stock_code}\n"
+        "- 사용자가 종목을 말하지 않은 질문은 이 종목에 대한 질문이다.\n"
+        "- 종목을 되묻지 않는다. Tool 의 stock_code 인자에 이 코드를 그대로 넣는다.\n"
+        "- 사용자가 다른 종목을 명시한 경우에만 그 종목을 쓴다."
+    )
 
 
 def _event_context_block(
@@ -134,6 +155,7 @@ def financial_agent_system_prompt(
     current_datetime: str | None,
     current_date: str | None,
     timezone: str,
+    stock_code: str | None = None,
     event_status: str = "none",
     event_title: str | None = None,
     event_date: str | None = None,
@@ -150,6 +172,7 @@ def financial_agent_system_prompt(
             f"- 시간대: {timezone}\n"
             "- 위 값은 서버가 요청 시점에 계산한 신뢰 가능한 값이다."
         )
+        + _stock_context_block(stock_code)
         + _event_context_block(
             event_status=event_status,
             event_title=event_title,
