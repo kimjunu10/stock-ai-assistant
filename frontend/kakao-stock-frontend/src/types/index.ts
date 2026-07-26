@@ -152,12 +152,14 @@ export interface DisclosureItem {
 }
 
 export interface ReportItem {
-  id: number
+  id: string | number
   stockCode: string
   broker: string
   title: string
   date: string
-  opinion: string
+  opinion?: string | null
+  pageCount?: number | null
+  downloadUrl?: string
 }
 
 export interface AssistantContext {

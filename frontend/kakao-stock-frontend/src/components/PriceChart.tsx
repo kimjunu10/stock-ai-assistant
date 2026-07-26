@@ -25,6 +25,8 @@ interface PriceChartProps {
   clusters: NewsCluster[]
   data: StockMarketData | null
   error: string
+  newsError: string
+  newsStatus: 'loading' | 'ready'
   onAsk: (context: AssistantContext) => void
   onRetry: () => void
   status: MarketDataStatus
@@ -48,6 +50,8 @@ export function PriceChart({
   clusters,
   data,
   error,
+  newsError,
+  newsStatus,
   onAsk,
   onRetry,
   status,
@@ -234,6 +238,14 @@ export function PriceChart({
               positions={markerPositions}
               selectedKey={selectedMomentKey}
             />
+            {newsStatus === 'loading' && (
+              <span className="price-chart__news-empty">차트 날짜의 뉴스를 불러오는 중이에요.</span>
+            )}
+            {newsStatus === 'ready' && moments.length === 0 && (
+              <span className="price-chart__news-empty">
+                {newsError || '현재 보이는 차트 날짜에는 연결된 뉴스가 없어요.'}
+              </span>
+            )}
           </div>
         )}
         {status === 'loading' && (

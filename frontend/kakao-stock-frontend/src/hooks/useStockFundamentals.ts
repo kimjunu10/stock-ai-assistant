@@ -1,21 +1,17 @@
 import { useEffect, useState } from 'react'
-import { fetchCompanyProfile, fetchDisclosures, fetchFinancialSummary } from '../api/fundamentals'
-import type { DisclosureItem, FinancialItem, StockCompanyProfile } from '../types'
+import { fetchCompanyProfile, fetchFinancialSummary } from '../api/fundamentals'
+import type { FinancialItem, StockCompanyProfile } from '../types'
 
 export function useStockFundamentals(stockCode: string) {
   const [financials, setFinancials] = useState<FinancialItem[]>([])
-  const [disclosures, setDisclosures] = useState<DisclosureItem[]>([])
   const [financialError, setFinancialError] = useState('')
-  const [disclosureError, setDisclosureError] = useState('')
   const [companyProfile, setCompanyProfile] = useState<StockCompanyProfile | null>(null)
   const [companyProfileError, setCompanyProfileError] = useState('')
 
   useEffect(() => {
     const controller = new AbortController()
     setFinancials([])
-    setDisclosures([])
     setFinancialError('')
-    setDisclosureError('')
     setCompanyProfile(null)
     setCompanyProfileError('')
 
@@ -35,22 +31,12 @@ export function useStockFundamentals(stockCode: string) {
         }
       })
 
-    fetchDisclosures(stockCode, controller.signal)
-      .then((response) => setDisclosures(response.items))
-      .catch((reason: unknown) => {
-        if (!controller.signal.aborted) {
-          setDisclosureError(reason instanceof Error ? reason.message : 'DART 공시를 불러오지 못했어요.')
-        }
-      })
-
     return () => controller.abort()
   }, [stockCode])
 
   return {
     companyProfile,
     companyProfileError,
-    disclosureError,
-    disclosures,
     financialError,
     financials,
   }

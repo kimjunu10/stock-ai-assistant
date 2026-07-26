@@ -1,3 +1,5 @@
+import { cleanPublicText } from '../utils/publicText'
+
 interface RagAnswerProps {
   text: string
 }
@@ -24,7 +26,7 @@ function parseAnswer(text: string): AnswerBlock[] {
     list = undefined
   }
 
-  for (const rawLine of text.replace(/\r/g, '').split('\n')) {
+  for (const rawLine of cleanPublicText(text).replace(/\r/g, '').split('\n')) {
     const line = rawLine.trim()
     if (!line) {
       flushParagraph()

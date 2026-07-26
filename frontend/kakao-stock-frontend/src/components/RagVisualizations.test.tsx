@@ -21,7 +21,8 @@ describe('RagVisualizations', () => {
       },
       sourceIds: ['n1'],
     }]} />)
-    expect(screen.getByText('2026-07-23 ~ 2026-07-25')).toBeTruthy()
+    expect(screen.getByText('관련 뉴스')).toBeTruthy()
+    expect(screen.getByText('1건')).toBeTruthy()
     expect(screen.getByRole('link', { name: /반도체 공급 확대/ }).getAttribute('href')).toBe('https://example.com/news')
   })
 
@@ -40,9 +41,9 @@ describe('RagVisualizations', () => {
         sourceIds: ['r1'],
       },
     ]} />)
-    expect(screen.getByText('공식 실제값')).toBeTruthy()
-    expect(screen.getByText('증권사 전망')).toBeTruthy()
-    expect(screen.getByText('목표주가는 증권사의 전망이며 실제 시장 가격이나 확정값이 아닙니다.')).toBeTruthy()
+    expect(screen.getByText('공식 실적')).toBeTruthy()
+    expect(screen.getByText('전망')).toBeTruthy()
+    expect(screen.getByText('증권사 전망치이며 실제 가격이나 확정 실적이 아닙니다.')).toBeTruthy()
   })
 
   it('renders news sentiment badge and stock code', () => {
@@ -55,7 +56,7 @@ describe('RagVisualizations', () => {
       sourceIds: ['n1'],
     }]} />)
     expect(screen.getByText('악재')).toBeTruthy()
-    expect(screen.getByText('005930')).toBeTruthy()
+    expect(document.querySelector('.news-list-item.is-sentiment-negative')).toBeTruthy()
   })
 
   it('renders event timeline merging news and disclosures newest-first', () => {
@@ -87,7 +88,8 @@ describe('RagVisualizations', () => {
       data: { points, quote: { currency: 'KRW' }, period: { start_trading_day: '2026-07-01', end_trading_day: '2026-07-22', return_pct: 8.4 } },
       sourceIds: ['price:x'],
     }]} />)
-    expect(screen.getByText('실제값')).toBeTruthy()
+    expect(screen.getByRole('img', { name: /주가 흐름/ })).toBeTruthy()
+    expect(screen.getByText('271,000원')).toBeTruthy()
   })
 
   it('ignores unknown visualization types safely', () => {
@@ -95,6 +97,6 @@ describe('RagVisualizations', () => {
       // @ts-expect-error unknown type on purpose
       type: 'unknown_kind', title: 'x', data: {}, sourceIds: ['s1'],
     }]} />)
-    expect(container.querySelector('.rag-viz')).toBeNull()
+    expect(container.querySelector('.answer-visuals')?.children).toHaveLength(0)
   })
 })
