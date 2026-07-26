@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Icon } from '../components/Icon'
 import { RagConversation } from '../components/RagConversation'
 import { STOCKS } from '../data/mockData'
 
@@ -8,8 +9,18 @@ export function AskPage() {
 
   return (
     <main className="ask-page">
-      <div aria-hidden="true" className="ask-page__glow ask-page__glow--one" />
-      <div aria-hidden="true" className="ask-page__glow ask-page__glow--two" />
+      <aside className="ask-sidebar">
+        <div className="ask-sidebar__title"><Icon name="message" size={18} /><strong>Moa AI</strong></div>
+        <div className="ask-sidebar__status"><i /><span>근거 자료 연결됨</span></div>
+        <div className="ask-sidebar__recent">
+          <span>확인하는 자료</span>
+          <p>실시간 주가와 DART 공식 수치</p>
+          <p>사건 단위 뉴스와 공시</p>
+          <p>증권사 리포트와 전망</p>
+        </div>
+        <div className="ask-sidebar__notice"><Icon name="info" size={16} /><p>AI 답변은 투자 권유가 아니며, 실제 자료와 전망을 구분해 표시합니다.</p></div>
+      </aside>
+
       <section className="global-chat">
         <header className="global-chat__header">
           <div className="global-chat__identity">
