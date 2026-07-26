@@ -687,6 +687,20 @@ docstring: 3개 Tool 에 "stock_code=6자리 숫자, 회사명 금지" 명시
 미수행: 운영 배포·자동 머지·Phase 8·프런트 event_context 연동
 ```
 
+## Phase 7 운영 배포 smoke(2026-07-26)
+
+PR #47 머지(`848eeed`) 후 운영 컨테이너가 해당 커밋 이미지로 재기동됨을 확인하고
+운영 API에 최소 smoke(A~E, `/qa/stream` 1건)만 실행했다. 코드 수정·전체 재평가 없음.
+
+```text
+운영 커밋: 848eeed(컨테이너 이미지 태그 일치) · health healthy · Agent 활성
+결과: A~E 전부 통과 — 임의 사건 선택 0건·기간 대체 0건·허위 숫자 0건·출처 누락 0건
+      C(사건 2026-07-21) 결과가 종료 게이트와 완전 일치, /qa·/qa/stream 의미 일치
+실패·재시도: 없음
+문서: phase_7/PHASE_7_COMPLETION.md §15
+판정: Phase 7 최종 완료
+```
+
 ---
 
 # Phase 8. 전체 평가·튜닝
