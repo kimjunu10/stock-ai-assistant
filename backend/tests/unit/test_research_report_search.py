@@ -24,17 +24,38 @@ class _FakeTable:
     def __init__(self, db, name):
         self._db = db
         self._name = name
-        self._filter_vals = None
+        self._rows = list(db.data.get(name, []))
 
     def select(self, *a, **k):
         return self
 
     def in_(self, col, vals):
-        self._filter_vals = vals
+        vals = set(vals)
+        self._rows = [r for r in self._rows if r.get(col) in vals]
+        return self
+
+    def eq(self, col, val):
+        self._rows = [r for r in self._rows if r.get(col) == val]
+        return self
+
+    def gte(self, col, val):
+        self._rows = [r for r in self._rows if (r.get(col) or "") >= val]
+        return self
+
+    def lte(self, col, val):
+        self._rows = [r for r in self._rows if (r.get(col) or "") <= val]
+        return self
+
+    def order(self, col, desc=False):
+        self._rows = sorted(self._rows, key=lambda r: r.get(col) or "", reverse=bool(desc))
+        return self
+
+    def limit(self, n):
+        self._rows = self._rows[:n]
         return self
 
     def execute(self):
-        return type("R", (), {"data": self._db.data.get(self._name, [])})()
+        return type("R", (), {"data": self._rows})()
 
 
 class _FakeDB:
@@ -71,11 +92,32 @@ def _svc(chunks, db_data):
     return ResearchReportSearch(_FakeDB(db_data), cfg, _FakeRetriever(chunks))
 
 
-def _db(reports, pages, tables):
+def _db(reports, pages, tables, documents=None, chunks=None):
     return {
         "research_reports": reports,
         "research_report_pages": pages,
         "research_report_tables": tables,
+        "rag_documents": documents or [],
+        "rag_chunks": chunks or [],
+    }
+
+
+def _doc(doc_id, file_hash):
+    return {
+        "id": doc_id,
+        "source_pk": file_hash,
+        "is_current": True,
+        "source_type": "research_report",
+    }
+
+
+def _rag_chunk(chunk_id, doc_id, page_number, content="본문"):
+    return {
+        "id": chunk_id,
+        "document_id": doc_id,
+        "content": content,
+        "source_locator": {"page_number": page_number},
+        "is_active": True,
     }
 
 
@@ -129,6 +171,11 @@ def test_partial_report_excluded_defensively():
 
 
 def test_broker_filter():
+    """broker 가 있으면 벡터 검색을 거치지 않고 메타에서 그 증권사만 직접 가져온다.
+
+    종목 전체 후보의 상위 top_k 안에 그 증권사 청크가 없어 최신 리포트를 놓치던
+    결함(report-09) 방지 — broker 필터는 이제 검색 후처리가 아니라 선행 조회다.
+    """
     reports = [
         {
             "id": "r1",
@@ -151,7 +198,9 @@ def test_broker_filter():
             "parse_status": "success",
         },
     ]
-    svc = _svc([_chunk("1", "h1", 1), _chunk("2", "h2", 1)], _db(reports, [], []))
+    documents = [_doc("d1", "h1"), _doc("d2", "h2")]
+    chunks = [_rag_chunk("c1", "d1", 1), _rag_chunk("c2", "d2", 1)]
+    svc = _svc([], _db(reports, [], [], documents, chunks))
     hits = svc.search("목표주가", stock_code="005930", broker="키움")
     assert len(hits) == 1 and hits[0].broker == "키움증권"
 
@@ -325,3 +374,65 @@ def test_current_dedupes_identical_broker_date_tp():
     )
     hana = [h for h in hits if h.broker == "하나증권"]
     assert len(hana) == 1  # 중복 제거 + 증권사별 최신 1건
+
+
+def test_empty_query_lists_recent_without_embedding():
+    """검색 주제 없는 '최근 리포트 목록' 요청은 임베딩(retriever.search)을 부르지 않는다.
+
+    search_research_reports 가 query="" 로 호출되면 임베딩 계층이 빈 문자열
+    입력을 거부해 오류가 나던 운영 결함(round3 A케이스) 회귀 방지.
+    """
+    reports = [
+        _report("r1", "h1", "미래에셋증권", "2026-07-08", tp=550000, tp_status="stated"),
+        _report("r2", "h2", "키움증권", "2026-07-08", tp=390000, tp_status="stated"),
+    ]
+    documents = [_doc("d1", "h1"), _doc("d2", "h2")]
+    chunks = [_rag_chunk("c1", "d1", 1), _rag_chunk("c2", "d2", 1)]
+    svc = _svc([], _db(reports, [], [], documents, chunks))
+    hits = svc.search("", stock_code="005930", time_context="current")
+    assert svc._retriever.calls == []  # 임베딩 검색 미호출
+    assert {h.broker for h in hits} == {"미래에셋증권", "키움증권"}
+
+
+def test_broker_filter_finds_report_outside_vector_topk():
+    """broker 지정 시 그 증권사 최신 리포트를 항상 찾는다(벡터 후보 밖이어도).
+
+    report-09 회귀: 종목 리포트가 많아 벡터 검색 top_k 안에 특정 증권사의
+    최신 리포트가 없으면 오래된 리포트를 잘못 반환하던 결함.
+    """
+    reports = [_report("r1", "h1", "SK증권", "2026-07-13", tp=134000, tp_status="stated")]
+    reports += [
+        _report(f"r{i}", f"h{i}", "타증권", f"2026-07-{i:02d}", tp=100000 + i, tp_status="stated")
+        for i in range(2, 12)
+    ]
+    documents = [_doc(f"d{i}", f"h{i}") for i in range(1, 12)]
+    chunks = [_rag_chunk(f"c{i}", f"d{i}", 1) for i in range(1, 12)]
+    svc = _svc([], _db(reports, [], [], documents, chunks))
+    # 벡터 검색 후보에 SK증권 청크가 전혀 없어도(리트리버가 빈 결과를 주더라도)
+    # broker 조회는 벡터 검색을 거치지 않으므로 영향받지 않는다.
+    hits = svc.search("목표주가", stock_code="005930", broker="SK증권", time_context="current")
+    assert len(hits) == 1
+    assert hits[0].broker == "SK증권" and hits[0].target_price == 134000
+
+
+def test_report_id_lookup_returns_specific_report():
+    """document_id 문맥으로 확정된 특정 리포트를 report_id 로 직접 조회한다."""
+    reports = [_report("r1", "h1", "하나증권", "2026-07-08", tp=480000, tp_status="stated")]
+    documents = [_doc("d1", "h1")]
+    chunks = [_rag_chunk("c1", "d1", 1, content="목표주가 근거 본문")]
+    svc = _svc([], _db(reports, [], [], documents, chunks))
+    hits = svc.get_by_report_id("r1", stock_code="005930")
+    assert len(hits) == 1
+    assert hits[0].broker == "하나증권" and hits[0].target_price == 480000
+
+
+def test_report_id_lookup_stock_mismatch_drops_target_price():
+    """report_id 로 조회했는데 문맥 종목과 리포트 종목이 다르면 목표주가를 신뢰하지 않는다."""
+    reports = [_report("r1", "h1", "하나증권", "2026-07-08", tp=480000, tp_status="stated")]
+    documents = [_doc("d1", "h1")]
+    chunks = [_rag_chunk("c1", "d1", 1)]
+    svc = _svc([], _db(reports, [], [], documents, chunks))
+    hits = svc.get_by_report_id("r1", stock_code="000660")  # 리포트는 005930 소속
+    assert len(hits) == 1
+    assert hits[0].target_price is None
+    assert hits[0].target_price_status == "ambiguous"

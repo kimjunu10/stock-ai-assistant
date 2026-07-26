@@ -163,6 +163,24 @@ def _event_context_block(
     return ""
 
 
+def _document_context_block(source_type: str | None, source_id: str | None) -> str:
+    """사용자가 현재 화면에서 보고 있는 특정 문서를 프롬프트에 싣는다.
+
+    "이 리포트", "이 공시" 처럼 지시 표현으로 묻는 후속 질문에서, 화면 문맥으로
+    이미 확정된 문서가 있는데도 어떤 문서인지 되묻는 것을 막는다. 서버가 확정해
+    넘긴 값만 쓰고, 모델이 임의로 다른 문서를 고르지 않는다.
+    """
+    if source_type != "research_report" or not source_id:
+        return ""
+    return (
+        "\n\n현재 문서 문맥(서버 확정):\n"
+        f"- report_id: {source_id}\n"
+        '- 사용자가 "이 리포트", "이 문서" 처럼 지시 표현으로 물으면 이 리포트를\n'
+        "  가리키는 것이다. 어떤 리포트인지 되묻지 않는다.\n"
+        "- search_research_reports 의 report_id 인자에 이 값을 그대로 넣어 조회한다."
+    )
+
+
 def financial_agent_system_prompt(
     *,
     current_datetime: str | None,
@@ -173,6 +191,8 @@ def financial_agent_system_prompt(
     event_title: str | None = None,
     event_date: str | None = None,
     event_candidates: list | None = None,
+    source_type: str | None = None,
+    source_id: str | None = None,
 ) -> str:
     """정적 원칙에 요청 시점의 서버 시간·사건 컨텍스트를 결합한다."""
 
@@ -192,4 +212,5 @@ def financial_agent_system_prompt(
             event_date=event_date,
             candidates=event_candidates,
         )
+        + _document_context_block(source_type, source_id)
     )

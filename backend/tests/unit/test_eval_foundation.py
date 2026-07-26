@@ -442,6 +442,38 @@ def test_exclusion_violation_still_caught_in_other_sentence():
     assert g.exclusion_violations == ["목표주가"]
 
 
+def test_exclusion_not_violated_by_amnida_negation():
+    """'확정 실적이 아님을' 처럼 '아님'으로 끝나는 부정도 위반이 아니다(round3 report-10)."""
+    case = _case(forbidden_claims=["확정"], required_tools=["search_research_reports"])
+    answer = "참고로, 증권사 목표주가와 전망은 예측치이며 확정 실적이 아님을 유의해 주세요."
+    g = grade_case(case, _record(answer=answer))
+    assert g.exclusion_violations == []
+
+
+def test_exclusion_not_violated_by_haji_anta_negation():
+    """'~하지 않습니다' 부정도 위반이 아니다(round3 na-05: 매수 추천은 하지 않습니다)."""
+    case = _case(
+        id="na-x2",
+        type="답변 불가능·모호",
+        is_answerable=False,
+        required_tools=[],
+        no_data_expectation="투자 추천은 하지 않는다고 밝혀야 함",
+        forbidden_claims=["추천"],
+    )
+    g = grade_case(case, _record(answer="직접적인 매수·매도 추천은 하지 않습니다."))
+    assert g.exclusion_violations == []
+
+
+def test_exclusion_not_violated_by_oe_suffix():
+    """'실적 외 주요 이슈'처럼 금지어 뒤에 '외'가 붙어 논의 대상에서 뺐다고 밝히면 위반이 아니다."""
+    case = _case(forbidden_claims=["실적"], required_tools=["search_news"])
+    g = grade_case(
+        case,
+        _record(answer="한화오션의 최근 실적 외 주요 이슈는 다음과 같습니다: 수주 소식입니다."),
+    )
+    assert g.exclusion_violations == []
+
+
 def test_grade_trading_day_accepts_korean_date_format():
     case = _case(
         required_tools=["get_stock_prices"],

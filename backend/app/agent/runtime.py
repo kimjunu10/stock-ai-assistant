@@ -114,6 +114,8 @@ def _runtime_prompt(request) -> str:
         event_title=getattr(ctx, "event_title", None),
         event_date=getattr(ctx, "event_date", None),
         event_candidates=getattr(ctx, "event_candidates", None),
+        source_type=getattr(ctx, "source_type", None),
+        source_id=getattr(ctx, "source_id", None),
     )
 
 
@@ -308,6 +310,7 @@ def build_tools() -> list:
         date_to: str | None = None,
         time_context: str | None = None,
         as_of_date: str | None = None,
+        report_id: str | None = None,
     ) -> str:
         """증권사 리포트를 검색한다(목표주가·투자의견·전망). 전망값은 예측치다.
 
@@ -318,6 +321,11 @@ def build_tools() -> list:
         broker: 사용자가 특정 증권사를 지목하면("대신증권 리포트", "미래에셋에서는")
         그 증권사명을 반드시 이 인자로 넘긴다. query 에만 넣으면 다른 증권사 리포트가
         섞여 나온다. 지목이 없으면 생략한다.
+        query: 검색 주제(예: "목표주가", "실적 전망"). 사용자가 최근 리포트
+        "목록"만 요청하고 특정 주제가 없으면 빈 문자열로 둔다(최신순 목록 반환).
+        report_id: 현재 문서 문맥(서버 확정)에 report_id 가 있고 사용자가 "이 리포트",
+        "이 문서" 처럼 그 리포트를 가리키면 이 인자에 그 값을 그대로 넣는다. 검색 없이
+        해당 리포트만 바로 반환한다. 이 값이 있으면 query/broker/time_context 는 무시된다.
         time_context 로 검색의 시간 기준을 준다(생략하면 "current" 가 기본):
           - "current"(기본): 최근 증권사 의견/목표주가(증권사별 최신 1건, 오래된 자료 표시).
             '지금 목표주가/전망' 질문은 이 값을 쓴다(이력·타 종목 값이 섞이지 않음).
@@ -337,6 +345,7 @@ def build_tools() -> list:
             date_to=date_to,
             time_context=time_context,
             as_of_date=as_of_date,
+            report_id=report_id,
         )
         return _dump(run_search_research_reports(svc.reports, inp))
 

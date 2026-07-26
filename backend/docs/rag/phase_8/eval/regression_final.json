@@ -1,0 +1,766 @@
+{
+  "n": 18,
+  "elapsed_sec": 131.2,
+  "disc11_repeat_runs": [
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ],
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ],
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ],
+    [
+      "20260710000002"
+    ],
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ],
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ],
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ],
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ],
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ],
+    [
+      "20260713000324",
+      "20260715000004",
+      "20260715800045",
+      "20260715800456",
+      "20260716000582"
+    ]
+  ],
+  "disc11_stable": false,
+  "rows": [
+    {
+      "id": "news-03",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 갤럭시Z 폴드8 이슈 설명해줘",
+      "before": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "삼성전자의 갤럭시Z 폴드8 관련 주요 이슈를 요약해 드리겠습니다.\n\n- 2026년 7월 22일 영국 런던에서 열리는 갤럭시 언팩 행사에서 갤럭시Z 폴드8, 폴드8 울트라, 플립8이 공개될 예정입니다.\n- 최근 공식 마케팅 이미지와 실물 사진이 유출되어 제품 디자인, 카메라 사양, 배터리 용량 등이 알려졌습니다.\n- 갤럭시Z 폴드8은 5000만 화소 광각 및"
+      },
+      "after": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": true,
+        "gold_document_hit": true,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "최근 삼성전자 갤럭시Z 폴드8 관련 주요 이슈는 다음과 같습니다:\n\n1. 삼성전자가 갤럭시Z 폴드8과 플립8 구독 서비스를 개편해 2년 사용 후 반납 시 잔존가 최대 50%를 보장하고, 어학 학습 앱 이용권도 제공하는 혜택을 내놓았습니다. 3년형 구독도 신설되어 파손·분실 보장과 무상 수리 서비스가 강화되었습니다. (출처: 2026-07-26)\n\n2. 7월"
+      }
+    },
+    {
+      "id": "news-04",
+      "type": "뉴스 사건·영향",
+      "question": "두산에너빌리티 미국 원전 수주 관련 소식 알려줘",
+      "before": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 4,
+        "answer_head": "두산에너빌리티의 미국 원전 수주 관련 최근 뉴스는 현재 확인되지 않습니다. 다만, 두산에너빌리티는 소형모듈원전(SMR)과 대형원전 분야에서 대규모 투자 계획을 논의 중이며, 이는 경남도의 첨단산업 발전 비전과 연계된 핵심 프로젝트로 추진되고 있습니다(2026년 7월 24일 보도).\n\n미국 원전 수주에 대한 구체적인 수주 소식이나 계약 체결 뉴스는 최근 2일"
+      },
+      "after": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 4,
+        "answer_head": "최근 두산에너빌리티의 미국 원전 수주 관련 구체적인 뉴스는 확인되지 않았습니다. 다만, 두산에너빌리티가 소형모듈원전(SMR)과 대형원전 분야에서 대규모 투자 계획을 논의하는 등 원전 사업에 적극적으로 참여하고 있다는 소식이 있습니다. \n\n요약하면:\n- 두산에너빌리티는 소형모듈원전(SMR)과 대형원전 분야에서 대규모 투자 계획을 추진 중입니다.\n- 경남도와 "
+      }
+    },
+    {
+      "id": "news-09",
+      "type": "뉴스 사건·영향",
+      "question": "두산에너빌리티 중부발전 관련 소식 알려줘",
+      "before": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 4,
+        "answer_head": "두산에너빌리티와 중부발전 관련 최근 소식은 다음과 같습니다.\n\n1. 한국남부발전이 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS(배터리 저장장치)를 준공했으며, 두산에너빌리티가 이 사업에 참여했습니다. 이 설비는 출력 23MW, 배터리 용량 92MWh 규모로 재생에너지 출력 제어 문제를 해결하고 전력계통 안정화에 기여합니다. (2026년 7월 16일 "
+      },
+      "after": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 4,
+        "answer_head": "두산에너빌리티와 중부발전 관련 최근 소식은 직접적으로 나오지 않았으나, 두산에너빌리티가 참여한 한국남부발전 관련 뉴스와 두산에너빌리티의 주요 사업 및 투자 소식이 있습니다.\n\n1. 한국남부발전이 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS(배터리 저장장치)를 준공했으며, 두산에너빌리티가 이 사업에 참여했습니다. 이 설비는 재생에너지 출력 제어 문제를"
+      }
+    },
+    {
+      "id": "news-13",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 구글과 협업한 AI 이슈 설명해줘",
+      "before": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "삼성전자가 구글과 협업한 AI 관련 이슈로는 최근 갤럭시 언팩 2026에서 공개된 구글과 협업한 스마트안경 2종 개발이 있습니다. 삼성전자 MX사업부 XR 개발팀장은 스마트안경 개발 과정에서 선크림의 알코올 성분이 스피커에 영향을 주는 등 기술적 어려움을 겪었고, 초슬림 힌지 구조와 경량 소재를 적용해 일반 안경처럼 가볍고 편안하게 착용할 수 있도록 했다고"
+      },
+      "after": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "삼성전자는 구글과 협업해 스마트안경을 개발했으며, 이 과정에서 선크림의 알코올 성분이 스피커에 영향을 주는 등 기술적 어려움을 겪었습니다. 삼성전자 MX사업부 XR 개발팀장은 초슬림 힌지 구조와 경량 소재를 적용해 일반 안경처럼 가볍고 편안한 착용감을 구현했고, 100회 이상 선크림 노출 테스트를 진행했다고 밝혔습니다. 이 스마트안경 2종은 핸즈프리 AI "
+      }
+    },
+    {
+      "id": "news-14",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 HJ중공업 관련 소식 알려줘",
+      "before": {
+        "tools": [
+          "search_news",
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "한화오션(042660) 관련 최근 소식 요약입니다:\n\n1. 한화오션이 노란봉투법 관련 첫 행정소송을 제기했습니다. 사내 협력업체 웰리브 노조의 사용자성 판정에 불복해 서울행정법원에 판정 취소 소송과 집행정지를 신청했으며, 원청의 사용자성 인정 범위가 쟁점으로 부상하고 있습니다. (출처: news_cluster:7225)\n\n2. 한화오션이 표준 FPSO 기본"
+      },
+      "after": {
+        "tools": [
+          "search_news",
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "한화오션(042660) 관련 최근 주요 소식은 다음과 같습니다:\n\n1. 한화오션이 노란봉투법 시행 이후 첫 행정소송을 제기했습니다. 사내 협력업체 웰리브 노조의 사용자성 판정에 불복해 서울행정법원에 판정 취소 소송과 집행정지를 신청했으며, 원청의 사용자성 인정 범위가 쟁점으로 부상하고 있습니다. (출처: news_cluster:7225)\n\n2. 한화오션이 "
+      }
+    },
+    {
+      "id": "news-15",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 SK 건은 어떤 내용이야?",
+      "before": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "최근 SK하이닉스 관련 SK 건은 SK그룹 최태원 회장과 전 부인 노소영 관장 간의 이혼 재산분할 판결입니다. 서울고등법원은 최태원 회장이 노소영 관장에게 SK(주) 주식 분할 대가로 9440억원을 현금으로 지급하라고 판결했습니다. 이 판결은 1심과 2심 판결 사이의 중간 수준으로 결정되었고, SK하이닉스 등 SK 계열사의 기업가치 급등이 재산분할 금액에 "
+      },
+      "after": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "SK 관련 최근 뉴스 중 SK하이닉스와 직접 관련된 'SK 건'으로 보이는 주요 내용은 다음과 같습니다.\n\n1. SK가 성장 단계 소셜벤처 9개사를 선발하고 SK 계열사와의 사업협력 및 지원을 본격화했습니다. 이 프로그램은 사회문제 해결과 사업성 추구를 목표로 하며, 선정된 소셜벤처에는 사업지원금과 협력 자금, 전문가 멘토링 등이 제공됩니다. (출처: 20"
+      }
+    },
+    {
+      "id": "news-19",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 최태원 관련 소식 알려줘",
+      "before": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "최근 SK하이닉스와 관련해 최태원 대한상공회의소 회장과 관련된 주요 소식은 다음과 같습니다:\n\n1. 최태원 회장은 SK하이닉스의 성과급 논란에 대해 \"모두가 싫어하는 건 아니지만, 제도가 이해관계자에게 부정적 영향을 주면 손볼 필요가 있다\"며 상황을 좀 더 지켜봐야 한다고 밝혔습니다. (2026-07-21)\n2. SK그룹 최태원 회장과 노소영 관장의 재산분"
+      },
+      "after": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "최근 SK하이닉스와 관련해 최태원 대한상공회의소 회장에 관한 주요 소식은 다음과 같습니다:\n\n1. 최태원 회장은 SK하이닉스의 성과급 논란에 대해 \"모두가 싫어하는 건 아니지만, 제도가 이해관계자에게 부정적 영향을 주면 손볼 필요가 있다\"며 현재 상황을 좀 더 지켜봐야 한다고 밝혔습니다. (2026년 7월 21일)\n2. SK그룹 최태원 회장과 노소영 관장의"
+      }
+    },
+    {
+      "id": "report-06",
+      "type": "증권사 리포트",
+      "question": "대신증권 SK하이닉스 리포트 전망 어때?",
+      "before": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "SK하이닉스에 대한 최근 증권사 리포트 전망을 요약하면 다음과 같습니다.\n\n- 교보증권(2026-07-01): DRAM 가격 상승과 HBM4 기여도 확대 등으로 3~4분기 이익 모멘텀이 가속화될 전망이며, 2027년 HBM 가격 협상 결과에 따라 추가 상향 여지도 있음. 투자의견은 매수(BUY), 목표주가는 4,000,000원으로 상향 조정됨.\n- 미래에셋"
+      },
+      "after": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "대신증권의 SK하이닉스 전망 리포트에 따르면, 2~4분기 이익 모멘텀이 가속화될 것으로 보이며, 2027년 HBM 가격 협상 결과에 따라 추가적인 전망치 상향 가능성도 있습니다. AI 확산으로 DRAM·NAND 수요가 확대되고 구조적 공급 부족이 2028년까지 지속될 것으로 예상되어 하반기 실적 개선이 이어질 전망입니다. 대신증권은 투자의견 'BUY'와 목"
+      }
+    },
+    {
+      "id": "report-08",
+      "type": "증권사 리포트",
+      "question": "삼성전자에 대한 IBK투자증권 리포트 내용 요약해줘",
+      "before": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [
+          "답변에 재무성 숫자가 있으나 이를 뒷받침하는 숫자 Tool 근거가 없음"
+        ],
+        "answer_dropped": false,
+        "n_sources": 1,
+        "answer_head": "IBK투자증권의 삼성전자 리포트(2026년 5월 4일자)를 요약하면 다음과 같습니다.\n\n- 투자 의견: 매수\n- 목표주가: 350,000원\n- 2026년 예상 배당수익률: 0.8%\n- 최근 1개월, 6개월, 12개월 주가 상승률(상대기준): 0%, 31%, 54%\n- 2024~2028년 매출액과 영업이익 등 주요 실적 전망이 포함되어 있음\n- 주요 주주 구"
+      },
+      "after": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": true,
+        "gold_document_hit": true,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 1,
+        "answer_head": "IBK투자증권의 삼성전자 최신 리포트(2026년 7월 8일자)를 요약하면 다음과 같습니다.\n\n- 2026년 2분기 삼성전자 잠정 매출액은 171조원으로 1분기 대비 27.9% 증가, 영업이익은 89.4조원으로 56.2% 증가해 이전 전망보다 좋은 실적을 기록함\n- DS(반도체) 사업부가 실적 성장을 주도했으며, DRAM과 NAND 가격 상승이 긍정적 영향\n"
+      }
+    },
+    {
+      "id": "report-09",
+      "type": "증권사 리포트",
+      "question": "SK증권에서 한화오션 목표주가 얼마로 봤어?",
+      "before": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [
+          "답변에 재무성 숫자가 있으나 이를 뒷받침하는 숫자 Tool 근거가 없음"
+        ],
+        "answer_dropped": false,
+        "n_sources": 1,
+        "answer_head": "SK증권에서 본 한화오션의 목표주가는 175,000원입니다(2026년 4월 14일 기준). 이 보고서에서는 현재 주가 120,100원 대비 약 45.7% 상승 여력이 있다고 평가했습니다."
+      },
+      "after": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": true,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 1,
+        "answer_head": "SK증권에서 본 한화오션의 목표주가는 134,000원입니다. 이 목표주가는 2026년 7월 13일에 제시된 최신 전망치입니다."
+      }
+    },
+    {
+      "id": "report-15",
+      "type": "증권사 리포트",
+      "question": "2026-06-18에 나온 한화투자증권 현대차 투자의견 알려줘",
+      "before": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": false,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 0,
+        "answer_head": "2026년 6월 18일에 나온 현대차(005380)의 투자의견을 확인하려 했으나, 내부 조회 오류로 인해 해당 날짜의 투자의견 정보를 제공받지 못했습니다. 다른 날짜나 최근 투자의견을 원하시면 알려주세요."
+      },
+      "after": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": true,
+        "gold_document_hit": true,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 1,
+        "answer_head": "2026년 6월 18일 한화투자증권에서 발표한 현대차(005380)의 투자의견은 'Buy'입니다. 이 리포트에서 제시한 목표주가는 760,000원입니다. (출처: 한화투자증권 2026-06-18 리포트)"
+      }
+    },
+    {
+      "id": "mix-09",
+      "type": "복수 기능 혼합",
+      "question": "두산에너빌리티 왜 이런 실적이 나왔고 전망은 어떤지 알려줘",
+      "before": {
+        "tools": [
+          "get_financial_facts",
+          "search_research_reports",
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": null,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [
+          "답변의 목표주가 140,000원이 구조화 근거(stated)와 일치하지 않음 (허용값: [149000, 150000, 156000, 158000, 160000])",
+          "근거 없는 증권사·목표주가 문장을 답변에서 제거함"
+        ],
+        "answer_dropped": true,
+        "n_sources": 12,
+        "answer_head": "두산에너빌리티의 최근 실적과 전망을 요약해 드리겠습니다. 1. 최근 실적 (2026년 1분기 누적, 연결 기준) - 매출액: 4.26조원 - 영업이익: 2,335.1억원 - 당기순이익: 602.3억원 2. 실적 배경 및 최근 뉴스 - 두산에너빌리티는 국내외 원전 및 에너지 사업에서 활발한 활동을 하고 있습니다. - 최근 제주 안덕에 국내 첫 중앙계약시장형 "
+      },
+      "after": {
+        "tools": [
+          "search_news",
+          "get_financial_facts",
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": null,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [
+          "답변의 목표주가 140,000원이 구조화 근거(stated)와 일치하지 않음 (허용값: [149000, 150000, 156000, 158000, 160000])",
+          "근거 없는 증권사·목표주가 문장을 답변에서 제거함"
+        ],
+        "answer_dropped": true,
+        "n_sources": 12,
+        "answer_head": "두산에너빌리티의 2026년 1분기 누적 실적은 매출액 4.26조원, 영업이익 2,335억원, 당기순이익 602억원입니다. 실적 배경과 관련해 최근 뉴스들을 보면, 두산에너빌리티는 재생에너지 확대와 원전 사업 등에서 활발한 사업 활동을 하고 있습니다. 예를 들어, 제주 안덕에 국내 첫 중앙계약시장형 장주기 BESS 준공에 협력사로 참여하고 있고, 인도의 소형"
+      }
+    },
+    {
+      "id": "mix-15",
+      "type": "복수 기능 혼합",
+      "question": "한화오션 목표주가 대비 현재 주가 수준 알려줘",
+      "before": {
+        "tools": [
+          "search_research_reports",
+          "get_stock_prices"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": null,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [
+          "답변의 목표주가 140,000원이 구조화 근거(stated)와 일치하지 않음 (허용값: [139000, 144000, 179000])",
+          "근거 없는 증권사·목표주가 문장을 답변에서 제거함"
+        ],
+        "answer_dropped": true,
+        "n_sources": 3,
+        "answer_head": "현재 주가 정보는 내부 조회 오류로 확인이 어렵습니다. 다시 시도하거나 다른 방법으로 현재 주가를 확인해 보시길 권합니다. 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다."
+      },
+      "after": {
+        "tools": [
+          "search_research_reports",
+          "get_stock_prices"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": null,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [
+          "답변의 목표주가 140,000원이 구조화 근거(stated)와 일치하지 않음 (허용값: [139000, 144000, 179000])",
+          "근거 없는 증권사·목표주가 문장을 답변에서 제거함"
+        ],
+        "answer_dropped": true,
+        "n_sources": 3,
+        "answer_head": "현재 주가는 내부 조회 오류로 정확한 값을 확인하지 못했습니다. 다시 한 번 현재 주가를 조회해 드릴까요? 일부 증권사의 구조화된 목표주가를 확인할 수 없어 해당 수치는 제외했습니다."
+      }
+    },
+    {
+      "id": "disc-13",
+      "type": "공시 설명·구조화 값",
+      "question": "삼성전자 자기주식 취득 공시 알려줘",
+      "before": {
+        "tools": [
+          "get_disclosure_values"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [
+          "증권사"
+        ],
+        "gold_chunk_hit": true,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 3,
+        "answer_head": "삼성전자의 최근 자기주식 취득 공시는 다음과 같습니다.\n\n1. 2026년 3월 18일 결정된 공시\n   - 취득 예정 주식 수: 37,000,000주\n   - 취득 예정 금액: 약 7조 1,743억 원\n   - 취득 예정 기간: 2026년 3월 19일부터 6월 18일까지\n   - 취득 목적: 임직원 주식보상\n   - 취득 방법: 유가증권시장을 통한 장내 매"
+      },
+      "after": {
+        "tools": [
+          "search_disclosures"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "삼성전자의 최근 자기주식 취득 관련 공시는 2026년 7월 21일에 여러 건의 임원·주요주주 특정 증권 등 소유 상황 보고서 형태로 공시되었습니다. 다만, 자기주식 취득 공시 제목이 명확히 드러나지 않고 임원 및 주요주주 소유 상황 보고서로 나타납니다.\n\n자세한 내용은 아래 공시 링크에서 확인할 수 있습니다.\n- [임원ㆍ주요주주특정증권등소유상황보고서 (20"
+      }
+    },
+    {
+      "id": "report-10",
+      "type": "증권사 리포트",
+      "question": "IBK투자증권 SK하이닉스 리포트 전망 어때?",
+      "before": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": true,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 1,
+        "answer_head": "IBK투자증권의 SK하이닉스 최신 리포트(2026년 7월 2일자)에서는 SK하이닉스를 \"Agent AI Ecosystem 중심에 서다\"라는 제목으로 다루고 있습니다. 이 리포트의 투자 의견은 '매수'이며, 목표주가는 4,000,000원으로 제시되었습니다. \n\n참고로, 증권사 목표주가와 전망은 예측치이며 확정 실적이 아님을 유의해 주세요."
+      },
+      "after": {
+        "tools": [
+          "search_research_reports"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": true,
+        "gold_document_hit": true,
+        "other_stock_sources": [],
+        "validation_errors": [
+          "답변에 재무성 숫자가 있으나 이를 뒷받침하는 숫자 Tool 근거가 없음"
+        ],
+        "answer_dropped": false,
+        "n_sources": 1,
+        "answer_head": "IBK투자증권의 SK하이닉스 최신 리포트(2026년 7월 2일자)에 따르면, SK하이닉스에 대해 '매수' 의견을 유지하고 있습니다. 전망 내용의 핵심은 다음과 같습니다.\n\n- 2023년 4분기부터 2026년 2분기까지 11분기 연속 실적 서프라이즈가 예상됨\n- 2026년 2분기 매출액은 1분기 대비 50.2% 증가한 약 78조 9,680억원, 영업이익은 6"
+      }
+    },
+    {
+      "id": "excl-05",
+      "type": "부정·제외·대조",
+      "question": "한화오션 최근 이슈 중에 실적 빼고 뭐 있어?",
+      "before": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": null,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "한화오션의 최근 실적 외 주요 이슈는 다음과 같습니다:\n\n1. 노란봉투법 관련 첫 행정소송 제기: 한화오션이 사내 협력업체 웰리브 노조의 사용자성 판정에 불복해 서울행정법원에 판정 취소 소송을 냈습니다. (출처: news_cluster:7225)\n2. 글로벌 선급 인증 획득: 미국 ABS와 노르웨이 DNV로부터 표준 FPSO 기본설계에 대한 인증을 받아 해"
+      },
+      "after": {
+        "tools": [
+          "search_news"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": null,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "한화오션의 최근 실적 외 주요 이슈는 다음과 같습니다:\n\n1. 노란봉투법 관련 첫 행정소송 제기: 한화오션이 사내 협력업체 웰리브 노조의 사용자성 판정에 불복해 서울행정법원에 판정 취소 소송을 냈습니다. 노란봉투법 시행 이후 원청의 사용자성 인정 범위가 쟁점으로 부상하고 있습니다. (출처: news_cluster:7225)\n\n2. 글로벌 선급 인증 획득: "
+      }
+    },
+    {
+      "id": "na-05",
+      "type": "답변 불가능·모호",
+      "question": "이 종목 사도 돼?",
+      "before": {
+        "tools": [],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": null,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 0,
+        "answer_head": "투자 판단에 필요한 구체적인 정보(예: 재무 상태, 최근 뉴스, 증권사 전망 등)를 알려주시면 그에 맞는 데이터를 제공해 드릴 수 있습니다. 단, 직접적인 매수·매도 추천은 하지 않습니다. 어떤 정보를 알고 싶으신가요?"
+      },
+      "after": {
+        "tools": [],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": null,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 0,
+        "answer_head": "투자 판단에 도움이 될 수 있도록 삼성전자(005930)의 최근 재무 상태, 주가 동향, 그리고 관련 뉴스나 증권사 리포트 등 구체적인 정보를 알려드릴 수 있습니다. 어떤 정보를 우선적으로 알고 싶으신가요? 예를 들어, 최근 실적, 주가 흐름, 증권사 목표주가, 또는 최근 뉴스 등 구체적으로 말씀해 주세요."
+      }
+    },
+    {
+      "id": "disc-11",
+      "type": "공시 설명·구조화 값",
+      "question": "SK하이닉스 해외상장 결정 공시 내용 알려줘",
+      "before": {
+        "tools": [
+          "search_disclosures"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": false,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 5,
+        "answer_head": "SK하이닉스의 해외상장 결정 관련 공시는 2026년 7월 13일에 발표된 \"주요사항보고서(해외증권시장주권등상장)\"입니다. 이 공시가 해외상장 결정 내용을 담고 있습니다.\n\n자세한 내용은 금융감독원 전자공시시스템(DART)에서 확인할 수 있습니다: \n[주요사항보고서(해외증권시장주권등상장) 바로가기](https://dart.fss.or.kr/dsaf001/ma"
+      },
+      "after": {
+        "tools": [
+          "search_disclosures",
+          "get_disclosure_values"
+        ],
+        "stop_reason": "completed",
+        "required_tools_ok": true,
+        "forbidden_violated": [],
+        "exclusion_violations": [],
+        "gold_chunk_hit": true,
+        "gold_document_hit": null,
+        "other_stock_sources": [],
+        "validation_errors": [],
+        "answer_dropped": false,
+        "n_sources": 6,
+        "answer_head": "SK하이닉스는 2026년 6월 24일에 해외 증권시장 주권등 상장 결정을 했습니다. 주요 내용은 다음과 같습니다.\n\n- 상장 거래소: 미국 나스닥 증권거래소(Nasdaq Global Select Market)\n- 상장 목적: 글로벌 투자자 기반 확장\n- 상장 예정일: 2026년 7월 10일경\n- 상장 주식수: 17,790,000주\n- 자금 용도: 시설자금\n"
+      }
+    }
+  ]
+}
