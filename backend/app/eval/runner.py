@@ -34,6 +34,10 @@ class RunRecord:
     case_id: str
     question: str
     context: dict[str, Any]
+    # 이 문항이 실제로 실행된 시각(ISO, KST) — 상대 기간("최근 3일" 등)의 검색
+    # 범위는 이 시각 기준으로 계산됐다. 채점 시점에 gold 라벨이 그 범위 밖으로
+    # 밀려났는지(stale_gold) 판정하는 유일한 근거이므로, 실행기가 반드시 채운다.
+    evaluation_run_at: str | None = None
     tool_sequence: list[str] = field(default_factory=list)
     tool_calls: list[dict] = field(default_factory=list)  # name/args/status/latency_ms
     retrieved_ids: list[str] = field(default_factory=list)
@@ -79,12 +83,19 @@ class EvalRunner:
         self._recorder = recorder
 
     def run(self, case: EvalCase) -> RunRecord:
+        from app.agent.time_context import current_seoul_datetime
+
         ctx = case.context
         # 케이스의 stock_code 와 화면 문맥 stock_code 중 문맥을 우선한다
         # (현재 화면 문맥 유형은 context 에만 종목이 있다).
         stock_code = ctx.stock_code or case.stock_code
         if self._recorder is not None:
             self._recorder.reset()
+
+        # AgentQaService.answer() 내부에서도 이 직후 current_seoul_datetime() 을
+        # 호출해 상대 기간을 계산한다 — 여기서 잰 값은 그 계산의 사실상 동일 시점
+        # 근사치이며, 채점 시 stale_gold(§4) 판정의 유일한 근거가 된다.
+        evaluation_run_at = current_seoul_datetime().isoformat(timespec="seconds")
 
         t0 = time.perf_counter()
         try:
@@ -103,6 +114,7 @@ class EvalRunner:
                 case_id=case.id,
                 question=case.question,
                 context=ctx.model_dump(),
+                evaluation_run_at=evaluation_run_at,
                 total_latency_ms=int((time.perf_counter() - t0) * 1000),
                 stop_reason="runner_error",
                 error=type(exc).__name__,
@@ -133,6 +145,7 @@ class EvalRunner:
             case_id=case.id,
             question=case.question,
             context=ctx.model_dump(),
+            evaluation_run_at=evaluation_run_at,
             tool_sequence=[c["name"] for c in calls],
             tool_calls=calls,
             retrieved_ids=list(r.source_ids or []),

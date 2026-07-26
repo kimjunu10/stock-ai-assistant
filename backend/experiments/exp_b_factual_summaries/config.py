@@ -16,7 +16,14 @@ CLUSTERING_METHOD = "online_centroid"
 COSINE_THRESHOLD = 0.74
 # 같은 종목의 오래된 유사 사건이 새 기사에 다시 붙는 범위를 제한한다.
 # 이 값은 동일 사건 판정 자체가 아니라 LLM에 전달할 후보의 최근성 제한이다.
-ACTIVE_WINDOW_HOURS = 24
+# Phase 8 뉴스 최종 교정: 24시간이면 후속 보도가 원 사건 클러스터의 마지막
+# 활동 시각으로부터 하루 이상 늦게 나올 때(예: 계약 체결 보도 이틀 뒤의 후속
+# 기사) 후보 자체에서 배제돼, 유사도·LLM 판정 기회조차 주어지지 못하고
+# 무조건 새 클러스터가 생겼다(devset news-10/news-18, 40~48시간 차이로 확인).
+# 48시간으로 넓혀 이런 후보 누락을 막는다 — 최종 병합 여부는 여전히
+# COSINE_THRESHOLD/LLM_ASSIGN_AUTO_MERGE_MIN_SIM·Solar 판정이 결정하므로
+# 유사도 기준 자체를 완화하는 것은 아니다.
+ACTIVE_WINDOW_HOURS = 48
 CLUSTERING_VERSION = "bge_m3_title_multiprototype_v2"
 
 # --- over-merge 보호 (시장 뉴스 + 비사건형 투자정보 브리지 차단) ---

@@ -332,7 +332,11 @@ def test_v2_assigner_sends_below_auto_merge_threshold_to_llm():
     assert calls and "cluster_id=1" in calls[0]
 
 
-def test_v2_assigner_defaults_to_24_hour_candidate_window():
+def test_v2_assigner_defaults_to_48_hour_candidate_window():
+    """Phase 8 뉴스 최종 교정: 24h → 48h(devset news-10/news-18, 40~48h 차이의
+    후속 보도가 후보에서 아예 배제돼 새 클러스터가 됐던 문제의 최소 수정).
+    유사도 무관하게 시간창만으로 배제되지 않아야 한다는 게이트 자체를 고정한다.
+    """
     a = assign_llm_v2.LLMAssignerV2(
         call_fn=lambda _p: (
             {"decision": "existing", "matched_cluster_id": 1},
@@ -354,6 +358,22 @@ def test_v2_assigner_defaults_to_24_hour_candidate_window():
         vec,
         100.0,
     )
+    within_new_window = a.assign(
+        {
+            "article_id": "005930:followup",
+            "stock_code": "005930",
+            "title": "기업 총수들, 젠슨 황과 AI 비공개 간담회 후속 보도",
+            "description": "실리콘밸리 기업인 라운드테이블 후속",
+            "event_signature": {
+                "subject": "이재용·최태원·이해진·젠슨 황",
+                "action": "기업인 비공개 라운드테이블",
+            },
+        },
+        vec,
+        147.99,
+    )
+    # within_new_window 병합으로 클러스터의 last_active_h 가 147.99 로 갱신됐으므로,
+    # '48h 를 실제로 넘기는' 시각은 그 갱신값 기준으로 잡아야 한다(100.0 기준이 아님).
     after_window = a.assign(
         {
             "article_id": "005930:summit",
@@ -366,11 +386,17 @@ def test_v2_assigner_defaults_to_24_hour_candidate_window():
             },
         },
         vec,
-        124.01,
+        147.99 + 48.01,
     )
 
-    assert a.window_h == 24
+    assert a.window_h == 48
     assert first.status == "assigned_new"
+    # 24h~48h 사이(구간에서 24h 기준이면 배제됐을 후보)는 이제 후보에 들어가고,
+    # 동일 벡터·동일 event_signature 이므로 dense 유사도 자동 병합(existing)된다.
+    assert within_new_window.status == "assigned_existing"
+    assert within_new_window.cluster_id == first.cluster_id
+    # 48h 를 실제로 넘긴 후보는 여전히 배제되어 새 클러스터가 된다(시간창 자체는
+    # 무한정 늘리지 않는다 — over-merge 방지).
     assert after_window.status == "assigned_new"
     assert after_window.llm_called is False
     assert first.cluster_id != after_window.cluster_id
@@ -736,7 +762,8 @@ def test_incremental_cluster_phase_can_merge_into_persisted_cluster(monkeypatch)
             self.saved = []
 
         def get_v2_assignment_clusters(self, _stock_code, *, active_since=None):
-            assert active_since == "2026-07-20T01:00:00+00:00"
+            # article published_at(07-21T01:00) - ACTIVE_WINDOW_HOURS(48h) = 07-19T01:00.
+            assert active_since == "2026-07-19T01:00:00+00:00"
             return [persisted]
 
         def update_v2_cluster(self, cluster_id, **values):

@@ -141,12 +141,22 @@ class RetrievalMetrics:
     news_stats: dict | None = None
     report_stats: dict | None = None
     page_stats: dict | None = None
+    # Phase 8 뉴스 최종 교정 §4B/C: strict 와 별도로 보존하는 event-equivalent
+    # Recall(사람 승인 필요)과 product failure rate(평가 데이터 문제 제외).
+    news_event_equivalent: dict | None = None
+    report_event_equivalent: dict | None = None
+    news_product_failure: dict | None = None
+    report_product_failure: dict | None = None
 
     def as_dict(self) -> dict:
         return {
             "news_retrieval": self.news_stats,
             "report_retrieval": self.report_stats,
             "report_page_accuracy": self.page_stats,
+            "news_retrieval_event_equivalent": self.news_event_equivalent,
+            "report_retrieval_event_equivalent": self.report_event_equivalent,
+            "news_product_failure": self.news_product_failure,
+            "report_product_failure": self.report_product_failure,
             "structured_lookup": {
                 "row_hit_rate": _ratio(self.lookup_hit, self.lookup_total),
             },

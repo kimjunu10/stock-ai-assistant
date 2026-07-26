@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from typing import Any
 
+from app.agent.time_context import resolve_relative_date_range
 from app.eval.metrics import (
     AgentMetrics,
     AnswerMetrics,
@@ -33,6 +35,8 @@ _LOOKUP_SOURCE_TYPES = frozenset({"term", "financial", "structured_disclosure"})
 
 _NEWS_DOC_ID_RE = re.compile(r"news_clusters\.id=(\d+)")
 _REPORT_DOC_ID_RE = re.compile(r"research_reports\.id=([0-9a-fA-F-]{36})")
+# gold note 규약: "news_clusters.id=<id> / <YYYY-MM-DD> / <감성> / 기사 N건 / ...".
+_GOLD_PUBLISHED_DATE_RE = re.compile(r"/\s*(\d{4}-\d{2}-\d{2})\s*/")
 
 
 def _normalize_doc_id(kind: str, raw: str) -> str:
@@ -139,6 +143,109 @@ def _gold_document_id_for_case(case: EvalCase) -> str | None:
     return None
 
 
+def _gold_published_date(case: EvalCase) -> date | None:
+    """gold note 에 사람이 적어둔 발행일(YYYY-MM-DD)을 뽑는다.
+
+    devset·홀드아웃 자체는 수정하지 않는다 — note 는 이미 존재하는 라벨
+    필드를 읽기만 한다.
+    """
+    for gs in case.gold_sources:
+        note = gs.note or ""
+        m = _GOLD_PUBLISHED_DATE_RE.search(note)
+        if m:
+            return date.fromisoformat(m.group(1))
+    return None
+
+
+def _relative_period_search_news_calls(record: RunRecord) -> list[dict]:
+    """이 실행에서 실제로 relative_period 로 호출된 search_news 인자만 뽑는다.
+
+    date_from/date_to 를 사용자가 절대 날짜로 지정한 호출은 상대 기간 계약과
+    무관하므로 대상이 아니다.
+    """
+    out = []
+    for c in record.tool_calls:
+        if c.get("name") != "search_news":
+            continue
+        args = c.get("args") or {}
+        if args.get("relative_period"):
+            out.append(args)
+    return out
+
+
+def gold_out_of_relative_range(case: EvalCase, record: RunRecord) -> bool:
+    """§4 stale_gold/evaluation_data_issue 판정: gold 발행일이 실제 실행 시각
+    기준 relative_period 검색 범위 밖에 있었는지.
+
+    실제 서비스는 "최근 3일"을 항상 Agent 실행 시각(evaluation_run_at) 기준으로
+    계산한다(과거 라벨링 시점 기준으로 고정하지 않는다). devset 라벨링 당시에는
+    gold 가 그 범위 안이었더라도, 평가를 재실행한 시각 기준으로는 범위 밖으로
+    밀려날 수 있다 — 이건 Retriever 가 놓친 게 아니라 평가 데이터(라벨 유효기간)
+    문제이므로 별도로 분류한다(Retriever 실패 집계에서 제외하지 않고, 원인 표시만
+    덧붙인다 — 기존 strict 지표는 그대로 보존).
+    """
+    gold_date = _gold_published_date(case)
+    if gold_date is None or not record.evaluation_run_at:
+        return False
+    run_at = datetime.fromisoformat(record.evaluation_run_at)
+    for args in _relative_period_search_news_calls(record):
+        try:
+            start_s, end_s = resolve_relative_date_range(
+                args["relative_period"], reference_date=run_at.date()
+            )
+        except ValueError:
+            continue
+        start, end = date.fromisoformat(start_s), date.fromisoformat(end_s)
+        if not (start <= gold_date <= end):
+            return True
+    return False
+
+
+def preflight_check_relative_gold_validity(
+    cases: list[EvalCase], *, planned_run_at: datetime
+) -> dict:
+    """§3 홀드아웃 정책: 실행 전에 상대 날짜 gold 가 유효한지만 미리 점검한다.
+
+    실행 기록(RunRecord)이 아직 없는 시점(실행 전)에 쓰는 함수이므로,
+    실제 search_news 호출의 relative_period 는 알 수 없다 — 대신 gold 발행일이
+    planned_run_at 기준 가장 좁은 상대 기간("recent", RECENT_LOOKBACK_DAYS)
+    범위에도 들지 못하면 "이 실행 시각으로는 이 문항의 gold 가 상대 기간 질문의
+    정답이 될 수 없다"는 확실한 경고로 본다(느슨한 방향으로만 판단해 오탐을
+    줄인다 — 더 넓은 기간을 쓰는 문항은 여기서 걸리지 않을 수 있다).
+
+    이 함수는 실행을 멈추지 않는다 — 호출부(홀드아웃 실행 스크립트)가 반환된
+    `should_abort`를 보고 직접 중단 여부를 결정한다. devset·holdout 파일 자체를
+    열지 않고 이미 로드된 EvalCase 목록만 받는다(§6 '홀드아웃 열람·실행' 금지는
+    이 함수 자체의 책임이 아니라 호출 시점의 책임이다).
+    """
+    from app.agent.time_context import RECENT_LOOKBACK_DAYS
+
+    stale: list[dict] = []
+    for case in cases:
+        gold_date = _gold_published_date(case)
+        if gold_date is None:
+            continue
+        start, end = resolve_relative_date_range("recent", reference_date=planned_run_at.date())
+        start_d, end_d = date.fromisoformat(start), date.fromisoformat(end)
+        if not (start_d <= gold_date <= end_d):
+            stale.append(
+                {
+                    "case_id": case.id,
+                    "gold_published_date": gold_date.isoformat(),
+                    "recent_range": f"{start}~{end}",
+                }
+            )
+    return {
+        "planned_run_at": planned_run_at.isoformat(),
+        "recent_lookback_days": RECENT_LOOKBACK_DAYS,
+        "n_checked": len(cases),
+        "n_stale": len(stale),
+        "stale_cases": stale,
+        # 호출부 판단용 신호일 뿐 강제 중단이 아니다 — 실제 중단은 호출부 책임.
+        "should_abort": len(stale) > 0,
+    }
+
+
 def document_recall_stats(
     cases: list[EvalCase], records: list[RunRecord], grades: list[CaseGrade], doc_type: str
 ) -> dict:
@@ -159,6 +266,8 @@ def document_recall_stats(
     hit1_hit = 0
     rr_sum = 0.0
     missed_ids: list[str] = []
+    missed_ids_stale_gold: list[str] = []
+    missed_ids_retriever: list[str] = []
 
     for case, rec, grade in zip(cases, records, grades, strict=True):
         gold_doc = _gold_document_id_for_case(case)
@@ -181,6 +290,13 @@ def document_recall_stats(
                 hit1_hit += 1
         else:
             missed_ids.append(case.id)
+            # strict recall_hit/recall_at_k 는 그대로 두고(§4 "기존 strict 결과는
+            # 보존한다"), 미스 케이스만 원인별로 부가 분류한다 — Retriever 실패
+            # 집계 자체를 바꾸지 않는다.
+            if gold_out_of_relative_range(case, rec):
+                missed_ids_stale_gold.append(case.id)
+            else:
+                missed_ids_retriever.append(case.id)
 
     def ratio(h: int, t: int) -> float | None:
         return round(h / t, 4) if t else None
@@ -192,6 +308,102 @@ def document_recall_stats(
         "hit_at_1": ratio(hit1_hit, n_eval),
         "mrr": round(rr_sum / n_eval, 4) if n_eval else None,
         "missed_case_ids": missed_ids,
+        # §4 evaluation data issue 분류(부가 정보, strict 지표는 그대로).
+        "missed_case_ids_stale_gold": missed_ids_stale_gold,
+        "missed_case_ids_retriever_failure": missed_ids_retriever,
+    }
+
+
+def event_equivalent_recall_stats(
+    cases: list[EvalCase],
+    records: list[RunRecord],
+    grades: list[CaseGrade],
+    doc_type: str,
+    approvals: dict[str, list[str]],
+) -> dict:
+    """§4B event-equivalent Recall: strict gold 문서가 아니어도, 사람이 승인한
+    동일 사건 클러스터 중 하나를 반환했으면 적중으로 센다.
+
+    approvals 는 {case_id: [승인된 대체 문서ID(예: "news:7222"), ...]} 형태로,
+    반드시 사람이 직접 검토해 작성한 매핑만 넘겨야 한다(자동 승인 금지 — 이
+    함수는 매핑의 출처를 검증하지 않으므로 호출부가 책임진다). strict
+    document_recall_stats() 와 완전히 같은 분모(gold 문서가 있는 문항)를 쓰되,
+    hit 판정에만 승인된 대체 ID 를 추가로 인정한다.
+    """
+    kind = "news" if doc_type == "news_event" else "report"
+    n_eval = 0
+    recall_hit = 0
+    missed_ids: list[str] = []
+
+    for case, rec, grade in zip(cases, records, grades, strict=True):
+        gold_doc = _gold_document_id_for_case(case)
+        if gold_doc is None or not gold_doc.startswith(f"{kind}:"):
+            continue
+        n_eval += 1
+        ranking = document_ranking(rec)
+        accepted_ids = {gold_doc, *(approvals.get(case.id) or [])}
+        hit = bool(accepted_ids & set(ranking))
+        if hit and not grade.other_stock_sources:
+            recall_hit += 1
+        elif not hit:
+            missed_ids.append(case.id)
+        else:
+            # 다른 종목 혼입이 함께 있으면 대체 문서 적중이라도 실패로 남긴다.
+            missed_ids.append(case.id)
+
+    def ratio(h: int, t: int) -> float | None:
+        return round(h / t, 4) if t else None
+
+    return {
+        "n_eval": n_eval,
+        "recall_hit": recall_hit,
+        "recall_at_k": ratio(recall_hit, n_eval),
+        "missed_case_ids": missed_ids,
+    }
+
+
+def product_failure_stats(
+    cases: list[EvalCase],
+    records: list[RunRecord],
+    grades: list[CaseGrade],
+    doc_type: str,
+) -> dict:
+    """§4C product failure rate: 실제 제품이 고쳐야 할 실패만 골라 센다.
+
+    strict 미스 중에서도 다음은 "제품 실패"로 보지 않는다(§4D 로 넘어감):
+      - stale_gold(평가 데이터 문제, gold_out_of_relative_range)
+    반대로 다음은 반드시 제품 실패로 남긴다:
+      - 필수 Tool 자체를 안 부름(Tool 미호출)
+      - 종목·기간 필터가 틀려서 놓침(다른 종목 혼입)
+      - 검색 가능한 gold 를 실제로 놓침(그 외 순수 검색 미스)
+    """
+    kind = "news" if doc_type == "news_event" else "report"
+    required_tool = "search_news" if kind == "news" else "search_research_reports"
+    n_eval = 0
+    failures = 0
+    failed_ids: list[str] = []
+
+    for case, rec, grade in zip(cases, records, grades, strict=True):
+        gold_doc = _gold_document_id_for_case(case)
+        if gold_doc is None or not gold_doc.startswith(f"{kind}:"):
+            continue
+        n_eval += 1
+        used = {c["name"] for c in rec.tool_calls}
+        tool_missing = required_tool not in used
+        hit = gold_doc in document_ranking(rec)
+        if tool_missing or grade.other_stock_sources or not hit:
+            if not tool_missing and not grade.other_stock_sources and not hit:
+                # 순수 검색 미스는 stale_gold(평가 데이터 문제)면 제품 실패에서 뺀다.
+                if gold_out_of_relative_range(case, rec):
+                    continue
+            failures += 1
+            failed_ids.append(case.id)
+
+    return {
+        "n_eval": n_eval,
+        "failures": failures,
+        "failure_rate": round(failures / n_eval, 4) if n_eval else None,
+        "failed_case_ids": failed_ids,
     }
 
 
@@ -550,7 +762,44 @@ def _handled_as_unanswerable(record: RunRecord) -> bool:
     return not made_up_answer
 
 
-def aggregate(cases: list[EvalCase], records: list[RunRecord], grades: list[CaseGrade]) -> dict:
+def load_event_equivalent_approvals(path: Any, cases: list[EvalCase]) -> dict[str, list[str]]:
+    """§4B 사람 승인 매핑 파일을 {case_id: [approved_equivalent_doc_id, ...]} 로 로드한다.
+
+    파일이 없으면 빈 dict(= event-equivalent 계산에서 strict 와 동일하게 처리).
+    devset.json/holdout.json 이 아니다 — 그 둘은 이 함수가 건드리지 않는다.
+    문서 종류(news/report)는 승인 파일 자체가 아니라 해당 case 의 strict gold
+    문서 ID 접두어를 그대로 따른다(같은 문항 안에서 뉴스·리포트가 섞이지 않는다).
+    """
+    import json
+    from pathlib import Path
+
+    p = Path(path)
+    if not p.exists():
+        return {}
+    data = json.loads(p.read_text("utf-8"))
+    by_id = {c.id: c for c in cases}
+    out: dict[str, list[str]] = {}
+    for item in data.get("approvals", []):
+        case_id = item["case_id"]
+        case = by_id.get(case_id)
+        if case is None:
+            continue
+        gold_doc = _gold_document_id_for_case(case)
+        if gold_doc is None:
+            continue
+        kind = gold_doc.split(":", 1)[0]
+        ids = item.get("approved_equivalent_cluster_ids", [])
+        out[case_id] = [_normalize_doc_id(kind, i) for i in ids]
+    return out
+
+
+def aggregate(
+    cases: list[EvalCase],
+    records: list[RunRecord],
+    grades: list[CaseGrade],
+    *,
+    event_equivalent_approvals_path: Any = None,
+) -> dict:
     """집계 지표(§8)."""
     by_id = {c.id: c for c in cases}
     agent = AgentMetrics(n=len(grades))
@@ -659,6 +908,22 @@ def aggregate(cases: list[EvalCase], records: list[RunRecord], grades: list[Case
     retr.news_stats = document_recall_stats(cases, records, grades, "news_event")
     retr.report_stats = document_recall_stats(cases, records, grades, "research_report")
     retr.page_stats = report_page_accuracy(cases, records)
+
+    # §4A/B/C: strict Recall(위 news_stats/report_stats, 삭제·숨김 없이 그대로 보존)과
+    # 별도로 event-equivalent Recall·product failure rate 를 추가 계산한다.
+    approvals = (
+        load_event_equivalent_approvals(event_equivalent_approvals_path, cases)
+        if event_equivalent_approvals_path is not None
+        else {}
+    )
+    retr.news_event_equivalent = event_equivalent_recall_stats(
+        cases, records, grades, "news_event", approvals
+    )
+    retr.report_event_equivalent = event_equivalent_recall_stats(
+        cases, records, grades, "research_report", approvals
+    )
+    retr.news_product_failure = product_failure_stats(cases, records, grades, "news_event")
+    retr.report_product_failure = product_failure_stats(cases, records, grades, "research_report")
 
     return {
         "n": len(grades),

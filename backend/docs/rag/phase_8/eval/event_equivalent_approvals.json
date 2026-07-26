@@ -1,0 +1,32 @@
+{
+  "note": "Phase 8 뉴스 최종 교정(phase/8-news-final-correction) §4B event-equivalent Recall용 사람 승인 매핑. devset.json/holdout.json 의 gold_sources 는 변경하지 않는다 — 이 파일은 'strict 최초 gold 클러스터'와 별도로, 사람이 직접 내용을 대조해 같은 사건이라고 승인한 대체 클러스터만 담는 보조 라벨이다. 자동 생성·자동 승인 절대 금지 — 이 배열의 각 항목은 PHASE_8_NEWS_FINAL_CORRECTION.md 에 승인 근거(핵심 회사·사건·날짜·고유식별어 대조 결과)가 함께 기록돼 있어야 유효하다.",
+  "approved_by": "agent-assisted manual review (Phase 8 news final correction round)",
+  "approvals": [
+    {
+      "case_id": "news-10",
+      "strict_gold_cluster_id": "6974",
+      "approved_equivalent_cluster_ids": ["7222", "7167"],
+      "basis": "6974/7222 모두 한화오션+레이도스(깁스 앤 콕스)의 동일 계약(글로벌 전략 수송함/고속수송선 공동설계) 체결 보도. 7167은 같은 두 회사의 '조선업 협력 양해각서 체결' 후속 보도(same subject/object, 다른 후속 조치)."
+    },
+    {
+      "case_id": "news-13",
+      "strict_gold_cluster_id": "7182",
+      "approved_equivalent_cluster_ids": ["7195"],
+      "basis": "7182(연내 출시 예정 '인텔리전트 아이웨어' 공개)와 7195(구글 협업 스마트안경 개발 뒷이야기 공개)는 동일 회사(삼성전자)·동일 제품(구글 협업 스마트안경/인텔리전트 아이웨어)의 같은 사건 후속 보도."
+    },
+    {
+      "case_id": "news-18",
+      "strict_gold_cluster_id": "6944",
+      "approved_equivalent_cluster_ids": ["7193"],
+      "basis": "6944(한미 조선협력센터 워싱턴 개소, 1500억달러 마스가 프로젝트 본격 시동)와 7193(한미 조선협력센터 개소 및 마스가 프로젝트 본격 가동)은 동일 회사(한화오션)·동일 고유 식별어('마스가', '1500억달러', '한미 조선협력센터')의 같은 사건 후속 보도."
+    }
+  ],
+  "explicitly_not_approved": [
+    {
+      "case_id": "news-19",
+      "strict_gold_cluster_id": "7117",
+      "candidate_cluster_ids": ["5611"],
+      "reason": "5611(재산분할 소송 파기환송심 선고, 2026-07-21)과 7117(재산분할금 9440억원 확정, 2026-07-24)은 같은 소송의 다른 절차 단계를 다룬 별개 보도다. '선고'와 '확정'은 사건의 진행 단계가 다르므로 §2 금지 항목 '회사명만 같다는 이유로 병합'을 피하기 위해 동일 사건으로 승인하지 않는다."
+    }
+  ]
+}
