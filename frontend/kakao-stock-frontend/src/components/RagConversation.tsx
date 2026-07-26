@@ -41,27 +41,56 @@ function sourceHref(source: RagSource) {
   return undefined
 }
 
+function wonText(value: unknown) {
+  return typeof value === 'number' ? `${new Intl.NumberFormat('ko-KR').format(value)}원` : undefined
+}
+
+function SourceCard({ source }: { source: RagSource }) {
+  const href = sourceHref(source)
+  const meta = [source.publisher, source.publishedAt, source.page ? `${source.page}페이지` : '']
+    .filter(Boolean).join(' · ')
+  const head = (
+    <>
+      <span>{SOURCE_LABELS[source.sourceType]}</span>
+      <strong>{source.title ?? '제목 없는 출처'}</strong>
+      <small>{meta}</small>
+      {source.valueKind && <em>{source.valueKind === 'forecast' ? '전망값' : '실제값'}</em>}
+    </>
+  )
+  if (href) {
+    return <a href={href} rel="noreferrer" target="_blank">{head}<Icon name="external" size={14} /></a>
+  }
+  // 원문 URL이 없는 리포트: 클릭 시 검증된 근거 문장·목표주가를 인라인으로 펼친다.
+  const evidence = typeof source.locator.evidence === 'string' ? source.locator.evidence : undefined
+  const targetPrice = wonText(source.locator.target_price)
+  const opinion = typeof source.locator.investment_opinion === 'string' ? source.locator.investment_opinion : undefined
+  if (evidence || targetPrice) {
+    return (
+      <details className="rag-source-evidence">
+        <summary>{head}<span className="rag-source-more"><Icon name="document" size={13} /> 근거 보기</span></summary>
+        <div>
+          {(targetPrice || opinion) && (
+            <p className="rag-source-tp">
+              {targetPrice && <b>목표주가 {targetPrice}</b>}
+              {opinion && <span>{opinion}</span>}
+              <em>전망값 · 확정 실적 아님</em>
+            </p>
+          )}
+          {evidence && <blockquote>{evidence}</blockquote>}
+        </div>
+      </details>
+    )
+  }
+  return <article>{head}</article>
+}
+
 function SourceCards({ sources }: { sources: RagSource[] }) {
   if (sources.length === 0) return null
   return (
     <section aria-label="답변 출처" className="rag-sources">
       <h3>확인한 출처 <span>{sources.length}</span></h3>
       <div>
-        {sources.map((source) => {
-          const href = sourceHref(source)
-          const content = (
-            <>
-              <span>{SOURCE_LABELS[source.sourceType]}</span>
-              <strong>{source.title ?? '제목 없는 출처'}</strong>
-              <small>{[source.publisher, source.publishedAt, source.page ? `${source.page}페이지` : ''].filter(Boolean).join(' · ')}</small>
-              {source.valueKind && <em>{source.valueKind === 'forecast' ? '전망값' : '실제값'}</em>}
-              {href && <Icon name="external" size={14} />}
-            </>
-          )
-          return href
-            ? <a href={href} key={source.sourceId} rel="noreferrer" target="_blank">{content}</a>
-            : <article key={source.sourceId}>{content}</article>
-        })}
+        {sources.map((source) => <SourceCard key={source.sourceId} source={source} />)}
       </div>
     </section>
   )

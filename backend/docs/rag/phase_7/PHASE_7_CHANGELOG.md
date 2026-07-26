@@ -4,6 +4,62 @@ Phase 7 구현 이후 발견된 결함과 수정·검증 결과를 계속 누적
 하드코딩, 키워드 라우터는 추가하지 않는다. Agent가 의미를 해석해 Tool을 선택하고,
 Tool은 시간·정렬·숫자 같은 결정론적 정확성을 보장한다.
 
+## 2026-07-26 — Phase 7 마무리(통합 점검·부족 기능 보완)
+
+브랜치 `phase/7-finalization`. main(#44/#45 머지·운영 배포 완료) 기준으로 감사 후
+데이터가 이미 있는 부족 기능을 보완했다. 값·날짜 재계산이나 답변 파싱은 하지 않고,
+확정된 ToolResult 값만 UI view로 변환한다.
+
+### 뉴스 compact 카드 보강(§4)
+- news Tool item에 `sentiment`(호재/악재/중립)와 `stock_code`를 추가. 감성은 사건
+  조회 경로에서 `news_clusters.sentiment_label`로 채워지고(하이브리드 검색 경로는 None),
+  UI는 값이 있을 때만 배지를 그린다. Tool·Agent는 감성을 새로 판정하지 않는다.
+- 프런트 `NewsCards`에 감성 배지·종목 코드 배지 추가(기존 카드 variant 확장, 복제 아님).
+
+### 사건 타임라인(§6, event_timeline)
+- 같은 답변에서 뉴스와 공시가 **둘 다** 조회됐을 때만, 확정된 사건(제목·발표시각)을
+  발표시각 최신순으로 병합해 `event_timeline`을 생성. 단일 종류면 각자 카드로 충분.
+- `_build_ui_payload`에 cross-tool 병합 단계 추가(`_event_timeline`). 새 조회 없음.
+- 프런트 `EventTimeline` 렌더러 추가.
+
+### 실적 vs 전망 비교(§6, financial_comparison) — 미지원(사유 기록)
+- **데이터 부족으로 구현하지 않았다.** 실제 실적은 DART(`financials`)로 있으나,
+  증권사 리포트 Tool은 **목표주가만 구조화**하고 추정 매출·영업이익·EPS 등 전망
+  재무수치를 구조화된 값으로 반환하지 않는다(`table_value_kinds`는 값이 아닌 카운트).
+- 필요한 백엔드 계약: 리포트 파서가 추정 실적 표를 항목·기간·값으로 구조화해
+  `forecast_financials` 형태로 반환해야 실제/전망 병렬 비교 payload를 만들 수 있다.
+  값이 없는 상태에서 지원한다고 표시하지 않는다(빈/환각 차트 금지).
+
+### 리포트·공시 출처 이동(§5)
+- **공시**: `rcept_no`가 있으면 DART 공식 공개 뷰어 URL
+  (`https://dart.fss.or.kr/dsaf001/main.do?rcpNo=...`)을 SourceRef.url에 실어 새 탭
+  이동. 비공개 저장소 경로·signed URL·존재하지 않는 주소는 만들지 않는다.
+- **리포트**: 원문 URL이 없으므로 우선순위 4(내부 근거 보기)를 구현. SourceRef.locator에
+  검증된 근거 문장(`evidence`)·목표주가(stated만)·투자의견을 실어, 프런트에서 클릭 시
+  인라인으로 근거 페이지·목표주가(전망값 표기)·근거 문장을 펼친다.
+
+### 한 달 주가 그래프 점 수(§7)
+- get_stock_prices가 UI 전용 `daily_full`(실제 거래일별 종가, 최대 60거래일)을 별도로
+  반환. 모델용 요약 `daily`(앞3+뒤3)는 그대로 유지해 답변 문맥을 키우지 않는다.
+  UI 선그래프는 `daily_full` 우선, 없으면 `daily`. 프런트는 값을 재계산하지 않는다.
+  200개 API 상한·캐시는 StockPriceService가 그대로 처리. Tool docstring에 흐름·추이
+  질문 시 include_daily 안내 추가(키워드 라우터 아님).
+
+### 스트리밍 진행 상태의 실제성(§8)
+- 조사: LangChain create_agent는 `.stream()`/`astream_events()`로 실제 tool 이벤트
+  스트리밍이 가능하나, 현재 동기 `invoke` 구조를 진짜 실시간 스트리밍으로 바꾸는 것은
+  이번 마무리 범위에서 리스크가 크다(단일 Agent·표준 실행 유지, 직접 StateGraph 금지).
+- 결정(§170-173 대안): 백엔드가 invoke 완료 후 도구 이벤트를 한꺼번에 내보내므로,
+  **작업 중에는 일반 진행 라벨("근거 자료 확인 중")만 표시**하고 도구별 라벨을 순서대로
+  재생하지 않는다(허위 진행 상태 제거). 내부 추론·전체 도구 인자는 노출하지 않는다.
+  실제 실시간 스트리밍은 후속 과제로 남긴다.
+
+### 검증
+- 백엔드 pytest 316 passed(+3), ruff check·format 통과, Agent 평가 recall 1.0/forbidden 0.0.
+- 프런트 tsc·oxlint·vitest 13(+4) 통과, vite production build 통과.
+- Agent 경유 실제 API: 뉴스+공시→event_timeline 생성, 공시→DART url, 리포트→근거보기
+  evidence, 주가→daily_full 22거래일 확인. price_line은 daily_full 우선 사용 확인.
+
 ## 2026-07-26 — 최근 뉴스 계약·뉴스 카드·긴 답변 스크롤
 
 ### 최근의 기준

@@ -2,17 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { normalizeSources, normalizeVisualizations, streamQa } from '../api/qa'
 import type { QaStreamEvent, RagContext, RagMessage, RagPhase } from '../types/qa'
 
-const TOOL_LABELS: Record<string, string> = {
-  lookup_financial_term: '금융용어 확인 중',
-  get_financial_facts: '공식 재무정보 확인 중',
-  search_news: '최근 뉴스 검색 중',
-  search_disclosures: 'DART 공시 검색 중',
-  get_disclosure_values: '공시 핵심 숫자 확인 중',
-  search_research_reports: '증권사 리포트 확인 중',
-  get_stock_prices: '실제 주가 확인 중',
-  calculate_event_return: '사건 전후 주가 변화 계산 중',
-}
-
 function publicWarnings(value: unknown) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string').slice(0, 5)
@@ -62,9 +51,11 @@ export function useRagConversation(context: RagContext) {
         setPhase('running')
         setProgress('질문에 맞는 자료를 찾는 중')
       } else if (event.event === 'tool_start') {
-        const name = typeof event.data.name === 'string' ? event.data.name : ''
+        // 백엔드는 동기 invoke 완료 후 도구 이벤트를 한꺼번에 내보낸다. 따라서 도구별
+        // 라벨을 순서대로 재생하면 실제 진행처럼 보이는 허위 상태가 된다(제한사항).
+        // 실제 실시간 스트리밍 전까지는 일반 진행 라벨만 표시한다.
         setPhase('running')
-        setProgress(TOOL_LABELS[name] ?? '근거 자료 확인 중')
+        setProgress('근거 자료 확인 중')
       } else if (event.event === 'sources') {
         updateAssistant(assistantId, (message) => ({
           ...message,

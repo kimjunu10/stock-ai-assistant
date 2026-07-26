@@ -136,7 +136,7 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
                 )
             ]
             if inp.include_daily:
-                data["daily"] = _daily_summary(svc, inp.stock_code, start, end)
+                data.update(_daily_payload(svc, inp.stock_code, start, end))
             return ok(data, sources=sources)
 
         # (2) 현재가(항상). lookback 있으면 기간 수익률도 함께.
@@ -174,11 +174,13 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
                     )
                 )
         if inp.include_daily and inp.lookback:
-            data["daily"] = _daily_summary(
-                svc,
-                inp.stock_code,
-                q.trading_day - timedelta(days=LOOKBACK_DAYS[inp.lookback]),
-                q.trading_day,
+            data.update(
+                _daily_payload(
+                    svc,
+                    inp.stock_code,
+                    q.trading_day - timedelta(days=LOOKBACK_DAYS[inp.lookback]),
+                    q.trading_day,
+                )
             )
         return ok(data, sources=sources)
 
@@ -261,18 +263,33 @@ def _event_ok(stock_code: str, r: PeriodReturn, *, note: str) -> ToolResult:
     return ok(data, sources=sources)
 
 
-def _daily_summary(svc: StockPriceService, stock_code: str, start: date, end: date) -> list[dict]:
-    """일봉 요약(최대 앞뒤 몇 개만; 원시 전체 배열을 모델에 주지 않는다)."""
+# UI 주가 선그래프 상한(한 달 흐름 전 거래일 표시, 그러나 과도한 payload 방지).
+_UI_DAILY_MAX = 60
+
+
+def _candle_point(c) -> dict:
+    return {
+        "trading_day": c.trading_day.isoformat(),
+        "close": c.close,
+        "volume": c.volume,
+        "currency": c.currency,
+    }
+
+
+def _daily_payload(svc: StockPriceService, stock_code: str, start: date, end: date) -> dict:
+    """일봉을 모델용 요약과 UI용 전체(상한)로 나눠 반환한다.
+
+    - daily: 모델 문맥에 넣는 작은 요약(앞3+뒤3). Agent Tool 선택·답변 문맥을 키우지 않음.
+    - daily_full: UI 선그래프 전용. 실제 거래일별 종가를 최대 60거래일까지. 프런트는
+      값을 다시 계산하지 않고 이 점들을 그대로 그린다. 200개 API 상한·캐시는
+      StockPriceService(get_daily_candles)가 이미 처리한다.
+    """
     candles = svc.get_daily_candles(stock_code, start=start, end=end)
     if not candles:
-        return []
-    picked = candles if len(candles) <= 6 else candles[:3] + candles[-3:]
-    return [
-        {
-            "trading_day": c.trading_day.isoformat(),
-            "close": c.close,
-            "volume": c.volume,
-            "currency": c.currency,
-        }
-        for c in picked
-    ]
+        return {"daily": [], "daily_full": []}
+    summary = candles if len(candles) <= 6 else candles[:3] + candles[-3:]
+    ui = candles[-_UI_DAILY_MAX:] if len(candles) > _UI_DAILY_MAX else candles
+    return {
+        "daily": [_candle_point(c) for c in summary],
+        "daily_full": [_candle_point(c) for c in ui],
+    }

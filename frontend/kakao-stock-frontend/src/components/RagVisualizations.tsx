@@ -42,6 +42,17 @@ function shortDate(value: unknown) {
   }).format(date)
 }
 
+const SENTIMENT_LABEL: Record<string, string> = {
+  positive: '호재',
+  negative: '악재',
+  neutral: '중립',
+}
+
+function sentimentBadge(value: unknown) {
+  if (typeof value !== 'string' || !(value in SENTIMENT_LABEL)) return null
+  return <em className={`rag-news-sentiment is-${value}`}>{SENTIMENT_LABEL[value]}</em>
+}
+
 function NewsCards({ visualization }: { visualization: RagVisualization }) {
   const items = records(visualization.data.items)
   if (items.length === 0) return null
@@ -65,7 +76,12 @@ function NewsCards({ visualization }: { visualization: RagVisualization }) {
           const href = safeHref(item.url)
           const content = (
             <>
-              <div><span>{text(item.publisher, '언론 보도')}</span><time>{shortDate(item.published_at)}</time></div>
+              <div>
+                <span>{text(item.publisher, '언론 보도')}</span>
+                {sentimentBadge(item.sentiment)}
+                {typeof item.stock_code === 'string' && <b className="rag-news-code">{item.stock_code}</b>}
+                <time>{shortDate(item.published_at)}</time>
+              </div>
               <strong>{text(item.title, '제목 없는 뉴스')}</strong>
               {typeof item.snippet === 'string' && <p>{item.snippet}</p>}
               {href && <small>기사 보기 <Icon name="external" size={13} /></small>}
@@ -216,6 +232,37 @@ function TermDefinition({ visualization }: { visualization: RagVisualization }) 
   )
 }
 
+function EventTimeline({ visualization }: { visualization: RagVisualization }) {
+  const events = records(visualization.data.events)
+  if (events.length === 0) return null
+  return (
+    <article className="rag-viz rag-viz--timeline">
+      <header><Icon name="document" size={17} /><strong>{visualization.title}</strong><span>{events.length}건</span></header>
+      <ol className="rag-timeline">
+        {events.map((event, index) => {
+          const href = safeHref(event.url)
+          const label = event.kind === 'disclosure' ? '공시' : '뉴스'
+          const body = (
+            <>
+              <span className={`rag-timeline-kind is-${text(event.kind, 'news')}`}>{label}</span>
+              <time>{shortDate(event.at)}</time>
+              <strong>{text(event.title, '제목 없음')}</strong>
+              {typeof event.publisher === 'string' && <small>{event.publisher}</small>}
+            </>
+          )
+          return (
+            <li key={`${text(event.source_id)}-${index}`}>
+              {href
+                ? <a href={href} rel="noreferrer" target="_blank">{body}</a>
+                : <div>{body}</div>}
+            </li>
+          )
+        })}
+      </ol>
+    </article>
+  )
+}
+
 export function RagVisualizations({ visualizations }: { visualizations: RagVisualization[] }) {
   return (
     <div className="rag-visualizations">
@@ -229,6 +276,7 @@ export function RagVisualizations({ visualizations }: { visualizations: RagVisua
         if (visualization.type === 'broker_targets') return <BrokerTargets key={key} visualization={visualization} />
         if (visualization.type === 'disclosure_metrics') return <DisclosureMetrics key={key} visualization={visualization} />
         if (visualization.type === 'term_definition') return <TermDefinition key={key} visualization={visualization} />
+        if (visualization.type === 'event_timeline') return <EventTimeline key={key} visualization={visualization} />
         return null
       })}
     </div>

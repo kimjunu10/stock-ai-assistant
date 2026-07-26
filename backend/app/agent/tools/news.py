@@ -71,6 +71,10 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
 
     data, sources = [], []
     for c in clamp_items(chunks, inp.limit):
+        # 감성(호재/악재/중립)은 사건 조회 경로에서 news_clusters.sentiment_label로 채워지고
+        # (retrieval.list_recent_news), 주제 하이브리드 검색 경로에서는 없다(None) — UI는
+        # 값이 있을 때만 배지를 그린다. Tool·Agent 는 감성을 새로 판정하지 않는다.
+        locator = c.source_locator if isinstance(c.source_locator, dict) else {}
         data.append(
             {
                 "source_id": c.chunk_id,
@@ -79,6 +83,8 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
                 "published_at": iso(c.published_at),
                 "publisher": c.publisher,
                 "url": c.source_url,
+                "stock_code": c.stock_code,
+                "sentiment": locator.get("sentiment_label"),
             }
         )
         sources.append(

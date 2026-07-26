@@ -99,6 +99,12 @@ def run_search_research_reports(
                     "pdf_page": h.pdf_page,
                     "source_page": h.source_page,
                     "target_price_source_page": h.target_price_source_page,
+                    # 내부 근거 보기(prompt.md §5 우선순위 4): 원문 URL이 없으므로 클릭 시
+                    # 검증된 근거 문장·페이지·목표주가만 인라인으로 펼쳐 보여준다.
+                    # 비공개 저장소 경로·signed URL 은 만들지 않는다.
+                    "evidence": clamp_text(h.content),
+                    "investment_opinion": h.investment_opinion,
+                    "target_price": int(h.target_price) if tp_stated else None,
                 },
             )
         )
