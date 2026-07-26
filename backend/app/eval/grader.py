@@ -580,10 +580,22 @@ def _period_tokens(period: str) -> list[str]:
     return toks or [period]
 
 
-def grade_case(case: EvalCase, record: RunRecord, facts: Any = None) -> CaseGrade:
+def grade_case(
+    case: EvalCase,
+    record: RunRecord,
+    facts: Any = None,
+    *,
+    judge: Any = None,
+) -> CaseGrade:
     """케이스 1건을 채점한다.
 
     facts(FactsService)를 주면 expected_financial 정답을 DB 에서 조회해 함께 채점한다.
+
+    judge 를 주면 자연어 의미 판단(제외 조건 준수·답변 불가 처리)을 키워드 부분
+    문자열 검사 대신 LLM judge 결과로 채점한다. Tool 호출·문서 ID·숫자·기간처럼
+    객관적으로 검증 가능한 지표는 judge 와 무관하게 항상 코드로 채점한다.
+    judge 는 `(case, record) -> JudgeVerdict` 를 반환하는 호출 가능 객체이며,
+    호출 실패(verdict.ok=False)면 기존 키워드 채점으로 폴백한다.
     """
     g = CaseGrade(case_id=case.id, type=case.type)
     used = [c["name"] for c in record.tool_calls]
@@ -672,13 +684,34 @@ def grade_case(case: EvalCase, record: RunRecord, facts: Any = None) -> CaseGrad
             # 거래일은 정확 일치. 답변이 "2026-07-24" 또는 "7월 24일" 로 쓸 수 있어 둘 다 본다.
             g.trading_day_ok = all(_date_in_answer(d, record.answer) for d in days)
 
-    # --- 제외 조건·과도한 단정 ---
-    g.exclusion_violations = [c for c in case.forbidden_claims if _claim_asserted(record.answer, c)]
+    # --- 제외 조건·과도한 단정·답변 불가 처리 (자연어 의미 판단) ---
+    # 키워드 부분 문자열 검사는 "그 단어가 나왔는지"만 보므로, 금지 주제를 오히려
+    # 거절한 문장("매수 추천은 드리지 않습니다")이나 다른 맥락의 동일 단어
+    # (자기주식 공시의 "주관 증권사")까지 위반으로 잡는다. judge 가 있으면
+    # 의미 기준으로 판정하고, 없거나 호출 실패면 기존 키워드 검사로 폴백한다.
+    verdict = judge(case, record) if judge is not None else None
+    judged = verdict is not None and getattr(verdict, "ok", False)
+
+    if judged and verdict.exclusion_respected is not None:
+        # judge 는 위반 여부만 알려주므로, 어떤 금지어가 문제였는지는 표기하지
+        # 않는다(사람 검토용 근거는 verdict.reason 에 남는다).
+        g.exclusion_violations = [] if verdict.exclusion_respected else list(case.forbidden_claims)
+        if not verdict.exclusion_respected:
+            g.notes.append(f"judge 제외조건 위반 판정: {verdict.reason}")
+    else:
+        g.exclusion_violations = [
+            c for c in case.forbidden_claims if _claim_asserted(record.answer, c)
+        ]
+
     g.overclaim = has_overclaim(record.answer)
 
-    # --- 답변 불가능 질문 ---
     if not case.is_answerable:
-        g.unanswerable_handled = _handled_as_unanswerable(record)
+        if judged and verdict.handled_correctly is not None:
+            g.unanswerable_handled = verdict.handled_correctly
+            if not verdict.handled_correctly:
+                g.notes.append(f"judge 답변불가 처리 실패 판정: {verdict.reason}")
+        else:
+            g.unanswerable_handled = _handled_as_unanswerable(record)
 
     if record.error:
         g.notes.append(f"실행 오류: {record.error}")
