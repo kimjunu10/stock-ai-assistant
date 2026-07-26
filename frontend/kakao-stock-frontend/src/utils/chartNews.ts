@@ -7,7 +7,7 @@ export interface NewsMoment {
   sentiment: Sentiment | null
 }
 
-function kstDateKey(value: string) {
+export function kstDateKey(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
   return new Intl.DateTimeFormat('en-CA', {

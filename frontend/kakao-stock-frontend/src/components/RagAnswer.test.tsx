@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { cleanPublicText } from '../utils/publicText'
 import { RagAnswer } from './RagAnswer'
 
 describe('RagAnswer', () => {
@@ -10,5 +11,13 @@ describe('RagAnswer', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(2)
     expect(screen.getByText('<script>alert(1)</script>')).toBeTruthy()
     expect(document.querySelector('script')).toBeNull()
+  })
+
+  it('removes internal data labels from public copy', () => {
+    expect(cleanPublicText('연결 · actual_value / forecast_value')).toBe('연결 · 실제 실적 / 전망')
+  })
+
+  it('removes internal source ids from answer copy', () => {
+    expect(cleanPublicText('협약을 체결했습니다. (출처: news_cluster:7104)')).toBe('협약을 체결했습니다.')
   })
 })

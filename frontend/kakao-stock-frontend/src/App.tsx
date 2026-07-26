@@ -84,7 +84,9 @@ function App() {
         </footer>
       )}
       <MobileNavigation currentPath={currentPath} onNavigate={navigate} />
-      <AssistantPanel context={assistantContext} onClose={() => setAssistantContext(null)} open={assistantContext !== null} />
+      {currentPath !== '/ask' && (
+        <AssistantPanel context={assistantContext} onClose={() => setAssistantContext(null)} open={assistantContext !== null} />
+      )}
     </div>
   )
 }

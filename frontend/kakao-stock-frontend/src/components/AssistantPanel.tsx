@@ -37,10 +37,9 @@ export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) 
       <aside aria-hidden={!open} aria-label="문서에 관해 AI에게 질문" className={`assistant-panel${dockedToNews ? ' assistant-panel--news' : ''}${open ? ' is-open' : ''}`}>
         <header className="assistant-panel__header">
           <div>
-            <span className="assistant-symbol" aria-hidden="true">M</span>
             <div>
               <strong>Moa AI</strong>
-              <span>자료를 찾아 근거와 함께 답해요</span>
+              <span>{stock ? `${stock.name} 자료 기준` : '확인된 자료 기준'}</span>
             </div>
           </div>
           <button aria-label="패널 닫기" className="icon-button" onClick={onClose} type="button">

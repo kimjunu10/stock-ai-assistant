@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getStock } from '../data/mockData'
 import type { AssistantContext, Theme } from '../types'
-import { DisclosureList, ReportList } from '../components/ResearchLists'
+import { ReportList } from '../components/ResearchLists'
 import { FinancialCard } from '../components/FinancialCard'
 import { Icon } from '../components/Icon'
 import { NewsClusterListItem } from '../components/NewsClusterListItem'
@@ -13,6 +13,8 @@ import { CompanySnapshot } from '../components/CompanySnapshot'
 import { useStockMarketData } from '../hooks/useStockMarketData'
 import { useStockFundamentals } from '../hooks/useStockFundamentals'
 import { useNewsClusters } from '../hooks/useNewsClusters'
+import { useResearchReports } from '../hooks/useResearchReports'
+import { kstDateKey } from '../utils/chartNews'
 
 interface StockDetailPageProps {
   assistantOpen: boolean
@@ -27,9 +29,45 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
   const marketData = useStockMarketData(stockCode)
   const fundamentals = useStockFundamentals(stockCode)
   const news = useNewsClusters({ limit: 50, stockCode })
+  const reports = useResearchReports(stockCode)
+  const chartPublishedDate = useMemo(
+    () => kstDateKey(marketData.data?.intradayCandles.at(-1)?.time ?? ''),
+    [marketData.data?.intradayCandles],
+  )
+  const {
+    clusters: chartNewsClusters,
+    error: chartNewsError,
+    hasMore: chartNewsHasMore,
+    isLoading: isChartNewsLoading,
+    isLoadingMore: isChartNewsLoadingMore,
+    loadMore: loadMoreChartNews,
+  } = useNewsClusters({
+    enabled: Boolean(chartPublishedDate),
+    limit: 50,
+    publishedDate: chartPublishedDate || undefined,
+    stockCode,
+  })
   const [visibleNewsCount, setVisibleNewsCount] = useState(3)
 
   useEffect(() => setVisibleNewsCount(3), [stockCode])
+  useEffect(() => {
+    if (
+      chartPublishedDate
+      && chartNewsHasMore
+      && !chartNewsError
+      && !isChartNewsLoading
+      && !isChartNewsLoadingMore
+    ) {
+      loadMoreChartNews()
+    }
+  }, [
+    chartNewsError,
+    chartNewsHasMore,
+    chartPublishedDate,
+    isChartNewsLoading,
+    isChartNewsLoadingMore,
+    loadMoreChartNews,
+  ])
 
   if (!stock) {
     return <div className="not-found shell"><span>404</span><h1>분석 대상이 아닌 종목이에요.</h1><p>현재는 지정된 5개 종목만 제공하고 있어요.</p></div>
@@ -70,17 +108,18 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
         })}
         type="button"
       >
-        <span><Icon name="sparkles" size={17} /></span>
-        <strong>이 종목을 AI에게 질문</strong>
+        <strong>AI에게 질문하기</strong>
         <small>뉴스·공시·리포트·주가를 함께 확인해요</small>
         <Icon name="arrow-right" size={17} />
       </button>
 
       <section className="stock-section chart-section">
         <PriceChart
-          clusters={news.clusters}
+          clusters={chartNewsClusters}
           data={marketData.data}
           error={marketData.error}
+          newsError={chartNewsError}
+          newsStatus={isChartNewsLoading ? 'loading' : 'ready'}
           onAsk={onAsk}
           onRetry={marketData.retry}
           status={marketData.status}
@@ -139,16 +178,29 @@ export function StockDetailPage({ assistantOpen, onAssistantClose, onAsk, stockC
       </section>
 
       <section className="stock-section research-section">
-        <div className="research-column">
-          <SectionHeader description="회사가 직접 제출한 공식 문서예요." eyebrow="DART" title="최근 공시" />
-          <DisclosureList items={fundamentals.disclosures} onAsk={onAsk} />
-          {fundamentals.disclosureError && <p className="data-notice">{fundamentals.disclosureError}</p>}
-          <button className="list-more-button" type="button">공시 전체 보기 <Icon name="arrow-right" size={16} /></button>
-        </div>
-        <div className="research-column">
-          <SectionHeader description="증권사 분석의 핵심 논리를 모았어요." eyebrow="리서치" title="애널리스트 리포트" />
-          <ReportList items={[]} onAsk={onAsk} />
-          <p className="data-notice">로컬 리포트 244건은 적재 전이라 아직 표시하지 않아요.</p>
+        <div className="research-column research-column--wide">
+          <SectionHeader
+            action={<span className="section-meta">{reports.total > 0 ? `전체 ${reports.total}개` : 'PDF 리포트'}</span>}
+            description="Supabase에 보관된 최신 증권사 원문을 종목별·발행일순으로 확인하고 내려받을 수 있어요."
+            eyebrow="리서치"
+            title={`${stock.name} 증권사 리포트`}
+          />
+          {reports.isLoading && <div className="stock-news-loading"><LoadingDots label={`${stock.name} 리포트 불러오는 중`} /></div>}
+          {!reports.isLoading && reports.items.length > 0 && <ReportList items={reports.items} onAsk={onAsk} />}
+          {!reports.isLoading && reports.items.length === 0 && (
+            <p className="data-notice">{reports.error || '저장된 증권사 리포트가 아직 없어요.'}</p>
+          )}
+          {reports.hasMore && (
+            <button
+              className="list-more-button"
+              disabled={reports.isLoadingMore}
+              onClick={reports.loadMore}
+              type="button"
+            >
+              {reports.isLoadingMore ? '리포트 불러오는 중' : '리포트 더보기'}
+              <Icon name="arrow-right" size={16} />
+            </button>
+          )}
         </div>
       </section>
     </main>

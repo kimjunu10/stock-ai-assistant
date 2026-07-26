@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchNewsClusters } from '../api/news'
 import type { NewsCluster, StockIssueBrief } from '../types'
 
-export function useNewsClusters(options: { limit?: number; publishedDate?: string; stockCode?: string } = {}) {
+export function useNewsClusters(options: {
+  enabled?: boolean
+  limit?: number
+  publishedDate?: string
+  stockCode?: string
+} = {}) {
   const [clusters, setClusters] = useState<NewsCluster[]>([])
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -13,10 +18,21 @@ export function useNewsClusters(options: { limit?: number; publishedDate?: strin
   const requestKeyRef = useRef('')
   const loadMoreControllerRef = useRef<AbortController | null>(null)
   const limit = options.limit ?? 20
+  const enabled = options.enabled ?? true
   const publishedDate = options.publishedDate
   const stockCode = options.stockCode
 
   useEffect(() => {
+    if (!enabled) {
+      loadMoreControllerRef.current?.abort()
+      setClusters([])
+      setError('')
+      setIsLoading(false)
+      setIsLoadingMore(false)
+      setIssueBrief(null)
+      setTotal(0)
+      return
+    }
     const controller = new AbortController()
     const requestKey = `${stockCode ?? 'all'}:${publishedDate ?? 'all'}:${limit}:${attempt}`
     requestKeyRef.current = requestKey
@@ -42,11 +58,11 @@ export function useNewsClusters(options: { limit?: number; publishedDate?: strin
         if (!controller.signal.aborted) setIsLoading(false)
       })
     return () => controller.abort()
-  }, [attempt, limit, publishedDate, stockCode])
+  }, [attempt, enabled, limit, publishedDate, stockCode])
 
   const retry = useCallback(() => setAttempt((value) => value + 1), [])
   const loadMore = useCallback(() => {
-    if (isLoading || isLoadingMore || clusters.length >= total) return
+    if (!enabled || isLoading || isLoadingMore || clusters.length >= total) return
     const controller = new AbortController()
     loadMoreControllerRef.current?.abort()
     loadMoreControllerRef.current = controller
@@ -71,7 +87,7 @@ export function useNewsClusters(options: { limit?: number; publishedDate?: strin
           setIsLoadingMore(false)
         }
       })
-  }, [clusters, isLoading, isLoadingMore, limit, publishedDate, stockCode, total])
+  }, [clusters, enabled, isLoading, isLoadingMore, limit, publishedDate, stockCode, total])
 
   return {
     clusters,

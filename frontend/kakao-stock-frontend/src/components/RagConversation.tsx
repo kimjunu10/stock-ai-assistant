@@ -1,24 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useRagConversation } from '../hooks/useRagConversation'
-import type { RagContext, RagSource, RagSourceType } from '../types/qa'
+import type { RagContext } from '../types/qa'
 import { Icon } from './Icon'
 import { RagAnswer } from './RagAnswer'
+import { RagSources } from './RagSources'
 import { RagVisualizations } from './RagVisualizations'
 
 interface RagConversationProps {
   context: RagContext
   emptyTitle?: string
   variant: 'page' | 'panel'
-}
-
-const SOURCE_LABELS: Record<RagSourceType, string> = {
-  financial: '공식 재무정보',
-  term: '금융용어 출처',
-  news_event: '언론 보도',
-  dart_document: 'DART 공시',
-  structured_disclosure: 'DART 구조화 공시',
-  research_report: '증권사 전망',
-  price: '실제 시장 가격',
 }
 
 function suggestions(context: RagContext) {
@@ -34,66 +25,6 @@ function contextLabel(context: RagContext) {
   if (context.sourceType === 'dart_document' || context.sourceType === 'structured_disclosure') return `${stock ? `${stock} · ` : ''}현재 공시 기준`
   if (context.sourceType === 'research_report') return `${stock ? `${stock} · ` : ''}현재 리포트${context.page ? ` ${context.page}페이지` : ''} 기준`
   return stock ? `${stock} 기준` : '전체 자료 기준'
-}
-
-function sourceHref(source: RagSource) {
-  if (source.url) return source.url
-  return undefined
-}
-
-function wonText(value: unknown) {
-  return typeof value === 'number' ? `${new Intl.NumberFormat('ko-KR').format(value)}원` : undefined
-}
-
-function SourceCard({ source }: { source: RagSource }) {
-  const href = sourceHref(source)
-  const meta = [source.publisher, source.publishedAt, source.page ? `${source.page}페이지` : '']
-    .filter(Boolean).join(' · ')
-  const head = (
-    <>
-      <span>{SOURCE_LABELS[source.sourceType]}</span>
-      <strong>{source.title ?? '제목 없는 출처'}</strong>
-      <small>{meta}</small>
-      {source.valueKind && <em>{source.valueKind === 'forecast' ? '전망값' : '실제값'}</em>}
-    </>
-  )
-  if (href) {
-    return <a href={href} rel="noreferrer" target="_blank">{head}<Icon name="external" size={14} /></a>
-  }
-  // 원문 URL이 없는 리포트: 클릭 시 검증된 근거 문장·목표주가를 인라인으로 펼친다.
-  const evidence = typeof source.locator.evidence === 'string' ? source.locator.evidence : undefined
-  const targetPrice = wonText(source.locator.target_price)
-  const opinion = typeof source.locator.investment_opinion === 'string' ? source.locator.investment_opinion : undefined
-  if (evidence || targetPrice) {
-    return (
-      <details className="rag-source-evidence">
-        <summary>{head}<span className="rag-source-more"><Icon name="document" size={13} /> 근거 보기</span></summary>
-        <div>
-          {(targetPrice || opinion) && (
-            <p className="rag-source-tp">
-              {targetPrice && <b>목표주가 {targetPrice}</b>}
-              {opinion && <span>{opinion}</span>}
-              <em>전망값 · 확정 실적 아님</em>
-            </p>
-          )}
-          {evidence && <blockquote>{evidence}</blockquote>}
-        </div>
-      </details>
-    )
-  }
-  return <article>{head}</article>
-}
-
-function SourceCards({ sources }: { sources: RagSource[] }) {
-  if (sources.length === 0) return null
-  return (
-    <section aria-label="답변 출처" className="rag-sources">
-      <h3>확인한 출처 <span>{sources.length}</span></h3>
-      <div>
-        {sources.map((source) => <SourceCard key={source.sourceId} source={source} />)}
-      </div>
-    </section>
-  )
 }
 
 export function RagConversation({ context, emptyTitle, variant }: RagConversationProps) {
@@ -130,14 +61,14 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
   return (
     <div className={`rag-conversation rag-conversation--${variant}`}>
       <div aria-live="polite" className="rag-thread" ref={scrollRef}>
-        <div className="rag-context-badge"><Icon name="sparkles" size={14} /><span>{contextLabel(context)}</span></div>
+        <div className="rag-context-badge"><span>{contextLabel(context)}</span></div>
         {context.title && <div className="rag-context-title"><strong>{context.title}</strong>{context.selectedText && <q>{context.selectedText}</q>}</div>}
 
         {messages.length === 0 ? (
           <div className="rag-empty">
-            <span><Icon name="message" size={25} /></span>
+            <span>MOA</span>
             <h1>{emptyTitle ?? '무엇이 궁금한가요?'}</h1>
-            <p>뉴스·공시·리포트·재무·실제 주가를 찾아<br />확인된 근거와 함께 답해요.</p>
+            <p>주가, 뉴스, 공시와 리포트를 한 번에 확인하세요.</p>
             <div className="rag-starters">
               {starterQuestions.map((question) => <button key={question} onClick={() => void send(question)} type="button">{question}<Icon name="arrow-right" size={15} /></button>)}
             </div>
@@ -146,15 +77,14 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
           <div className="rag-messages">
             {messages.map((message) => (
               <article className={`rag-message rag-message--${message.role}${message.state ? ` is-${message.state}` : ''}`} key={message.id}>
-                {message.role === 'assistant' && <span className="chat-avatar" aria-hidden="true">M</span>}
                 <div>
                   {message.text
                     ? message.role === 'assistant' ? <RagAnswer text={message.text} /> : <p>{message.text}</p>
                     : message.state === 'pending' && <span className="rag-answer-placeholder">근거를 확인하고 있어요…</span>}
                   {message.role === 'assistant' && <RagVisualizations visualizations={message.visualizations} />}
-                  {message.role === 'assistant' && <SourceCards sources={message.sources.filter((source) => !message.visualizations.some(
+                  {message.role === 'assistant' && <RagSources sources={message.sources.filter((source) => !message.visualizations.some(
                     (visualization) => visualization.type === 'news_cards' && visualization.sourceIds.includes(source.sourceId),
-                  ))} />}
+                  ))} stockCode={context.stockCode} />}
                   {message.warnings.length > 0 && <div className="rag-warnings">{message.warnings.map((warning) => <p key={warning}><Icon name="info" size={13} />{warning}</p>)}</div>}
                   {(message.state === 'error' || message.state === 'aborted') && <button className="rag-retry" onClick={retry} type="button"><Icon name="refresh" size={14} /> 다시 시도</button>}
                 </div>
@@ -182,7 +112,7 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
             : <button aria-label="질문 보내기" disabled={!input.trim()} type="submit"><Icon name="send" size={17} /></button>}
         </div>
         <footer>
-          <span><Icon name="document" size={13} /> Agentic Hybrid RAG</span>
+          <span>답변은 확인된 자료를 기준으로 생성됩니다.</span>
           {messages.length > 0 && !active && <button onClick={reset} type="button">새 질문</button>}
         </footer>
       </form>
