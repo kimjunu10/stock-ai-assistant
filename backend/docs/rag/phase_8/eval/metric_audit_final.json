@@ -1,0 +1,453 @@
+{
+  "note": "phase/8-metric-audit — final-dev 저장 결과 재채점(LLM·DB 미호출). devset·gold·Agent·Tool·Retriever·프롬프트·Validator 미변경.",
+  "n": 120,
+  "official_metrics": {
+    "n": 120,
+    "agent": {
+      "required_tool_recall": 0.9843,
+      "forbidden_tool_call_rate": 0.0083,
+      "unnecessary_tool_call_rate": 0.0355,
+      "tool_argument_accuracy": 0.9866,
+      "multistep_completion_rate": 1.0,
+      "duplicate_call_rate": 0.0
+    },
+    "retrieval": {
+      "news_retrieval": {
+        "n_eval": 19,
+        "recall_hit": 10,
+        "recall_at_k": 0.5263,
+        "hit_at_1": 0.4737,
+        "mrr": 0.5,
+        "missed_case_ids": [
+          "news-04",
+          "news-09",
+          "news-10",
+          "news-11",
+          "news-13",
+          "news-14",
+          "news-15",
+          "news-18",
+          "news-19"
+        ]
+      },
+      "report_retrieval": {
+        "n_eval": 15,
+        "recall_hit": 14,
+        "recall_at_k": 0.9333,
+        "hit_at_1": 0.9333,
+        "mrr": 0.9333,
+        "missed_case_ids": [
+          "report-06"
+        ]
+      },
+      "report_page_accuracy": {
+        "n_eval": 48,
+        "hit": 12,
+        "page_accuracy": 0.25
+      },
+      "structured_lookup": {
+        "row_hit_rate": 0.8222
+      },
+      "other_stock_contamination_rate": 0.0
+    },
+    "numbers": {
+      "number_exact_match": null,
+      "unit_accuracy": null,
+      "period_accuracy": 1.0,
+      "trading_day_accuracy": null,
+      "value_kind_confusions": 0
+    },
+    "answer": {
+      "key_fact_coverage": 0.4286,
+      "citation_precision": 1.0,
+      "citation_coverage": 0.9464,
+      "nonexistent_citations": 0,
+      "unsupported_numbers": 5,
+      "exclusion_violations": 2,
+      "overclaim_cases": 2,
+      "false_answer_on_unanswerable": 1
+    },
+    "ops": {
+      "latency_ms_p50": 3766.0,
+      "latency_ms_p95": 8038.0,
+      "avg_tool_calls": 1.18,
+      "avg_model_calls": 1.99,
+      "cost_usd_per_query": 0.005426,
+      "cost_usd_total": 0.651102
+    }
+  },
+  "required_tool_recall_independent_check": {
+    "required_total": 127,
+    "required_hit": 125,
+    "recall": 0.9843,
+    "missing": [
+      [
+        "term-07",
+        "lookup_financial_term"
+      ],
+      [
+        "news-11",
+        "search_news"
+      ]
+    ]
+  },
+  "official_vs_independent_match": true,
+  "document_ranking_audit": [
+    {
+      "id": "news-01",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 이재용-올트먼 관련해서 무슨 일 있었어?",
+      "document_ranking": [
+        "news:7201",
+        "news:7165",
+        "news:7010",
+        "news:7052",
+        "news:7135"
+      ]
+    },
+    {
+      "id": "news-02",
+      "type": "뉴스 사건·영향",
+      "question": "현대차 동남아 최대 축구대회 뉴스 어떻게 된 거야?",
+      "document_ranking": [
+        "news:7194",
+        "news:7219",
+        "news:7074",
+        "news:7137",
+        "news:7161"
+      ]
+    },
+    {
+      "id": "news-03",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 갤럭시Z 폴드8 이슈 설명해줘",
+      "document_ranking": [
+        "news:7189",
+        "news:7174",
+        "news:7230",
+        "news:3782",
+        "news:7095"
+      ]
+    },
+    {
+      "id": "news-04",
+      "type": "뉴스 사건·영향",
+      "question": "두산에너빌리티 미국 원전 수주 관련 소식 알려줘",
+      "document_ranking": [
+        "news:7202"
+      ]
+    },
+    {
+      "id": "news-05",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 남미 건은 어떤 내용이야?",
+      "document_ranking": [
+        "news:7190",
+        "news:7008",
+        "news:6048",
+        "news:6820",
+        "news:5763"
+      ]
+    },
+    {
+      "id": "news-06",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 키옥시아 2대 주주 관련해서 무슨 일 있었어?",
+      "document_ranking": [
+        "news:7192",
+        "news:7109",
+        "news:7206",
+        "news:7210",
+        "news:7215"
+      ]
+    },
+    {
+      "id": "news-07",
+      "type": "뉴스 사건·영향",
+      "question": "현대차 엔비디아와 로봇 레퍼런스 뉴스 어떻게 된 거야?",
+      "document_ranking": [
+        "news:7156",
+        "news:7143",
+        "news:7137",
+        "news:7131",
+        "news:7200"
+      ]
+    },
+    {
+      "id": "news-08",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 1020세대 겨냥 'New 이슈 설명해줘",
+      "document_ranking": [
+        "news:7187",
+        "news:7230",
+        "news:7002",
+        "news:7148",
+        "news:7003"
+      ]
+    },
+    {
+      "id": "news-09",
+      "type": "뉴스 사건·영향",
+      "question": "두산에너빌리티 중부발전 관련 소식 알려줘",
+      "document_ranking": [
+        "news:7202"
+      ]
+    },
+    {
+      "id": "news-10",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 레이도스 깁스 앤 건은 어떤 내용이야?",
+      "document_ranking": [
+        "news:7167",
+        "news:7222",
+        "news:7229",
+        "news:7207",
+        "news:7228",
+        "news:7193",
+        "news:7190"
+      ]
+    },
+    {
+      "id": "news-11",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 2분기 영업이익 64조원 관련해서 무슨 일 있었어?",
+      "document_ranking": []
+    },
+    {
+      "id": "news-12",
+      "type": "뉴스 사건·영향",
+      "question": "현대차 피지컬 AI 솔루션 뉴스 어떻게 된 거야?",
+      "document_ranking": [
+        "news:7143",
+        "news:7131",
+        "news:7156",
+        "news:7199",
+        "news:7137"
+      ]
+    },
+    {
+      "id": "news-13",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 구글과 협업한 AI 이슈 설명해줘",
+      "document_ranking": [
+        "news:7057",
+        "news:7195",
+        "news:7217",
+        "news:7163",
+        "news:7012"
+      ]
+    },
+    {
+      "id": "news-14",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 HJ중공업 관련 소식 알려줘",
+      "document_ranking": [
+        "news:7190",
+        "news:7225",
+        "news:7229",
+        "news:7228",
+        "news:7222"
+      ]
+    },
+    {
+      "id": "news-15",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 SK 건은 어떤 내용이야?",
+      "document_ranking": [
+        "news:5600",
+        "news:5604",
+        "news:4070",
+        "news:6775",
+        "news:7011"
+      ]
+    },
+    {
+      "id": "news-16",
+      "type": "뉴스 사건·영향",
+      "question": "현대차 이재명 대통령 관련해서 무슨 일 있었어?",
+      "document_ranking": [
+        "news:7161",
+        "news:7137",
+        "news:7074",
+        "news:7219",
+        "news:7131"
+      ]
+    },
+    {
+      "id": "news-17",
+      "type": "뉴스 사건·영향",
+      "question": "삼성전자 갤럭시 워치9 뉴스 어떻게 된 거야?",
+      "document_ranking": [
+        "news:7180",
+        "news:7095",
+        "news:7183",
+        "news:7174",
+        "news:3782"
+      ]
+    },
+    {
+      "id": "news-18",
+      "type": "뉴스 사건·영향",
+      "question": "한화오션 한미 조선협력센터 워싱턴 이슈 설명해줘",
+      "document_ranking": [
+        "news:7193",
+        "news:7222",
+        "news:7167",
+        "news:7162",
+        "news:7207"
+      ]
+    },
+    {
+      "id": "news-19",
+      "type": "뉴스 사건·영향",
+      "question": "SK하이닉스 최태원 관련 소식 알려줘",
+      "document_ranking": [
+        "news:3931",
+        "news:5611",
+        "news:6847",
+        "news:3997",
+        "news:6261"
+      ]
+    },
+    {
+      "id": "report-01",
+      "type": "증권사 리포트",
+      "question": "미래에셋증권에서 SK하이닉스 목표주가 얼마로 봤어?",
+      "document_ranking": [
+        "report:18f336cf-2f29-44fb-a626-b56ed9088db7",
+        "report:b4d72099-bd79-4b86-b954-e575033a5a11",
+        "report:2b8ed14b-b5fb-42cd-84d5-d089acba477c",
+        "report:6a806303-5c84-4db3-80a4-c9f2b6c94416",
+        "report:b64cfa46-d8b2-4f17-a0ee-13e1231e1bd2"
+      ]
+    },
+    {
+      "id": "report-02",
+      "type": "증권사 리포트",
+      "question": "유진투자증권 현대차 리포트 전망 어때?",
+      "document_ranking": [
+        "report:2b7440e2-24f8-4778-98a2-5fdd67ebf174",
+        "report:b3b55fe6-854f-470b-beed-63dffb6644bf",
+        "report:c71346f8-8ba1-4ca2-a756-7aeab8626e1f",
+        "report:cb1a177c-1e2d-466d-9b0f-66dac591e89d",
+        "report:1075fa3f-092f-4955-99a9-d70e9cb7ed60"
+      ]
+    },
+    {
+      "id": "report-03",
+      "type": "증권사 리포트",
+      "question": "2026-07-08에 나온 iM증권 삼성전자 투자의견 알려줘",
+      "document_ranking": [
+        "report:a8e7ed6e-f1a0-4667-8d53-61bf8e48db49"
+      ]
+    },
+    {
+      "id": "report-04",
+      "type": "증권사 리포트",
+      "question": "두산에너빌리티에 대한 유안타증권 리포트 내용 요약해줘",
+      "document_ranking": [
+        "report:88e60303-12e5-4d2c-9d92-fe67a41e1b04",
+        "report:b8f33c29-086b-4b5d-9802-7e7725b6b833",
+        "report:e4cee6fd-cd30-41cb-8279-84c8d4babacd",
+        "report:fdec9c76-a6aa-4d7f-ab72-1943600baf5a",
+        "report:a284912e-b2de-4bac-8f15-59602191b69e"
+      ]
+    },
+    {
+      "id": "report-05",
+      "type": "증권사 리포트",
+      "question": "키움증권에서 한화오션 목표주가 얼마로 봤어?",
+      "document_ranking": [
+        "report:2dd06f4e-5df8-40fa-9f15-f43cf325a430"
+      ]
+    },
+    {
+      "id": "report-06",
+      "type": "증권사 리포트",
+      "question": "대신증권 SK하이닉스 리포트 전망 어때?",
+      "document_ranking": [
+        "report:6a806303-5c84-4db3-80a4-c9f2b6c94416",
+        "report:e501341e-2aaf-4e6f-945f-3d619457e171",
+        "report:23960dbc-c750-4af5-a8ab-aee205b748dc",
+        "report:035c409f-baec-4e95-a9c4-485cbf38adce",
+        "report:725efa1d-4861-4300-91ee-eadb74ef4dbc"
+      ]
+    },
+    {
+      "id": "report-07",
+      "type": "증권사 리포트",
+      "question": "2026-07-08에 나온 키움증권 현대차 투자의견 알려줘",
+      "document_ranking": [
+        "report:fa6279c9-904b-4745-a587-178b9c50145b"
+      ]
+    },
+    {
+      "id": "report-08",
+      "type": "증권사 리포트",
+      "question": "삼성전자에 대한 IBK투자증권 리포트 내용 요약해줘",
+      "document_ranking": [
+        "report:3d0d8a91-251a-4dde-abee-cd072af90822"
+      ]
+    },
+    {
+      "id": "report-09",
+      "type": "증권사 리포트",
+      "question": "SK증권에서 한화오션 목표주가 얼마로 봤어?",
+      "document_ranking": [
+        "report:3055bcf2-bd61-4845-848d-d388a1a4cc9a"
+      ]
+    },
+    {
+      "id": "report-10",
+      "type": "증권사 리포트",
+      "question": "IBK투자증권 SK하이닉스 리포트 전망 어때?",
+      "document_ranking": [
+        "report:2b8ed14b-b5fb-42cd-84d5-d089acba477c"
+      ]
+    },
+    {
+      "id": "report-11",
+      "type": "증권사 리포트",
+      "question": "2026-07-06에 나온 한화투자증권 현대차 투자의견 알려줘",
+      "document_ranking": [
+        "report:b3b55fe6-854f-470b-beed-63dffb6644bf"
+      ]
+    },
+    {
+      "id": "report-12",
+      "type": "증권사 리포트",
+      "question": "삼성전자에 대한 대신증권 리포트 내용 요약해줘",
+      "document_ranking": [
+        "report:9fad15ea-6cf1-4f0c-9a93-9a8978b4c345"
+      ]
+    },
+    {
+      "id": "report-13",
+      "type": "증권사 리포트",
+      "question": "대신증권에서 한화오션 목표주가 얼마로 봤어?",
+      "document_ranking": [
+        "report:cf0fe949-7cf7-4256-86ff-33b83777cd61"
+      ]
+    },
+    {
+      "id": "report-14",
+      "type": "증권사 리포트",
+      "question": "교보증권 SK하이닉스 리포트 전망 어때?",
+      "document_ranking": [
+        "report:6a806303-5c84-4db3-80a4-c9f2b6c94416",
+        "report:e501341e-2aaf-4e6f-945f-3d619457e171",
+        "report:23960dbc-c750-4af5-a8ab-aee205b748dc",
+        "report:035c409f-baec-4e95-a9c4-485cbf38adce",
+        "report:725efa1d-4861-4300-91ee-eadb74ef4dbc"
+      ]
+    },
+    {
+      "id": "report-15",
+      "type": "증권사 리포트",
+      "question": "2026-06-18에 나온 한화투자증권 현대차 투자의견 알려줘",
+      "document_ranking": [
+        "report:f6e89bb1-c9d2-4431-9d79-832b89b0aaf9"
+      ]
+    }
+  ]
+}

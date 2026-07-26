@@ -31,6 +31,74 @@ _UNSUPPORTED_NUM_ERR = "재무성 숫자"
 _DOC_SOURCE_TYPES = frozenset({"news_event", "research_report"})
 _LOOKUP_SOURCE_TYPES = frozenset({"term", "financial", "structured_disclosure"})
 
+_NEWS_DOC_ID_RE = re.compile(r"news_clusters\.id=(\d+)")
+_REPORT_DOC_ID_RE = re.compile(r"research_reports\.id=([0-9a-fA-F-]{36})")
+
+
+def _normalize_doc_id(kind: str, raw: str) -> str:
+    """부모 문서 ID 표기를 통일한다(ID 타입·문자열 형식 정규화).
+
+    news_clusters.id 는 DB 상 정수이지만 라벨 note·locator.source_pk 양쪽에서
+    문자열로 오갈 수 있다. research_reports.id(uuid) 는 대소문자 차이가 있을 수
+    있다. 종류를 접두어로 붙여 뉴스/리포트 ID 공간이 절대 섞이지 않게 한다.
+    """
+    return f"{kind}:{str(raw).strip().lower()}"
+
+
+def _gold_document_id(gs: Any) -> str | None:
+    """정답 라벨(GoldSource)에서 부모 문서 ID를 뽑는다(청크 ID 아님).
+
+    devset 은 청크 단위 source_id 만 정식 필드로 갖고 있어, note 에 사람이
+    적어둔 원본 식별자(news_clusters.id=.../research_reports.id=...)를 문서
+    단위 정답으로 쓴다. devset 자체는 수정하지 않는다 — 여기서는 읽기만 한다.
+    """
+    note = gs.note or ""
+    m = _NEWS_DOC_ID_RE.search(note)
+    if m:
+        return _normalize_doc_id("news", m.group(1))
+    m = _REPORT_DOC_ID_RE.search(note)
+    if m:
+        return _normalize_doc_id("report", m.group(1))
+    return None
+
+
+def _source_document_id(source: dict) -> str | None:
+    """Tool 이 반환한 출처 1건(dict)에서 부모 문서 ID를 뽑는다.
+
+    news_event 는 locator.source_pk 가 news_clusters.id 와 동일 값이고,
+    research_report 는 locator.report_id 가 research_reports.id 와 동일
+    값이다(둘 다 이미 원본 테이블 PK를 그대로 넘겨받는 필드 — 별도 조인 없이
+    신뢰 가능). 다른 source_type 은 문서 검색 대상이 아니므로 None.
+    """
+    loc = source.get("locator") or {}
+    stype = source.get("source_type")
+    if stype == "news_event":
+        pk = loc.get("source_pk")
+        return _normalize_doc_id("news", pk) if pk else None
+    if stype == "research_report":
+        rid = loc.get("report_id")
+        return _normalize_doc_id("report", rid) if rid else None
+    return None
+
+
+def document_ranking(record: RunRecord) -> list[str]:
+    """실행 기록에서 문서 검색 순위(부모 문서 ID, 중복 제거)를 뽑는다.
+
+    record.sources 는 Tool 이 반환한 순서를 그대로 보존한다(실제 검색
+    순위) — record.retrieved_ids 는 집합을 정렬한 값이라 청크 ID의
+    알파벳순이 되어버려 순위 정보로 쓸 수 없다(Hit@1/MRR 계산에 그걸 쓰면
+    실제 검색 결과와 무관한 순서로 채점된다). 같은 문서의 여러 청크가
+    연달아 나오면 첫 등장 순위만 남기고 중복 제거한다.
+    """
+    seen: list[str] = []
+    seen_set: set[str] = set()
+    for s in record.sources:
+        doc_id = _source_document_id(s)
+        if doc_id and doc_id not in seen_set:
+            seen_set.add(doc_id)
+            seen.append(doc_id)
+    return seen
+
 
 def _doc_miss_is_not_retriever_fault(case: EvalCase, record: RunRecord, grade: CaseGrade) -> bool:
     """이 문항의 문서 검색 실패를 Retriever 탓으로 볼 수 없는지 판정한다.
@@ -39,6 +107,13 @@ def _doc_miss_is_not_retriever_fault(case: EvalCase, record: RunRecord, grade: C
       - Tool 은 정답 문서를 반환했는데 검증기가 답변을 삭제한 경우
       - 라벨이 한 청크만 허용했지만 같은 정답 '문서'의 다른 유효 청크를 반환한 경우
     단, 실제로 다른 종목·엉뚱한 문서를 반환한 경우는 계속 실패로 남긴다.
+
+    주의: 이 함수는 '검색이 실패했을 때 그 실패를 Retriever 탓이 아니라고
+    볼 것인가'를 판정하는 용도로만 쓴다. 문서를 실제로 맞힌 경우(완전 적중)
+    에는 이 함수의 반환값과 무관하게 항상 적중으로 집계해야 한다 — 과거
+    aggregate() 는 이 구분 없이 호출해 완전 적중 케이스까지 recall 집계에서
+    빠지는 결함이 있었다(§1 참고). 새 aggregate() 는 document_recall_stats()
+    를 통해 이 구분을 명시적으로 지킨다.
     """
     # 다른 종목이 섞였으면 명백한 검색 실패다.
     if grade.other_stock_sources:
@@ -48,29 +123,98 @@ def _doc_miss_is_not_retriever_fault(case: EvalCase, record: RunRecord, grade: C
     if any("제거함" in e for e in record.validation_errors):
         return True
 
-    # 같은 정답 문서의 다른 청크를 반환했는가.
-    # 라벨 note 에 원본 식별자(news_clusters.id / research_reports.id)가 있고,
-    # 실제 출처의 locator 가 같은 원본을 가리키면 문서 단위로는 맞힌 것이다.
-    want_docs = set()
-    for gs in case.gold_sources:
-        note = gs.note or ""
-        m = re.search(r"news_clusters\.id=(\d+)", note)
-        if m:
-            want_docs.add(("news", m.group(1)))
-        m = re.search(r"research_reports\.id=([0-9a-f-]{36})", note)
-        if m:
-            want_docs.add(("report", m.group(1)))
-    if not want_docs:
+    # 같은 정답 문서의 다른 청크를 반환했는가 — 문서 ID 기준으로 비교한다.
+    gold_doc = _gold_document_id_for_case(case)
+    if gold_doc is None:
         return False
-    for s in record.sources:
-        loc = s.get("locator") or {}
-        rid = loc.get("report_id")
-        if rid and ("report", str(rid)) in want_docs:
-            return True
-        pk = loc.get("source_pk")
-        if pk and ("news", str(pk)) in want_docs:
-            return True
-    return False
+    return gold_doc in document_ranking(record)
+
+
+def _gold_document_id_for_case(case: EvalCase) -> str | None:
+    """이 문항의 뉴스/리포트 정답 문서 ID(있으면 정확히 1개)를 반환한다."""
+    for gs in case.gold_sources:
+        doc_id = _gold_document_id(gs)
+        if doc_id is not None:
+            return doc_id
+    return None
+
+
+def document_recall_stats(
+    cases: list[EvalCase], records: list[RunRecord], grades: list[CaseGrade], doc_type: str
+) -> dict:
+    """뉴스 또는 리포트 문서 검색의 Recall@K/Hit@1/MRR을 문서 ID 기준으로 계산한다.
+
+    prompt.md 감사 원칙:
+      - 뉴스/리포트 별도 계산(doc_type 인자로 호출부에서 분리)
+      - gold 문서가 있는 문항만 분모에 포함(그 외 문항은 아예 세지 않음)
+      - 구조화 조회 질문은 대상이 아님(gold_document_id 가 애초에 None)
+      - Validator/Generation 실패를 retrieval 실패로 중복 계산하지 않음
+        (다른 종목 혼입만 실패로 유지, 답변 삭제·같은 문서 다른 청크는 적중 처리)
+      - 청크 ID 대신 부모 문서 ID로 비교, 같은 문서의 중복 청크는 1건으로 축약
+      - Recall@K·Hit@1·MRR 모두 동일한 분모(n_eval) 사용
+    """
+    kind = "news" if doc_type == "news_event" else "report"
+    n_eval = 0
+    recall_hit = 0
+    hit1_hit = 0
+    rr_sum = 0.0
+    missed_ids: list[str] = []
+
+    for case, rec, grade in zip(cases, records, grades, strict=True):
+        gold_doc = _gold_document_id_for_case(case)
+        if gold_doc is None or not gold_doc.startswith(f"{kind}:"):
+            continue
+        # 문서 검색 이외의 원인(다른 종목 혼입)이 아니면, 답변 삭제·청크 형식
+        # 차이로 인한 '실패처럼 보임'은 적중으로 인정한다(§4 원칙).
+        ranking = document_ranking(rec)
+        hit = gold_doc in ranking
+        if not hit and grade.other_stock_sources:
+            # 다른 종목이 섞인 검색 실패 — 그대로 미스로 남긴다(이미 hit=False).
+            pass
+
+        n_eval += 1
+        if hit:
+            recall_hit += 1
+            rank = ranking.index(gold_doc) + 1
+            rr_sum += 1.0 / rank
+            if rank == 1:
+                hit1_hit += 1
+        else:
+            missed_ids.append(case.id)
+
+    def ratio(h: int, t: int) -> float | None:
+        return round(h / t, 4) if t else None
+
+    return {
+        "n_eval": n_eval,
+        "recall_hit": recall_hit,
+        "recall_at_k": ratio(recall_hit, n_eval),
+        "hit_at_1": ratio(hit1_hit, n_eval),
+        "mrr": round(rr_sum / n_eval, 4) if n_eval else None,
+        "missed_case_ids": missed_ids,
+    }
+
+
+def report_page_accuracy(cases: list[EvalCase], records: list[RunRecord]) -> dict:
+    """리포트 근거 페이지 정확도(문서 검색 지표와 별도 계산, §1 요구사항).
+
+    gold 라벨의 page 가 있는 리포트 문항만 대상. record.sources 중
+    research_report 타입에서 같은 page 를 반환했는지만 본다(문서 자체를
+    맞혔는지는 document_recall_stats 가 이미 별도로 잰다).
+    """
+    total = 0
+    ok = 0
+    for case, rec in zip(cases, records, strict=True):
+        for gs in case.gold_sources:
+            if gs.source_type != "research_report" or not gs.page:
+                continue
+            total += 1
+            if any(
+                s.get("source_type") == "research_report" and s.get("page") == gs.page
+                for s in rec.sources
+            ):
+                ok += 1
+    return {"n_eval": total, "hit": ok, "page_accuracy": round(ok / total, 4) if total else None}
 
 
 @dataclass
@@ -438,43 +582,22 @@ def aggregate(cases: list[EvalCase], records: list[RunRecord], grades: list[Case
         if duplicate_call_count(used):
             agent.duplicate_cases += 1
 
-        # 검색: 문서 검색과 구조화 조회를 나눠 집계한다(성격이 다른 실패다).
-        doc_gold = [
-            gs.source_id
-            for gs in case.gold_sources
-            if gs.source_id and gs.source_type in _DOC_SOURCE_TYPES
-        ]
+        # 검색: 문서 검색(뉴스·리포트, 문서 ID 기준)과 구조화 조회(정확 행 조회)를
+        # 나눠 집계한다(성격이 다른 실패다). 문서 검색은 document_recall_stats() 로
+        # 뉴스/리포트 전용 함수(아래)에서 별도 계산하므로 여기서는 lookup·부수
+        # 지표(타 종목 혼입)만 채운다.
         lookup_gold = [
             gs.source_id
             for gs in case.gold_sources
             if gs.source_id and gs.source_type in _LOOKUP_SOURCE_TYPES
         ]
         hits = set(g.gold_source_hits)
-
-        if doc_gold and not _doc_miss_is_not_retriever_fault(case, rec, g):
-            retr.recall_total += len(doc_gold)
-            retr.recall_hit += len([d for d in doc_gold if d in hits])
-            retr.hit_at_1_total += 1
-            first = rec.retrieved_ids[0] if rec.retrieved_ids else None
-            if first in doc_gold:
-                retr.hit_at_1 += 1
-            retr.rr_total += 1
-            retr.rr_sum += _reciprocal_rank(rec.retrieved_ids, doc_gold)
-
         if lookup_gold:
             # 구조화 조회는 순위가 아니라 '정확한 행을 집었는가'다.
             retr.lookup_total += len(lookup_gold)
             retr.lookup_hit += len([x for x in lookup_gold if x in hits])
         if g.other_stock_sources:
             retr.other_stock_cases += 1
-        for gs in case.gold_sources:
-            if gs.source_type == "research_report" and gs.page:
-                retr.page_total += 1
-                if any(
-                    s.get("source_type") == "research_report" and s.get("page") == gs.page
-                    for s in rec.sources
-                ):
-                    retr.page_ok += 1
 
         # 숫자·기간
         for nr in g.number_results:
@@ -530,6 +653,13 @@ def aggregate(cases: list[EvalCase], records: list[RunRecord], grades: list[Case
         ops.model_calls.append(rec.model_calls)
         ops.costs.append(rec.cost_usd)
 
+    # 문서 검색(뉴스/리포트 분리, 문서 ID 기준)은 케이스 단위 개별 채점이 아니라
+    # 뉴스/리포트 각각의 분모로 한 번에 계산한다(§1 감사 원칙 — 두 유형을 같은
+    # recall_total 에 합산하지 않는다).
+    retr.news_stats = document_recall_stats(cases, records, grades, "news_event")
+    retr.report_stats = document_recall_stats(cases, records, grades, "research_report")
+    retr.page_stats = report_page_accuracy(cases, records)
+
     return {
         "n": len(grades),
         "agent": agent.as_dict(),
@@ -538,10 +668,3 @@ def aggregate(cases: list[EvalCase], records: list[RunRecord], grades: list[Case
         "answer": ans.as_dict(),
         "ops": ops.as_dict(),
     }
-
-
-def _reciprocal_rank(retrieved: list[str], gold: list[str]) -> float:
-    for i, r in enumerate(retrieved, start=1):
-        if r in gold:
-            return 1.0 / i
-    return 0.0

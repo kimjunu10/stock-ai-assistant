@@ -592,7 +592,8 @@ def test_unmeasured_metric_is_none_not_zero():
     agg = aggregate([case], [rec], [grade_case(case, rec)])
     # 이 케이스엔 기대 숫자·정답 식별자가 없다 → 잰 적 없음
     assert agg["numbers"]["number_exact_match"] is None
-    assert agg["retrieval"]["document_retrieval"]["mrr"] is None
+    assert agg["retrieval"]["news_retrieval"]["mrr"] is None
+    assert agg["retrieval"]["report_retrieval"]["mrr"] is None
 
 
 def test_document_retrieval_and_structured_lookup_are_separated():
@@ -603,7 +604,13 @@ def test_document_retrieval_and_structured_lookup_are_separated():
         question="무슨 일 있었어?",
         stock_code="005930",
         required_tools=["search_news"],
-        gold_sources=[{"source_type": "news_event", "source_id": "chunk-1"}],
+        gold_sources=[
+            {
+                "source_type": "news_event",
+                "source_id": "chunk-1",
+                "note": "news_clusters.id=9001",
+            }
+        ],
     )
     lookup_case = _case(
         id="l",
@@ -614,7 +621,14 @@ def test_document_retrieval_and_structured_lookup_are_separated():
         tool_calls=[{"name": "search_news", "args": {}, "status": "ok", "latency_ms": 1}],
         retrieved_ids=["chunk-1"],
         answer="사건 설명",
-        sources=[{"source_id": "chunk-1", "source_type": "news_event", "stock_code": "005930"}],
+        sources=[
+            {
+                "source_id": "chunk-1",
+                "source_type": "news_event",
+                "stock_code": "005930",
+                "locator": {"source_pk": "9001"},
+            }
+        ],
     )
     lookup_rec = _record(
         case_id="l",
@@ -629,7 +643,7 @@ def test_document_retrieval_and_structured_lookup_are_separated():
     agg = aggregate(cases, recs, grades)
 
     # 문서 검색은 맞혔고, 구조화 조회는 틀렸다 — 한 숫자로 섞이지 않아야 한다.
-    assert agg["retrieval"]["document_retrieval"]["recall_at_k"] == 1.0
+    assert agg["retrieval"]["news_retrieval"]["recall_at_k"] == 1.0
     assert agg["retrieval"]["structured_lookup"]["row_hit_rate"] == 0.0
 
 
@@ -641,7 +655,13 @@ def test_validator_dropped_answer_not_counted_as_retriever_failure():
         question="목표주가 얼마야?",
         stock_code="005930",
         required_tools=["search_research_reports"],
-        gold_sources=[{"source_type": "research_report", "source_id": "rc-1"}],
+        gold_sources=[
+            {
+                "source_type": "research_report",
+                "source_id": "rc-1",
+                "note": "research_reports.id=11111111-1111-1111-1111-111111111111",
+            }
+        ],
     )
     rec = _record(
         case_id="r",
@@ -650,12 +670,18 @@ def test_validator_dropped_answer_not_counted_as_retriever_failure():
         ],
         retrieved_ids=["rc-other"],
         answer="일부 목표주가를 확인할 수 없어 제외했습니다.",
-        sources=[{"source_id": "rc-other", "source_type": "research_report"}],
+        sources=[
+            {
+                "source_id": "rc-other",
+                "source_type": "research_report",
+                "locator": {"report_id": "11111111-1111-1111-1111-111111111111"},
+            }
+        ],
         validation_errors=["근거 없는 증권사·목표주가 문장을 답변에서 제거함"],
     )
     agg = aggregate([case], [rec], [grade_case(case, rec)])
-    # 분모에 들어가지 않아 '미측정'이어야 한다(0.0 으로 검색 탓을 하지 않는다).
-    assert agg["retrieval"]["document_retrieval"]["recall_at_k"] is None
+    # 같은 부모 문서를 반환했으므로 청크가 다르더라도 적중으로 집계해야 한다.
+    assert agg["retrieval"]["report_retrieval"]["recall_at_k"] == 1.0
 
 
 def test_other_stock_source_still_counts_as_retrieval_failure():
@@ -666,18 +692,31 @@ def test_other_stock_source_still_counts_as_retrieval_failure():
         question="무슨 일 있었어?",
         stock_code="005930",
         required_tools=["search_news"],
-        gold_sources=[{"source_type": "news_event", "source_id": "chunk-1"}],
+        gold_sources=[
+            {
+                "source_type": "news_event",
+                "source_id": "chunk-1",
+                "note": "news_clusters.id=9001",
+            }
+        ],
     )
     rec = _record(
         case_id="x",
         tool_calls=[{"name": "search_news", "args": {}, "status": "ok", "latency_ms": 1}],
         retrieved_ids=["chunk-9"],
         answer="다른 종목 뉴스",
-        sources=[{"source_id": "chunk-9", "source_type": "news_event", "stock_code": "000660"}],
+        sources=[
+            {
+                "source_id": "chunk-9",
+                "source_type": "news_event",
+                "stock_code": "000660",
+                "locator": {"source_pk": "9002"},
+            }
+        ],
         validation_errors=["근거 없는 증권사·목표주가 문장을 답변에서 제거함"],
     )
     agg = aggregate([case], [rec], [grade_case(case, rec)])
-    assert agg["retrieval"]["document_retrieval"]["recall_at_k"] == 0.0
+    assert agg["retrieval"]["news_retrieval"]["recall_at_k"] == 0.0
 
 
 def test_period_check_does_not_require_words_absent_from_question():

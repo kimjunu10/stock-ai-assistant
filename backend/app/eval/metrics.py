@@ -124,32 +124,29 @@ class RetrievalMetrics:
     문서 검색(뉴스·리포트)과 구조화 조회(용어·재무·공시)를 섞으면 의미가 없다.
     전자는 Retriever 순위 품질이고 후자는 DB 행을 정확히 집었는가의 문제다.
     한 숫자로 합치면 어느 계층을 고쳐야 할지 알 수 없어 분리한다.
+
+    문서 검색(news/report)은 부모 문서 ID 기준 Recall@K/Hit@1/MRR 을
+    grader.document_recall_stats() 가 별도로 계산해 as_dict() 호출 시
+    news_stats/report_stats/page_stats 로 주입한다(청크 ID 합산이 아니라
+    뉴스·리포트를 완전히 분리해 각자의 분모로 계산 — 감사 §1).
     """
 
-    # 문서 검색(news_event / research_report)
-    recall_hit: int = 0
-    recall_total: int = 0
-    hit_at_1: int = 0
-    hit_at_1_total: int = 0
-    rr_sum: float = 0.0
-    rr_total: int = 0
-    page_ok: int = 0
-    page_total: int = 0
     # 구조화 조회(term / financial / structured_disclosure)
     lookup_hit: int = 0
     lookup_total: int = 0
     # 공통
     other_stock_cases: int = 0
     n: int = 0
+    # 문서 검색(뉴스/리포트 분리, aggregate() 가 document_recall_stats() 결과를 주입)
+    news_stats: dict | None = None
+    report_stats: dict | None = None
+    page_stats: dict | None = None
 
     def as_dict(self) -> dict:
         return {
-            "document_retrieval": {
-                "recall_at_k": _ratio(self.recall_hit, self.recall_total),
-                "hit_at_1": _ratio(self.hit_at_1, self.hit_at_1_total),
-                "mrr": round(self.rr_sum / self.rr_total, 4) if self.rr_total else None,
-                "page_accuracy": _ratio(self.page_ok, self.page_total),
-            },
+            "news_retrieval": self.news_stats,
+            "report_retrieval": self.report_stats,
+            "report_page_accuracy": self.page_stats,
             "structured_lookup": {
                 "row_hit_rate": _ratio(self.lookup_hit, self.lookup_total),
             },
