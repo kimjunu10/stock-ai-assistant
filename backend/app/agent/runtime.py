@@ -107,6 +107,7 @@ def _runtime_prompt(request) -> str:
         current_datetime=getattr(ctx, "current_datetime", None),
         current_date=getattr(ctx, "current_date", None),
         timezone=getattr(ctx, "timezone", "Asia/Seoul"),
+        stock_code=getattr(ctx, "stock_code", None),
         event_status=getattr(ctx, "event_status", "none"),
         event_title=getattr(ctx, "event_title", None),
         event_date=getattr(ctx, "event_date", None),
@@ -143,7 +144,7 @@ def build_tools() -> list:
         if err:
             return _dump(err)
         inp = FinancialFactsInput(
-            stock_code=stock_code,
+            stock_code=_resolve_stock_code(stock_code, runtime),
             account_name=account_name,
             account_names=account_names or [],
             business_year=business_year,
@@ -252,7 +253,10 @@ def build_tools() -> list:
         svc, err = _services(runtime)
         if err:
             return _dump(err)
-        inp = DisclosureValuesInput(stock_code=stock_code, event_types=event_types or [])
+        inp = DisclosureValuesInput(
+            stock_code=_resolve_stock_code(stock_code, runtime),
+            event_types=event_types or [],
+        )
         return _dump(run_get_disclosure_values(svc.facts, inp))
 
     @tool
@@ -321,7 +325,7 @@ def build_tools() -> list:
         if svc.prices is None:
             return _dump(error("주가 조회가 현재 구성되어 있지 않습니다."))
         inp = GetStockPricesInput(
-            stock_code=stock_code,
+            stock_code=_resolve_stock_code(stock_code, runtime),
             lookback=lookback,
             start_date=start_date,
             end_date=end_date,
