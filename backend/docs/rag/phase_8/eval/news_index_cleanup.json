@@ -1,0 +1,18 @@
+{
+  "ran_at": "2026-07-26T12:11:25.614180+00:00",
+  "mode": "APPLY",
+  "before": {
+    "stale_documents": 868,
+    "stale_active_chunks": 0,
+    "current_documents": 3311,
+    "current_active_chunks": 3494
+  },
+  "after": {
+    "stale_documents": 868,
+    "stale_active_chunks": 0,
+    "current_documents": 3311,
+    "current_active_chunks": 3494
+  },
+  "deactivated": 0,
+  "would_deactivate": 0
+}

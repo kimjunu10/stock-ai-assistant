@@ -122,13 +122,24 @@ def grade_arguments(case: EvalCase, record: RunRecord) -> dict[str, bool]:
 
     expected_args 의 각 (tool, arg) 를 실제 호출 인자와 비교한다.
     `_contains` 접미사가 붙은 기대 키는 부분 일치로 본다(자연어 인자 대응).
+
+    required_tools_any 로 여러 Tool 중 하나면 되는 문항에서, 라벨의 expected_args 는
+    그중 한 Tool 만 예시로 적어둘 수 있다. 허용된 다른 Tool 로 답했다면 부르지 않은
+    Tool 의 인자를 틀렸다고 셀 수 없다(제품 실패가 아니라 라벨 표현의 한계).
+    이 경우만 채점에서 제외하며, 필수 Tool 자체를 안 부른 경우는 그대로 실패로 둔다.
     """
+    used = {c["name"] for c in record.tool_calls}
+    satisfied_by_alternative = bool(case.required_tools_any) and bool(
+        used & set(case.required_tools_any)
+    )
     results: dict[str, bool] = {}
     for tool_name, expected in case.expected_args.items():
         actual_calls = [c for c in record.tool_calls if c["name"] == tool_name]
         for key, want in expected.items():
             label = f"{tool_name}.{key}"
             if not actual_calls:
+                if satisfied_by_alternative and tool_name in case.required_tools_any:
+                    continue
                 results[label] = False
                 continue
             if any(c.get("args") is None for c in actual_calls):
