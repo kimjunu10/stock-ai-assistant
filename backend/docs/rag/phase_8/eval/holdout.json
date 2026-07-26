@@ -662,10 +662,10 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": null,
+          "source_id": "dd8e7f2e-fcc5-478c-bb30-bfb24cfbefac",
           "ref": "정의선 회장, 엔비디아 본사 방문…자율주행·로봇·제조 AI 협력 후속 논의",
           "page": null,
-          "note": "news_clusters.id=7131 (2026-07-24, neutral)"
+          "note": "news_clusters.id=7131 / 2026-07-24 / neutral / 기사 29건 / rag_documents.id=9b1b651f-1299-486d-8dc1-7e07565674a5"
         }
       ],
       "expected_facts": [],
@@ -676,8 +676,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "news_clusters.id=7131 실재(기사 29건, 2026-07-24). 출처 chunk_id 는 검색 경로에 따라 달라져 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "news_clusters.id=7131 실재(요약 success, 기사 29건, 2026-07-24, 감성 neutral). rag_documents.id=9b1b651f-1299-486d-8dc1-7e07565674a5(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 005380 일치.",
       "split": "holdout"
     },
     {
@@ -713,10 +713,10 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": null,
+          "source_id": "c6151c73-7de2-429f-9a29-8202dd15ce90",
           "ref": "삼성 AI 글래스, 안경처럼 가볍고 편안한 착용감 구현",
           "page": null,
-          "note": "news_clusters.id=7181 (2026-07-25, positive)"
+          "note": "news_clusters.id=7181 / 2026-07-25 / positive / 기사 17건 / rag_documents.id=6efe40bf-5c66-445f-95ab-d58e61a5585a"
         }
       ],
       "expected_facts": [],
@@ -727,8 +727,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "news_clusters.id=7181 실재(기사 17건, 2026-07-25). 출처 chunk_id 는 검색 경로에 따라 달라져 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "news_clusters.id=7181 실재(요약 success, 기사 17건, 2026-07-25, 감성 positive). rag_documents.id=6efe40bf-5c66-445f-95ab-d58e61a5585a(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 005930 일치.",
       "split": "holdout"
     },
     {
@@ -764,10 +764,10 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": null,
+          "source_id": "789d528d-85ef-4d0b-9ced-6c6670f71791",
           "ref": "美 하원 세출위, HD현대중공업·한화오션·삼성중공업 조선소 방문",
           "page": null,
-          "note": "news_clusters.id=6889 (2026-07-23, neutral)"
+          "note": "news_clusters.id=6889 / 2026-07-23 / neutral / 기사 8건 / rag_documents.id=8457ebec-3b9e-45b1-b791-dbd918d2d72b"
         }
       ],
       "expected_facts": [],
@@ -778,8 +778,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "news_clusters.id=6889 실재(기사 8건, 2026-07-23). 출처 chunk_id 는 검색 경로에 따라 달라져 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "news_clusters.id=6889 실재(요약 success, 기사 8건, 2026-07-23, 감성 neutral). rag_documents.id=8457ebec-3b9e-45b1-b791-dbd918d2d72b(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 042660 일치.",
       "split": "holdout"
     },
     {
@@ -815,10 +815,17 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": null,
-          "ref": "이재명 대통령, 미국 방문 계기로 국내 기업과 글로벌 빅테크 간 9500억달러 규모 AI 협력 발표",
+          "source_id": "518f14aa-691b-48aa-a319-5f89cb92be31",
+          "ref": "이재명 대통령 방미 계기 한미 AI 협력, 9500억달러 규모 반도체·AI 인프라 계약 체결",
           "page": null,
-          "note": "news_clusters.id=7108 (2026-07-24, positive)"
+          "note": "news_clusters.id=7108 / 2026-07-24 / positive / 기사 8건 / rag_documents.id=24953106-3d2c-478f-869c-445fa948c43f"
+        },
+        {
+          "source_type": "news_event",
+          "source_id": "575e036e-771a-4f2b-a3e0-e91ed6e0648d",
+          "ref": "이재명 대통령 방미 계기 한미 AI 협력, 9500억달러 규모 반도체·AI 인프라 계약 체결",
+          "page": null,
+          "note": "news_clusters.id=7108 / 2026-07-24 / positive / 기사 8건 / rag_documents.id=24953106-3d2c-478f-869c-445fa948c43f"
         }
       ],
       "expected_facts": [],
@@ -829,8 +836,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "news_clusters.id=7108 실재(기사 7건, 2026-07-24). 출처 chunk_id 는 검색 경로에 따라 달라져 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "news_clusters.id=7108 실재(요약 success, 기사 8건, 2026-07-24, 감성 positive). rag_documents.id=24953106-3d2c-478f-869c-445fa948c43f(is_current) 연결 확인, 활성 청크 2건을 정답 식별자로 확정. 종목 000660 일치.",
       "split": "holdout"
     },
     {
@@ -866,10 +873,10 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": null,
+          "source_id": "f226617d-352c-417b-8a91-1d32dca5bf21",
           "ref": "기아, 2분기 역대 최대 매출 달성…전동화 판매 확대로 수익성 회복세",
           "page": null,
-          "note": "news_clusters.id=7014 (2026-07-24, positive)"
+          "note": "news_clusters.id=7014 / 2026-07-24 / positive / 기사 9건 / rag_documents.id=acae810d-c7f8-426a-9dda-a3c9d867e161"
         }
       ],
       "expected_facts": [],
@@ -880,8 +887,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "news_clusters.id=7014 실재(기사 9건, 2026-07-24). 출처 chunk_id 는 검색 경로에 따라 달라져 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "news_clusters.id=7014 실재(요약 success, 기사 9건, 2026-07-24, 감성 positive). rag_documents.id=acae810d-c7f8-426a-9dda-a3c9d867e161(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 005380 일치.",
       "split": "holdout"
     },
     {
@@ -917,10 +924,10 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": null,
+          "source_id": "6a0c49ae-956e-43fd-87f5-aff90a1d12fc",
           "ref": "삼성전자-브로드컴, 5년간 2000억달러 규모 AI 반도체 파운드리 협력 체결",
           "page": null,
-          "note": "news_clusters.id=7149 (2026-07-25, positive)"
+          "note": "news_clusters.id=7149 / 2026-07-25 / positive / 기사 42건 / rag_documents.id=c17e0bbc-2b52-48a6-aaa5-7925bf995963"
         }
       ],
       "expected_facts": [],
@@ -931,8 +938,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "news_clusters.id=7149 실재(기사 42건, 2026-07-25). 출처 chunk_id 는 검색 경로에 따라 달라져 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "news_clusters.id=7149 실재(요약 success, 기사 42건, 2026-07-25, 감성 positive). rag_documents.id=c17e0bbc-2b52-48a6-aaa5-7925bf995963(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 005930 일치.",
       "split": "holdout"
     },
     {
@@ -1236,10 +1243,24 @@
       "gold_sources": [
         {
           "source_type": "research_report",
-          "source_id": null,
+          "source_id": "91da2c94-889f-47a6-802b-fe8cb0713f95",
           "ref": "키움증권 2026-07-08 하반기, EPS 성장률 둔화 예상",
           "page": 1,
-          "note": "research_reports.id=a854fc5b-7116-433f-a5f7-bac4960a7ca7, target_price=390000"
+          "note": "research_reports.id=a854fc5b-7116-433f-a5f7-bac4960a7ca7 / 목표주가 390,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "a6487d9c-19e1-467b-87c9-481a60c202b2",
+          "ref": "키움증권 2026-07-08 하반기, EPS 성장률 둔화 예상",
+          "page": 7,
+          "note": "research_reports.id=a854fc5b-7116-433f-a5f7-bac4960a7ca7 / 목표주가 390,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "10d18d4d-15fb-4f04-9c35-c4cad1aef3cf",
+          "ref": "키움증권 2026-07-08 하반기, EPS 성장률 둔화 예상",
+          "page": 9,
+          "note": "research_reports.id=a854fc5b-7116-433f-a5f7-bac4960a7ca7 / 목표주가 390,000원(stated)"
         }
       ],
       "expected_facts": [],
@@ -1253,8 +1274,8 @@
         "보장"
       ],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "research_reports 실재: 키움증권 2026-07-08 목표주가 390000(stated), 의견 BUY. 질문이 특정 리포트를 지정하지 않아 정답 chunk 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "research_reports.id=a854fc5b-7116-433f-a5f7-bac4960a7ca7 실재: 키움증권 2026-07-08, 목표주가 390,000원(stated), 투자의견 BUY, 종목 005930 일치. 목표주가 숫자가 본문에 있는 청크 3건(p.[1, 7, 9])을 근거로 확정. PDF 11쪽. 목표주가는 전망값(투자의견 기준)이며 실제 거래가가 아니다.",
       "split": "holdout"
     },
     {
@@ -1288,10 +1309,24 @@
       "gold_sources": [
         {
           "source_type": "research_report",
-          "source_id": null,
+          "source_id": "86ced8cb-d5b7-473d-94e8-51d968f54cab",
           "ref": "유안타증권 2026-07-06 2Q26 Pre 보다 중요한 이벤트, CPSP",
           "page": 1,
-          "note": "research_reports.id=afffea99-5ddc-4520-910d-03ee502e1776, target_price=179000"
+          "note": "research_reports.id=afffea99-5ddc-4520-910d-03ee502e1776 / 목표주가 179,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "1e431c16-2949-442c-bd01-70175e69c97a",
+          "ref": "유안타증권 2026-07-06 2Q26 Pre 보다 중요한 이벤트, CPSP",
+          "page": 1,
+          "note": "research_reports.id=afffea99-5ddc-4520-910d-03ee502e1776 / 목표주가 179,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "86e6af36-29a6-44eb-b320-750802dc46d1",
+          "ref": "유안타증권 2026-07-06 2Q26 Pre 보다 중요한 이벤트, CPSP",
+          "page": 6,
+          "note": "research_reports.id=afffea99-5ddc-4520-910d-03ee502e1776 / 목표주가 179,000원(stated)"
         }
       ],
       "expected_facts": [],
@@ -1305,8 +1340,8 @@
         "보장"
       ],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "research_reports 실재: 유안타증권 2026-07-06 목표주가 179000(stated), 의견 BUY. 질문이 특정 리포트를 지정하지 않아 정답 chunk 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "research_reports.id=afffea99-5ddc-4520-910d-03ee502e1776 실재: 유안타증권 2026-07-06, 목표주가 179,000원(stated), 투자의견 BUY, 종목 042660 일치. 목표주가 숫자가 본문에 있는 청크 3건(p.[1, 6])을 근거로 확정. PDF 7쪽. 목표주가는 전망값(투자의견 기준)이며 실제 거래가가 아니다.",
       "split": "holdout"
     },
     {
@@ -1340,10 +1375,17 @@
       "gold_sources": [
         {
           "source_type": "research_report",
-          "source_id": null,
+          "source_id": "cf4e310d-22f0-41f4-aefc-1c7e9ce271cb",
           "ref": "하나증권 2026-06-26 실적과 멀티플 둘 다 열려 있다",
           "page": 1,
-          "note": "research_reports.id=a9243ce5-1fef-4144-8926-81a04b2fc982, target_price=3600000"
+          "note": "research_reports.id=a9243ce5-1fef-4144-8926-81a04b2fc982 / 목표주가 3,600,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "a03dd006-f9a9-4581-9051-723256c2dc74",
+          "ref": "하나증권 2026-06-26 실적과 멀티플 둘 다 열려 있다",
+          "page": 6,
+          "note": "research_reports.id=a9243ce5-1fef-4144-8926-81a04b2fc982 / 목표주가 3,600,000원(stated)"
         }
       ],
       "expected_facts": [],
@@ -1357,8 +1399,8 @@
         "보장"
       ],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "research_reports 실재: 하나증권 2026-06-26 목표주가 3600000(stated), 의견 BUY. 질문이 특정 리포트를 지정하지 않아 정답 chunk 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "research_reports.id=a9243ce5-1fef-4144-8926-81a04b2fc982 실재: 하나증권 2026-06-26, 목표주가 3,600,000원(stated), 투자의견 BUY, 종목 000660 일치. 목표주가 숫자가 본문에 있는 청크 2건(p.[1, 6])을 근거로 확정. PDF 6쪽. 목표주가는 전망값(투자의견 기준)이며 실제 거래가가 아니다.",
       "split": "holdout"
     },
     {
@@ -1392,10 +1434,24 @@
       "gold_sources": [
         {
           "source_type": "research_report",
-          "source_id": null,
+          "source_id": "d0e8aaf1-fd0e-4a87-8327-9e40a3cab9d5",
           "ref": "유안타증권 2026-06-16 속성이 다른 이익에 기반한 밸류에ᄋ",
           "page": 1,
-          "note": "research_reports.id=e2ebcd35-3940-4f22-ab7a-ab2c63e7a98e, target_price=690000"
+          "note": "research_reports.id=e2ebcd35-3940-4f22-ab7a-ab2c63e7a98e / 목표주가 690,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "6390a3dc-a6fd-47a1-82ed-54d43df2f795",
+          "ref": "유안타증권 2026-06-16 속성이 다른 이익에 기반한 밸류에ᄋ",
+          "page": 4,
+          "note": "research_reports.id=e2ebcd35-3940-4f22-ab7a-ab2c63e7a98e / 목표주가 690,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "c61ac16d-d946-4029-b268-c1e65317b566",
+          "ref": "유안타증권 2026-06-16 속성이 다른 이익에 기반한 밸류에ᄋ",
+          "page": 6,
+          "note": "research_reports.id=e2ebcd35-3940-4f22-ab7a-ab2c63e7a98e / 목표주가 690,000원(stated)"
         }
       ],
       "expected_facts": [],
@@ -1409,8 +1465,8 @@
         "보장"
       ],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "research_reports 실재: 유안타증권 2026-06-16 목표주가 690000(stated), 의견 HOLD. 질문이 특정 리포트를 지정하지 않아 정답 chunk 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "research_reports.id=e2ebcd35-3940-4f22-ab7a-ab2c63e7a98e 실재: 유안타증권 2026-06-16, 목표주가 690,000원(stated), 투자의견 HOLD, 종목 005380 일치. 목표주가 숫자가 본문에 있는 청크 3건(p.[1, 4, 6])을 근거로 확정. PDF 7쪽. 목표주가는 전망값(투자의견 기준)이며 실제 거래가가 아니다.",
       "split": "holdout"
     },
     {
@@ -1444,10 +1500,24 @@
       "gold_sources": [
         {
           "source_type": "research_report",
-          "source_id": null,
+          "source_id": "3f4dc07e-0621-43ed-a209-b203686161c1",
           "ref": "미래에셋증권 2026-07-08 과격한 주가 반응에 뇌동하지 말자",
           "page": 1,
-          "note": "research_reports.id=c615f423-eb30-4474-ae28-e270c318a0c0, target_price=550000"
+          "note": "research_reports.id=c615f423-eb30-4474-ae28-e270c318a0c0 / 목표주가 550,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "b5018fae-0acd-4b2f-9004-99d6a1142dbe",
+          "ref": "미래에셋증권 2026-07-08 과격한 주가 반응에 뇌동하지 말자",
+          "page": 5,
+          "note": "research_reports.id=c615f423-eb30-4474-ae28-e270c318a0c0 / 목표주가 550,000원(stated)"
+        },
+        {
+          "source_type": "research_report",
+          "source_id": "1e84fdb9-4053-4d71-b9cb-88019ccd385d",
+          "ref": "미래에셋증권 2026-07-08 과격한 주가 반응에 뇌동하지 말자",
+          "page": 8,
+          "note": "research_reports.id=c615f423-eb30-4474-ae28-e270c318a0c0 / 목표주가 550,000원(stated)"
         }
       ],
       "expected_facts": [],
@@ -1461,8 +1531,8 @@
         "보장"
       ],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "research_reports 실재: 미래에셋증권 2026-07-08 목표주가 550000(stated), 의견 매수. 질문이 특정 리포트를 지정하지 않아 정답 chunk 식별자 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "research_reports.id=c615f423-eb30-4474-ae28-e270c318a0c0 실재: 미래에셋증권 2026-07-08, 목표주가 550,000원(stated), 투자의견 매수, 종목 005930 일치. 목표주가 숫자가 본문에 있는 청크 3건(p.[1, 5, 8])을 근거로 확정. PDF 8쪽. 목표주가는 전망값(투자의견 기준)이며 실제 거래가가 아니다.",
       "split": "holdout"
     },
     {
@@ -1509,8 +1579,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "복합 질문 — 필수 기능 2개 호출 여부로 채점. 정답 문서 식별자는 하위 질문마다 달라 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "복합 질문 라벨 확정: 종목 005930, 필수 Tool ['get_disclosure_values', 'get_financial_facts'], 보조 Tool ['search_news', 'search_research_reports', 'get_stock_prices'], 허용 출처 ['financial', 'news_event', 'research_report', 'price', 'structured_disclosure']. 하위 질문마다 정답 문서가 달라 단일 정답 식별자는 두지 않는다(검색 Recall 분모에서 제외되며, 필수 Tool 호출·입력 조건·출처 종류로 채점한다).",
       "split": "holdout"
     },
     {
@@ -1557,8 +1627,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "복합 질문 — 필수 기능 2개 호출 여부로 채점. 정답 문서 식별자는 하위 질문마다 달라 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "복합 질문 라벨 확정: 종목 000660, 필수 Tool ['get_disclosure_values', 'get_financial_facts'], 보조 Tool ['search_news', 'search_research_reports', 'get_stock_prices'], 허용 출처 ['financial', 'news_event', 'research_report', 'price', 'structured_disclosure']. 하위 질문마다 정답 문서가 달라 단일 정답 식별자는 두지 않는다(검색 Recall 분모에서 제외되며, 필수 Tool 호출·입력 조건·출처 종류로 채점한다).",
       "split": "holdout"
     },
     {
@@ -1605,8 +1675,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "복합 질문 — 필수 기능 2개 호출 여부로 채점. 정답 문서 식별자는 하위 질문마다 달라 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "복합 질문 라벨 확정: 종목 005380, 필수 Tool ['get_disclosure_values', 'get_financial_facts'], 보조 Tool ['search_news', 'search_research_reports', 'get_stock_prices'], 허용 출처 ['financial', 'news_event', 'research_report', 'price', 'structured_disclosure']. 하위 질문마다 정답 문서가 달라 단일 정답 식별자는 두지 않는다(검색 Recall 분모에서 제외되며, 필수 Tool 호출·입력 조건·출처 종류로 채점한다).",
       "split": "holdout"
     },
     {
@@ -1653,8 +1723,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "복합 질문 — 필수 기능 2개 호출 여부로 채점. 정답 문서 식별자는 하위 질문마다 달라 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "복합 질문 라벨 확정: 종목 034020, 필수 Tool ['get_disclosure_values', 'get_financial_facts'], 보조 Tool ['search_news', 'search_research_reports', 'get_stock_prices'], 허용 출처 ['financial', 'news_event', 'research_report', 'price', 'structured_disclosure']. 하위 질문마다 정답 문서가 달라 단일 정답 식별자는 두지 않는다(검색 Recall 분모에서 제외되며, 필수 Tool 호출·입력 조건·출처 종류로 채점한다).",
       "split": "holdout"
     },
     {
@@ -1701,8 +1771,8 @@
       ],
       "forbidden_claims": [],
       "no_data_expectation": null,
-      "review_status": "needs_manual_review",
-      "label_basis": "복합 질문 — 필수 기능 2개 호출 여부로 채점. 정답 문서 식별자는 하위 질문마다 달라 미확정.",
+      "review_status": "confirmed",
+      "label_basis": "복합 질문 라벨 확정: 종목 042660, 필수 Tool ['get_disclosure_values', 'get_financial_facts'], 보조 Tool ['search_news', 'search_research_reports', 'get_stock_prices'], 허용 출처 ['financial', 'news_event', 'research_report', 'price', 'structured_disclosure']. 하위 질문마다 정답 문서가 달라 단일 정답 식별자는 두지 않는다(검색 Recall 분모에서 제외되며, 필수 Tool 호출·입력 조건·출처 종류로 채점한다).",
       "split": "holdout"
     },
     {

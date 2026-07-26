@@ -126,6 +126,166 @@ def check_overlap(dev: list[EvalCase], hold: list[EvalCase]) -> None:
     check("홀드아웃 40문항", len(hold) == 40, f"{len(hold)}문항")
 
 
+def check_chunk_sources(cases: list[EvalCase], client) -> None:
+    """뉴스·리포트 정답 청크가 실제로 존재하고 올바른 원본에 속하는지 확인한다(§7).
+
+    - 뉴스: 청크가 활성 상태이고, 그 문서가 라벨에 적힌 news_clusters.id 의 현재 문서인가
+    - 리포트: 청크가 라벨에 적힌 research_reports.id 에 속하고 페이지가 PDF 범위 안인가
+    - 종목 혼입: 청크 종목이 질문 종목과 같은가
+    """
+    news_items: list[tuple[str, str, str, str | None]] = []  # (case_id, chunk_id, cluster, stock)
+    report_items: list[tuple[str, str, str, int | None, str | None]] = []
+
+    for c in cases:
+        want_stock = c.context.stock_code or c.stock_code
+        for gs in c.gold_sources:
+            if not gs.source_id:
+                continue
+            note = gs.note or ""
+            if gs.source_type == "news_event":
+                m = re.search(r"news_clusters\.id=(\d+)", note)
+                news_items.append((c.id, gs.source_id, m.group(1) if m else "", want_stock))
+            elif gs.source_type == "research_report":
+                m = re.search(r"research_reports\.id=([0-9a-f-]{36})", note)
+                report_items.append(
+                    (c.id, gs.source_id, m.group(1) if m else "", gs.page, want_stock)
+                )
+
+    # ── 뉴스: 청크 실재 + 사건 연결 + 종목 일치 ──
+    news_bad: list[str] = []
+    news_ids = [cid for _, cid, _, _ in news_items]
+    chunk_rows: dict[str, dict] = {}
+    for i in range(0, len(news_ids), 50):
+        for row in (
+            client.table("rag_chunks")
+            .select("id,document_id,stock_code,is_active,source_type")
+            .in_("id", news_ids[i : i + 50])
+            .execute()
+            .data
+            or []
+        ):
+            chunk_rows[row["id"]] = row
+
+    doc_ids = sorted({r["document_id"] for r in chunk_rows.values()})
+    docs: dict[str, dict] = {}
+    for i in range(0, len(doc_ids), 50):
+        for d in (
+            client.table("rag_documents")
+            .select("id,source_pk,source_type,is_current,stock_code")
+            .in_("id", doc_ids[i : i + 50])
+            .execute()
+            .data
+            or []
+        ):
+            docs[d["id"]] = d
+
+    for case_id, chunk_id, cluster_id, want_stock in news_items:
+        ch = chunk_rows.get(chunk_id)
+        if not ch or not ch.get("is_active"):
+            news_bad.append(f"{case_id}:청크없음/비활성")
+            continue
+        doc = docs.get(ch["document_id"])
+        if not doc or not doc.get("is_current"):
+            news_bad.append(f"{case_id}:현재문서아님")
+            continue
+        if cluster_id and str(doc.get("source_pk")) != cluster_id:
+            news_bad.append(f"{case_id}:사건연결불일치")
+            continue
+        if want_stock and str(ch.get("stock_code")) != want_stock:
+            news_bad.append(f"{case_id}:종목혼입")
+    check(
+        "뉴스 정답 청크 실재·사건 연결·종목 일치",
+        not news_bad,
+        f"{len(news_items) - len(news_bad)}/{len(news_items)} 확인, 문제 {news_bad[:3]}",
+    )
+
+    # ── 리포트: 청크가 해당 리포트 소속 + 페이지 범위 + 종목 일치 ──
+    rep_bad: list[str] = []
+    rep_ids = [cid for _, cid, _, _, _ in report_items]
+    rep_chunks: dict[str, dict] = {}
+    for i in range(0, len(rep_ids), 50):
+        for row in (
+            client.table("rag_chunks")
+            .select("id,source_locator,stock_code,is_active,source_type")
+            .in_("id", rep_ids[i : i + 50])
+            .execute()
+            .data
+            or []
+        ):
+            rep_chunks[row["id"]] = row
+
+    report_ids = sorted({r for _, _, r, _, _ in report_items if r})
+    reports: dict[str, dict] = {}
+    for i in range(0, len(report_ids), 50):
+        for r in (
+            client.table("research_reports")
+            .select("id,stock_code,page_count,target_price,target_price_status")
+            .in_("id", report_ids[i : i + 50])
+            .execute()
+            .data
+            or []
+        ):
+            reports[r["id"]] = r
+
+    for case_id, chunk_id, report_id, page, want_stock in report_items:
+        ch = rep_chunks.get(chunk_id)
+        if not ch or not ch.get("is_active"):
+            rep_bad.append(f"{case_id}:청크없음/비활성")
+            continue
+        loc = ch.get("source_locator") or {}
+        if report_id and str(loc.get("report_id")) != report_id:
+            rep_bad.append(f"{case_id}:리포트연결불일치")
+            continue
+        rp = reports.get(report_id)
+        if rp and page and rp.get("page_count") and page > rp["page_count"]:
+            rep_bad.append(f"{case_id}:페이지초과({page}>{rp['page_count']})")
+            continue
+        if want_stock and rp and str(rp.get("stock_code")) != want_stock:
+            rep_bad.append(f"{case_id}:종목혼입")
+    check(
+        "리포트 정답 청크 실재·리포트 연결·페이지 범위",
+        not rep_bad,
+        f"{len(report_items) - len(rep_bad)}/{len(report_items)} 확인, 문제 {rep_bad[:3]}",
+    )
+
+    # ── 실제값·전망값 구분: 리포트 목표주가는 전망값이어야 한다 ──
+    kind_bad = [
+        rid for rid in report_ids if reports.get(rid, {}).get("target_price_status") != "stated"
+    ]
+    check(
+        "리포트 목표주가 stated(전망값) 구분",
+        not kind_bad,
+        f"{len(report_ids) - len(kind_bad)}/{len(report_ids)} 확인, 문제 {kind_bad[:3]}",
+    )
+
+
+def check_review_status(cases: list[EvalCase]) -> None:
+    """확정 라벨은 추적 가능한 근거를 가져야 한다(§4)."""
+    confirmed = [c for c in cases if c.review_status == "confirmed"]
+    # 확정했는데 근거에 원본 식별자가 없으면 사람이 다시 추적할 수 없다.
+    untraceable = [
+        c.id
+        for c in confirmed
+        if c.type in ("뉴스 사건·영향", "증권사 리포트")
+        and not re.search(
+            r"(news_clusters\.id=\d+|research_reports\.id=[0-9a-f-]{36})", c.label_basis
+        )
+    ]
+    check("확정 라벨의 원본 추적 가능", not untraceable, f"추적 불가 {untraceable[:5]}")
+
+    still = [c.id for c in cases if c.review_status == "needs_manual_review"]
+    reasons_missing = [
+        c.id
+        for c in cases
+        if c.review_status == "needs_manual_review" and "미확정 사유" not in c.label_basis
+    ]
+    check(
+        "미확정 라벨에 사유 기록",
+        not reasons_missing,
+        f"미확정 {len(still)}건, 사유 누락 {reasons_missing[:3]}",
+    )
+
+
 def check_gold_sources(cases: list[EvalCase], client) -> None:
     """정답 출처 식별자가 실제 DB 에 있는지 확인한다."""
     fin_ids: list[str] = []
@@ -232,11 +392,14 @@ def main() -> int:
     check_required_fields(allc)
     check_formats(allc)
     check_overlap(dev, hold)
+    check_review_status(allc)
 
     if not args.offline:
         from app.db.client import get_supabase_client
 
-        check_gold_sources(allc, get_supabase_client())
+        client = get_supabase_client()
+        check_gold_sources(allc, client)
+        check_chunk_sources(allc, client)
 
     need = [c.id for c in allc if c.review_status == "needs_manual_review"]
     print(f"\n수동 검토 필요 라벨: {len(need)}건")
