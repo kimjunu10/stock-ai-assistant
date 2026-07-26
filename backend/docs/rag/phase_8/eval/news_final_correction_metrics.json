@@ -1,0 +1,92 @@
+{
+  "note": "phase/8-news-final-correction 재계산(기존 저장 raw 재사용, LLM/DB 미호출). strict 는 §1 감사 결과와 동일(비교 검증), event-equivalent 는 event_equivalent_approvals.json 적용 결과.",
+  "news_retrieval_strict": {
+    "n_eval": 19,
+    "recall_hit": 10,
+    "recall_at_k": 0.5263,
+    "hit_at_1": 0.4737,
+    "mrr": 0.5,
+    "missed_case_ids": [
+      "news-04",
+      "news-09",
+      "news-10",
+      "news-11",
+      "news-13",
+      "news-14",
+      "news-15",
+      "news-18",
+      "news-19"
+    ],
+    "missed_case_ids_stale_gold": [],
+    "missed_case_ids_retriever_failure": [
+      "news-04",
+      "news-09",
+      "news-10",
+      "news-11",
+      "news-13",
+      "news-14",
+      "news-15",
+      "news-18",
+      "news-19"
+    ]
+  },
+  "news_retrieval_event_equivalent": {
+    "n_eval": 19,
+    "recall_hit": 13,
+    "recall_at_k": 0.6842,
+    "missed_case_ids": [
+      "news-04",
+      "news-09",
+      "news-11",
+      "news-14",
+      "news-15",
+      "news-19"
+    ]
+  },
+  "news_product_failure": {
+    "n_eval": 19,
+    "failures": 9,
+    "failure_rate": 0.4737,
+    "failed_case_ids": [
+      "news-04",
+      "news-09",
+      "news-10",
+      "news-11",
+      "news-13",
+      "news-14",
+      "news-15",
+      "news-18",
+      "news-19"
+    ]
+  },
+  "report_retrieval_strict": {
+    "n_eval": 15,
+    "recall_hit": 14,
+    "recall_at_k": 0.9333,
+    "hit_at_1": 0.9333,
+    "mrr": 0.9333,
+    "missed_case_ids": [
+      "report-06"
+    ],
+    "missed_case_ids_stale_gold": [],
+    "missed_case_ids_retriever_failure": [
+      "report-06"
+    ]
+  },
+  "report_retrieval_event_equivalent": {
+    "n_eval": 15,
+    "recall_hit": 14,
+    "recall_at_k": 0.9333,
+    "missed_case_ids": [
+      "report-06"
+    ]
+  },
+  "report_product_failure": {
+    "n_eval": 15,
+    "failures": 1,
+    "failure_rate": 0.0667,
+    "failed_case_ids": [
+      "report-06"
+    ]
+  }
+}

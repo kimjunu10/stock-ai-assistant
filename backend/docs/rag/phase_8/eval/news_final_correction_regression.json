@@ -1,0 +1,103 @@
+{
+  "note": "phase/8-news-final-correction targeted regression. devset.json 미변경, 여기 문항은 공식 지표에 포함되지 않는다.",
+  "n": 5,
+  "n_pass": 5,
+  "all_pass": true,
+  "results": [
+    {
+      "id": "regress-news11-original",
+      "question": "SK하이닉스 2분기 영업이익 64조원 관련해서 무슨 일 있었어?",
+      "required_tools": [
+        "search_news"
+      ],
+      "forbidden_tools": [
+        "get_financial_facts"
+      ],
+      "tool_sequence": [
+        "search_news"
+      ],
+      "required_tools_ok": true,
+      "forbidden_tools_violated": [],
+      "also_called_get_financial_facts": false,
+      "pass": true,
+      "stop_reason": "completed",
+      "total_latency_ms": 8214
+    },
+    {
+      "id": "regress-news11-variant-stock",
+      "question": "삼성전자 3분기 영업이익 12조원 관련해서 무슨 일 있었어?",
+      "required_tools": [
+        "search_news"
+      ],
+      "forbidden_tools": [
+        "get_financial_facts"
+      ],
+      "tool_sequence": [
+        "search_news"
+      ],
+      "required_tools_ok": true,
+      "forbidden_tools_violated": [],
+      "also_called_get_financial_facts": false,
+      "pass": true,
+      "stop_reason": "completed",
+      "total_latency_ms": 4876
+    },
+    {
+      "id": "regress-news11-variant-phrasing",
+      "question": "한화오션 영업이익 5000억원 관련 뉴스랑 배경 알려줘",
+      "required_tools": [
+        "search_news"
+      ],
+      "forbidden_tools": [
+        "get_financial_facts"
+      ],
+      "tool_sequence": [
+        "search_news"
+      ],
+      "required_tools_ok": true,
+      "forbidden_tools_violated": [],
+      "also_called_get_financial_facts": false,
+      "pass": true,
+      "stop_reason": "completed",
+      "total_latency_ms": 7129
+    },
+    {
+      "id": "regress-pure-number-question",
+      "question": "SK하이닉스 2026년 2분기 영업이익 얼마야?",
+      "required_tools": [
+        "get_financial_facts"
+      ],
+      "forbidden_tools": [
+        "search_news"
+      ],
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "required_tools_ok": true,
+      "forbidden_tools_violated": [],
+      "also_called_get_financial_facts": true,
+      "pass": true,
+      "stop_reason": "completed",
+      "total_latency_ms": 2659
+    },
+    {
+      "id": "regress-official-confirmation",
+      "question": "SK하이닉스 2분기 영업이익 64조원이라는데 실제로 맞는 수치야? 무슨 일이 있었는지도 알려줘",
+      "required_tools": [
+        "search_news",
+        "get_financial_facts"
+      ],
+      "forbidden_tools": [],
+      "tool_sequence": [
+        "search_news",
+        "get_financial_facts"
+      ],
+      "required_tools_ok": true,
+      "forbidden_tools_violated": [],
+      "also_called_get_financial_facts": true,
+      "pass": true,
+      "stop_reason": "completed",
+      "total_latency_ms": 5630
+    }
+  ]
+}
