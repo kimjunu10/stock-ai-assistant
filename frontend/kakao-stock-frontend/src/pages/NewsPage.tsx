@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { STOCKS } from '../data/mockData'
-import type { AssistantContext } from '../types'
-import { NewsClusterListItem } from '../components/NewsClusterListItem'
+import type { AssistantContext, NewsCluster } from '../types'
+import { NewsClusterDetail, NewsClusterListItem } from '../components/NewsClusterListItem'
 import { LoadingDots } from '../components/LoadingDots'
 import { Icon } from '../components/Icon'
 import { useNewsClusters } from '../hooks/useNewsClusters'
+import { fetchNewsClusters } from '../api/news'
 
 interface NewsPageProps {
   assistantOpen: boolean
@@ -15,11 +16,30 @@ interface NewsPageProps {
 export function NewsPage({ assistantOpen, onAssistantClose, onAsk }: NewsPageProps) {
   const [stockCode, setStockCode] = useState('all')
   const [publishedDate, setPublishedDate] = useState('')
+  const [linkedCluster, setLinkedCluster] = useState<NewsCluster | null>(null)
   const news = useNewsClusters({
     limit: 20,
     publishedDate: publishedDate || undefined,
     stockCode: stockCode === 'all' ? undefined : stockCode,
   })
+  useEffect(() => {
+    const value = new URLSearchParams(window.location.search).get('cluster')
+    const clusterId = value && /^\d+$/.test(value) ? Number(value) : null
+    if (!clusterId) return
+    const controller = new AbortController()
+    fetchNewsClusters(controller.signal, { clusterId, limit: 1 })
+      .then((response) => setLinkedCluster(response.clusters[0] ?? null))
+      .catch(() => setLinkedCluster(null))
+    return () => controller.abort()
+  }, [])
+
+  const closeLinkedCluster = () => {
+    setLinkedCluster(null)
+    const url = new URL(window.location.href)
+    url.searchParams.delete('cluster')
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+    if (assistantOpen) onAssistantClose()
+  }
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date())
   const selectedDateLabel = publishedDate
     ? new Intl.DateTimeFormat('ko-KR', {
@@ -97,6 +117,14 @@ export function NewsPage({ assistantOpen, onAssistantClose, onAsk }: NewsPagePro
           <div className="empty-state"><strong>조건에 맞는 브리핑이 없어요.</strong><p>뉴스 사건 정리가 생성되면 이곳에 표시됩니다.</p></div>
         )}
       </div>
+      {linkedCluster && (
+        <NewsClusterDetail
+          assistantOpen={assistantOpen}
+          cluster={linkedCluster}
+          onAsk={onAsk}
+          onClose={closeLinkedCluster}
+        />
+      )}
     </main>
   )
 }

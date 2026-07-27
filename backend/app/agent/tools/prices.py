@@ -127,6 +127,7 @@ def _return_payload(r: PeriodReturn) -> dict:
         "return_pct": r.return_pct,
         "currency": r.currency,
         "adjusted": r.adjusted,
+        "end_price_kind": r.end_price_kind,
         "unit": "원",
     }
 
@@ -138,13 +139,24 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
         start = _parse_date(inp.start_date)
         end = _parse_date(inp.end_date)
         if start and end:
-            r = svc.get_period_return(inp.stock_code, start=start, end=end)
+            q = svc.get_current_quote(inp.stock_code)
+            live_quote = q if q is not None and start <= q.trading_day <= end else None
+            r = svc.get_period_return(
+                inp.stock_code,
+                start=start,
+                end=end,
+                live_quote=live_quote,
+                start_on_or_before=True,
+            )
             if r is None:
                 return no_data(
                     f"{inp.stock_code} {start}~{end} 구간의 거래일 데이터가 없습니다. "
                     "다른 기간으로 대체하지 않았습니다."
                 )
-            data = {"quote": None, "period": _return_payload(r)}
+            data = {
+                "quote": _quote_payload(live_quote) if live_quote is not None else None,
+                "period": _return_payload(r),
+            }
             sources = [
                 _price_source(
                     inp.stock_code,
@@ -153,8 +165,16 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
                     extra={"start": r.start_trading_day.isoformat(), "adjusted": r.adjusted},
                 )
             ]
-            if inp.include_daily:
-                data.update(_daily_payload(svc, inp.stock_code, start, end))
+            # 기간 비교는 질문에 "그래프"라는 단어가 없어도 해당 구간 자체가 시각화 범위다.
+            data.update(
+                _daily_payload(
+                    svc,
+                    inp.stock_code,
+                    r.start_trading_day,
+                    r.end_trading_day,
+                    live_quote=live_quote,
+                )
+            )
             return ok(data, sources=sources)
 
         # (2) 현재가(항상). lookback 있으면 기간 수익률도 함께.
@@ -179,7 +199,12 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
             if days is None:
                 return error(f"지원하지 않는 기간입니다: {inp.lookback}")
             start = q.trading_day - timedelta(days=days)
-            r = svc.get_period_return(inp.stock_code, start=start, end=q.trading_day)
+            r = svc.get_period_return(
+                inp.stock_code,
+                start=start,
+                end=q.trading_day,
+                live_quote=q,
+            )
             if r is not None:
                 data["period"] = _return_payload(r)
                 data["period"]["lookback"] = inp.lookback
@@ -191,15 +216,19 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
                         extra={"kind": "period_start", "adjusted": r.adjusted},
                     )
                 )
-        if inp.include_daily and inp.lookback:
+        if inp.lookback:
             data.update(
                 _daily_payload(
                     svc,
                     inp.stock_code,
                     q.trading_day - timedelta(days=LOOKBACK_DAYS[inp.lookback]),
                     q.trading_day,
+                    live_quote=q,
                 )
             )
+        else:
+            # 현재가·전일 대비 질문은 고정 6개월 차트 대신 직전 확정 종가→현재가만 그린다.
+            data.update(_quote_comparison_payload(svc, inp.stock_code, q))
         return ok(data, sources=sources)
 
     except StockPriceError as e:
@@ -334,33 +363,118 @@ def _event_window_ok(inp: CalculateEventReturnInput, ew: EventWindowReturn) -> T
     return ok(data, sources=sources)
 
 
-# UI 주가 선그래프 상한(한 달 흐름 전 거래일 표시, 그러나 과도한 payload 방지).
+# UI 주가 선그래프 상한. 긴 기간은 끝부분만 자르지 않고 전체 구간에서 실제 거래일을
+# 균등 선택해 시작·종료 범위를 보존한다.
 _UI_DAILY_MAX = 60
 
 
 def _candle_point(c) -> dict:
     return {
         "trading_day": c.trading_day.isoformat(),
+        "open": c.open,
+        "high": c.high,
+        "low": c.low,
         "close": c.close,
         "volume": c.volume,
         "currency": c.currency,
     }
 
 
-def _daily_payload(svc: StockPriceService, stock_code: str, start: date, end: date) -> dict:
+def _sample_points(points: list[dict], limit: int = _UI_DAILY_MAX) -> tuple[list[dict], bool]:
+    if len(points) <= limit:
+        return points, False
+    last_index = len(points) - 1
+    indices = sorted({round(i * last_index / (limit - 1)) for i in range(limit)})
+    return [points[index] for index in indices], True
+
+
+def _daily_payload(
+    svc: StockPriceService,
+    stock_code: str,
+    start: date,
+    end: date,
+    *,
+    live_quote: PriceQuote | None = None,
+) -> dict:
     """일봉을 모델용 요약과 UI용 전체(상한)로 나눠 반환한다.
 
     - daily: 모델 문맥에 넣는 작은 요약(앞3+뒤3). Agent Tool 선택·답변 문맥을 키우지 않음.
-    - daily_full: UI 선그래프 전용. 실제 거래일별 종가를 최대 60거래일까지. 프런트는
-      값을 다시 계산하지 않고 이 점들을 그대로 그린다. 200개 API 상한·캐시는
+    - daily_full: UI 선그래프 전용. 요청 구간의 시작·종료를 보존하며 실제 거래일
+      포인트를 최대 60개로 균등 표본화한다. 프런트는 값을 다시 계산하지 않고
+      이 점들을 그대로 그린다. 200개 API 상한·캐시는
       StockPriceService(get_daily_candles)가 이미 처리한다.
     """
     candles = svc.get_daily_candles(stock_code, start=start, end=end)
-    if not candles:
+    points = [_candle_point(c) for c in candles]
+    if live_quote is not None and start <= live_quote.trading_day <= end:
+        # 당일 일봉은 장중 집계값이거나 제공자별 세션 차이가 있을 수 있다. 동일 날짜를
+        # 단일종목 현재가로 교체해 숫자 카드·답변·차트의 마지막 값이 항상 일치하게 한다.
+        live_day = live_quote.trading_day.isoformat()
+        existing = next((point for point in points if point["trading_day"] == live_day), None)
+        points = [point for point in points if point["trading_day"] != live_day]
+        live_point = {
+            **(existing or {}),
+            "trading_day": live_day,
+            "close": live_quote.price,
+            "volume": existing.get("volume") if existing else None,
+            "currency": live_quote.currency,
+            "price_kind": "current",
+            "as_of": live_quote.as_of.isoformat(),
+        }
+        if existing and existing.get("high", 0) > 0 and existing.get("low", 0) > 0:
+            live_point["high"] = max(existing["high"], live_quote.price)
+            live_point["low"] = min(existing["low"], live_quote.price)
+        points.append(live_point)
+        points.sort(key=lambda point: point["trading_day"])
+    if not points:
         return {"daily": [], "daily_full": []}
-    summary = candles if len(candles) <= 6 else candles[:3] + candles[-3:]
-    ui = candles[-_UI_DAILY_MAX:] if len(candles) > _UI_DAILY_MAX else candles
+    summary = points if len(points) <= 6 else points[:3] + points[-3:]
+    ui, sampled = _sample_points(points)
     return {
-        "daily": [_candle_point(c) for c in summary],
-        "daily_full": [_candle_point(c) for c in ui],
+        "daily": summary,
+        "daily_full": ui,
+        "daily_full_sampled": sampled,
     }
+
+
+def _quote_comparison_payload(
+    svc: StockPriceService,
+    stock_code: str,
+    quote: PriceQuote,
+) -> dict:
+    """전일 대비 질문용: 직전 확정 거래일 종가와 현재가 두 점만 반환한다."""
+
+    candles = svc.get_daily_candles(
+        stock_code,
+        start=quote.trading_day - timedelta(days=10),
+        end=quote.trading_day,
+    )
+    previous = [c for c in candles if c.trading_day < quote.trading_day]
+    if not previous:
+        return {"daily": [], "daily_full": []}
+    point = max(previous, key=lambda candle: candle.trading_day)
+    current = next((c for c in candles if c.trading_day == quote.trading_day), None)
+    live = {
+        **(_candle_point(current) if current else {}),
+        "trading_day": quote.trading_day.isoformat(),
+        "close": quote.price,
+        "volume": current.volume if current else None,
+        "currency": quote.currency,
+        "price_kind": "current",
+        "as_of": quote.as_of.isoformat(),
+    }
+    if current and current.high > 0 and current.low > 0:
+        live["high"] = max(current.high, quote.price)
+        live["low"] = min(current.low, quote.price)
+    previous_point = {
+        **_candle_point(point),
+        # 전일 비교 기준은 일봉 closePrice가 아니라 현재가와 함께 제공된 basePrice다.
+        "close": quote.previous_close,
+        "currency": quote.currency,
+        "price_kind": "previous_close",
+    }
+    if point.high > 0 and point.low > 0:
+        previous_point["high"] = max(point.high, quote.previous_close)
+        previous_point["low"] = min(point.low, quote.previous_close)
+    points = [previous_point, live]
+    return {"daily": points, "daily_full": points, "daily_full_sampled": False}

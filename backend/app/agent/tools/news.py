@@ -77,6 +77,8 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
         # (retrieval.list_recent_news), 주제 하이브리드 검색 경로에서는 없다(None) — UI는
         # 값이 있을 때만 배지를 그린다. Tool·Agent 는 감성을 새로 판정하지 않는다.
         locator = c.source_locator if isinstance(c.source_locator, dict) else {}
+        cluster_id = str(locator.get("cluster_id") or c.source_pk or "").strip()
+        cluster_url = f"/news?cluster={cluster_id}" if cluster_id.isdigit() else None
         data.append(
             {
                 "source_id": c.chunk_id,
@@ -84,7 +86,8 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
                 "snippet": clamp_text(c.content),
                 "published_at": iso(c.published_at),
                 "publisher": c.publisher,
-                "url": c.source_url,
+                # RAG 결과 클릭은 외부 검색이 아니라 서비스의 사건 클러스터 상세로 이동한다.
+                "url": cluster_url,
                 "stock_code": c.stock_code,
                 "sentiment": locator.get("sentiment_label"),
             }
@@ -97,8 +100,13 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
                 title=c.title,
                 publisher=c.publisher,
                 published_at=iso(c.published_at),
-                url=c.source_url,
-                locator={"source_pk": c.source_pk, "document_id": c.document_id},
+                url=cluster_url,
+                locator={
+                    "source_pk": c.source_pk,
+                    "cluster_id": int(cluster_id) if cluster_id.isdigit() else None,
+                    "document_id": c.document_id,
+                    "original_url": c.source_url,
+                },
             )
         )
     warnings = []

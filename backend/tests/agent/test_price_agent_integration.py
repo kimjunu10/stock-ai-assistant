@@ -18,6 +18,7 @@ from langchain_core.messages import AIMessage
 
 from app.agent.context import QaRuntimeContext, ToolServices
 from app.services.stock_prices import (
+    DailyClose,
     EventHorizonReturn,
     EventWindowReturn,
     PeriodReturn,
@@ -60,7 +61,16 @@ class FakePriceSvc:
             trading_day=date(2026, 7, 24),
         )
 
-    def get_period_return(self, stock_code, *, start, end, adjusted=True):
+    def get_period_return(
+        self,
+        stock_code,
+        *,
+        start,
+        end,
+        adjusted=True,
+        live_quote=None,
+        start_on_or_before=False,
+    ):
         self.calls.append(("period", stock_code))
         return PeriodReturn(
             stock_code=stock_code,
@@ -73,6 +83,19 @@ class FakePriceSvc:
             currency="KRW",
             adjusted=adjusted,
         )
+
+    def get_daily_candles(self, stock_code, *, start, end, adjusted=True):
+        return [
+            DailyClose(
+                trading_day=date(2026, 7, 23),
+                close=250000.0,
+                open=250000.0,
+                high=250000.0,
+                low=250000.0,
+                volume=1000,
+                currency="KRW",
+            )
+        ]
 
     def get_event_return(self, stock_code, *, event_date, pre_days, post_days, adjusted=True):
         self.calls.append(("event", stock_code))
@@ -131,9 +154,6 @@ class FakePriceSvc:
             currency="KRW",
             adjusted=adjusted,
         )
-
-    def get_daily_candles(self, stock_code, *, start, end, adjusted=True):
-        return []
 
 
 class FakeReports:

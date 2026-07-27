@@ -1,6 +1,6 @@
 import type { RagSource, RagVisualization } from '../types/qa'
-import { RagMarketChart } from './RagMarketChart'
 import { RagNewsResultItem } from './RagNewsResultItem'
+import { RagPriceChart, type RagPricePoint } from './RagPriceChart'
 
 function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -38,9 +38,19 @@ function sentiment(value: unknown) {
   return value === 'positive' || value === 'negative' || value === 'neutral' ? value : undefined
 }
 
-function newsSearchUrl(title: unknown) {
-  const query = text(title, '').trim()
-  return query ? `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(query)}` : undefined
+function newsClusterUrl(item: Record<string, unknown>, source?: RagSource) {
+  const candidates = [
+    item.cluster_id,
+    source?.locator.cluster_id,
+    source?.locator.source_pk,
+    item.source_id,
+    source?.sourceId,
+  ]
+  for (const candidate of candidates) {
+    const match = String(candidate ?? '').match(/^(?:news_cluster:)?(\d+)$/)
+    if (match?.[1]) return `/news?cluster=${match[1]}`
+  }
+  return undefined
 }
 
 function NewsResults({ sources, visualization }: { sources: RagSource[]; visualization: RagVisualization }) {
@@ -64,7 +74,7 @@ function NewsResults({ sources, visualization }: { sources: RagSource[]; visuali
               snippet={typeof item.snippet === 'string' ? item.snippet : undefined}
               stockCode={typeof item.stock_code === 'string' ? item.stock_code : undefined}
               title={text(item.title, '제목 없는 뉴스')}
-              url={safeHref(item.url) ?? source?.url ?? newsSearchUrl(item.title)}
+              url={newsClusterUrl(item, source) ?? safeHref(item.url) ?? source?.url}
             />
           )
         })}
@@ -81,19 +91,20 @@ function PriceChart({ visualization }: { visualization: RagVisualization }) {
   const values = points.map((point) => point.close as number)
   const min = Math.min(...values)
   const max = Math.max(...values)
-  const span = max - min || 1
-  const coords = points.map((point, index) => ({
-    x: 10 + (index / (points.length - 1)) * 580,
-    y: 154 - (((point.close as number) - min) / span) * 120,
+  const chartPoints: RagPricePoint[] = points.map((point) => ({
+    tradingDay: point.trading_day as string,
+    close: point.close as number,
+    open: typeof point.open === 'number' ? point.open : undefined,
+    high: typeof point.high === 'number' ? point.high : undefined,
+    low: typeof point.low === 'number' ? point.low : undefined,
+    volume: typeof point.volume === 'number' ? point.volume : undefined,
   }))
-  const path = coords.map((point, index) => (
-    `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`
-  )).join(' ')
-  const area = `${path} L 590 166 L 10 166 Z`
   const quote = record(visualization.data.quote)
   const period = record(visualization.data.period)
   const last = points.at(-1)
   const returnPct = typeof period.return_pct === 'number' ? period.return_pct : undefined
+  const lastIsCurrent = last?.price_kind === 'current' || period.end_price_kind === 'current'
+  const sampled = visualization.data.sampled === true
 
   return (
     <section className="answer-price-chart">
@@ -108,27 +119,20 @@ function PriceChart({ visualization }: { visualization: RagVisualization }) {
           )}
         </div>
       </header>
-      <svg aria-label={`${text(points[0]?.trading_day)}부터 ${text(last?.trading_day)}까지의 주가 흐름`} role="img" viewBox="0 0 600 176">
-        <defs>
-          <linearGradient id="answer-price-area" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor="var(--brand)" stopOpacity=".22" />
-            <stop offset="1" stopColor="var(--brand)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path className="answer-price-chart__grid" d="M10 34H590M10 94H590M10 154H590" />
-        <path className="answer-price-chart__area" d={area} />
-        <path className="answer-price-chart__line" d={path} />
-      </svg>
+      <RagPriceChart
+        label={`${text(points[0]?.trading_day)}부터 ${text(last?.trading_day)}까지의 토스증권 주가 흐름`}
+        points={chartPoints}
+      />
       <footer>
         <span>{text(points[0]?.trading_day)}</span>
-        <span>최저 {won(min)} · 최고 {won(max)}</span>
-        <span>{text(last?.trading_day)}</span>
+        <span>{sampled ? '전체 기간 대표 거래일 · ' : ''}토스증권 Open API · 최저 {won(min)} · 최고 {won(max)}</span>
+        <span>{text(last?.trading_day)}{lastIsCurrent ? ' 현재가' : ''}</span>
       </footer>
     </section>
   )
 }
 
-function PriceSnapshot({ stockCode, visualization }: { stockCode?: string; visualization: RagVisualization }) {
+function PriceSnapshot({ visualization }: { visualization: RagVisualization }) {
   const quote = record(visualization.data.quote)
   const period = record(visualization.data.period)
   if (Object.keys(quote).length === 0 && Object.keys(period).length === 0) return null
@@ -141,7 +145,6 @@ function PriceSnapshot({ stockCode, visualization }: { stockCode?: string; visua
         {typeof quote.price === 'number' && <article><small>현재가</small><strong>{won(quote.price, quote.currency)}</strong><span>{text(quote.trading_day)}</span></article>}
         {typeof period.return_pct === 'number' && <article><small>기간 수익률</small><strong>{period.return_pct > 0 ? '+' : ''}{period.return_pct}%</strong><span>{text(period.start_trading_day)} → {text(period.end_trading_day)}</span></article>}
       </div>
-      {stockCode && <RagMarketChart stockCode={stockCode} />}
     </section>
   )
 }
@@ -303,14 +306,13 @@ function EventTimeline({ visualization }: { visualization: RagVisualization }) {
 }
 
 export function RagVisualizations({ sources = [], visualizations }: { sources?: RagSource[]; visualizations: RagVisualization[] }) {
-  const stockCode = sources.find((source) => source.sourceType === 'price')?.locator.stock_code
   return (
     <div className="answer-visuals">
       {visualizations.map((visualization, index) => {
         const key = `${visualization.type}-${visualization.sourceIds.join('-')}-${index}`
         if (visualization.type === 'news_cards') return <NewsResults key={key} sources={sources} visualization={visualization} />
         if (visualization.type === 'price_line') return <PriceChart key={key} visualization={visualization} />
-        if (visualization.type === 'price_snapshot') return <PriceSnapshot key={key} stockCode={typeof stockCode === 'string' ? stockCode : undefined} visualization={visualization} />
+        if (visualization.type === 'price_snapshot') return <PriceSnapshot key={key} visualization={visualization} />
         if (visualization.type === 'event_return') return <EventReturn key={key} visualization={visualization} />
         if (visualization.type === 'financial_series' || visualization.type === 'financial_comparison') return <FinancialMetrics key={key} visualization={visualization} />
         if (visualization.type === 'broker_targets') return <BrokerTargets key={key} visualization={visualization} />

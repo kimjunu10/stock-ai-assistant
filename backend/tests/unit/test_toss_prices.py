@@ -194,7 +194,7 @@ class MissingCurrentDailyCandleSession(FakeSession):
 
 
 class CandleCloseDiffersFromReferencePriceSession(FakeSession):
-    """일봉 종가와 토스 화면의 전일 기준가가 다른 경우를 재현한다."""
+    """랭킹 현재가·단일종목 현재가·일봉 값이 서로 다른 경우를 재현한다."""
 
     def request(self, method: str, url: str, **kwargs: Any) -> FakeResponse:
         if url.endswith("/api/v1/rankings"):
@@ -216,6 +216,21 @@ class CandleCloseDiffersFromReferencePriceSession(FakeSession):
                             for symbol in SUPPORTED_STOCK_CODES
                         ],
                     }
+                }
+            )
+        if url.endswith("/api/v1/prices"):
+            self.market_calls += 1
+            symbol = kwargs["params"]["symbols"]
+            return FakeResponse(
+                {
+                    "result": [
+                        {
+                            "symbol": symbol,
+                            "timestamp": "2026-07-27T12:04:00+09:00",
+                            "lastPrice": "252500",
+                            "currency": "KRW",
+                        }
+                    ]
                 }
             )
         if url.endswith("/api/v1/candles") and kwargs["params"]["interval"] == "1d":
@@ -276,7 +291,7 @@ def test_market_data_is_normalized_and_cached() -> None:
     assert first.lower_limit_price == 49700
     assert second is first
     assert session.auth_calls == 1
-    assert session.market_calls == 5
+    assert session.market_calls == 6
 
 
 def test_market_data_uses_latest_completed_candle_when_today_is_missing() -> None:
@@ -294,7 +309,7 @@ def test_market_data_uses_latest_completed_candle_when_today_is_missing() -> Non
     assert result.quote.change_rate == 1.41
 
 
-def test_market_data_uses_toss_reference_price_instead_of_daily_close() -> None:
+def test_market_data_uses_single_stock_live_price_and_reference_base() -> None:
     client = TossInvestClient(
         "client-id",
         "client-secret",
@@ -303,13 +318,13 @@ def test_market_data_uses_toss_reference_price_instead_of_daily_close() -> None:
 
     result = client.get_stock_market_data("005930")
 
-    assert result.quote.price == 248500
+    assert result.quote.price == 252500
     assert result.quote.previous_close == 249500
-    assert result.quote.change == -1000
-    assert result.quote.change_rate == -0.4
+    assert result.quote.change == 3000
+    assert result.quote.change_rate == 1.2
 
 
-def test_market_overview_batches_and_caches_reference_quotes() -> None:
+def test_market_overview_uses_live_quotes_and_caches_result() -> None:
     session = FakeSession()
     client = TossInvestClient(
         "client-id",
@@ -328,7 +343,7 @@ def test_market_overview_batches_and_caches_reference_quotes() -> None:
     assert first.quotes[0].change_rate == 1.41
     assert second is first
     assert session.auth_calls == 1
-    assert session.market_calls == 1
+    assert session.market_calls == 6
 
 
 def test_market_overview_uses_latest_completed_candle_when_today_is_missing() -> None:
@@ -345,7 +360,7 @@ def test_market_overview_uses_latest_completed_candle_when_today_is_missing() ->
     assert all(quote.change_rate == 1.41 for quote in result.quotes)
 
 
-def test_market_overview_uses_toss_reference_price_instead_of_daily_close() -> None:
+def test_market_overview_uses_single_stock_live_price_and_reference_base() -> None:
     client = TossInvestClient(
         "client-id",
         "client-secret",
@@ -354,10 +369,10 @@ def test_market_overview_uses_toss_reference_price_instead_of_daily_close() -> N
 
     result = client.get_stock_market_overview()
 
-    assert all(quote.price == 248500 for quote in result.quotes)
+    assert all(quote.price == 252500 for quote in result.quotes)
     assert all(quote.previous_close == 249500 for quote in result.quotes)
-    assert all(quote.change == -1000 for quote in result.quotes)
-    assert all(quote.change_rate == -0.4 for quote in result.quotes)
+    assert all(quote.change == 3000 for quote in result.quotes)
+    assert all(quote.change_rate == 1.2 for quote in result.quotes)
 
 
 def test_auth_reports_ip_allowlist_failure() -> None:

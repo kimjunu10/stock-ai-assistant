@@ -133,15 +133,26 @@ describe('RagVisualizations', () => {
       .toBe('https://example.com/source-news')
   })
 
-  it('keeps a news card clickable when the backend has no original URL', () => {
+  it('does not send a news card to an unrelated search when no cluster id exists', () => {
     render(<RagVisualizations visualizations={[{
       type: 'news_cards',
       title: '최근 뉴스',
       data: { items: [{ source_id: 'n1', title: '원문 주소가 없는 뉴스' }] },
       sourceIds: ['n1'],
     }]} />)
-    expect(screen.getByRole('link', { name: /원문 주소가 없는 뉴스/ }).getAttribute('href'))
-      .toContain('search.naver.com/search.naver?where=news')
+    expect(screen.queryByRole('link', { name: /원문 주소가 없는 뉴스/ })).toBeNull()
+  })
+
+  it('routes a RAG news card to the matching in-product cluster', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'news_cards',
+      title: '최근 뉴스',
+      data: { items: [{ source_id: 'news_cluster:7123', title: '클러스터 뉴스' }] },
+      sourceIds: ['news_cluster:7123'],
+    }]} />)
+    const link = screen.getByRole('link', { name: /클러스터 뉴스/ })
+    expect(link.getAttribute('href')).toBe('/news?cluster=7123')
+    expect(link.getAttribute('target')).toBeNull()
   })
 
   it('ignores unknown visualization types safely', () => {

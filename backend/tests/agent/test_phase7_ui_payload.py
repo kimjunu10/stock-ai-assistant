@@ -33,7 +33,7 @@ def test_price_payload_uses_tool_values_and_sources_without_recalculation():
     assert visualizations == [
         {
             "type": "price_line",
-            "title": "실제 주가 흐름",
+            "title": "2026-07-23 ~ 2026-07-24 주가",
             "data": {
                 "points": [
                     {"trading_day": "2026-07-23", "close": 98_000},
@@ -45,6 +45,7 @@ def test_price_payload_uses_tool_values_and_sources_without_recalculation():
                     "trading_day": "2026-07-24",
                 },
                 "period": {"return_pct": 2.5},
+                "sampled": False,
             },
             "source_ids": ["price:005930:2026-07-24"],
         }

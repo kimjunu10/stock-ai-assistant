@@ -296,7 +296,8 @@ def test_search_news_surfaces_exclude_topics():
     assert any("제외" in w for w in r.warnings)
     assert r.data["applied_filters"]["exclude_topics"] == ["실적", "영업이익"]
     assert r.data["news"][0]["source_id"] == "c1"
-    assert r.data["news"][0]["url"] == "http://x"
+    assert r.data["news"][0]["url"] == "/news?cluster=1"
+    assert r.sources[0].locator["original_url"] == "http://x"
 
 
 def test_search_news_with_topic_uses_hybrid_search():
