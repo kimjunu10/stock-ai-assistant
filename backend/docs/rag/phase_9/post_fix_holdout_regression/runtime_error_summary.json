@@ -1,0 +1,31 @@
+{
+  "note": "비밀값을 포함하지 않는 Phase 9 동일 홀드아웃 회귀 실행 오류 감사 요약",
+  "tool_runtime_error_log_count": 0,
+  "known_correlation_id_count": 0,
+  "unknown_correlation_id_count": 0,
+  "status_error_count": 0,
+  "status_null_count": 2,
+  "step_limit_count": 0,
+  "rows": [
+    {
+      "case_id": "h-na-09",
+      "tool": "get_financial_facts",
+      "call_count": 2,
+      "arguments_summary": {
+        "stock_codes": [
+          "005930",
+          "AAPL"
+        ],
+        "invalid_account_name": "순이익"
+      },
+      "status": null,
+      "exception_class": null,
+      "failed_layer": null,
+      "correlation_id": null,
+      "expected_request_id": "eval-h-na-09",
+      "reason": "recorder에는 status=null이 남았지만 TOOL_RUNTIME_ERROR 로그가 생성되지 않아 실제 예외 클래스·실패 계층·correlation ID를 복원할 수 없음",
+      "subsequent_calls": "당기순이익으로 교정한 두 호출은 모두 status=ok",
+      "final_answer_completed": true
+    }
+  ]
+}

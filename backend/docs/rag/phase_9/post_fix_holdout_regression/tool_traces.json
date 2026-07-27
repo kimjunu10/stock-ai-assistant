@@ -1,0 +1,1065 @@
+{
+  "note": "Phase 9 post-fix same-holdout regression Tool traces in dataset order.",
+  "case_order": [
+    "h-term-12",
+    "h-term-13",
+    "h-term-14",
+    "h-term-15",
+    "h-fin-20",
+    "h-fin-21",
+    "h-fin-22",
+    "h-fin-23",
+    "h-fin-24",
+    "h-fin-25",
+    "h-news-20",
+    "h-news-21",
+    "h-news-22",
+    "h-news-23",
+    "h-news-24",
+    "h-news-25",
+    "h-disc-16",
+    "h-disc-17",
+    "h-disc-18",
+    "h-disc-19",
+    "h-disc-20",
+    "h-report-16",
+    "h-report-17",
+    "h-report-18",
+    "h-report-19",
+    "h-report-20",
+    "h-mix-16",
+    "h-mix-17",
+    "h-mix-18",
+    "h-mix-19",
+    "h-mix-20",
+    "h-excl-12",
+    "h-excl-13",
+    "h-excl-14",
+    "h-excl-15",
+    "h-ctx-08",
+    "h-ctx-09",
+    "h-ctx-10",
+    "h-na-09",
+    "h-na-10"
+  ],
+  "traces": [
+    {
+      "case_id": "h-term-12",
+      "evaluation_run_at": "2026-07-27T14:48:16+09:00",
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "자기자본이익률"
+          },
+          "status": "ok",
+          "latency_ms": 724
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-term-13",
+      "evaluation_run_at": "2026-07-27T14:48:22+09:00",
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "자기주식"
+          },
+          "status": "ok",
+          "latency_ms": 62
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-term-14",
+      "evaluation_run_at": "2026-07-27T14:48:24+09:00",
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "주가수익비율"
+          },
+          "status": "ok",
+          "latency_ms": 131
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-term-15",
+      "evaluation_run_at": "2026-07-27T14:48:27+09:00",
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "주가순자산비율"
+          },
+          "status": "ok",
+          "latency_ms": 54
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-fin-20",
+      "evaluation_run_at": "2026-07-27T14:48:30+09:00",
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "034020",
+            "account_name": "영업이익",
+            "business_year": 2025,
+            "report_period": "q3",
+            "amount_type": "cumulative"
+          },
+          "status": "ok",
+          "latency_ms": 73
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-fin-21",
+      "evaluation_run_at": "2026-07-27T14:48:33+09:00",
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_name": "영업이익",
+            "business_year": 2025,
+            "report_period": "annual",
+            "amount_type": "cumulative"
+          },
+          "status": "ok",
+          "latency_ms": 51
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-fin-22",
+      "evaluation_run_at": "2026-07-27T14:48:35+09:00",
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_name": "매출액",
+            "business_year": 2025,
+            "report_period": "annual",
+            "amount_type": "cumulative"
+          },
+          "status": "ok",
+          "latency_ms": 49
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-fin-23",
+      "evaluation_run_at": "2026-07-27T14:48:38+09:00",
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_name": "당기순이익",
+            "business_year": 2025,
+            "report_period": "q3",
+            "amount_type": "cumulative"
+          },
+          "status": "ok",
+          "latency_ms": 45
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-fin-24",
+      "evaluation_run_at": "2026-07-27T14:48:41+09:00",
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_name": "영업이익",
+            "business_year": 2024,
+            "report_period": "annual",
+            "amount_type": "cumulative",
+            "fs_div": "CFS"
+          },
+          "status": "ok",
+          "latency_ms": 36
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-fin-25",
+      "evaluation_run_at": "2026-07-27T14:48:43+09:00",
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "account_name": "매출액",
+            "business_year": 2025,
+            "report_period": "q1",
+            "amount_type": "cumulative"
+          },
+          "status": "ok",
+          "latency_ms": 34
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-news-20",
+      "evaluation_run_at": "2026-07-27T14:48:46+09:00",
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005380",
+            "query": "정의선 회장",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 2561
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-news-21",
+      "evaluation_run_at": "2026-07-27T14:48:54+09:00",
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005930",
+            "query": "삼성 AI 글래스",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 445
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-news-22",
+      "evaluation_run_at": "2026-07-27T14:49:00+09:00",
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "042660",
+            "query": "美 하원 세출위",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 301
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-news-23",
+      "evaluation_run_at": "2026-07-27T14:49:05+09:00",
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "000660",
+            "query": "이재명 대통령",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 318
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-news-24",
+      "evaluation_run_at": "2026-07-27T14:49:12+09:00",
+      "tool_sequence": [
+        "search_news",
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005380",
+            "query": "기아",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 394
+        },
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005380",
+            "query": "현대차",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 391
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 8
+    },
+    {
+      "case_id": "h-news-25",
+      "evaluation_run_at": "2026-07-27T14:49:22+09:00",
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005930",
+            "query": "브로드컴",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 292
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-disc-16",
+      "evaluation_run_at": "2026-07-27T14:49:28+09:00",
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "000660",
+            "event_types": [
+              "paid_in_capital_increase"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 92
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-disc-17",
+      "evaluation_run_at": "2026-07-27T14:49:31+09:00",
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005380",
+            "event_types": [
+              "treasury_stock_disposal"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 63
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 3
+    },
+    {
+      "case_id": "h-disc-18",
+      "evaluation_run_at": "2026-07-27T14:49:36+09:00",
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005930",
+            "event_types": [
+              "treasury_stock_disposal"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 67
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-disc-19",
+      "evaluation_run_at": "2026-07-27T14:49:42+09:00",
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "034020",
+            "event_types": [
+              "treasury_stock_acquisition"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 76
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-disc-20",
+      "evaluation_run_at": "2026-07-27T14:49:45+09:00",
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "042660",
+            "event_types": [
+              "treasury_stock_acquisition"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 32
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-report-16",
+      "evaluation_run_at": "2026-07-27T14:49:48+09:00",
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "005930",
+            "query": "키움증권"
+          },
+          "status": "ok",
+          "latency_ms": 1763
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-report-17",
+      "evaluation_run_at": "2026-07-27T14:49:53+09:00",
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "042660",
+            "query": "목표주가",
+            "time_context": "current"
+          },
+          "status": "ok",
+          "latency_ms": 623
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 3
+    },
+    {
+      "case_id": "h-report-18",
+      "evaluation_run_at": "2026-07-27T14:49:57+09:00",
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "000660",
+            "query": "목표주가 전망",
+            "time_context": "current"
+          },
+          "status": "ok",
+          "latency_ms": 1176
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-report-19",
+      "evaluation_run_at": "2026-07-27T14:50:05+09:00",
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "005380",
+            "broker": "유안타증권",
+            "date_from": "2026-06-16",
+            "date_to": "2026-06-16",
+            "query": "투자의견"
+          },
+          "status": "ok",
+          "latency_ms": 1034
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-report-20",
+      "evaluation_run_at": "2026-07-27T14:50:09+09:00",
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "005930",
+            "broker": "미래에셋증권",
+            "query": "",
+            "time_context": "current"
+          },
+          "status": "ok",
+          "latency_ms": 271
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-mix-16",
+      "evaluation_run_at": "2026-07-27T14:50:14+09:00",
+      "tool_sequence": [
+        "get_financial_facts",
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 57
+        },
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005930",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 55
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 4
+    },
+    {
+      "case_id": "h-mix-17",
+      "evaluation_run_at": "2026-07-27T14:50:19+09:00",
+      "tool_sequence": [
+        "get_financial_facts",
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "000660",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 150
+        },
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "000660",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 146
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 4
+    },
+    {
+      "case_id": "h-mix-18",
+      "evaluation_run_at": "2026-07-27T14:50:23+09:00",
+      "tool_sequence": [
+        "get_disclosure_values",
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005380",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 36
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005380",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 33
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 4
+    },
+    {
+      "case_id": "h-mix-19",
+      "evaluation_run_at": "2026-07-27T14:50:27+09:00",
+      "tool_sequence": [
+        "get_disclosure_values",
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "034020",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 44
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "034020",
+            "account_names": [
+              "영업이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 43
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 2
+    },
+    {
+      "case_id": "h-mix-20",
+      "evaluation_run_at": "2026-07-27T14:50:31+09:00",
+      "tool_sequence": [
+        "get_financial_facts",
+        "search_news",
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 25
+        },
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "042660",
+            "query": "배당 정책"
+          },
+          "status": "ok",
+          "latency_ms": 1137
+        },
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "042660",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 27
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 9
+    },
+    {
+      "case_id": "h-excl-12",
+      "evaluation_run_at": "2026-07-27T14:50:40+09:00",
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "000660"
+          },
+          "status": "ok",
+          "latency_ms": 571
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-excl-13",
+      "evaluation_run_at": "2026-07-27T14:50:43+09:00",
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "005380"
+          },
+          "status": "ok",
+          "latency_ms": 1
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-excl-14",
+      "evaluation_run_at": "2026-07-27T14:50:45+09:00",
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "034020"
+          },
+          "status": "ok",
+          "latency_ms": 1
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-excl-15",
+      "evaluation_run_at": "2026-07-27T14:50:48+09:00",
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "042660"
+          },
+          "status": "ok",
+          "latency_ms": 1
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-ctx-08",
+      "evaluation_run_at": "2026-07-27T14:50:51+09:00",
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "005380",
+            "query": "목표주가"
+          },
+          "status": "ok",
+          "latency_ms": 731
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-ctx-09",
+      "evaluation_run_at": "2026-07-27T14:50:56+09:00",
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "042660",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 65
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 5
+    },
+    {
+      "case_id": "h-ctx-10",
+      "evaluation_run_at": "2026-07-27T14:51:00+09:00",
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005930",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 28
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 1
+    },
+    {
+      "case_id": "h-na-09",
+      "evaluation_run_at": "2026-07-27T14:51:04+09:00",
+      "tool_sequence": [
+        "get_financial_facts",
+        "get_financial_facts",
+        "get_financial_facts",
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": null,
+          "latency_ms": 1
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "AAPL",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": null,
+          "latency_ms": 4
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 278
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "AAPL",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 278
+        }
+      ],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 3
+    },
+    {
+      "case_id": "h-na-10",
+      "evaluation_run_at": "2026-07-27T14:51:10+09:00",
+      "tool_sequence": [],
+      "tool_calls": [],
+      "stop_reason": "completed",
+      "answer_completed": true,
+      "source_count": 0
+    }
+  ]
+}

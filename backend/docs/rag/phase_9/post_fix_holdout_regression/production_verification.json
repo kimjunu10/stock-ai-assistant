@@ -1,0 +1,32 @@
+{
+  "verified_before_regression": true,
+  "pr": {
+    "number": 73,
+    "state": "merged",
+    "merge_commit": "b0c70aa95899463862948a9a1cb014fd107d3ee8"
+  },
+  "ci": {
+    "status": "success",
+    "run_id": 30240066920,
+    "head_sha": "b0c70aa95899463862948a9a1cb014fd107d3ee8"
+  },
+  "cd": {
+    "status": "success",
+    "run_id": 30240257460,
+    "head_sha": "b0c70aa95899463862948a9a1cb014fd107d3ee8"
+  },
+  "production_container": {
+    "image_revision": "b0c70aa95899463862948a9a1cb014fd107d3ee8",
+    "state": "running",
+    "health": "healthy"
+  },
+  "phase9_tool_smoke": {
+    "status": "pass",
+    "executed_at": "2026-07-27T05:39:54.436040+00:00",
+    "normal_status_ok": 27,
+    "normal_status_error": 0,
+    "status_null": 0,
+    "step_limit": 0
+  },
+  "secrets_recorded": false
+}
