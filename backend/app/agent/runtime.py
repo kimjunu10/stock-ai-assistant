@@ -110,6 +110,7 @@ def _runtime_prompt(request) -> str:
         current_date=getattr(ctx, "current_date", None),
         timezone=getattr(ctx, "timezone", "Asia/Seoul"),
         stock_code=getattr(ctx, "stock_code", None),
+        company_name=getattr(ctx, "company_name", None),
         event_status=getattr(ctx, "event_status", "none"),
         event_title=getattr(ctx, "event_title", None),
         event_date=getattr(ctx, "event_date", None),

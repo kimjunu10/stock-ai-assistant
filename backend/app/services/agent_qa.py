@@ -70,6 +70,18 @@ class AgentQaService:
         self._services = services
         self._agent = build_agent(cfg, api_key=api_key, base_url=base_url)
 
+    @lru_cache(maxsize=128)
+    def _stock_name(self, stock_code: str) -> str | None:
+        """기존 FactsService 연결로 공식 회사명을 조회하되 실패 시 추측하지 않는다."""
+
+        resolver = getattr(getattr(self._services, "facts", None), "get_stock_name", None)
+        if not callable(resolver):
+            return None
+        try:
+            return resolver(stock_code)
+        except Exception:  # noqa: BLE001 - 회사명 부가 문맥 실패가 QA 요청을 막지 않게
+            return None
+
     def _context(
         self,
         stock_code,
@@ -90,6 +102,7 @@ class AgentQaService:
         status = "resolved" if resolved else ("none" if res.status == "resolved" else res.status)
         return QaRuntimeContext(
             stock_code=stock_code,
+            company_name=self._stock_name(stock_code) if stock_code else None,
             source_type=source_type,
             source_id=source_id,
             document_id=document_id,
