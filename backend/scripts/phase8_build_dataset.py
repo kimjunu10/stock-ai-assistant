@@ -378,6 +378,7 @@ def build_news(ref: dict) -> list[EvalCase]:
                 gold_sources=[
                     {
                         "source_type": "news_event",
+                        "canonical_id": f"news_clusters.id={cl['id']}",
                         "ref": (cl.get("summary_title") or "")[:80],
                         "note": f"news_clusters.id={cl['id']} ({date}, {cl['sentiment_label']})",
                     }
@@ -385,8 +386,9 @@ def build_news(ref: dict) -> list[EvalCase]:
                 allowed_source_types=["news_event"],
                 review_status="needs_manual_review",
                 label_basis=(
-                    f"news_clusters.id={cl['id']} 실재(기사 {cl['article_count']}건, {date}). "
-                    "출처 chunk_id 는 검색 경로에 따라 달라져 식별자 미확정."
+                    f"canonical Gold news_clusters.id={cl['id']} "
+                    f"실재(기사 {cl['article_count']}건, {date}). "
+                    "document/chunk ID는 preflight 실행 시 현행 인덱스에서 해석."
                 ),
             )
         )

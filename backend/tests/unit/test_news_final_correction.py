@@ -232,21 +232,58 @@ class TestHoldoutPreflight:
     """
 
     def test_gold_within_recent_range_passes(self):
-        case = _case(id="news-x", gold_sources=_news_gold("6974", "2026-07-26"))
+        case = _case(
+            id="news-x",
+            question="최근 3일 뉴스 알려줘",
+            gold_sources=_news_gold("6974", "2026-07-26"),
+        )
         result = preflight_check_relative_gold_validity(
             [case], planned_run_at=datetime.fromisoformat("2026-07-27T09:00:00+09:00")
         )
+        assert result["n_checked"] == 1
         assert result["n_stale"] == 0
         assert result["should_abort"] is False
 
     def test_gold_outside_recent_range_flags_abort(self):
-        case = _case(id="news-x", gold_sources=_news_gold("6974", "2026-07-20"))
+        case = _case(
+            id="news-x",
+            question="최근 뉴스 알려줘",
+            gold_sources=_news_gold("6974", "2026-07-20"),
+        )
         result = preflight_check_relative_gold_validity(
             [case], planned_run_at=datetime.fromisoformat("2026-07-27T09:00:00+09:00")
         )
         assert result["n_stale"] == 1
         assert result["stale_cases"][0]["case_id"] == "news-x"
         assert result["should_abort"] is True
+
+    def test_news_without_relative_period_is_skipped_even_when_gold_is_old(self):
+        case = _case(
+            id="news-x",
+            question="삼성전자 브로드컴 건은 어떤 내용이야?",
+            gold_sources=_news_gold("6974", "2026-07-20"),
+        )
+        result = preflight_check_relative_gold_validity(
+            [case], planned_run_at=datetime.fromisoformat("2026-07-27T09:00:00+09:00")
+        )
+        assert result["n_checked"] == 0
+        assert result["n_skipped_non_relative"] == 1
+        assert result["n_stale"] == 0
+        assert result["should_abort"] is False
+
+    def test_expected_tool_relative_period_is_checked(self):
+        case = _case(
+            id="news-x",
+            question="삼성전자 뉴스 알려줘",
+            expected_args={"search_news": {"relative_period": "last_7_days"}},
+            gold_sources=_news_gold("6974", "2026-07-22"),
+        )
+        result = preflight_check_relative_gold_validity(
+            [case], planned_run_at=datetime.fromisoformat("2026-07-27T09:00:00+09:00")
+        )
+        assert result["n_checked"] == 1
+        assert result["n_stale"] == 0
+        assert result["should_abort"] is False
 
     def test_case_without_gold_note_date_is_skipped(self):
         """gold note 에 발행일이 없는(구조화 조회 등) 문항은 점검 대상이 아니다."""
@@ -264,7 +301,11 @@ class TestHoldoutPreflight:
 
     def test_does_not_mutate_or_require_run_records(self):
         """실행 기록(RunRecord) 없이 case 목록만으로 동작한다(실행 전 점검)."""
-        case = _case(id="news-x", gold_sources=_news_gold("6974", "2026-07-20"))
+        case = _case(
+            id="news-x",
+            question="최근 뉴스 알려줘",
+            gold_sources=_news_gold("6974", "2026-07-20"),
+        )
         before = case.model_dump()
         preflight_check_relative_gold_validity(
             [case], planned_run_at=datetime.fromisoformat("2026-07-27T09:00:00+09:00")

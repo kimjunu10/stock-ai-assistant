@@ -71,7 +71,15 @@ def test_news_confirmed_when_all_conditions_met():
         _news_case("news_clusters.id=7134 실재"), _news_index()
     )
     assert ok is True
-    assert gold[0]["source_id"] == "chunk-1"
+    assert gold == [
+        {
+            "source_type": "news_event",
+            "source_id": None,
+            "canonical_id": "news_clusters.id=7134",
+            "ref": "이재용 엔비디아 회동",
+            "note": "news_clusters.id=7134 / 2026-07-24 / neutral / 기사 32건",
+        }
+    ]
     # 사람이 다시 추적할 수 있게 원본 식별자가 근거에 남아야 한다
     assert "news_clusters.id=7134" in basis
     assert "rag_documents.id=doc-1" in basis
@@ -110,16 +118,20 @@ def test_news_rejected_without_cluster_id_in_label():
     assert ok is False and "특정할 수 없음" in basis
 
 
-def test_news_keeps_all_chunks_not_just_first():
-    """사건이 여러 청크로 쪼개지면 전부 정답 후보 — 1위 자동 채택 아님."""
+def test_news_uses_one_canonical_cluster_when_event_has_multiple_chunks():
+    """여러 청크는 하나의 canonical 사건 Gold로 수렴하며 UUID를 정답으로 고정하지 않는다."""
     idx = _news_index(
         chunks=[
             {"id": "c1", "stock_code": "005930", "is_active": True},
             {"id": "c2", "stock_code": "005930", "is_active": True},
         ]
     )
-    ok, _, gold = review.review_news_case(_news_case("news_clusters.id=7134"), idx)
-    assert ok is True and {g["source_id"] for g in gold} == {"c1", "c2"}
+    ok, basis, gold = review.review_news_case(_news_case("news_clusters.id=7134"), idx)
+    assert ok is True
+    assert len(gold) == 1
+    assert gold[0]["canonical_id"] == "news_clusters.id=7134"
+    assert gold[0]["source_id"] is None
+    assert "활성 청크 2건" in basis
 
 
 # ─────────────────── 리포트 ───────────────────

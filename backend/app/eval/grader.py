@@ -22,6 +22,7 @@ from app.eval.metrics import (
     has_overclaim,
     number_matches,
 )
+from app.eval.news_gold import canonical_news_cluster_id
 from app.eval.runner import RunRecord
 from app.eval.schema import EvalCase
 
@@ -52,10 +53,15 @@ def _normalize_doc_id(kind: str, raw: str) -> str:
 def _gold_document_id(gs: Any) -> str | None:
     """정답 라벨(GoldSource)에서 부모 문서 ID를 뽑는다(청크 ID 아님).
 
-    devset 은 청크 단위 source_id 만 정식 필드로 갖고 있어, note 에 사람이
-    적어둔 원본 식별자(news_clusters.id=.../research_reports.id=...)를 문서
-    단위 정답으로 쓴다. devset 자체는 수정하지 않는다 — 여기서는 읽기만 한다.
+    뉴스는 canonical_id 의 news_clusters.id 를 우선 사용한다. 기존 devset
+    라벨과 리포트는 note 에 사람이 적어둔 원본 식별자를 읽는 호환 경로를
+    유지한다. 어느 경우에도 재색인 산물인 chunk UUID를 문서 정답으로 쓰지 않는다.
     """
+    if gs.source_type == "news_event":
+        cluster_id = canonical_news_cluster_id(gs)
+        if cluster_id:
+            return _normalize_doc_id("news", cluster_id)
+
     note = gs.note or ""
     m = _NEWS_DOC_ID_RE.search(note)
     if m:
@@ -207,11 +213,9 @@ def preflight_check_relative_gold_validity(
     """§3 홀드아웃 정책: 실행 전에 상대 날짜 gold 가 유효한지만 미리 점검한다.
 
     실행 기록(RunRecord)이 아직 없는 시점(실행 전)에 쓰는 함수이므로,
-    실제 search_news 호출의 relative_period 는 알 수 없다 — 대신 gold 발행일이
-    planned_run_at 기준 가장 좁은 상대 기간("recent", RECENT_LOOKBACK_DAYS)
-    범위에도 들지 못하면 "이 실행 시각으로는 이 문항의 gold 가 상대 기간 질문의
-    정답이 될 수 없다"는 확실한 경고로 본다(느슨한 방향으로만 판단해 오탐을
-    줄인다 — 더 넓은 기간을 쓰는 문항은 여기서 걸리지 않을 수 있다).
+    실제 search_news 호출은 아직 알 수 없으므로 질문의 명시적 상대 기간 표현이나
+    expected_args.search_news.relative_period 를 사용한다. 상대 기간 조건이 없는
+    문항은 오래된 특정 사건을 묻는 질문일 수 있으므로 날짜만으로 중단하지 않는다.
 
     이 함수는 실행을 멈추지 않는다 — 호출부(홀드아웃 실행 스크립트)가 반환된
     `should_abort`를 보고 직접 중단 여부를 결정한다. devset·holdout 파일 자체를
@@ -220,25 +224,71 @@ def preflight_check_relative_gold_validity(
     """
     from app.agent.time_context import RECENT_LOOKBACK_DAYS
 
+    question_periods = (
+        ("last_7_days", re.compile(r"(?:최근|지난)\s*(?:7\s*일|일주일|한\s*주)")),
+        ("last_30_days", re.compile(r"(?:최근|지난)\s*(?:30\s*일|한\s*달|1\s*개월)")),
+        ("this_week", re.compile(r"이번\s*주")),
+        ("this_month", re.compile(r"이번\s*(?:달|개월)")),
+        ("yesterday", re.compile(r"어제")),
+        ("today", re.compile(r"오늘")),
+        ("recent", re.compile(r"최근")),
+    )
+
+    def expected_relative_period(case: EvalCase) -> str | None:
+        expected = case.expected_args.get("search_news", {}).get("relative_period")
+        if expected:
+            return str(expected)
+        normalized_question = re.sub(r"\s+", " ", case.question)
+        return next(
+            (period for period, pattern in question_periods if pattern.search(normalized_question)),
+            None,
+        )
+
     stale: list[dict] = []
+    checked = 0
+    relative_cases = 0
+    skipped_no_gold_date = 0
     for case in cases:
+        relative_period = expected_relative_period(case)
+        if relative_period is None:
+            continue
+        relative_cases += 1
         gold_date = _gold_published_date(case)
         if gold_date is None:
+            skipped_no_gold_date += 1
             continue
-        start, end = resolve_relative_date_range("recent", reference_date=planned_run_at.date())
+        checked += 1
+        try:
+            start, end = resolve_relative_date_range(
+                relative_period, reference_date=planned_run_at.date()
+            )
+        except ValueError:
+            stale.append(
+                {
+                    "case_id": case.id,
+                    "gold_published_date": gold_date.isoformat(),
+                    "relative_period": relative_period,
+                    "error": "unsupported_relative_period",
+                }
+            )
+            continue
         start_d, end_d = date.fromisoformat(start), date.fromisoformat(end)
         if not (start_d <= gold_date <= end_d):
             stale.append(
                 {
                     "case_id": case.id,
                     "gold_published_date": gold_date.isoformat(),
-                    "recent_range": f"{start}~{end}",
+                    "relative_period": relative_period,
+                    "relative_range": f"{start}~{end}",
                 }
             )
     return {
         "planned_run_at": planned_run_at.isoformat(),
         "recent_lookback_days": RECENT_LOOKBACK_DAYS,
-        "n_checked": len(cases),
+        "n_cases": len(cases),
+        "n_checked": checked,
+        "n_skipped_non_relative": len(cases) - relative_cases,
+        "n_skipped_no_gold_date": skipped_no_gold_date,
         "n_stale": len(stale),
         "stale_cases": stale,
         # 호출부 판단용 신호일 뿐 강제 중단이 아니다 — 실제 중단은 호출부 책임.
@@ -624,6 +674,10 @@ def grade_case(
         str(s.get("source_id")) for s in record.sources if s.get("source_id")
     }
     for gs in case.gold_sources:
+        # 뉴스·리포트는 아래 문서 ID 기반 전용 지표에서 채점한다. 재색인 때 바뀌는
+        # chunk UUID를 여기서 exact match 하면 같은 문서/사건도 오답이 된다.
+        if gs.source_type in _DOC_SOURCE_TYPES:
+            continue
         if not gs.source_id:
             continue  # 식별자 미확정 라벨은 검색 채점에서 제외(수동 검토 대상)
         if gs.source_id in got_ids:

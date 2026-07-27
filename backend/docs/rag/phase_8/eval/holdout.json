@@ -662,10 +662,11 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": "dd8e7f2e-fcc5-478c-bb30-bfb24cfbefac",
+          "source_id": null,
+          "canonical_id": "news_clusters.id=7131",
           "ref": "정의선 회장, 엔비디아 본사 방문…자율주행·로봇·제조 AI 협력 후속 논의",
           "page": null,
-          "note": "news_clusters.id=7131 / 2026-07-24 / neutral / 기사 29건 / rag_documents.id=9b1b651f-1299-486d-8dc1-7e07565674a5"
+          "note": "news_clusters.id=7131 / 2026-07-24 / neutral / 기사 29건"
         }
       ],
       "expected_facts": [],
@@ -677,7 +678,7 @@
       "forbidden_claims": [],
       "no_data_expectation": null,
       "review_status": "confirmed",
-      "label_basis": "news_clusters.id=7131 실재(요약 success, 기사 29건, 2026-07-24, 감성 neutral). rag_documents.id=9b1b651f-1299-486d-8dc1-7e07565674a5(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 005380 일치.",
+      "label_basis": "canonical Gold news_clusters.id=7131. 정의선·젠슨 황의 엔비디아 본사 방문 및 자율주행·로봇·제조 AI 후속 논의 사건, 종목 005380. document/chunk ID는 실행 시점 현행 인덱스에서 읽기 전용으로 해석하며 기존 resolved chunk dd8e7f2e-fcc5-478c-bb30-bfb24cfbefac은 감사 기록으로만 보존.",
       "split": "holdout"
     },
     {
@@ -713,10 +714,11 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": "c6151c73-7de2-429f-9a29-8202dd15ce90",
+          "source_id": null,
+          "canonical_id": "news_clusters.id=7181",
           "ref": "삼성 AI 글래스, 안경처럼 가볍고 편안한 착용감 구현",
           "page": null,
-          "note": "news_clusters.id=7181 / 2026-07-25 / positive / 기사 17건 / rag_documents.id=6efe40bf-5c66-445f-95ab-d58e61a5585a"
+          "note": "news_clusters.id=7181 / 2026-07-25 / positive / 기사 17건"
         }
       ],
       "expected_facts": [],
@@ -728,7 +730,7 @@
       "forbidden_claims": [],
       "no_data_expectation": null,
       "review_status": "confirmed",
-      "label_basis": "news_clusters.id=7181 실재(요약 success, 기사 17건, 2026-07-25, 감성 positive). rag_documents.id=6efe40bf-5c66-445f-95ab-d58e61a5585a(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 005930 일치.",
+      "label_basis": "canonical Gold news_clusters.id=7181. 삼성 AI 글래스의 경량화·착용감·프라이버시·연내 출시 사건, 종목 005930. document/chunk ID는 실행 시점 현행 인덱스에서 읽기 전용으로 해석하며 기존 resolved chunk c6151c73-7de2-429f-9a29-8202dd15ce90은 감사 기록으로만 보존.",
       "split": "holdout"
     },
     {
@@ -764,10 +766,11 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": "789d528d-85ef-4d0b-9ced-6c6670f71791",
+          "source_id": null,
+          "canonical_id": "news_clusters.id=6889",
           "ref": "美 하원 세출위, HD현대중공업·한화오션·삼성중공업 조선소 방문",
           "page": null,
-          "note": "news_clusters.id=6889 / 2026-07-23 / neutral / 기사 8건 / rag_documents.id=8457ebec-3b9e-45b1-b791-dbd918d2d72b"
+          "note": "news_clusters.id=6889 / 2026-07-23 / neutral / 기사 8건"
         }
       ],
       "expected_facts": [],
@@ -779,7 +782,7 @@
       "forbidden_claims": [],
       "no_data_expectation": null,
       "review_status": "confirmed",
-      "label_basis": "news_clusters.id=6889 실재(요약 success, 기사 8건, 2026-07-23, 감성 neutral). rag_documents.id=8457ebec-3b9e-45b1-b791-dbd918d2d72b(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 042660 일치.",
+      "label_basis": "canonical Gold news_clusters.id=6889. 미국 하원 세출위 국방소위의 한화오션 거제사업장 방문 사건, 종목 042660. document/chunk ID는 실행 시점 현행 인덱스에서 읽기 전용으로 해석하며 기존 resolved chunk 789d528d-85ef-4d0b-9ced-6c6670f71791은 감사 기록으로만 보존.",
       "split": "holdout"
     },
     {
@@ -815,17 +818,11 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": "518f14aa-691b-48aa-a319-5f89cb92be31",
+          "source_id": null,
+          "canonical_id": "news_clusters.id=7108",
           "ref": "이재명 대통령 방미 계기 한미 AI 협력, 9500억달러 규모 반도체·AI 인프라 계약 체결",
           "page": null,
-          "note": "news_clusters.id=7108 / 2026-07-24 / positive / 기사 8건 / rag_documents.id=24953106-3d2c-478f-869c-445fa948c43f"
-        },
-        {
-          "source_type": "news_event",
-          "source_id": "575e036e-771a-4f2b-a3e0-e91ed6e0648d",
-          "ref": "이재명 대통령 방미 계기 한미 AI 협력, 9500억달러 규모 반도체·AI 인프라 계약 체결",
-          "page": null,
-          "note": "news_clusters.id=7108 / 2026-07-24 / positive / 기사 8건 / rag_documents.id=24953106-3d2c-478f-869c-445fa948c43f"
+          "note": "news_clusters.id=7108 / 2026-07-24 / positive / 기사 8건"
         }
       ],
       "expected_facts": [],
@@ -837,7 +834,7 @@
       "forbidden_claims": [],
       "no_data_expectation": null,
       "review_status": "confirmed",
-      "label_basis": "news_clusters.id=7108 실재(요약 success, 기사 8건, 2026-07-24, 감성 positive). rag_documents.id=24953106-3d2c-478f-869c-445fa948c43f(is_current) 연결 확인, 활성 청크 2건을 정답 식별자로 확정. 종목 000660 일치.",
+      "label_basis": "canonical Gold news_clusters.id=7108. 이재명 대통령 방미·삼성/SK·미국 빅테크·9500억달러 AI 협력 사건, 종목 000660. document/chunk ID는 실행 시점 현행 인덱스에서 읽기 전용으로 해석하며 기존 resolved chunks 518f14aa-691b-48aa-a319-5f89cb92be31, 575e036e-771a-4f2b-a3e0-e91ed6e0648d은 감사 기록으로만 보존.",
       "split": "holdout"
     },
     {
@@ -873,10 +870,11 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": "f226617d-352c-417b-8a91-1d32dca5bf21",
+          "source_id": null,
+          "canonical_id": "news_clusters.id=7014",
           "ref": "기아, 2분기 역대 최대 매출 달성…전동화 판매 확대로 수익성 회복세",
           "page": null,
-          "note": "news_clusters.id=7014 / 2026-07-24 / positive / 기사 9건 / rag_documents.id=acae810d-c7f8-426a-9dda-a3c9d867e161"
+          "note": "news_clusters.id=7014 / 2026-07-24 / positive / 기사 9건"
         }
       ],
       "expected_facts": [],
@@ -888,7 +886,7 @@
       "forbidden_claims": [],
       "no_data_expectation": null,
       "review_status": "confirmed",
-      "label_basis": "news_clusters.id=7014 실재(요약 success, 기사 9건, 2026-07-24, 감성 positive). rag_documents.id=acae810d-c7f8-426a-9dda-a3c9d867e161(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 005380 일치.",
+      "label_basis": "canonical Gold news_clusters.id=7014. 기아 2분기 역대 최대 매출 및 전동화 판매 확대 사건, 종목 005380. document/chunk ID는 실행 시점 현행 인덱스에서 읽기 전용으로 해석하며 기존 resolved chunk f226617d-352c-417b-8a91-1d32dca5bf21은 감사 기록으로만 보존.",
       "split": "holdout"
     },
     {
@@ -924,10 +922,11 @@
       "gold_sources": [
         {
           "source_type": "news_event",
-          "source_id": "6a0c49ae-956e-43fd-87f5-aff90a1d12fc",
+          "source_id": null,
+          "canonical_id": "news_clusters.id=7149",
           "ref": "삼성전자-브로드컴, 5년간 2000억달러 규모 AI 반도체 파운드리 협력 체결",
           "page": null,
-          "note": "news_clusters.id=7149 / 2026-07-25 / positive / 기사 42건 / rag_documents.id=c17e0bbc-2b52-48a6-aaa5-7925bf995963"
+          "note": "news_clusters.id=7149 / 2026-07-25 / positive / 기사 42건"
         }
       ],
       "expected_facts": [],
@@ -939,7 +938,7 @@
       "forbidden_claims": [],
       "no_data_expectation": null,
       "review_status": "confirmed",
-      "label_basis": "news_clusters.id=7149 실재(요약 success, 기사 42건, 2026-07-25, 감성 positive). rag_documents.id=c17e0bbc-2b52-48a6-aaa5-7925bf995963(is_current) 연결 확인, 활성 청크 1건을 정답 식별자로 확정. 종목 005930 일치.",
+      "label_basis": "canonical Gold news_clusters.id=7149. 삼성전자·브로드컴·5년·2000억달러·AI 반도체 파운드리 협력 사건, 종목 005930. document/chunk ID는 실행 시점 현행 인덱스에서 읽기 전용으로 해석하며 기존 resolved chunk 6a0c49ae-956e-43fd-87f5-aff90a1d12fc은 감사 기록으로만 보존.",
       "split": "holdout"
     },
     {

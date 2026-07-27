@@ -10,6 +10,7 @@ is_answerable)를 그대로 승계하고, Phase 8 이 요구하는 라벨 항목
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from typing import Any, Literal
 
@@ -131,6 +132,9 @@ class GoldSource(BaseModel):
 
     source_type: str
     source_id: str | None = None  # uuid·접수번호 등 확정 식별자
+    # 뉴스는 재색인 때 바뀌는 document/chunk UUID 대신 사건 PK를 canonical Gold로 쓴다.
+    # 형식: "news_clusters.id=<정수>". source_id는 이전 resolved chunk 감사값일 수 있다.
+    canonical_id: str | None = None
     ref: str | None = None  # 사람이 읽는 참조(리포트 제목, 클러스터 제목 등)
     page: int | None = Field(default=None, ge=1)
     note: str | None = None
@@ -141,6 +145,13 @@ class GoldSource(BaseModel):
         if v not in SOURCE_TYPES:
             raise ValueError(f"알 수 없는 출처 종류: {v}")
         return v
+
+    @model_validator(mode="after")
+    def _canonical_news_id_format(self) -> GoldSource:
+        if self.source_type == "news_event" and self.canonical_id is not None:
+            if not re.fullmatch(r"news_clusters\.id=\d+", self.canonical_id):
+                raise ValueError("뉴스 canonical_id 형식은 news_clusters.id=<정수>여야 한다")
+        return self
 
 
 class EvalCase(BaseModel):

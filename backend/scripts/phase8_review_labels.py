@@ -175,24 +175,25 @@ def review_news_case(case, index: dict) -> tuple[bool, str, list[dict]]:
     if bad:
         return False, f"다른 종목 청크 혼입: {bad[:2]}", []
 
-    # 사건 1건이 청크 여러 개로 쪼개졌으면 모두 정답 후보로 둔다(1위 자동 채택 아님).
+    # 정답은 재색인으로 바뀌는 청크가 아니라 안정적인 사건 PK 하나로 확정한다.
     date = str(cl.get("first_published_at", ""))[:10]
     gold = [
         {
             "source_type": "news_event",
-            "source_id": ch["id"],
+            "source_id": None,
+            "canonical_id": f"news_clusters.id={cid}",
             "ref": (cl.get("summary_title") or "")[:80],
             "note": (
                 f"news_clusters.id={cid} / {date} / {cl['sentiment_label']} / "
-                f"기사 {cl['article_count']}건 / rag_documents.id={doc['id']}"
+                f"기사 {cl['article_count']}건"
             ),
         }
-        for ch in chunks
     ]
     basis = (
-        f"news_clusters.id={cid} 실재(요약 success, 기사 {cl['article_count']}건, {date}, "
-        f"감성 {cl['sentiment_label']}). rag_documents.id={doc['id']}(is_current) 연결 확인, "
-        f"활성 청크 {len(chunks)}건을 정답 식별자로 확정. 종목 {cl['stock_code']} 일치."
+        f"canonical Gold news_clusters.id={cid} 실재(요약 success, "
+        f"기사 {cl['article_count']}건, {date}, 감성 {cl['sentiment_label']}). "
+        f"현재 rag_documents.id={doc['id']}, 활성 청크 {len(chunks)}건은 검토 시점 "
+        f"resolved 감사값이며 canonical 정답이 아님. 종목 {cl['stock_code']} 일치."
     )
     return True, basis, gold
 
