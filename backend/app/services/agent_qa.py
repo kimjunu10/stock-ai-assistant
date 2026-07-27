@@ -46,6 +46,13 @@ from app.services.stock_context_safety import (
 logger = logging.getLogger(__name__)
 
 
+def _clip_primary_text(value: object, limit: int = 6000) -> str:
+    """주 자료 원문을 모델 문맥 예산 안에서 안전하게 제한한다."""
+
+    text = " ".join(str(value or "").replace("\x00", " ").split())
+    return text if len(text) <= limit else f"{text[: limit - 1]}…"
+
+
 @dataclass
 class AgentToolCall:
     name: str
@@ -94,6 +101,95 @@ class AgentQaService:
         except Exception:  # noqa: BLE001 - 회사명 부가 문맥 실패가 QA 요청을 막지 않게
             return None
 
+    def _resolve_primary_source(
+        self,
+        *,
+        stock_code: str | None,
+        source_type: str | None,
+        source_id: str | None,
+    ) -> dict | None:
+        """현재 화면의 정확한 자료를 검색 모델을 거치지 않고 ID로 직접 조회한다."""
+
+        if not stock_code or not source_id:
+            return None
+        try:
+            if source_type == "news_event":
+                resolver = getattr(self._services.retriever, "get_news_event", None)
+                chunk = resolver(source_id, stock_code=stock_code) if callable(resolver) else None
+                if chunk is None:
+                    return None
+                locator = (
+                    dict(chunk.source_locator)
+                    if isinstance(getattr(chunk, "source_locator", None), dict)
+                    else {}
+                )
+                locator.setdefault(
+                    "cluster_id",
+                    int(source_id) if source_id.isdigit() else source_id,
+                )
+                return {
+                    "context_source_id": source_id,
+                    "source_id": chunk.chunk_id,
+                    "source_type": "news_event",
+                    "stock_code": chunk.stock_code,
+                    "title": chunk.title,
+                    "publisher": chunk.publisher,
+                    "published_at": chunk.published_at,
+                    "content": _clip_primary_text(chunk.content or chunk.title or ""),
+                    "sentiment": locator.get("sentiment_label"),
+                    "url": f"/news?cluster={source_id}" if source_id.isdigit() else None,
+                    "locator": locator,
+                }
+            if source_type in {"dart_document", "structured_disclosure"}:
+                resolver = getattr(self._services.facts, "get_disclosure_by_id", None)
+                row = resolver(source_id, stock_code=stock_code) if callable(resolver) else None
+                if not row:
+                    return None
+                return {
+                    "context_source_id": source_id,
+                    "source_id": source_id,
+                    "source_type": source_type,
+                    "stock_code": stock_code,
+                    "title": row.get("title"),
+                    "publisher": "DART",
+                    "published_at": row.get("disclosed_at"),
+                    "content": _clip_primary_text(row.get("raw_text") or row.get("title") or ""),
+                    "locator": {"rcept_no": source_id},
+                }
+            if source_type == "research_report":
+                resolver = getattr(self._services.reports, "get_by_report_id", None)
+                hits = resolver(source_id, stock_code=stock_code) if callable(resolver) else []
+                if not hits:
+                    return None
+                hit = hits[0]
+                page = hit.source_page if hit.source_page is not None else hit.pdf_page
+                return {
+                    "context_source_id": source_id,
+                    "source_id": hit.chunk_id,
+                    "source_type": "research_report",
+                    "stock_code": hit.stock_code,
+                    "title": hit.title,
+                    "publisher": hit.broker,
+                    "published_at": hit.report_date,
+                    "page": page,
+                    "content": _clip_primary_text(hit.content),
+                    "locator": {
+                        "report_id": hit.report_id,
+                        "page_number": hit.page_number,
+                        "pdf_page": hit.pdf_page,
+                        "source_page": hit.source_page,
+                        "evidence": _clip_primary_text(hit.content, 1200),
+                    },
+                }
+        except Exception as exc:  # noqa: BLE001 - 주 자료 조회 실패는 Agent에서 안전 안내
+            logger.warning(
+                "PRIMARY_SOURCE_LOOKUP_FAILED source_type=%s source_id=%s error=%s",
+                source_type,
+                source_id,
+                type(exc).__name__,
+            )
+        return None
+
     def _context(
         self,
         stock_code,
@@ -114,6 +210,11 @@ class AgentQaService:
         # 날짜를 추정하지 않고 미확정으로 강등한다(§4 "정보가 불충분하면 호출하지 않기").
         resolved = res.status == "resolved" and event is not None and event_day is not None
         status = "resolved" if resolved else ("none" if res.status == "resolved" else res.status)
+        primary_source = self._resolve_primary_source(
+            stock_code=stock_code,
+            source_type=source_type,
+            source_id=source_id,
+        )
         return QaRuntimeContext(
             stock_code=stock_code,
             company_name=self._stock_name(stock_code) if stock_code else None,
@@ -122,6 +223,7 @@ class AgentQaService:
             document_id=document_id,
             report_page=report_page,
             conversation_id=conversation_id,
+            primary_source=primary_source,
             request_id=request_id,
             user_question=user_question,
             current_datetime=request_now.isoformat(timespec="seconds"),
@@ -136,6 +238,56 @@ class AgentQaService:
             event_stock_code=event.stock_code if resolved else None,
             event_candidates=res.candidates or None,
         )
+
+    @staticmethod
+    def _history_messages(history: list | None) -> list[dict[str, str]]:
+        """클라이언트가 보낸 완료 대화를 모델의 user/assistant 메시지로만 정규화한다."""
+
+        messages: list[dict[str, str]] = []
+        for item in list(history or [])[-20:]:
+            role = item.get("role") if isinstance(item, dict) else getattr(item, "role", None)
+            content = (
+                item.get("content") if isinstance(item, dict) else getattr(item, "content", None)
+            )
+            if role not in {"user", "assistant"} or not isinstance(content, str):
+                continue
+            content = content.strip()
+            if not content:
+                continue
+            messages.append({"role": role, "content": content[:6000]})
+        return messages
+
+    @staticmethod
+    def _primary_source_payload(primary_source: dict | None) -> dict | None:
+        """주 자료를 최종 근거 목록에도 포함해 답변과 UI가 같은 자료를 가리키게 한다."""
+
+        if not primary_source or not primary_source.get("source_id"):
+            return None
+        return {
+            "_tool_name": "primary_source",
+            "status": "ok",
+            "data": {"primary_source": True},
+            "sources": [
+                {
+                    key: value
+                    for key, value in primary_source.items()
+                    if key
+                    in {
+                        "source_id",
+                        "source_type",
+                        "stock_code",
+                        "title",
+                        "publisher",
+                        "published_at",
+                        "page",
+                        "url",
+                        "locator",
+                    }
+                    and value is not None
+                }
+            ],
+            "warnings": [],
+        }
 
     @staticmethod
     def _extract(out: dict) -> tuple[str, list[AgentToolCall], int, list[dict], int, int]:
@@ -208,6 +360,7 @@ class AgentQaService:
         document_id: str | None = None,
         report_page: int | None = None,
         conversation_id: str | None = None,
+        history: list | None = None,
         request_id: str = "",
         event_context: list | None = None,
         selected_event_id: str | None = None,
@@ -268,7 +421,26 @@ class AgentQaService:
             request_id,
             question,
         )
-        payload = {"messages": [{"role": "user", "content": question}]}
+        if (
+            source_type
+            in {"news_event", "dart_document", "structured_disclosure", "research_report"}
+            and source_id
+            and ctx.primary_source is None
+        ):
+            return AgentQaResult(
+                answer=(
+                    "현재 화면의 자료 원문을 확인할 수 없어 이 자료를 기준으로 답변하지 "
+                    "않았습니다. 자료를 다시 연 뒤 질문해 주세요."
+                ),
+                stop_reason="no_data",
+                warnings=["현재 화면의 주 자료를 조회하지 못했습니다."],
+            )
+        payload = {
+            "messages": [
+                *self._history_messages(history),
+                {"role": "user", "content": question},
+            ]
+        }
         # LangGraph 스텝 하드 상한: 모델·Tool loop 폭주를 그래프 레벨에서 차단(GraphRecursionError).
         # (모델호출 + Tool 호출) 여유분. ThreadPoolExecutor timeout 이 못 끊는 무한 loop 방지.
         recursion_limit = 2 * (self._cfg.agent_max_model_calls + self._cfg.agent_max_tool_calls) + 2
@@ -298,6 +470,9 @@ class AgentQaService:
             )
 
         answer, tool_calls, model_calls, tool_payloads, in_tok, out_tok = self._extract(out)
+        primary_payload = self._primary_source_payload(ctx.primary_source)
+        if primary_payload is not None:
+            tool_payloads.insert(0, primary_payload)
 
         violation = validate_execution_stock_context(
             selected_stock_code=stock_code,

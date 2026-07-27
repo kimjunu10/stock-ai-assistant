@@ -151,6 +151,7 @@ def _runtime_prompt(request) -> str:
         event_candidates=getattr(ctx, "event_candidates", None),
         source_type=getattr(ctx, "source_type", None),
         source_id=getattr(ctx, "source_id", None),
+        primary_source=getattr(ctx, "primary_source", None),
     )
 
 

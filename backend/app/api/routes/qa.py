@@ -59,6 +59,7 @@ def ask(req: QaRequest) -> QaResponse:
         document_id=req.document_id,
         report_page=req.report_page,
         conversation_id=req.conversation_id,
+        history=[message.model_dump() for message in req.history],
         event_context=req.event_context,
         selected_event_id=req.selected_event_id,
     )
@@ -110,6 +111,7 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
             document_id=req.document_id,
             report_page=req.report_page,
             conversation_id=req.conversation_id,
+            history=[message.model_dump() for message in req.history],
             event_context=req.event_context,
             selected_event_id=req.selected_event_id,
         )

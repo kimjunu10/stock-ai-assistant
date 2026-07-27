@@ -44,6 +44,9 @@ class QaRuntimeContext:
     document_id: str | None = None
     report_page: int | None = None
     conversation_id: str | None = None
+    # UI에서 선택한 뉴스·공시·리포트를 서버가 직접 조회한 주 자료. 매 턴 새로 확인하며
+    # 모델이 다른 검색 결과를 현재 자료로 오인하지 않도록 dynamic prompt에 주입한다.
+    primary_source: dict[str, Any] | None = None
     request_id: str | None = None
     user_question: str | None = None
     current_datetime: str | None = None
