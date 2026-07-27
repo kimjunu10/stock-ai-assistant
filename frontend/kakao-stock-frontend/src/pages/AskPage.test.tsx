@@ -27,9 +27,9 @@ describe('AskPage stock context safety', () => {
     fireEvent.click(screen.getByLabelText('질문 보내기'))
 
     await screen.findByText(/종목을 현대차로 변경해 주세요/)
-    const select = screen.getByLabelText('질문할 종목')
-    await waitFor(() => expect(document.activeElement).toBe(select))
-    expect(select.closest('label')?.className).toContain('stock-select--attention')
+    const stockPicker = screen.getByLabelText('질문할 종목')
+    await waitFor(() => expect(document.activeElement).toBe(stockPicker))
+    expect(stockPicker.className).toContain('stock-select--attention')
     expect(screen.queryByText('삼성전자 재무')).toBeNull()
   })
 })

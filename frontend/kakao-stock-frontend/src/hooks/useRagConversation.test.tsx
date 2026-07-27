@@ -39,23 +39,46 @@ describe('useRagConversation', () => {
     expect(result.current.messages[1]?.state).toBe('aborted')
   })
 
-  it('renders a stock context block as a source-free assistant notice', async () => {
+  it.each([
+    'STOCK_CONTEXT_MISMATCH',
+    'UNSUPPORTED_STOCK',
+    'MULTI_STOCK_NOT_SUPPORTED',
+  ])('renders %s as a source-free assistant notice', async (errorCode) => {
+    const notice = '현재 선택한 종목에서는 해당 요청에 답변할 수 없습니다.'
     const stream = [
-      'event: agent_start\ndata: {}\n\n',
-      'event: sources\ndata: {"sources":[{"source_id":"005930/2025","source_type":"financial","stock_code":"005930","locator":{}}],"visualizations":[{"type":"financial_series","title":"삼성전자 재무","data":{},"source_ids":["005930/2025"]}]}\n\n',
-      'event: error\ndata: {"message":"현재 애플은 지원하지 않는 종목입니다.\\n지원 종목을 선택한 뒤 다시 질문해 주세요.","stop_reason":"blocked","error_code":"UNSUPPORTED_STOCK"}\n\n',
+      'event: sources\ndata: {"sources":[],"visualizations":[]}\n\n',
+      `event: error\ndata: ${JSON.stringify({
+        message: notice,
+        stop_reason: 'blocked',
+        error_code: errorCode,
+      })}\n\n`,
     ].join('')
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(stream, { status: 200 }))
     const { result } = renderHook(() => useRagConversation({ stockCode: '005930' }))
 
-    await act(async () => result.current.send('애플 올해 실적'))
+    await act(async () => result.current.send('지원 범위를 벗어난 요청'))
 
     await waitFor(() => expect(result.current.phase).toBe('completed'))
-    expect(result.current.stockContextError).toBe('UNSUPPORTED_STOCK')
-    expect(result.current.messages[1]?.errorCode).toBe('UNSUPPORTED_STOCK')
-    expect(result.current.messages[1]?.state).toBe('complete')
-    expect(result.current.messages[1]?.sources).toEqual([])
-    expect(result.current.messages[1]?.visualizations).toEqual([])
-    expect(result.current.messages[1]?.text).toContain('지원하지 않는 종목')
+    expect(result.current.stockContextError).toBe(errorCode)
+    expect(result.current.messages[1]?.errorCode).toBe(errorCode)
+    expect(result.current.messages[1]).toMatchObject({
+      role: 'assistant',
+      text: notice,
+      sources: [],
+      visualizations: [],
+      state: 'complete',
+    })
+  })
+
+  it('keeps non-policy stream errors in the retryable error state', async () => {
+    const stream = 'event: error\ndata: {"message":"internal","stop_reason":"error"}\n\n'
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(stream, { status: 200 }))
+    const { result } = renderHook(() => useRagConversation({ stockCode: '005930' }))
+
+    await act(async () => result.current.send('일반 오류 요청'))
+
+    await waitFor(() => expect(result.current.phase).toBe('error'))
+    expect(result.current.messages[1]?.state).toBe('error')
+    expect(result.current.messages[1]?.text).toBe('데이터를 불러오는 중 문제가 발생했습니다.')
   })
 })

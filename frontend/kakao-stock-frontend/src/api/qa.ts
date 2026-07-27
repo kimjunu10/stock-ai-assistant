@@ -112,7 +112,6 @@ export function normalizeVisualizations(value: unknown): RagVisualization[] {
       !VISUALIZATION_TYPES.has(type as RagVisualizationType)
       || typeof item.title !== 'string'
       || !Array.isArray(sourceIds)
-      || sourceIds.length === 0
       || sourceIds.some((id) => typeof id !== 'string')
     ) return []
     return [{

@@ -1,5 +1,5 @@
-import type { RagVisualization } from '../types/qa'
-import { Icon } from './Icon'
+import type { RagSource, RagVisualization } from '../types/qa'
+import { RagMarketChart } from './RagMarketChart'
 import { RagNewsResultItem } from './RagNewsResultItem'
 
 function record(value: unknown): Record<string, unknown> {
@@ -38,7 +38,12 @@ function sentiment(value: unknown) {
   return value === 'positive' || value === 'negative' || value === 'neutral' ? value : undefined
 }
 
-function NewsResults({ visualization }: { visualization: RagVisualization }) {
+function newsSearchUrl(title: unknown) {
+  const query = text(title, '').trim()
+  return query ? `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(query)}` : undefined
+}
+
+function NewsResults({ sources, visualization }: { sources: RagSource[]; visualization: RagVisualization }) {
   const items = records(visualization.data.items)
   if (items.length === 0) return null
   return (
@@ -48,18 +53,21 @@ function NewsResults({ visualization }: { visualization: RagVisualization }) {
         <em>{items.length}건</em>
       </header>
       <div className="news-list answer-news-list">
-        {items.slice(0, 6).map((item, index) => (
-          <RagNewsResultItem
-            key={`${text(item.source_id)}-${index}`}
-            publishedAt={typeof item.published_at === 'string' ? item.published_at : undefined}
-            publisher={typeof item.publisher === 'string' ? item.publisher : undefined}
-            sentiment={sentiment(item.sentiment)}
-            snippet={typeof item.snippet === 'string' ? item.snippet : undefined}
-            stockCode={typeof item.stock_code === 'string' ? item.stock_code : undefined}
-            title={text(item.title, '제목 없는 뉴스')}
-            url={safeHref(item.url)}
-          />
-        ))}
+        {items.slice(0, 6).map((item, index) => {
+          const source = sources.find((candidate) => candidate.sourceId === item.source_id)
+          return (
+            <RagNewsResultItem
+              key={`${text(item.source_id)}-${index}`}
+              publishedAt={typeof item.published_at === 'string' ? item.published_at : source?.publishedAt}
+              publisher={typeof item.publisher === 'string' ? item.publisher : source?.publisher}
+              sentiment={sentiment(item.sentiment)}
+              snippet={typeof item.snippet === 'string' ? item.snippet : undefined}
+              stockCode={typeof item.stock_code === 'string' ? item.stock_code : undefined}
+              title={text(item.title, '제목 없는 뉴스')}
+              url={safeHref(item.url) ?? source?.url ?? newsSearchUrl(item.title)}
+            />
+          )
+        })}
       </div>
     </section>
   )
@@ -120,7 +128,7 @@ function PriceChart({ visualization }: { visualization: RagVisualization }) {
   )
 }
 
-function PriceSnapshot({ visualization }: { visualization: RagVisualization }) {
+function PriceSnapshot({ stockCode, visualization }: { stockCode?: string; visualization: RagVisualization }) {
   const quote = record(visualization.data.quote)
   const period = record(visualization.data.period)
   if (Object.keys(quote).length === 0 && Object.keys(period).length === 0) return null
@@ -133,25 +141,40 @@ function PriceSnapshot({ visualization }: { visualization: RagVisualization }) {
         {typeof quote.price === 'number' && <article><small>현재가</small><strong>{won(quote.price, quote.currency)}</strong><span>{text(quote.trading_day)}</span></article>}
         {typeof period.return_pct === 'number' && <article><small>기간 수익률</small><strong>{period.return_pct > 0 ? '+' : ''}{period.return_pct}%</strong><span>{text(period.start_trading_day)} → {text(period.end_trading_day)}</span></article>}
       </div>
+      {stockCode && <RagMarketChart stockCode={stockCode} />}
     </section>
   )
 }
 
 function EventReturn({ visualization }: { visualization: RagVisualization }) {
   const data = visualization.data
-  if (typeof data.return_pct !== 'number') return null
+  const horizons = records(data.horizons).filter((item) => (
+    typeof item.horizon_days === 'number' && typeof item.return_pct === 'number'
+  ))
+  if (horizons.length === 0) return null
+  const largest = Math.max(...horizons.map((item) => Math.abs(item.return_pct as number)), 1)
   return (
     <section className="answer-event-return">
       <header className="answer-section-heading">
-        <div><span>주가 변화</span><strong>{visualization.title}</strong></div>
-        <em className={(data.return_pct as number) >= 0 ? 'is-up' : 'is-down'}>
-          {(data.return_pct as number) > 0 ? '+' : ''}{data.return_pct}%
-        </em>
+        <div><span>사건 영향</span><strong>{visualization.title}</strong></div>
+        <em>{text(data.event_date)}</em>
       </header>
-      <div>
-        <article><small>발표 전</small><strong>{won(data.start_close, data.currency)}</strong><span>{text(data.start_trading_day)}</span></article>
-        <Icon name="arrow-right" size={19} />
-        <article><small>발표 후</small><strong>{won(data.end_close, data.currency)}</strong><span>{text(data.end_trading_day)}</span></article>
+      <div className="answer-event-return__baseline">
+        <span>기준 거래일</span>
+        <strong>{won(data.baseline_close, data.currency)}</strong>
+        <time>{text(data.baseline_trading_day)}</time>
+      </div>
+      <div className="answer-event-return__horizons">
+        {horizons.map((item) => {
+          const value = item.return_pct as number
+          return (
+            <article key={text(item.horizon_days)}>
+              <header><span>발표 후 {text(item.horizon_days)}거래일</span><strong className={value >= 0 ? 'is-up' : 'is-down'}>{value > 0 ? '+' : ''}{value}%</strong></header>
+              <div><i className={value >= 0 ? 'is-up' : 'is-down'} style={{ width: `${Math.max(8, Math.abs(value) / largest * 100)}%` }} /></div>
+              <footer><span>{text(item.trading_day)}</span><span>{won(item.close, data.currency)}</span></footer>
+            </article>
+          )
+        })}
       </div>
       <p>발표 전후 거래일의 가격 변화이며 직접적인 인과관계를 뜻하지 않습니다.</p>
     </section>
@@ -210,6 +233,19 @@ const DISCLOSURE_LABELS: Record<string, string> = {
   contract_start_date: '계약 시작일',
   decision_amount: '결정금액',
   ratio_to_revenue: '매출 대비',
+  cash_dividend_per_share: '주당 현금배당',
+  dividend_yield: '배당수익률',
+  total_dividend_amount: '배당금 총액',
+}
+
+const DISCLOSURE_EVENT_LABELS: Record<string, string> = {
+  dividend_matter: '배당 결정',
+  supply_contract: '공급 계약',
+  single_sales_contract: '단일판매·공급계약',
+  capital_increase: '유상증자 결정',
+  capital_reduction: '감자 결정',
+  treasury_stock: '자기주식 결정',
+  merger: '합병 결정',
 }
 
 function DisclosureMetrics({ visualization }: { visualization: RagVisualization }) {
@@ -227,7 +263,7 @@ function DisclosureMetrics({ visualization }: { visualization: RagVisualization 
           )).slice(0, 4)
           return (
             <article key={`${text(item.rcept_no)}-${index}`}>
-              <header><strong>{text(item.event_type, '공시')}</strong><time>{text(item.announced_at, '')}</time></header>
+              <header><strong>{DISCLOSURE_EVENT_LABELS[text(item.event_type, '')] ?? text(item.event_type, '공시').replaceAll('_', ' ')}</strong><time>{text(item.announced_at, '')}</time></header>
               {normalized.length > 0 && <dl>{normalized.map(([key, value]) => <div key={key}><dt>{DISCLOSURE_LABELS[key] ?? key.replaceAll('_', ' ')}</dt><dd>{text(value)}</dd></div>)}</dl>}
               {typeof item.summary === 'string' && <p>{item.summary}</p>}
             </article>
@@ -266,14 +302,15 @@ function EventTimeline({ visualization }: { visualization: RagVisualization }) {
   )
 }
 
-export function RagVisualizations({ visualizations }: { visualizations: RagVisualization[] }) {
+export function RagVisualizations({ sources = [], visualizations }: { sources?: RagSource[]; visualizations: RagVisualization[] }) {
+  const stockCode = sources.find((source) => source.sourceType === 'price')?.locator.stock_code
   return (
     <div className="answer-visuals">
       {visualizations.map((visualization, index) => {
         const key = `${visualization.type}-${visualization.sourceIds.join('-')}-${index}`
-        if (visualization.type === 'news_cards') return <NewsResults key={key} visualization={visualization} />
+        if (visualization.type === 'news_cards') return <NewsResults key={key} sources={sources} visualization={visualization} />
         if (visualization.type === 'price_line') return <PriceChart key={key} visualization={visualization} />
-        if (visualization.type === 'price_snapshot') return <PriceSnapshot key={key} visualization={visualization} />
+        if (visualization.type === 'price_snapshot') return <PriceSnapshot key={key} stockCode={typeof stockCode === 'string' ? stockCode : undefined} visualization={visualization} />
         if (visualization.type === 'event_return') return <EventReturn key={key} visualization={visualization} />
         if (visualization.type === 'financial_series' || visualization.type === 'financial_comparison') return <FinancialMetrics key={key} visualization={visualization} />
         if (visualization.type === 'broker_targets') return <BrokerTargets key={key} visualization={visualization} />
