@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from app.sources.prices import TossApiError, TossInvestClient
+from app.sources.prices import SUPPORTED_STOCK_CODES, TossApiError, TossInvestClient
 
 
 class FakeResponse:
@@ -31,6 +31,26 @@ class FakeSession:
 
     def request(self, _method: str, url: str, **kwargs: Any) -> FakeResponse:
         self.market_calls += 1
+        if url.endswith("/api/v1/rankings"):
+            return FakeResponse(
+                {
+                    "result": {
+                        "rankedAt": "2026-07-20T15:30:00+09:00",
+                        "rankings": [
+                            {
+                                "symbol": symbol,
+                                "price": {
+                                    "lastPrice": "72000",
+                                    "basePrice": "71000",
+                                    "changeRate": "0.0141",
+                                },
+                                "currency": "KRW",
+                            }
+                            for symbol in SUPPORTED_STOCK_CODES
+                        ],
+                    }
+                }
+            )
         if url.endswith("/api/v1/prices"):
             symbols = kwargs["params"]["symbols"].split(",")
             return FakeResponse(
@@ -173,29 +193,33 @@ class MissingCurrentDailyCandleSession(FakeSession):
         return super().request(method, url, **kwargs)
 
 
-class AdjustedCloseDiffersFromActualCloseSession(FakeSession):
-    """수정주가와 실제 전일 종가가 다른 경우를 재현한다."""
+class CandleCloseDiffersFromReferencePriceSession(FakeSession):
+    """일봉 종가와 토스 화면의 전일 기준가가 다른 경우를 재현한다."""
 
     def request(self, method: str, url: str, **kwargs: Any) -> FakeResponse:
-        if url.endswith("/api/v1/prices"):
+        if url.endswith("/api/v1/rankings"):
             self.market_calls += 1
-            symbols = kwargs["params"]["symbols"].split(",")
             return FakeResponse(
                 {
-                    "result": [
-                        {
-                            "symbol": symbol,
-                            "timestamp": "2026-07-24T15:30:00+09:00",
-                            "lastPrice": "249500",
-                            "currency": "KRW",
-                        }
-                        for symbol in symbols
-                    ]
+                    "result": {
+                        "rankedAt": "2026-07-27T12:03:00+09:00",
+                        "rankings": [
+                            {
+                                "symbol": symbol,
+                                "price": {
+                                    "lastPrice": "248500",
+                                    "basePrice": "249500",
+                                    "changeRate": "-0.004",
+                                },
+                                "currency": "KRW",
+                            }
+                            for symbol in SUPPORTED_STOCK_CODES
+                        ],
+                    }
                 }
             )
         if url.endswith("/api/v1/candles") and kwargs["params"]["interval"] == "1d":
             self.market_calls += 1
-            previous_close = "273000" if kwargs["params"]["adjusted"] == "true" else "270000"
             return FakeResponse(
                 {
                     "result": {
@@ -205,16 +229,16 @@ class AdjustedCloseDiffersFromActualCloseSession(FakeSession):
                                 "openPrice": "258000",
                                 "highPrice": "261000",
                                 "lowPrice": "247000",
-                                "closePrice": "249500",
+                                "closePrice": "252500",
                                 "volume": "3100000",
                                 "currency": "KRW",
                             },
                             {
                                 "timestamp": "2026-07-23T00:00:00+09:00",
-                                "openPrice": previous_close,
-                                "highPrice": previous_close,
-                                "lowPrice": previous_close,
-                                "closePrice": previous_close,
+                                "openPrice": "273000",
+                                "highPrice": "273000",
+                                "lowPrice": "273000",
+                                "closePrice": "273000",
                                 "volume": "2500000",
                                 "currency": "KRW",
                             },
@@ -252,7 +276,7 @@ def test_market_data_is_normalized_and_cached() -> None:
     assert first.lower_limit_price == 49700
     assert second is first
     assert session.auth_calls == 1
-    assert session.market_calls == 6
+    assert session.market_calls == 5
 
 
 def test_market_data_uses_latest_completed_candle_when_today_is_missing() -> None:
@@ -270,22 +294,22 @@ def test_market_data_uses_latest_completed_candle_when_today_is_missing() -> Non
     assert result.quote.change_rate == 1.41
 
 
-def test_market_data_compares_live_price_with_unadjusted_previous_close() -> None:
+def test_market_data_uses_toss_reference_price_instead_of_daily_close() -> None:
     client = TossInvestClient(
         "client-id",
         "client-secret",
-        session=AdjustedCloseDiffersFromActualCloseSession(),  # type: ignore[arg-type]
+        session=CandleCloseDiffersFromReferencePriceSession(),  # type: ignore[arg-type]
     )
 
     result = client.get_stock_market_data("005930")
 
-    assert result.quote.price == 249500
-    assert result.quote.previous_close == 270000
-    assert result.quote.change == -20500
-    assert result.quote.change_rate == -7.59
+    assert result.quote.price == 248500
+    assert result.quote.previous_close == 249500
+    assert result.quote.change == -1000
+    assert result.quote.change_rate == -0.4
 
 
-def test_market_overview_batches_prices_and_caches_previous_closes() -> None:
+def test_market_overview_batches_and_caches_reference_quotes() -> None:
     session = FakeSession()
     client = TossInvestClient(
         "client-id",
@@ -304,7 +328,7 @@ def test_market_overview_batches_prices_and_caches_previous_closes() -> None:
     assert first.quotes[0].change_rate == 1.41
     assert second is first
     assert session.auth_calls == 1
-    assert session.market_calls == 6
+    assert session.market_calls == 1
 
 
 def test_market_overview_uses_latest_completed_candle_when_today_is_missing() -> None:
@@ -321,18 +345,19 @@ def test_market_overview_uses_latest_completed_candle_when_today_is_missing() ->
     assert all(quote.change_rate == 1.41 for quote in result.quotes)
 
 
-def test_market_overview_uses_unadjusted_previous_close() -> None:
+def test_market_overview_uses_toss_reference_price_instead_of_daily_close() -> None:
     client = TossInvestClient(
         "client-id",
         "client-secret",
-        session=AdjustedCloseDiffersFromActualCloseSession(),  # type: ignore[arg-type]
+        session=CandleCloseDiffersFromReferencePriceSession(),  # type: ignore[arg-type]
     )
 
     result = client.get_stock_market_overview()
 
-    assert all(quote.previous_close == 270000 for quote in result.quotes)
-    assert all(quote.change == -20500 for quote in result.quotes)
-    assert all(quote.change_rate == -7.59 for quote in result.quotes)
+    assert all(quote.price == 248500 for quote in result.quotes)
+    assert all(quote.previous_close == 249500 for quote in result.quotes)
+    assert all(quote.change == -1000 for quote in result.quotes)
+    assert all(quote.change_rate == -0.4 for quote in result.quotes)
 
 
 def test_auth_reports_ip_allowlist_failure() -> None:
