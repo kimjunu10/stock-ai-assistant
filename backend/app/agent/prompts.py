@@ -223,8 +223,7 @@ def _stock_context_block(stock_code: str | None, company_name: str | None) -> st
     if not stock_code:
         return ""
     lines = [
-        "\n\n현재 종목 문맥(서버 확정):\n"
-        f"- 종목코드: {stock_code}\n",
+        f"\n\n현재 종목 문맥(서버 확정):\n- 종목코드: {stock_code}\n",
     ]
     name = (company_name or "").strip()
     if name:

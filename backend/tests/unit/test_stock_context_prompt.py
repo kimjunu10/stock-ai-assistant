@@ -20,9 +20,7 @@ _BASE = {
 
 
 def test_stock_context_is_injected_when_present():
-    prompt = financial_agent_system_prompt(
-        **_BASE, stock_code="005380", company_name="현대자동차"
-    )
+    prompt = financial_agent_system_prompt(**_BASE, stock_code="005380", company_name="현대자동차")
     assert "현재 종목 문맥(서버 확정)" in prompt
     assert "005380 / 현대자동차" in prompt
     assert "종목을 되묻지 않는다" in prompt
@@ -43,9 +41,7 @@ def test_no_stock_context_block_without_stock_code():
 
 def test_stock_context_allows_user_specified_other_stock():
     """문맥 종목이 있어도 사용자가 다른 종목을 말하면 그 종목을 쓰라고 지시한다."""
-    prompt = financial_agent_system_prompt(
-        **_BASE, stock_code="005930", company_name="삼성전자"
-    )
+    prompt = financial_agent_system_prompt(**_BASE, stock_code="005930", company_name="삼성전자")
     assert "사용자가 다른 종목을 명시한 경우에만 그 종목을 쓴다" in prompt
 
 

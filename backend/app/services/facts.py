@@ -57,12 +57,7 @@ class FactsService:
         """종목 마스터에서 코드와 일치하는 공식 회사명을 조회한다."""
 
         rows = (
-            self._db.table("stocks")
-            .select("name")
-            .eq("code", stock_code)
-            .limit(1)
-            .execute()
-            .data
+            self._db.table("stocks").select("name").eq("code", stock_code).limit(1).execute().data
             or []
         )
         name = rows[0].get("name") if rows else None
