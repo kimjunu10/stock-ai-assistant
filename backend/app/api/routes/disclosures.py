@@ -26,7 +26,7 @@ def get_disclosures(
 
     response = (
         client.table("disclosures")
-        .select("id,title,disclosed_at,disclosure_type,viewer_url")
+        .select("id,rcept_no,title,disclosed_at,disclosure_type,viewer_url")
         .eq("stock_code", stock_code)
         .order("disclosed_at", desc=True)
         .order("id")
@@ -39,6 +39,7 @@ def get_disclosures(
         items.append(
             DisclosureSummaryItem(
                 id=int(row["id"]),
+                sourceId=str(row["rcept_no"]),
                 stockCode=stock_code,
                 type=str(row.get("disclosure_type") or "공시"),
                 title=str(row["title"]),

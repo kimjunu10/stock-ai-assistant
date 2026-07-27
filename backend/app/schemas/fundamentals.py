@@ -18,6 +18,7 @@ class FinancialSummary(BaseModel):
 
 class DisclosureSummaryItem(BaseModel):
     id: int
+    sourceId: str
     stockCode: str
     type: str
     title: str

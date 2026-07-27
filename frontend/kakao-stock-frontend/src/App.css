@@ -2037,8 +2037,21 @@
   .assistant-panel--news {
     @apply right-[max(16px,calc((100vw_-_1320px)/2))] h-[min(900px,92vh)] w-[420px] rounded-[24px];
   }
+  .assistant-panel,
+  .rag-conversation,
+  .rag-thread,
+  .rag-messages,
+  .rag-composer {
+    min-width: 0;
+  }
+  .assistant-panel,
+  .rag-conversation,
+  .rag-thread {
+    overflow-x: hidden;
+  }
   body:has(.assistant-panel--news.is-open) .news-detail {
     width: min(860px, calc(100vw - 472px));
+    translate: 0;
     transform: translateX(-220px) !important;
   }
 }
@@ -2061,6 +2074,7 @@
     .rag-conversation--page .rag-composer { @apply w-[calc(100%_-_28px)] pb-[calc(10px+env(safe-area-inset-bottom))]; }
     body:has(.assistant-panel--news.is-open) .news-detail {
       width: 100%;
+      translate: 0;
       transform: none !important;
     }
     .assistant-panel--news {

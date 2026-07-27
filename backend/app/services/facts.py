@@ -190,6 +190,29 @@ class FactsService:
             or []
         )
 
+    def get_disclosure_by_id(
+        self,
+        rcept_no: str,
+        *,
+        stock_code: str,
+    ) -> dict[str, Any] | None:
+        """Return the exact UI-selected disclosure within its stock boundary."""
+
+        rows = (
+            self._db.table("disclosures")
+            .select(
+                "rcept_no,title,disclosed_at,correction_status,is_latest,"
+                "original_rcept_no,supersedes_rcept_no,parse_status,raw_text"
+            )
+            .eq("rcept_no", rcept_no)
+            .eq("stock_code", stock_code)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        return rows[0] if rows else None
+
     def get_correction_pair(self, rcept_no: str) -> dict[str, Any] | None:
         """정정본 rcept_no 로 정정 전(직전본)과 최신본을 함께 반환한다."""
 

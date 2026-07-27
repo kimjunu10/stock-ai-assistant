@@ -44,12 +44,25 @@ export function RagConversation({
   variant,
   onStockContextError,
 }: RagConversationProps) {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(context.selectedText ?? '')
   const { abort, messages, phase, progress, retry, send, stockContextError } = useRagConversation(context)
   const scrollRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const lastUserRef = useRef<HTMLElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const active = phase === 'connecting' || phase === 'running' || phase === 'streaming'
+
+  useEffect(() => {
+    if (!context.selectedText) return
+    setInput(context.selectedText)
+    const frame = window.requestAnimationFrame(() => {
+      const inputElement = inputRef.current
+      if (!inputElement) return
+      inputElement.focus()
+      inputElement.setSelectionRange(inputElement.value.length, inputElement.value.length)
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [context.selectedText])
 
   useEffect(() => {
     onStockContextError?.(stockContextError)
@@ -138,6 +151,7 @@ export function RagConversation({
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="AI에게 질문해 보세요"
+            ref={inputRef}
             rows={1}
             value={input}
           />

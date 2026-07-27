@@ -79,6 +79,7 @@ def test_disclosures_are_mapped_to_public_response():
         [
             {
                 "id": 7,
+                "rcept_no": "20260716000123",
                 "title": "분기보고서",
                 "disclosed_at": "2026-07-16T00:00:00+00:00",
                 "disclosure_type": "정기공시",
@@ -90,4 +91,5 @@ def test_disclosures_are_mapped_to_public_response():
     response = get_disclosures("005930", client, 3)
 
     assert response.items[0].date == "2026.07.16"
+    assert response.items[0].sourceId == "20260716000123"
     assert response.items[0].viewerUrl == "https://dart.fss.or.kr/report"

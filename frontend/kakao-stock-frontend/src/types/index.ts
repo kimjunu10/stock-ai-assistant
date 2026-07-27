@@ -143,6 +143,7 @@ export interface FinancialItem {
 
 export interface DisclosureItem {
   id: number
+  sourceId?: string
   stockCode: string
   type: string
   title: string

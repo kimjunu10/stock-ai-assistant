@@ -30,6 +30,7 @@ from app.services.facts import FactsService
 class SearchDisclosuresInput(BaseModel):
     stock_code: str = Field(pattern=r"^[0-9]{6}$")
     query: str = ""
+    current_document_id: str | None = None
     latest_only: bool = True
     only_corrections: bool = False
     limit: int = Field(default=5, ge=1, le=12)
@@ -37,12 +38,23 @@ class SearchDisclosuresInput(BaseModel):
 
 def run_search_disclosures(facts: FactsService, inp: SearchDisclosuresInput) -> ToolResult:
     try:
-        rows = facts.get_latest_disclosures(
+        selected = (
+            facts.get_disclosure_by_id(
+                inp.current_document_id,
+                stock_code=inp.stock_code,
+            )
+            if inp.current_document_id
+            else None
+        )
+        recent_rows = facts.get_latest_disclosures(
             inp.stock_code,
             only_corrections=inp.only_corrections,
             with_text=False,
             limit=inp.limit,
         )
+        rows = ([selected] if selected else []) + [
+            row for row in recent_rows if row.get("rcept_no") != inp.current_document_id
+        ]
     except Exception as e:  # noqa: BLE001
         log_tool_exception(e, layer="FactsService.get_latest_disclosures")
         return error(sanitize_exception(e))

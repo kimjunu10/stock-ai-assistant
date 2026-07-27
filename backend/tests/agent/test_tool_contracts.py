@@ -107,6 +107,17 @@ class _FakeFacts:
             }
         ]
 
+    def get_disclosure_by_id(self, rcept_no, *, stock_code):
+        if rcept_no != "R7" or stock_code != "005930":
+            return None
+        return {
+            "rcept_no": "R7",
+            "title": "현재 화면 공시",
+            "disclosed_at": "2026-06-01",
+            "correction_status": "original",
+            "is_latest": True,
+        }
+
     def get_structured_values(self, stock_code, **kwargs):
         return [
             {
@@ -243,6 +254,20 @@ def test_search_disclosures_latest_only_default():
     assert r.status == "ok" and r.sources[0].source_type == "dart_document"
 
 
+def test_search_disclosures_pins_exact_ui_selected_document():
+    facts = _FakeFacts()
+    r = run_search_disclosures(
+        facts,
+        SearchDisclosuresInput(
+            stock_code="005930",
+            current_document_id="R7",
+        ),
+    )
+    assert r.status == "ok"
+    assert r.data["disclosures"][0]["rcept_no"] == "R7"
+    assert r.data["disclosures"][0]["title"] == "현재 화면 공시"
+
+
 # ── news: 검색 주제 유무에 따른 경로 분리(prompt.md phase_7 빈 검색어 결함) ──
 def _news_chunk(chunk_id, title, published_at, source_pk="1"):
     from app.rag.retrieval import RetrievedChunk
@@ -268,13 +293,20 @@ class _FakeRetriever:
 
     def __init__(self, recent=None):
         self.search_called = False
+        self.search_kwargs = None
         self.recent_called = False
         self.recent_kwargs = None
         self._recent = recent
 
     def search(self, q, **kwargs):
         self.search_called = True
+        self.search_kwargs = kwargs
         return [_news_chunk("c1", "공급계약", "2026-07-01")]
+
+    def get_news_event(self, cluster_id, *, stock_code=None):
+        if cluster_id != "77" or stock_code != "005930":
+            return None
+        return _news_chunk("news_cluster:77", "현재 화면 뉴스", "2026-07-26", "77")
 
     def list_recent_news(self, **kwargs):
         self.recent_called = True
@@ -309,6 +341,24 @@ def test_search_news_with_topic_uses_hybrid_search():
     assert r.status == "ok"
     assert fake.search_called and not fake.recent_called
     assert r.data["applied_filters"]["mode"] == "hybrid_search"
+
+
+def test_search_news_pins_exact_ui_selected_event_before_related_results():
+    fake = _FakeRetriever()
+    r = run_search_news(
+        fake,
+        SearchNewsInput(
+            stock_code="005930",
+            query="관련 이슈",
+            current_event_id="77",
+        ),
+    )
+    assert r.status == "ok"
+    assert [item["title"] for item in r.data["news"][:2]] == [
+        "현재 화면 뉴스",
+        "공급계약",
+    ]
+    assert fake.search_kwargs["context_source_id"] == "77"
 
 
 @pytest.mark.parametrize("empty_query", [None, "", "   "])

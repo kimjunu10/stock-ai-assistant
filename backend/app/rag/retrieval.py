@@ -218,6 +218,50 @@ class HybridRetriever:
             self._expand_parents(final)
         return final
 
+    def get_news_event(
+        self,
+        cluster_id: str,
+        *,
+        stock_code: str | None = None,
+    ) -> RetrievedChunk | None:
+        """Return the exact UI-selected news event without semantic recall risk."""
+
+        if not str(cluster_id).isdigit():
+            return None
+        query = (
+            self._db.table("news_clusters")
+            .select(
+                "id,stock_code,summary_title,event_signature,factual_body,"
+                "easy_explanation,first_published_at,sentiment_label"
+            )
+            .eq("id", int(cluster_id))
+        )
+        if stock_code:
+            query = query.eq("stock_code", stock_code)
+        rows = query.limit(1).execute().data or []
+        if not rows:
+            return None
+        row = rows[0]
+        title = row.get("summary_title") or _first_topic(row.get("event_signature"))
+        return RetrievedChunk(
+            chunk_id=f"news_cluster:{row['id']}",
+            document_id=f"news_cluster:{row['id']}",
+            content=row.get("factual_body") or row.get("easy_explanation") or "",
+            value_kind=None,
+            stock_code=row.get("stock_code"),
+            source_type="news_event",
+            published_at=row.get("first_published_at"),
+            source_pk=str(row["id"]),
+            title=title,
+            publisher=None,
+            source_url=None,
+            similarity=1.0,
+            source_locator={
+                "cluster_id": int(row["id"]),
+                "sentiment_label": row.get("sentiment_label"),
+            },
+        )
+
     def list_recent_news(
         self,
         *,

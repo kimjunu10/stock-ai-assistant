@@ -287,6 +287,11 @@ def build_tools() -> list:
             include_topics=include_topics or [],
             date_from=date_from,
             date_to=date_to,
+            current_event_id=(
+                getattr(runtime.context, "source_id", None)
+                if getattr(runtime.context, "source_type", None) == "news_event"
+                else None
+            ),
         )
         return _dump(run_search_news(svc.retriever, inp))
 
@@ -313,6 +318,12 @@ def build_tools() -> list:
                 tool_name="search_disclosures",
             ),
             query=query,
+            current_document_id=(
+                getattr(runtime.context, "source_id", None)
+                if getattr(runtime.context, "source_type", None)
+                in {"dart_document", "structured_disclosure"}
+                else None
+            ),
             latest_only=latest_only,
             only_corrections=only_corrections,
         )
