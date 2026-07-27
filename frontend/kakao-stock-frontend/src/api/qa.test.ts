@@ -28,11 +28,12 @@ describe('QA SSE contract', () => {
 
   it('normalizes only known source types and safe URLs', () => {
     const result = normalizeSources([
-      { source_id: 'n1', source_type: 'news_event', title: '뉴스', url: 'https://example.com/a', locator: {} },
+      { source_id: 'n1', source_type: 'news_event', stock_code: '005930', title: '뉴스', url: 'https://example.com/a', locator: {} },
       { source_id: 'x1', source_type: 'private_file', title: '내부 파일', url: 'file:///tmp/a' },
     ])
     expect(result).toHaveLength(1)
     expect(result[0]?.url).toBe('https://example.com/a')
+    expect(result[0]?.stockCode).toBe('005930')
   })
 
   it('includes the current screen context in the request', async () => {

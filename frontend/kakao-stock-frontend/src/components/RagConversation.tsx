@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useRagConversation } from '../hooks/useRagConversation'
-import type { RagContext } from '../types/qa'
+import type { RagContext, StockContextErrorCode } from '../types/qa'
 import { Icon, type IconName } from './Icon'
 import { RagAnswer } from './RagAnswer'
 import { RagSources } from './RagSources'
@@ -10,6 +10,7 @@ interface RagConversationProps {
   context: RagContext
   emptyTitle?: string
   variant: 'page' | 'panel'
+  onStockContextError?: (code: StockContextErrorCode | null) => void
 }
 
 interface StarterQuestion {
@@ -53,13 +54,31 @@ function contextLabel(context: RagContext) {
   return stock ? `${stock} 기준` : '전체 자료 기준'
 }
 
-export function RagConversation({ context, emptyTitle, variant }: RagConversationProps) {
+export function RagConversation({
+  context,
+  emptyTitle,
+  variant,
+  onStockContextError,
+}: RagConversationProps) {
   const [input, setInput] = useState('')
-  const { abort, messages, phase, progress, reset, retry, send } = useRagConversation(context)
+  const {
+    abort,
+    messages,
+    phase,
+    progress,
+    reset,
+    retry,
+    send,
+    stockContextError,
+  } = useRagConversation(context)
   const scrollRef = useRef<HTMLDivElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const starterQuestions = useMemo(() => suggestions(context), [context])
   const active = phase === 'connecting' || phase === 'running' || phase === 'streaming'
+
+  useEffect(() => {
+    onStockContextError?.(stockContextError)
+  }, [onStockContextError, stockContextError])
 
   useEffect(() => {
     if (messages.length > 0 || progress) {
@@ -130,7 +149,7 @@ export function RagConversation({ context, emptyTitle, variant }: RagConversatio
                     (visualization) => visualization.type === 'news_cards' && visualization.sourceIds.includes(source.sourceId),
                   ))} stockCode={context.stockCode} />}
                   {message.warnings.length > 0 && <div className="rag-warnings">{message.warnings.map((warning) => <p key={warning}><Icon name="info" size={13} />{warning}</p>)}</div>}
-                  {(message.state === 'error' || message.state === 'aborted') && <button className="rag-retry" onClick={retry} type="button"><Icon name="refresh" size={14} /> 다시 시도</button>}
+                  {(message.state === 'aborted' || (message.state === 'error' && !message.errorCode)) && <button className="rag-retry" onClick={retry} type="button"><Icon name="refresh" size={14} /> 다시 시도</button>}
                 </div>
               </article>
             ))}

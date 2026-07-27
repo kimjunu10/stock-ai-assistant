@@ -195,6 +195,7 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
             SourceRef(
                 source_id=f.source_key,
                 source_type="financial",
+                stock_code=inp.stock_code,
                 title=f"{f.label} · {f.period} · {f.basis}",
                 value_kind=f.value_kind,
                 locator={"source_type": f.source_type, "source_key": f.source_key},

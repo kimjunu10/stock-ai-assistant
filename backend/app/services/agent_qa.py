@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import concurrent.futures
 import json
+import logging
 import time
+import uuid
 from dataclasses import dataclass, field
 from functools import lru_cache
 
@@ -34,6 +36,14 @@ from app.agent.validator import (
     validate_answer,
 )
 from app.core.config import Settings, settings
+from app.services.stock_context_safety import (
+    StockContextDecision,
+    validate_execution_stock_context,
+    validate_input_source_stock_context,
+    validate_question_stock_context,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -41,6 +51,7 @@ class AgentToolCall:
     name: str
     status: str | None = None
     result_count: int | None = None
+    stock_code: str | None = None
 
 
 @dataclass
@@ -50,6 +61,7 @@ class AgentQaResult:
     model_calls: int = 0
     stop_reason: str = "completed"
     error: str | None = None
+    error_code: str | None = None
     source_ids: list[str] = field(default_factory=list)
     validation_errors: list[str] = field(default_factory=list)
     trace: dict = field(default_factory=dict)
@@ -146,7 +158,18 @@ class AgentQaService:
                 in_tok += int(um.get("input_tokens", 0) or 0)
                 out_tok += int(um.get("output_tokens", 0) or 0)
                 for tc in getattr(m, "tool_calls", []) or []:
-                    tool_calls.append(AgentToolCall(name=tc.get("name", "")))
+                    args = tc.get("args") if isinstance(tc, dict) else None
+                    tool_calls.append(
+                        AgentToolCall(
+                            name=tc.get("name", ""),
+                            stock_code=(
+                                args.get("stock_code")
+                                if isinstance(args, dict)
+                                and isinstance(args.get("stock_code"), str)
+                                else None
+                            ),
+                        )
+                    )
                 content = getattr(m, "content", "")
                 if isinstance(content, str) and content.strip():
                     answer = content  # 마지막 ai 텍스트가 최종 답변
@@ -189,6 +212,49 @@ class AgentQaService:
         event_context: list | None = None,
         selected_event_id: str | None = None,
     ) -> AgentQaResult:
+        request_id = request_id or uuid.uuid4().hex
+        stock_decision = validate_question_stock_context(question, stock_code)
+        if not stock_decision.allowed:
+            logger.warning(
+                "STOCK_CONTEXT_BLOCKED code=%s selected_stock_code=%s "
+                "mentioned_stocks=%s correlation_id=%s",
+                stock_decision.error_code,
+                stock_code,
+                [
+                    {
+                        "stock_code": mention.stock_code,
+                        "supported": mention.supported,
+                    }
+                    for mention in stock_decision.mentions
+                ],
+                request_id or "unknown",
+            )
+            return self._blocked(request_id, stock_decision)
+
+        input_source_violation = validate_input_source_stock_context(
+            selected_stock_code=stock_code,
+            event_context=event_context,
+            source_id=source_id,
+        )
+        if input_source_violation is not None:
+            logger.error(
+                "STOCK_CONTEXT_CONTAMINATION code=%s failed_layer=%s "
+                "selected_stock_code=%s observed_stock_codes=%s correlation_id=%s",
+                input_source_violation.error_code,
+                input_source_violation.failed_layer,
+                stock_code,
+                input_source_violation.observed_codes,
+                request_id,
+            )
+            decision = StockContextDecision(
+                allowed=False,
+                error_code=input_source_violation.error_code,
+                message=input_source_violation.message,
+                selected_stock_code=stock_code,
+                selected_stock_name=stock_decision.selected_stock_name,
+            )
+            return self._blocked(request_id, decision)
+
         # 사건 확정은 코드가 한다(§4). 모델은 사건을 고르지 않는다.
         resolution = resolve_event(list(event_context or []), selected_event_id=selected_event_id)
         ctx = self._context(
@@ -232,6 +298,40 @@ class AgentQaService:
             )
 
         answer, tool_calls, model_calls, tool_payloads, in_tok, out_tok = self._extract(out)
+
+        violation = validate_execution_stock_context(
+            selected_stock_code=stock_code,
+            runtime_stock_code=ctx.stock_code,
+            tool_calls=tool_calls,
+            tool_payloads=tool_payloads,
+            runtime_events=ctx.stock_context_events,
+        )
+        if violation is not None:
+            logger.error(
+                "STOCK_CONTEXT_CONTAMINATION code=%s failed_layer=%s "
+                "selected_stock_code=%s observed_stock_codes=%s correlation_id=%s",
+                violation.error_code,
+                violation.failed_layer,
+                stock_code,
+                violation.observed_codes,
+                request_id or "unknown",
+            )
+            decision = StockContextDecision(
+                allowed=False,
+                error_code=violation.error_code,
+                message=violation.message,
+                selected_stock_code=stock_code,
+                selected_stock_name=stock_decision.selected_stock_name,
+            )
+            return self._blocked(
+                request_id,
+                decision,
+                tool_calls=tool_calls,
+                model_calls=model_calls,
+                input_tokens=in_tok,
+                output_tokens=out_tok,
+                t0=t0,
+            )
 
         # ── 코드 검증(SPEC §12.2): 숫자를 고치지 않고 오류만 기록 ──
         evidence = collect_evidence(tool_payloads)
@@ -291,6 +391,45 @@ class AgentQaService:
         trace = AgentTrace(request_id=request_id, stop_reason=reason, total_latency_ms=total_ms)
         return AgentQaResult(
             answer="", stop_reason=reason, error=message, trace=trace.to_log_dict()
+        )
+
+    @staticmethod
+    def _blocked(
+        request_id: str,
+        decision: StockContextDecision,
+        *,
+        tool_calls: list[AgentToolCall] | None = None,
+        model_calls: int = 0,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        t0: float | None = None,
+    ) -> AgentQaResult:
+        message = decision.message or "종목 문맥을 확인할 수 없어 답변을 생성하지 않았습니다."
+        total_ms = int((time.perf_counter() - t0) * 1000) if t0 is not None else 0
+        calls = tool_calls or []
+        trace = AgentTrace(
+            request_id=request_id,
+            model_calls=model_calls,
+            tool_calls=[
+                ToolTrace(name=c.name, status=c.status, result_count=c.result_count) for c in calls
+            ],
+            stop_reason="blocked",
+            total_latency_ms=total_ms,
+        )
+        return AgentQaResult(
+            answer=message,
+            tool_calls=calls,
+            model_calls=model_calls,
+            stop_reason="blocked",
+            error=message,
+            error_code=decision.error_code,
+            trace=trace.to_log_dict(),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            sources=[],
+            visualizations=[],
+            report_opinions=[],
+            warnings=[],
         )
 
 

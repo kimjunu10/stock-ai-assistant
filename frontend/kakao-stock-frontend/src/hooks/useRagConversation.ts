@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { normalizeSources, normalizeVisualizations, streamQa } from '../api/qa'
-import type { QaStreamEvent, RagContext, RagMessage, RagPhase } from '../types/qa'
+import {
+  normalizeSources,
+  normalizeVisualizations,
+  QaStreamError,
+  stockContextErrorCode,
+  streamQa,
+} from '../api/qa'
+import type {
+  QaStreamEvent,
+  RagContext,
+  RagMessage,
+  RagPhase,
+  StockContextErrorCode,
+} from '../types/qa'
 
 function publicWarnings(value: unknown) {
   return Array.isArray(value)
@@ -12,6 +24,7 @@ export function useRagConversation(context: RagContext) {
   const [messages, setMessages] = useState<RagMessage[]>([])
   const [phase, setPhase] = useState<RagPhase>('idle')
   const [progress, setProgress] = useState('')
+  const [stockContextError, setStockContextError] = useState<StockContextErrorCode | null>(null)
   const activeController = useRef<AbortController | null>(null)
   const lastQuestion = useRef('')
 
@@ -28,6 +41,7 @@ export function useRagConversation(context: RagContext) {
     const controller = new AbortController()
     activeController.current = controller
     lastQuestion.current = question
+    setStockContextError(null)
     const idBase = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     const assistantId = `${idBase}-assistant`
     setMessages((current) => [
@@ -81,6 +95,13 @@ export function useRagConversation(context: RagContext) {
         }))
       } else if (event.event === 'error') {
         const reason = event.data.stop_reason
+        const code = stockContextErrorCode(event.data.error_code)
+        if (code) {
+          const safeMessage = typeof event.data.message === 'string'
+            ? event.data.message
+            : '종목 문맥을 확인할 수 없어 요청을 처리하지 않았습니다.'
+          throw new QaStreamError(safeMessage, code)
+        }
         const message = reason === 'timeout'
           ? '답변 시간이 초과됐어요. 같은 질문을 다시 시도해 주세요.'
           : '데이터를 불러오는 중 문제가 발생했습니다.'
@@ -102,10 +123,16 @@ export function useRagConversation(context: RagContext) {
       } else {
         setPhase('error')
         setProgress('')
+        const errorCode = error instanceof QaStreamError ? error.code : undefined
+        setStockContextError(errorCode ?? null)
         updateAssistant(assistantId, (message) => ({
           ...message,
           text: error instanceof Error ? error.message : '데이터를 불러오는 중 문제가 발생했습니다.',
+          sources: [],
+          visualizations: [],
+          warnings: [],
           state: 'error',
+          errorCode,
         }))
       }
     } finally {
@@ -122,7 +149,8 @@ export function useRagConversation(context: RagContext) {
     setMessages([])
     setPhase('idle')
     setProgress('')
+    setStockContextError(null)
   }, [])
 
-  return { abort, messages, phase, progress, reset, retry, send }
+  return { abort, messages, phase, progress, reset, retry, send, stockContextError }
 }

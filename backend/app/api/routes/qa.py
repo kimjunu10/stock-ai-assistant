@@ -70,6 +70,7 @@ def ask(req: QaRequest) -> QaResponse:
         ],
         model_calls=r.model_calls,
         stop_reason=r.stop_reason,
+        error_code=getattr(r, "error_code", None),
         validation_errors=r.validation_errors,
         source_ids=r.source_ids,
     )
@@ -78,6 +79,7 @@ def ask(req: QaRequest) -> QaResponse:
     warnings = getattr(r, "warnings", [])
     return QaResponse(
         answer=r.answer,
+        error_code=getattr(r, "error_code", None),
         sources=[Source(**source) for source in ui_sources],
         invalid_citations=[],
         latency_ms={},
@@ -100,7 +102,6 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
         raise HTTPException(status_code=503, detail=_QA_DISABLED_DETAIL)
 
     def gen() -> Iterator[str]:
-        yield _sse("agent_start", {"question": req.question})
         r = agent.answer(
             req.question,
             stock_code=req.stock_code,
@@ -112,12 +113,33 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
             event_context=req.event_context,
             selected_event_id=req.selected_event_id,
         )
-        for c in r.tool_calls:
-            yield _sse("tool_start", {"name": c.name})
-            yield _sse("tool_end", {"name": c.name, "status": c.status})
         ui_sources = getattr(r, "sources", [])
         visualizations = getattr(r, "visualizations", [])
         warnings = getattr(r, "warnings", [])
+        # Pre-Agent 종목 문맥 차단은 agent_start/Tool 이벤트를 만들지 않는다.
+        if getattr(r, "error_code", None):
+            yield _sse(
+                "sources",
+                {
+                    "sources": ui_sources,
+                    "visualizations": visualizations,
+                    "warnings": warnings,
+                },
+            )
+            yield _sse(
+                "error",
+                {
+                    "message": r.error,
+                    "stop_reason": r.stop_reason,
+                    "error_code": getattr(r, "error_code", None),
+                },
+            )
+            return
+
+        yield _sse("agent_start", {"question": req.question})
+        for c in r.tool_calls:
+            yield _sse("tool_start", {"name": c.name})
+            yield _sse("tool_end", {"name": c.name, "status": c.status})
         yield _sse(
             "sources",
             {
@@ -127,7 +149,14 @@ def ask_stream(req: QaRequest) -> StreamingResponse:
             },
         )
         if r.error:
-            yield _sse("error", {"message": r.error, "stop_reason": r.stop_reason})
+            yield _sse(
+                "error",
+                {
+                    "message": r.error,
+                    "stop_reason": r.stop_reason,
+                    "error_code": getattr(r, "error_code", None),
+                },
+            )
             return
         yield _sse("delta", {"text": r.answer})
         yield _sse(

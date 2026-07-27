@@ -66,6 +66,7 @@ def run_search_disclosures(facts: FactsService, inp: SearchDisclosuresInput) -> 
             SourceRef(
                 source_id=rcept_no or "",
                 source_type="dart_document",
+                stock_code=inp.stock_code,
                 title=r.get("title"),
                 published_at=iso(r.get("disclosed_at")),
                 url=dart_url,
@@ -139,6 +140,7 @@ def run_get_disclosure_values(facts: FactsService, inp: DisclosureValuesInput) -
             SourceRef(
                 source_id=r.get("rcept_no") or f"struct:{r.get('event_type')}",
                 source_type="structured_disclosure",
+                stock_code=inp.stock_code,
                 title=r.get("event_type"),
                 published_at=iso(r.get("announced_at")),
                 locator={"rcept_no": r.get("rcept_no"), "event_type": r.get("event_type")},

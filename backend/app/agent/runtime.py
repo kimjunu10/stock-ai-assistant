@@ -58,6 +58,10 @@ from app.agent.tools.prices import (
 from app.agent.tools.reports import SearchResearchReportsInput, run_search_research_reports
 from app.agent.tools.terms import FinancialTermInput, run_lookup_financial_term
 from app.core.config import Settings
+from app.services.stock_context_safety import (
+    is_selected_stock_alias,
+    record_runtime_stock_violation,
+)
 
 _RETRY_TOOLS = ["search_news", "search_disclosures", "search_research_reports"]
 
@@ -73,19 +77,41 @@ def _services(runtime: ToolRuntime[QaRuntimeContext]):
     return ctx.services, None
 
 
-def _resolve_stock_code(stock_code: str, runtime: ToolRuntime[QaRuntimeContext]) -> str:
-    """Agent 가 stock_code 자리에 회사명(예: '삼성')을 넣는 실수를 방어한다.
+def _resolve_stock_code(
+    stock_code: str,
+    runtime: ToolRuntime[QaRuntimeContext],
+    *,
+    tool_name: str = "unknown",
+) -> str:
+    """화면 종목을 authoritative context로 쓰되 다른 종목으로 fallback하지 않는다."""
 
-    6자리 숫자 코드가 아니면, 사용자가 UI 문맥으로 제공한 종목코드
-    (runtime.context.stock_code)로 폴백한다. 문맥도 없으면 원값을 그대로 두어
-    입력 스키마 검증이 안전 오류로 처리하게 한다.
-    질문 문자열을 파싱하거나 회사명을 코드로 매핑하지 않는다(하드코딩·라우터 아님).
-    """
-    if isinstance(stock_code, str) and re.fullmatch(r"[0-9]{6}", stock_code):
-        return stock_code
     ctx_code = getattr(runtime.context, "stock_code", None)
-    if isinstance(ctx_code, str) and re.fullmatch(r"[0-9]{6}", ctx_code):
+    if not isinstance(ctx_code, str) or not re.fullmatch(r"[0-9]{6}", ctx_code):
+        return stock_code
+
+    if isinstance(stock_code, str) and re.fullmatch(r"[0-9]{6}", stock_code):
+        if stock_code == ctx_code:
+            return stock_code
+        record_runtime_stock_violation(
+            runtime.context,
+            code="STOCK_CONTEXT_MISMATCH",
+            tool_name=tool_name,
+            provided_stock_code=stock_code,
+        )
+        return ""
+
+    if not stock_code:
         return ctx_code
+
+    if isinstance(stock_code, str) and is_selected_stock_alias(stock_code, ctx_code):
+        return ctx_code
+
+    record_runtime_stock_violation(
+        runtime.context,
+        code="UNSUPPORTED_STOCK",
+        tool_name=tool_name,
+        provided_stock_code=stock_code,
+    )
     return stock_code
 
 
@@ -175,7 +201,11 @@ def build_tools() -> list:
         if err:
             return _dump(err)
         inp = FinancialFactsInput(
-            stock_code=_resolve_stock_code(stock_code, runtime),
+            stock_code=_resolve_stock_code(
+                stock_code,
+                runtime,
+                tool_name="get_financial_facts",
+            ),
             account_name=account_name,
             account_names=account_names or [],
             business_year=business_year,
@@ -246,7 +276,11 @@ def build_tools() -> list:
             except ValueError:
                 return _dump(error("서버의 날짜 기준이 올바르지 않습니다."))
         inp = SearchNewsInput(
-            stock_code=_resolve_stock_code(stock_code, runtime),
+            stock_code=_resolve_stock_code(
+                stock_code,
+                runtime,
+                tool_name="search_news",
+            ),
             query=query,
             sentiment=sentiment,
             exclude_topics=exclude_topics or [],
@@ -273,7 +307,11 @@ def build_tools() -> list:
         if err:
             return _dump(err)
         inp = SearchDisclosuresInput(
-            stock_code=_resolve_stock_code(stock_code, runtime),
+            stock_code=_resolve_stock_code(
+                stock_code,
+                runtime,
+                tool_name="search_disclosures",
+            ),
             query=query,
             latest_only=latest_only,
             only_corrections=only_corrections,
@@ -301,7 +339,11 @@ def build_tools() -> list:
             return _dump(err)
         try:
             inp = DisclosureValuesInput(
-                stock_code=_resolve_stock_code(stock_code, runtime),
+                stock_code=_resolve_stock_code(
+                    stock_code,
+                    runtime,
+                    tool_name="get_disclosure_values",
+                ),
                 event_types=event_types or [],
             )
         except ValidationError:
@@ -353,7 +395,11 @@ def build_tools() -> list:
         if err:
             return _dump(err)
         inp = SearchResearchReportsInput(
-            stock_code=_resolve_stock_code(stock_code, runtime),
+            stock_code=_resolve_stock_code(
+                stock_code,
+                runtime,
+                tool_name="search_research_reports",
+            ),
             query=query,
             broker=broker,
             date_from=date_from,
@@ -391,7 +437,11 @@ def build_tools() -> list:
         if svc.prices is None:
             return _dump(error("주가 조회가 현재 구성되어 있지 않습니다."))
         inp = GetStockPricesInput(
-            stock_code=_resolve_stock_code(stock_code, runtime),
+            stock_code=_resolve_stock_code(
+                stock_code,
+                runtime,
+                tool_name="get_stock_prices",
+            ),
             lookback=lookback,
             start_date=start_date,
             end_date=end_date,
@@ -452,7 +502,9 @@ def build_tools() -> list:
 
         inp = CalculateEventReturnInput(
             stock_code=_resolve_stock_code(
-                getattr(ctx, "event_stock_code", None) or stock_code, runtime
+                getattr(ctx, "event_stock_code", None) or stock_code,
+                runtime,
+                tool_name="calculate_event_return",
             ),
             event_date=event_date,
             event_id=getattr(ctx, "event_id", None),

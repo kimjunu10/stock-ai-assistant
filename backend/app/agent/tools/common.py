@@ -123,6 +123,7 @@ class SourceRef(BaseModel):
 
     source_id: str
     source_type: SourceType
+    stock_code: str | None = None
     title: str | None = None
     publisher: str | None = None
     published_at: str | None = None  # ISO 문자열로 정규화
