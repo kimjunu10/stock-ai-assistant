@@ -452,6 +452,12 @@ class CaseGrade:
     overclaim: bool = False
     unanswerable_handled: bool | None = None
     notes: list[str] = field(default_factory=list)
+    # 자연어 판정을 LLM judge 로 했는지, 키워드 채점으로 폴백했는지 구분한다.
+    # judge_used=False 면 judge 미주입이거나 호출 실패(judge_error 에 사유).
+    judge_used: bool = False
+    judge_error: str | None = None
+    judge_grounded: bool | None = None  # 참고 지표(통과 조건에 넣지 않는다)
+    judge_reason: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         d = self.__dict__.copy()
@@ -691,6 +697,11 @@ def grade_case(
     # 의미 기준으로 판정하고, 없거나 호출 실패면 기존 키워드 검사로 폴백한다.
     verdict = judge(case, record) if judge is not None else None
     judged = verdict is not None and getattr(verdict, "ok", False)
+    g.judge_used = judged
+    if verdict is not None:
+        g.judge_error = None if judged else getattr(verdict, "error", None)
+        g.judge_grounded = getattr(verdict, "grounded", None) if judged else None
+        g.judge_reason = getattr(verdict, "reason", "") if judged else ""
 
     if judged and verdict.exclusion_respected is not None:
         # judge 는 위반 여부만 알려주므로, 어떤 금지어가 문제였는지는 표기하지
