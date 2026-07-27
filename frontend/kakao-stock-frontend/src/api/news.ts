@@ -59,7 +59,7 @@ function cleanEasyExplanation(value: string) {
 
 export async function fetchNewsClusters(
   signal: AbortSignal,
-  options: { limit?: number; offset?: number; publishedDate?: string; stockCode?: string } = {},
+  options: { clusterId?: number; limit?: number; offset?: number; publishedDate?: string; stockCode?: string } = {},
 ) {
   const params = new URLSearchParams({
     limit: String(options.limit ?? 20),
@@ -67,6 +67,7 @@ export async function fetchNewsClusters(
   })
   if (options.stockCode) params.set('stock_code', options.stockCode)
   if (options.publishedDate) params.set('published_date', options.publishedDate)
+  if (options.clusterId) params.set('cluster_id', String(options.clusterId))
   const response = await fetch(`${API_BASE_URL}/api/clusters?${params}`, { signal })
   if (!response.ok) {
     const body = await response.json().catch(() => ({})) as { detail?: string }

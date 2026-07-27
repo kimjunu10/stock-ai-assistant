@@ -80,11 +80,12 @@ class TossInvestClient:
                 return self._market_overview_cache[1]
 
         stock_codes = sorted(SUPPORTED_STOCK_CODES)
-        reference_quotes = self._get_market_reference_quotes()
         try:
             quotes = []
             for stock_code in stock_codes:
-                raw_quote = reference_quotes[stock_code]
+                raw_quote = self.fetch_live_quote(stock_code)
+                if not raw_quote:
+                    raise KeyError(stock_code)
                 price = self._number(raw_quote["lastPrice"])
                 previous_close = self._number(raw_quote["basePrice"])
                 change = price - previous_close
@@ -94,7 +95,9 @@ class TossInvestClient:
                         price=price,
                         previous_close=previous_close,
                         change=change,
-                        change_rate=round(self._number(raw_quote["changeRate"]) * 100, 2),
+                        change_rate=(
+                            round(change / previous_close * 100, 2) if previous_close else 0.0
+                        ),
                         as_of=datetime.fromisoformat(raw_quote["timestamp"]),
                     )
                 )
@@ -137,6 +140,29 @@ class TossInvestClient:
         """
 
         return self._get_market_reference_quotes().get(stock_code, {})
+
+    def fetch_live_quote(self, stock_code: str) -> dict[str, Any]:
+        """단일 종목 실시간 현재가와 전일 기준가를 한 응답으로 합친다.
+
+        ``/prices``의 단일 종목 체결가·시각을 가격의 기준으로 삼고, 랭킹 API는
+        전일 기준가만 보완한다. 랭킹의 ``lastPrice``는 갱신 시점이 달라질 수 있으므로
+        현재가로 재사용하지 않는다.
+        """
+
+        current = self.fetch_current_price(stock_code)
+        reference = self.fetch_reference_quote(stock_code)
+        if not current or not reference:
+            return {}
+        try:
+            return {
+                "symbol": stock_code,
+                "timestamp": current["timestamp"],
+                "lastPrice": current["lastPrice"],
+                "basePrice": reference["basePrice"],
+                "currency": current.get("currency") or reference["currency"],
+            }
+        except (KeyError, TypeError) as exc:
+            raise TossApiError("토스증권 실시간 시세 응답을 결합하지 못했습니다.") from exc
 
     def _get_market_reference_quotes(self) -> dict[str, dict[str, Any]]:
         now = self._clock()
@@ -234,9 +260,9 @@ class TossInvestClient:
                 if cached and cached[0] > now:
                     return cached[1]
 
-            reference_quote = self.fetch_reference_quote(stock_code)
-            if not reference_quote:
-                raise TossApiError("토스증권 전일 기준가를 확인할 수 없습니다.")
+            live_quote = self.fetch_live_quote(stock_code)
+            if not live_quote:
+                raise TossApiError("토스증권 실시간 현재가와 전일 기준가를 확인할 수 없습니다.")
             candle_payload = self._request_json(
                 "GET",
                 "/api/v1/candles",
@@ -247,7 +273,7 @@ class TossInvestClient:
                     "adjusted": "true",
                 },
             )
-            quote_date = datetime.fromisoformat(reference_quote["timestamp"]).date().isoformat()
+            quote_date = datetime.fromisoformat(live_quote["timestamp"]).date().isoformat()
             intraday_payload = self._get_intraday_candles(stock_code, quote_date)
             orderbook_payload = self._request_json(
                 "GET", "/api/v1/orderbook", params={"symbol": stock_code}
@@ -257,7 +283,7 @@ class TossInvestClient:
             )
             market_data = self._normalize_market_data(
                 stock_code,
-                reference_quote,
+                live_quote,
                 candle_payload,
                 intraday_payload,
                 orderbook_payload,
@@ -457,7 +483,7 @@ class TossInvestClient:
     def _normalize_market_data(
         self,
         stock_code: str,
-        reference_quote: dict[str, Any],
+        live_quote: dict[str, Any],
         candle_payload: dict[str, Any],
         intraday_payload: dict[str, Any],
         orderbook_payload: dict[str, Any],
@@ -507,16 +533,16 @@ class TossInvestClient:
             ]
             raw_limits = price_limit_payload["result"]
 
-            last_price = self._number(reference_quote["lastPrice"])
-            previous_close = self._number(reference_quote["basePrice"])
+            last_price = self._number(live_quote["lastPrice"])
+            previous_close = self._number(live_quote["basePrice"])
             change = last_price - previous_close
             quote = StockQuote(
                 price=last_price,
                 previous_close=previous_close,
                 change=change,
-                change_rate=round(self._number(reference_quote["changeRate"]) * 100, 2),
-                currency=str(reference_quote["currency"]),
-                as_of=datetime.fromisoformat(reference_quote["timestamp"]),
+                change_rate=(round(change / previous_close * 100, 2) if previous_close else 0.0),
+                currency=str(live_quote["currency"]),
+                as_of=datetime.fromisoformat(live_quote["timestamp"]),
                 volume=candles[-1].volume,
             )
         except (KeyError, StopIteration, TypeError, ValueError) as exc:

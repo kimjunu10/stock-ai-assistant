@@ -733,6 +733,166 @@
   }
 }
 
+/* Ask 3.0 — quiet empty-state glow and lightweight, GPT-like answer typography. */
+@layer components {
+  .ask-page {
+    background: var(--surface);
+  }
+
+  .rag-conversation--page {
+    @apply relative;
+    display: block !important;
+    background: var(--surface);
+  }
+
+  .rag-conversation--page::before {
+    @apply pointer-events-none absolute inset-0 opacity-0;
+    content: '';
+    background: radial-gradient(
+      ellipse 44% 37% at 50% 52%,
+      color-mix(in srgb, var(--brand) 23%, transparent) 0%,
+      color-mix(in srgb, var(--brand) 11%, transparent) 46%,
+      transparent 76%
+    );
+    transform: scale(.92);
+    transition: opacity .65s ease, transform .8s cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .rag-conversation--page.is-empty::before {
+    @apply opacity-100;
+    transform: scale(1);
+  }
+
+  .rag-conversation--page .rag-thread {
+    @apply relative z-[1] pb-32;
+    height: 100% !important;
+  }
+
+  .rag-conversation--page.is-empty .rag-empty {
+    @apply absolute inset-0 min-h-0 justify-center;
+    height: 100%;
+    padding-bottom: 126px;
+    transform: translateY(-64px);
+    transition: opacity .35s ease, transform .55s cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .rag-conversation--page .rag-composer {
+    @apply absolute right-0 left-0 z-[2];
+    margin-right: auto !important;
+    margin-left: auto !important;
+    top: calc(100% - 94px);
+    transform: none !important;
+    transition: top .6s cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .rag-conversation--page.is-empty .rag-composer {
+    top: calc(50% + 70px);
+  }
+
+  .rag-conversation--page .rag-composer > div {
+    @apply border-line-strong bg-surface;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .09);
+    backdrop-filter: none;
+  }
+
+  .rag-conversation--page .rag-message--assistant > div {
+    @apply w-full max-w-none border-0 bg-transparent p-0;
+    box-shadow: none;
+  }
+
+  .rag-conversation--page .rag-message--assistant > div > :not(.rag-message__identity) {
+    @apply ml-0;
+  }
+
+  .rag-conversation--page .rag-message--user > div {
+    @apply border border-line bg-subtle px-4 py-3;
+    border-radius: 18px 18px 5px 18px;
+    box-shadow: none;
+  }
+
+  .rag-conversation--page .rag-message--user > div > p {
+    @apply font-medium text-ink;
+  }
+
+  .rag-conversation--page .rag-answer {
+    @apply max-w-[760px] gap-3.5 text-[15px] leading-[1.7] text-ink;
+  }
+
+  .rag-conversation--page .rag-answer__summary {
+    @apply rounded-none border-0 border-l-2 border-brand bg-transparent py-0 pr-0 pl-4;
+  }
+
+  .rag-conversation--page .rag-answer__summary > span {
+    @apply mb-1 block text-[10px] font-bold tracking-normal text-muted normal-case;
+  }
+
+  .rag-conversation--page .rag-answer__summary > p {
+    @apply text-[17px] leading-[1.55] font-bold text-ink;
+  }
+
+  .rag-conversation--page .rag-answer ol,
+  .rag-conversation--page .rag-answer ul {
+    @apply gap-2.5 p-0;
+  }
+
+  .rag-conversation--page .rag-answer li {
+    @apply grid grid-cols-[7px_minmax(0,1fr)] gap-2.5 rounded-none border-0 bg-transparent px-0 py-0.5;
+  }
+
+  .rag-conversation--page .rag-answer ul li::before {
+    @apply mt-[9px] size-1 rounded-full bg-brand-ink;
+  }
+
+  .rag-conversation--page .rag-answer ol li {
+    @apply grid-cols-[20px_minmax(0,1fr)];
+  }
+
+  .rag-conversation--page .rag-answer ol li::before {
+    @apply size-5 text-[9px];
+  }
+
+  .rag-conversation--page .rag-answer li > span {
+    @apply leading-[1.65];
+  }
+
+  .rag-conversation--page .rag-answer__note {
+    @apply mt-1 grid grid-cols-[max-content_minmax(0,1fr)] items-start gap-3 rounded-none border-0 border-t border-line bg-transparent px-0 pt-3.5 pb-0;
+  }
+
+  .rag-conversation--page .rag-answer__note > span {
+    @apply m-0 rounded-full bg-subtle px-2.5 py-1 text-[10px] font-bold tracking-normal text-muted normal-case;
+  }
+
+  .rag-conversation--page .rag-answer__note > p {
+    @apply pt-0.5 text-[14px] leading-[1.65] font-medium text-ink;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rag-conversation--page::before,
+  .rag-conversation--page .rag-empty,
+  .rag-conversation--page .rag-composer {
+    transition-duration: .01ms;
+  }
+}
+
+@media (max-width: 820px) {
+  @layer components {
+    .rag-conversation--page .rag-empty {
+      @apply justify-center pt-0;
+      transform: translateY(-56px);
+    }
+
+    .rag-conversation--page.is-empty .rag-composer {
+      top: calc(50% + 76px);
+    }
+
+    .rag-conversation--page .rag-answer__note {
+      @apply grid-cols-1 gap-2;
+    }
+  }
+}
+
 @layer components {
   .rag-conversation--page .rag-message--assistant > div > :not(.rag-message__identity) {
     margin-left: 0 !important;
@@ -1392,10 +1552,23 @@
   .rag-message--user > div > p { @apply text-[14px] font-medium text-white; }
   .rag-message.is-error > div { @apply rounded-xl border border-negative-ink/15 bg-negative-soft p-4; }
   .rag-message.is-aborted > div { @apply text-faint; }
-  .rag-answer { @apply flex flex-col gap-3 text-[16px] leading-[1.8] font-normal text-ink/85; }
+  .rag-answer { @apply flex max-w-[800px] flex-col gap-3 text-[16px] leading-[1.62] font-normal text-ink; }
   .rag-answer p { @apply m-0; }
-  .rag-answer ol, .rag-answer ul { @apply m-0 flex flex-col gap-2 pl-6; }
-  .rag-answer li { @apply pl-1 marker:font-bold marker:text-ink; }
+  .rag-answer > p:first-child { @apply font-semibold text-ink; }
+  .rag-answer__summary { @apply rounded-[16px] border border-brand/30 bg-brand-soft/45 px-5 py-4; }
+  .rag-answer__summary > span,
+  .rag-answer__note > span { @apply mb-1.5 block text-[10px] font-black tracking-[0.7px] text-brand-ink uppercase; }
+  .rag-answer__summary > p { @apply text-[17px] leading-[1.6] font-bold text-ink; }
+  .rag-answer ol, .rag-answer ul { @apply m-0 flex list-none flex-col gap-2 p-0; }
+  .rag-answer li { @apply grid min-w-0 grid-cols-[8px_minmax(0,1fr)] items-start gap-3 rounded-[13px] border border-line bg-surface px-4 py-3.5; }
+  .rag-answer ul li::before { @apply mt-[9px] size-1.5 rounded-full bg-brand-ink content-['']; }
+  .rag-answer ol { counter-reset: rag-answer-item; }
+  .rag-answer ol li { @apply grid-cols-[22px_minmax(0,1fr)]; counter-increment: rag-answer-item; }
+  .rag-answer ol li::before { @apply flex size-[22px] items-center justify-center rounded-full bg-brand-soft text-[10px] font-black text-brand-ink; content: counter(rag-answer-item); }
+  .rag-answer li > span { @apply min-w-0; }
+  .rag-answer__note { @apply mt-1 rounded-[14px] border-l-4 border-brand bg-subtle px-4 py-3.5; }
+  .rag-answer__note > p { @apply text-[14px] leading-[1.65] font-semibold text-ink; }
+  .rag-answer strong { @apply font-extrabold text-ink; }
   .rag-answer-placeholder { @apply text-[13px] font-medium text-faint; }
   .rag-progress { @apply mx-auto flex w-[min(860px,100%)] items-center gap-2 text-[11px] font-semibold text-muted; }
   .rag-progress i { @apply size-1.5 animate-pulse rounded-full bg-brand; box-shadow: none; }
@@ -1417,7 +1590,7 @@
   .answer-news-list .news-list-item__thumbnail > svg { @apply text-faint; }
   .answer-news-list .news-list-item__eyebrow { @apply mb-1.5 min-h-0; }
   .answer-news-list .news-list-item__title { @apply text-[15px] leading-[1.45] tracking-[-0.2px]; }
-  .answer-news-list .news-list-item__body-preview { @apply mt-1 line-clamp-1 text-[12px]; }
+  .answer-news-list .news-list-item__body-preview { @apply mt-1 line-clamp-1 text-[12px] text-muted; }
 
   .answer-price-chart { @apply overflow-hidden rounded-[17px] border border-line bg-surface p-5; }
   .answer-price-chart > header { @apply flex items-start justify-between gap-5; }
@@ -1431,11 +1604,11 @@
   .answer-price-chart__grid { fill: none; stroke: var(--line); stroke-width: 1; }
   .answer-price-chart__area { fill: url(#answer-price-area); }
   .answer-price-chart__line { fill: none; stroke: var(--brand-ink); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-  .answer-price-chart > footer { @apply mt-1 flex items-center justify-between gap-3 text-[10px] font-medium text-faint; }
+  .answer-price-chart > footer { @apply mt-1 flex items-center justify-between gap-3 text-[11px] font-semibold text-muted; }
 
   .answer-metrics > div { @apply grid grid-cols-3 gap-2; }
   .answer-metrics article { @apply flex min-w-0 flex-col border-t border-line-strong px-1 py-3; }
-  .answer-metrics article small { @apply text-[11px] font-semibold text-faint; }
+  .answer-metrics article small { @apply text-[11px] font-semibold text-muted; }
   .answer-metrics article strong { @apply mt-1 truncate text-[20px] font-extrabold text-ink; }
   .answer-metrics article span { @apply mt-1 text-[10px] leading-4 font-medium text-muted; }
 
@@ -1491,7 +1664,7 @@
   .answer-source__kind { @apply text-[10px] font-extrabold text-brand-ink; }
   .answer-source__body { @apply flex min-w-0 flex-col; }
   .answer-source__body strong { @apply truncate text-[12px] font-bold text-ink; }
-  .answer-source__body small { @apply mt-0.5 truncate text-[10px] text-faint; }
+  .answer-source__body small { @apply mt-0.5 truncate text-[10px] font-medium text-muted; }
   .answer-source__action { @apply flex min-w-8 items-center justify-center gap-1 text-[10px] font-bold text-muted; }
   .answer-source--evidence { @apply block; }
   .answer-source--evidence summary { @apply grid cursor-pointer list-none grid-cols-[90px_minmax(0,1fr)_auto] items-center gap-3; }
@@ -2302,5 +2475,81 @@
     .rag-conversation--page .rag-composer { @apply w-[calc(100%_-_28px)] pb-[calc(10px+env(safe-area-inset-bottom))]; }
     .rag-conversation--page .rag-message--assistant.is-pending > div { @apply max-w-[min(390px,92%)]; }
     .rag-loading-state { @apply min-h-[78px] rounded-[18px] px-3.5 py-3; }
+  }
+}
+
+/* Ask 3.0 final conflict resolution — keep legacy theme layers from repainting chat. */
+@layer components {
+  .ask-page,
+  .rag-conversation--page {
+    background: var(--surface) !important;
+  }
+
+  .rag-conversation--page .rag-message--user > div {
+    background: var(--subtle) !important;
+    border-color: var(--line) !important;
+  }
+
+  .rag-conversation--page.is-empty .rag-composer {
+    top: calc(50% + 18px) !important;
+  }
+}
+
+@media (max-width: 820px) {
+  @layer components {
+    .rag-conversation--page.is-empty .rag-composer {
+      top: calc(50% + 32px) !important;
+    }
+  }
+}
+
+/* Ask answer legibility and the shared Toss-style compact chart. */
+@layer components {
+  .rag-conversation--page .rag-answer {
+    font-size: 16px;
+  }
+
+  .rag-conversation--page .rag-answer__summary {
+    border-left-width: 3px;
+  }
+
+  .rag-conversation--page .rag-answer__summary > span {
+    font-size: 11px;
+  }
+
+  .rag-conversation--page .rag-answer__summary > p {
+    font-size: 18px;
+  }
+
+  .rag-conversation--page .rag-answer__note > span {
+    font-size: 11px;
+  }
+
+  .rag-conversation--page .rag-answer__note > p {
+    font-size: 15px;
+  }
+
+  .rag-conversation--page .answer-section-heading > div > span {
+    font-size: 11px;
+  }
+
+  .rag-conversation--page .answer-section-heading > div > strong {
+    font-size: 18px;
+  }
+
+  .answer-price-chart__canvas {
+    @apply mt-4 h-[290px] w-full overflow-hidden;
+  }
+
+  .answer-price-chart > footer {
+    @apply mt-2;
+  }
+}
+
+@media (max-width: 820px) {
+  @layer components {
+    .answer-price-chart__canvas {
+      @apply h-[250px];
+    }
   }
 }

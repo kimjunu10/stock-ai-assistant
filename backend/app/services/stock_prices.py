@@ -73,6 +73,8 @@ class PeriodReturn:
     return_pct: float  # % , 소수 2자리
     currency: str
     adjusted: bool
+    # 종료값이 확정 일봉 종가인지, 장중 단일종목 현재가인지 공개 계약에 명시한다.
+    end_price_kind: str = "close"
 
 
 @dataclass
@@ -288,13 +290,12 @@ class StockPriceService:
             if cached is not None:
                 return cached  # type: ignore[return-value]
 
-            raw = self._with_backoff(lambda: self._client.fetch_reference_quote(stock_code))
+            raw = self._with_backoff(lambda: self._client.fetch_live_quote(stock_code))
             if not raw:
                 return None
             try:
                 price = float(raw["lastPrice"])
                 previous_close = float(raw["basePrice"])
-                change_rate = _round2(float(raw["changeRate"]) * 100)
                 as_of = datetime.fromisoformat(str(raw["timestamp"]))
                 currency = str(raw.get("currency") or "KRW")
             except (KeyError, TypeError, ValueError) as exc:
@@ -302,6 +303,7 @@ class StockPriceService:
 
             quote_day = as_of.date()
             change = price - previous_close
+            change_rate = _round2(change / previous_close * 100) if previous_close else 0.0
             quote = PriceQuote(
                 stock_code=stock_code,
                 price=price,
@@ -316,11 +318,20 @@ class StockPriceService:
             return quote
 
     def get_period_return(
-        self, stock_code: str, *, start: date, end: date, adjusted: bool = True
+        self,
+        stock_code: str,
+        *,
+        start: date,
+        end: date,
+        adjusted: bool = True,
+        live_quote: PriceQuote | None = None,
+        start_on_or_before: bool = False,
     ) -> PeriodReturn | None:
         """[start, end] 구간 수익률(백엔드 계산). 거래일 스냅 적용.
 
-        시작일은 사용할 수 있는 첫 거래일(start 이상), 종료일은 마지막 거래일(end 이하).
+        일반 lookback 시작일은 첫 거래일(start 이상), 사용자가 특정 날짜를 직접 비교한
+        경우(start_on_or_before=True)는 그 날짜가 휴장이면 직전 거래일을 쓴다.
+        종료일은 마지막 거래일(end 이하)이며 live_quote가 범위에 있으면 현재가로 끝낸다.
         데이터가 부족하면 None(no_data). 두 기준이 같은 거래일이면 수익률 0으로 유효.
         """
         self._require_supported(stock_code)
@@ -331,22 +342,36 @@ class StockPriceService:
         )
         if not candles:
             return None
-        start_c = self._snap_on_or_after(candles, start)
+        start_c = (
+            self._snap_on_or_before(candles, start)
+            if start_on_or_before
+            else self._snap_on_or_after(candles, start)
+        )
         end_c = self._snap_on_or_before(candles, end)
-        if start_c is None or end_c is None or start_c.trading_day > end_c.trading_day:
+        use_live_end = (
+            live_quote is not None
+            and start <= live_quote.trading_day <= end
+            and (start_c is None or start_c.trading_day <= live_quote.trading_day)
+        )
+        if start_c is None or (end_c is None and not use_live_end):
             return None
-        change = end_c.close - start_c.close
+        end_day = live_quote.trading_day if use_live_end else end_c.trading_day
+        end_price = live_quote.price if use_live_end else end_c.close
+        if start_c.trading_day > end_day:
+            return None
+        change = end_price - start_c.close
         return_pct = _round2(change / start_c.close * 100) if start_c.close else 0.0
         return PeriodReturn(
             stock_code=stock_code,
             start_trading_day=start_c.trading_day,
-            end_trading_day=end_c.trading_day,
+            end_trading_day=end_day,
             start_close=start_c.close,
-            end_close=end_c.close,
+            end_close=end_price,
             change=change,
             return_pct=return_pct,
             currency=start_c.currency,
             adjusted=adjusted,
+            end_price_kind="current" if use_live_end else "close",
         )
 
     def get_event_return(

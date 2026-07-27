@@ -667,13 +667,21 @@ def _visualization_for_tool(
         if not (isinstance(points, list) and len(points) >= 2):
             points = data.get("daily")
         if isinstance(points, list) and len(points) >= 2:
+            first_day = points[0].get("trading_day") if isinstance(points[0], dict) else None
+            last_day = points[-1].get("trading_day") if isinstance(points[-1], dict) else None
+            title = (
+                f"{first_day} ~ {last_day} 주가"
+                if isinstance(first_day, str) and isinstance(last_day, str)
+                else "실제 주가 흐름"
+            )
             return {
                 "type": "price_line",
-                "title": "실제 주가 흐름",
+                "title": title,
                 "data": {
                     "points": points,
                     "quote": data.get("quote"),
                     "period": data.get("period"),
+                    "sampled": data.get("daily_full_sampled", False),
                 },
                 "source_ids": source_ids,
             }

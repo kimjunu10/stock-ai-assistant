@@ -148,6 +148,32 @@ def test_clusters_api_filters_by_korean_published_date() -> None:
     assert response.total == 1
 
 
+def test_clusters_api_can_open_one_rag_linked_cluster() -> None:
+    client = FakeClient(
+        {
+            "news_clusters": [
+                {
+                    "id": cluster_id,
+                    "stock_code": "005930",
+                    "kind": "company",
+                    "summary_title": f"뉴스 {cluster_id}",
+                    "easy_explanation": "쉬운 설명",
+                    "factual_body": "사건 본문",
+                    "article_count": 1,
+                    "last_active_at": f"2026-07-{cluster_id:02d}T00:00:00+00:00",
+                    "summary_status": "success",
+                }
+                for cluster_id in (1, 2)
+            ],
+            "news_cluster_assignments": [],
+        }
+    )
+
+    response = get_clusters(client, None, 20, 0, None, 2)
+
+    assert [item.id for item in response.items] == [2]
+
+
 def test_easy_explanation_parser_accepts_json_and_rejects_empty_text() -> None:
     parsed, ok = _parse_easy_explanation(
         '{"explanation":"유상증자는 새 주식을 발행하는 일이에요."}'

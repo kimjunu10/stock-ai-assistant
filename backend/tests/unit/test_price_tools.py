@@ -39,7 +39,16 @@ class FakeSvc:
     def get_current_quote(self, stock_code):
         return self._quote
 
-    def get_period_return(self, stock_code, *, start, end, adjusted=True):
+    def get_period_return(
+        self,
+        stock_code,
+        *,
+        start,
+        end,
+        adjusted=True,
+        live_quote=None,
+        start_on_or_before=False,
+    ):
         return self._period
 
     def get_event_return(self, stock_code, *, event_date, pre_days, post_days, adjusted=True):
@@ -97,6 +106,25 @@ def test_get_current_price_contract_and_source():
     assert s.value_kind == "actual"
 
 
+def test_current_price_chart_is_only_previous_close_to_live_price():
+    daily = [
+        DailyClose(date(2026, 7, 23), 249500, 0, 0, 0, 1000, "KRW"),
+        DailyClose(date(2026, 7, 24), 251000, 0, 0, 0, 1000, "KRW"),
+    ]
+    r = run_get_stock_prices(
+        FakeSvc(quote=_quote(), daily=daily),
+        GetStockPricesInput(stock_code="005930"),
+    )
+
+    assert [point["trading_day"] for point in r.data["daily_full"]] == [
+        "2026-07-23",
+        "2026-07-24",
+    ]
+    assert r.data["daily_full"][0]["close"] == 250000.0
+    assert r.data["daily_full"][-1]["close"] == 252500.0
+    assert r.data["daily_full"][-1]["price_kind"] == "current"
+
+
 # ── 기간 수익률(현재가 + lookback) ─────────────────────────────────
 def test_get_prices_with_lookback_period():
     svc = FakeSvc(quote=_quote(), period=_period())
@@ -139,7 +167,16 @@ def test_get_prices_range_no_data():
 # ── 일봉 요약 ──────────────────────────────────────────────────────
 def test_get_prices_daily_summary():
     daily = [
-        DailyClose(date(2026, 7, 20 + i), 100000 + i * 100, 0, 0, 0, 1000, "KRW") for i in range(4)
+        DailyClose(
+            date(2026, 7, 20 + i),
+            100000 + i * 100,
+            99500 + i * 100,
+            101000 + i * 100,
+            99000 + i * 100,
+            1000,
+            "KRW",
+        )
+        for i in range(4)
     ]
     svc = FakeSvc(quote=_quote(), period=_period(), daily=daily)
     r = run_get_stock_prices(
@@ -148,6 +185,9 @@ def test_get_prices_daily_summary():
     assert "daily" in r.data
     assert r.data["daily"][0]["trading_day"] == "2026-07-20"
     assert r.data["daily"][0]["close"] == 100000.0
+    assert r.data["daily"][0]["open"] == 99500.0
+    assert r.data["daily"][0]["high"] == 101000.0
+    assert r.data["daily"][0]["low"] == 99000.0
 
 
 # ── 사건 전후 수익률 (fix/phase-7-exit-gate: 일반 기간 대체 차단) ──────

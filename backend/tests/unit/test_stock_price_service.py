@@ -28,7 +28,7 @@ def _mk_candle(day: str, close: float, *, o=None, h=None, low=None, vol=1000):
 
 
 class FakeToss:
-    """fetch_reference_quote / fetch_daily_candles_raw 만 구현한 가짜 클라이언트."""
+    """fetch_live_quote / fetch_daily_candles_raw 만 구현한 가짜 클라이언트."""
 
     def __init__(self, candles: list[dict], *, current=None, raise_429_times=0, not_found=False):
         # candles 는 newest-first 로 저장(토스와 동일)
@@ -39,7 +39,7 @@ class FakeToss:
         self.daily_calls = 0
         self.current_calls = 0
 
-    def fetch_reference_quote(self, stock_code):
+    def fetch_live_quote(self, stock_code):
         self.current_calls += 1
         if self.not_found:
             return {}
@@ -126,6 +126,37 @@ def test_period_return_exact():
     assert r.end_trading_day == date(2026, 7, 24)
 
 
+def test_period_return_ending_today_uses_single_stock_live_price():
+    candles = [
+        _mk_candle("2026-07-24", 249500),
+        # 제공자 일봉의 장중 마지막 값이 달라도 현재가와 혼용하지 않는다.
+        _mk_candle("2026-07-27", 254000),
+    ]
+    client = FakeToss(
+        candles,
+        current={
+            "symbol": "005930",
+            "timestamp": "2026-07-27T12:04:00.000+09:00",
+            "lastPrice": "252500",
+            "basePrice": "249500",
+            "currency": "KRW",
+        },
+    )
+    svc = _svc(client)
+    quote = svc.get_current_quote("005930")
+    r = svc.get_period_return(
+        "005930",
+        start=date(2026, 7, 24),
+        end=date(2026, 7, 27),
+        live_quote=quote,
+    )
+
+    assert r is not None
+    assert r.end_close == 252500.0
+    assert r.return_pct == 1.2
+    assert r.end_price_kind == "current"
+
+
 def test_period_return_no_data():
     r = _svc(FakeToss([])).get_period_return(
         "005930", start=date(2026, 6, 1), end=date(2026, 6, 30)
@@ -148,6 +179,22 @@ def test_trading_day_snap_start_after_end_before():
     # end 를 휴장일(07-26)로 주면 직전 거래일 07-24 로 스냅
     r2 = svc.get_period_return("005930", start=date(2026, 7, 24), end=date(2026, 7, 26))
     assert r2.end_trading_day == date(2026, 7, 24)
+
+
+def test_explicit_holiday_reference_can_snap_to_previous_trading_day():
+    candles = [
+        _mk_candle("2026-07-24", 249500),
+        _mk_candle("2026-07-27", 252500),
+    ]
+    r = _svc(FakeToss(candles)).get_period_return(
+        "005930",
+        start=date(2026, 7, 25),
+        end=date(2026, 7, 27),
+        start_on_or_before=True,
+    )
+
+    assert r is not None
+    assert r.start_trading_day == date(2026, 7, 24)
 
 
 # ── 사건 전후 수익률 ───────────────────────────────────────────────

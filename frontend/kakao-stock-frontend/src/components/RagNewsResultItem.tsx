@@ -39,6 +39,14 @@ export function RagNewsResultItem({
   url,
 }: RagNewsResultItemProps) {
   const stock = stockCode ? getStock(stockCode) : undefined
+  const internal = url?.startsWith('/') || (() => {
+    if (!url) return false
+    try {
+      return new URL(url, window.location.origin).origin === window.location.origin
+    } catch {
+      return false
+    }
+  })()
   const content = (
     <>
       <span className="news-list-item__thumbnail">
@@ -70,7 +78,7 @@ export function RagNewsResultItem({
       sentiment ? `is-sentiment-${sentiment}` : '',
     ].filter(Boolean).join(' ')}>
       {url
-        ? <a className="news-list-item__button" href={url} rel="noreferrer" target="_blank">{content}</a>
+        ? <a className="news-list-item__button" href={url} rel={internal ? undefined : 'noreferrer'} target={internal ? undefined : '_blank'}>{content}</a>
         : <div className="news-list-item__button">{content}</div>}
     </article>
   )

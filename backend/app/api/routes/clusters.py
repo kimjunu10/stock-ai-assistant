@@ -87,6 +87,7 @@ def get_clusters(
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
     published_date: Annotated[date | None, Query()] = None,
+    cluster_id: Annotated[int | None, Query(ge=1)] = None,
 ) -> NewsClusterList:
     """Return factual summaries and original sources for completed clusters."""
 
@@ -110,6 +111,8 @@ def get_clusters(
         query = query.eq("clustering_version", active_version)
     if stock_code is not None:
         query = query.eq("stock_code", stock_code)
+    if cluster_id is not None:
+        query = query.eq("id", cluster_id)
     if published_date is not None:
         seoul = ZoneInfo("Asia/Seoul")
         day_start = datetime.combine(published_date, time.min, tzinfo=seoul).astimezone(UTC)
