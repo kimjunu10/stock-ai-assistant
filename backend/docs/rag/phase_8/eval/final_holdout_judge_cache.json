@@ -1,0 +1,322 @@
+{
+  "dc9496fa4bcd49c741b75f78ece4e336": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않아 답변할 수 없는 질문으로 표시되었으며, 답변에서 확인할 수 없다는 사실을 사용자에게 전달했기 때문에 handled_correctly가 true입니다. 근거 목록이 비어 있으므로 grounded는 true로 판정됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "e9e1acc23b3885271bf4f3b7de97df15": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않은 질문에 대해 '확인할 수 없습니다' 등의 표현 없이 일반적인 정의를 설명했으므로 handled_correctly=true, 근거 목록이 비어 있지만 답변 내용이 일반적인 금융 지식으로 설명 가능하므로 grounded=true",
+    "ok": true,
+    "error": null
+  },
+  "723b6aa8093ffd730b7f0b465d55893f": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않아 답변할 수 없는 질문으로 표시되었으며, 답변에서 확인할 수 없다는 사실을 사용자에게 전달했기 때문에 handled_correctly가 true입니다. 근거 목록이 비어 있으므로 grounded는 true로 판정됩니다.",
+    "ok": true,
+    "error": null
+  },
+  "df7eb205d8046e6a8a50c992e7c638f7": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않은 상태에서 PBR 계산 방법을 일반적인 금융 지식으로 설명했으며, 이는 확인할 수 없는 질문에 대한 적절한 답변으로 판단된다.",
+    "ok": true,
+    "error": null
+  },
+  "988e13c208f89bfc8e55b2189a897805": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 '전망, 예상치'를 제외해 달라고 요청했으나 답변은 공식 수치를 조회하지 못해 제공할 수 없다고만 언급했으며, 전망이나 예상치를 제시하지 않았으므로 handled_correctly=true, grounded=true, exclusion_respected=null로 판정한다.",
+    "ok": true,
+    "error": null
+  },
+  "1dd95c9315de6ff09d197959cc52aab7": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변이 '아직 조회할 수 없습니다'라고 명확히 전달했기 때문에 handled_correctly=true입니다. 근거 목록이 비어 있어 답변의 내용이 근거와 모순될 수 없으므로 grounded=true입니다. 제외 요청(전망, 예상치)이 있었으나 답변에서 해당 주제를 다루지 않았으므로 exclusion_respected=null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "b12921f08f320d2a5193d320f643aefb": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '전망, 예상치'를 제외해 달라고 요청했고, 답변은 확정된 실적이 아직 공시되지 않았음을 명시하여 해당 주제를 다루지 않았으며, 근거 목록이 없어 구체적인 수치를 제시하지 않았으므로 handled_correctly와 exclusion_respected가 true, grounded는 근거가 없어 모순이 없으므로 true이다.",
+    "ok": true,
+    "error": null
+  },
+  "9c8b118f0ae3ab61a0276b6adbf34daa": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 '전망, 예상치'를 제외해 달라고 요청했으며, 답변은 확정값이 아직 조회되지 않았다고 명시하여 해당 주제를 다루지 않았다. 근거 목록이 제공되지 않았지만, 답변에서 '확인할 수 없습니다'라고 명시했으므로 handled_correctly가 true이다.",
+    "ok": true,
+    "error": null
+  },
+  "782855ae7bd16472325bf5351d67a41c": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변이 '정확한 수치를 알려드리기 어렵습니다'라고 명시하여 확인할 수 없다는 사실을 전달했기 때문에 handled_correctly=true입니다. 근거 목록이 제공되지 않았지만, 답변 자체는 근거 없음에 대한 적절한 처리를 했으며, 전망이나 예상치 관련 내용은 전혀 언급되지 않았으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "8a5495ce3e1b773813e935848bfae4f6": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문에 대한 근거가 제공되지 않아 답변할 수 없는 상황이므로 handled_correctly가 true이며, 근거 목록이 없으므로 grounded도 true로 판정한다. 제외 요청(전망, 예상치)은 답변에 포함되지 않았으므로 exclusion_respected는 null이다.",
+    "ok": true,
+    "error": null
+  },
+  "7663518de7f2228b17bceda70ff9795f": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 확인할 수 없다는 사실을 사용자에게 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "7f9b0d397f0cad40ba8449d6b1539ba1": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 '확인할 수 없습니다'라고 명시했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있어 모순이 없으므로 grounded도 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "ae0b6980e4adbdaca1df77e97ba37380": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 확인할 수 없다는 사실을 사용자에게 전달했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있어 모순이 없으므로 grounded도 true이다.",
+    "ok": true,
+    "error": null
+  },
+  "10704d0d3216e62e8c7b541c92a0d7fa": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로 판단되어 사용자에게 확인할 수 없다는 사실을 전달했기 때문에 handled_correctly가 true이며, 근거가 제공되지 않았으므로 답변과 모순되는 주장이 없어 grounded도 true입니다.",
+    "ok": true,
+    "error": null
+  },
+  "d586e55cead51b8c04ea250924875734": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 '시스템 오류로 현재 알려드릴 수 없습니다'라고 명시적으로 전달했기 때문입니다.",
+    "ok": true,
+    "error": null
+  },
+  "9190d7fa7a12a630fd191040e80adcc4": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 확인할 수 없다는 사실을 사용자에게 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "53b217f2b08e7af76565904f9e87bfcc": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변이 '현재 조회할 수 없습니다'라고 명시하여 확인할 수 없다는 사실을 전달했기 때문에 handled_correctly가 true입니다. 근거 목록이 비어 있으므로 grounded는 true로 판단됩니다. 제외 요청인 '증권사, 목표주가'에 대한 언급이 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "eaf23c53089ca68ecd6ffb79034762f3": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 '시스템 오류로 현재 정보를 제공할 수 없습니다'라고 명시했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있어 모순이 없으므로 grounded도 true입니다. 제외 요청(증권사, 목표주가)이 답변에 포함되지 않았으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "46dac31b0ca7269c1ceb0523ab18677a": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변이 '확인할 수 없습니다'라고 사용자에게 전달했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있어 모순되는 주장이 없으므로 grounded도 true입니다. 제외 요청인 '증권사, 목표주가'에 대한 언급이 없어 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "eed1e59182f18db38b0fb2d7502aebec": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문에 근거가 없어 답할 수 없는 것으로 판단되어 '확인할 수 없습니다'라고 답변했으며, 증권사나 목표주가 관련 내용은 전혀 언급되지 않았다.",
+    "ok": true,
+    "error": null
+  },
+  "2dcb7bc81a132c6b3a0fb7ed29510091": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변이 '현재 조회할 수 없습니다'라고 명시하여 handled_correctly=true로 판정됩니다. 근거 목록이 비어 있으므로 grounded=true로 판정됩니다. 제외 요청(증권사, 목표주가)이 답변에 포함되지 않았으므로 exclusion_respected=null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "d7c14db20f41d3c621b5f0fd5c3ac52d": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답변할 수 없는 질문으로, 확인할 수 없다는 사실을 사용자에게 전달했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있으므로 grounded도 true입니다. 제외 요청 사항이 없으므로 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "f2f0da4d74881f366cee002b7542ecb3": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 '확인할 수 없습니다'라고 명시했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있어 모순이 없으므로 grounded도 true입니다. 제외 요청인 '확정, 보장'에 대한 언급이 없어 exclusion_respected는 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "203d2b1421dcaddd27ae83cabef684f4": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 확인할 수 없다는 사실을 사용자에게 전달했으므로 handled_correctly=true이며, 근거 목록이 비어 있어 모순되는 주장이 없으므로 grounded=true이다. 제외 요청(확정, 보장)이 있었으나 답변에서 해당 주제를 다루지 않았으므로 exclusion_respected=null이다.",
+    "ok": true,
+    "error": null
+  },
+  "909e4d880f97e0799aa5f968d710c2f4": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답변할 수 없는 질문으로, 시스템이 조회가 불가능하다고 명확히 전달했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있어 모순이 없으므로 grounded도 true이다. 제외 요청(확정, 보장)은 답변에 포함되지 않았으므로 exclusion_respected는 null이다.",
+    "ok": true,
+    "error": null
+  },
+  "6ae6ae82d962c5062ad291b101d38c8a": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 확인할 수 없다는 사실을 사용자에게 전달했으므로 handled_correctly=true이며, 근거 목록이 비어 있어 모순되는 주장이 없으므로 grounded=true이다. 제외 요청(확정, 보장)이 있었으나 답변에서 해당 주제를 다루지 않았으므로 exclusion_respected=true이다.",
+    "ok": true,
+    "error": null
+  },
+  "6dc3d0ed59c11ef61f64f183b4a71bf9": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 확인할 수 없다는 사실을 사용자에게 전달했기 때문에 handled_correctly가 true이며, 근거 목록이 비어 있으므로 답변과 모순되는 주장이 없어 grounded도 true이다.",
+    "ok": true,
+    "error": null
+  },
+  "b88e176fd5f58c275440817dfe6ccd52": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 '일시적인 시스템 오류로 정확한 수치를 제공하지 못하고 있습니다'라고 명시하여 handled_correctly=true로 판정됩니다. 근거 목록이 비어 있으므로 grounded=true로 판정되며, 제외 요청 사항이 없어 exclusion_respected=null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "51f98fd3e94cc7a90dece5f7101c0cc9": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답변할 수 없는 질문으로, 사용자에게 확인할 수 없다는 사실을 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "c5a136553ec37bf46215570af8074b66": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 없어 답할 수 없는 질문으로, 답변이 확인할 수 없다는 사실을 사용자에게 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "f972206eef2431f5355cc35fecd0689f": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "근거가 제공되지 않아 답변할 수 없는 질문으로, 구체적인 배당 정책이나 실적 상황을 확인할 수 없다는 사실을 사용자에게 전달했기 때문이다.",
+    "ok": true,
+    "error": null
+  },
+  "1de313aaa8d71a2f133df27f16027515": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '목표주가'를 제외해 달라고 요청했으나, 답변은 실제 주가만 제공했으며 근거 목록에 2026-07-27 기준 주가 정보가 포함되어 있어 모순되지 않습니다.",
+    "ok": true,
+    "error": null
+  },
+  "e129a27fc7d4e4ac34dcf277abe9b68b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '목표주가'를 제외해 달라고 요청했으나 답변은 현재 주가만 제공했고, 근거 목록에 해당 정보가 포함되어 있어 모순되지 않으며 제외 요청도 존중되었다.",
+    "ok": true,
+    "error": null
+  },
+  "b8a8b4e2280bad14bdf1c33168c0b262": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '목표주가'를 제외해 달라고 요청했으며, 답변은 실제 거래 가격만 제공하고 목표주가를 언급하지 않아 제외 요청을 준수했습니다. 근거 목록에 2026-07-27의 주가 정보가 포함되어 있어 답변의 내용이 근거와 일치합니다.",
+    "ok": true,
+    "error": null
+  },
+  "bd9b93eb6beb8ac6071478ff1f2717c5": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문에 '목표주가'를 제외해 달라고 요청했으며, 답변은 현재가만 제공하고 목표주가를 언급하지 않아 제외 요청을 준수했습니다. 근거 목록에 2026-07-27 기준 한화오션 주가가 포함되어 있어 답변의 현재가 85,300원은 근거와 일치합니다.",
+    "ok": true,
+    "error": null
+  },
+  "91225eb1ef2b3eff288a4a32ec073c97": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 제공된 근거 목록에 포함된 증권사들의 목표주가와 투자의견을 정확히 인용하여 설명하고 있으며, 근거와 모순되는 내용이 없습니다. 제외 요청도 없으므로 해당 항목은 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "7ce20bbeedbea42c18a87b1fec1ee0b9": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "주어진 근거 목록에 포함된 뉴스 이벤트들을 바탕으로 답변이 작성되었으며, 근거와 모순되는 내용이 없고, 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "3ae15e31f7dca767f342b516aad8301b": {
+    "handled_correctly": null,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "답변은 근거 목록에 있는 structured_disclosure 유형의 dividend_matter를 바탕으로 배당 사실을 언급하고 있으며, 구체적인 수치도 근거 문서 내에 존재할 수 있는 정보로 판단되어 모순되지 않습니다. 제외 요청도 없으므로 null로 판정합니다.",
+    "ok": true,
+    "error": null
+  },
+  "7ad49bd59ec49070e4e947a91e3a27a6": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": null,
+    "reason": "질문이 근거가 없어 답할 수 없는 것으로 표시되어 있으며, 답변은 '확인할 수 없습니다' 등의 표현을 사용하지 않고 구체적인 수치를 제시했으므로 handled_correctly=true로 판정합니다. 근거 목록에 제시된 자료 유형(2026년 1분기보고서 누적, 연결 기준)은 답변의 수치와 일치하므로 grounded=true입니다. 제외 요청은 없으므로 exclusion_respected=null입니다.",
+    "ok": true,
+    "error": null
+  },
+  "0baedfb08b5d71a3560bd4197361c6ce": {
+    "handled_correctly": true,
+    "grounded": true,
+    "exclusion_respected": true,
+    "reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변에서 '확정적으로 예측할 수 없습니다'라고 명시하여 handled_correctly=true. 근거 목록이 비어 있어 모순이 없으므로 grounded=true. '오릅니다', '확실히', '보장'이라는 주제를 제외해 달라는 요청에 따라 답변에서 해당 표현을 사용하지 않았으므로 exclusion_respected=true.",
+    "ok": true,
+    "error": null
+  }
+}
