@@ -100,7 +100,19 @@ export function useRagConversation(context: RagContext) {
           const safeMessage = typeof event.data.message === 'string'
             ? event.data.message
             : '종목 문맥을 확인할 수 없어 요청을 처리하지 않았습니다.'
-          throw new QaStreamError(safeMessage, code)
+          setPhase('completed')
+          setProgress('')
+          setStockContextError(code)
+          updateAssistant(assistantId, (message) => ({
+            ...message,
+            text: safeMessage,
+            sources: [],
+            visualizations: [],
+            warnings: [],
+            state: 'complete',
+            errorCode: code,
+          }))
+          return
         }
         const message = reason === 'timeout'
           ? '답변 시간이 초과됐어요. 같은 질문을 다시 시도해 주세요.'
