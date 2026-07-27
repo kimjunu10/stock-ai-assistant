@@ -299,7 +299,26 @@ def _document_context_block(source_type: str | None, source_id: str | None) -> s
     이미 확정된 문서가 있는데도 어떤 문서인지 되묻는 것을 막는다. 서버가 확정해
     넘긴 값만 쓰고, 모델이 임의로 다른 문서를 고르지 않는다.
     """
-    if source_type != "research_report" or not source_id:
+    if not source_id:
+        return ""
+    if source_type == "news_event":
+        return (
+            "\n\n현재 뉴스 문맥(서버 확정):\n"
+            f"- news_event_id: {source_id}\n"
+            '- 사용자가 "이 뉴스", "이 내용", "이 사건"처럼 지시 표현으로 물으면 이 뉴스\n'
+            "  사건을 가리키는 것이다. 어떤 뉴스인지 되묻지 않는다.\n"
+            "- search_news를 호출할 때 서버가 이 사건을 최우선 근거로 강제한다.\n"
+            "- 관련 뉴스나 같은 종목의 다른 사건을 요청하면 이 사건을 중심에 두고 "
+            "추가 근거를 찾는다."
+        )
+    if source_type in {"dart_document", "structured_disclosure"}:
+        return (
+            "\n\n현재 공시 문맥(서버 확정):\n"
+            f"- disclosure_id: {source_id}\n"
+            '- 사용자가 "이 공시", "이 문서"처럼 지시 표현으로 물으면 이 공시를\n'
+            "  가리키는 것이다. 어떤 공시인지 되묻지 않는다."
+        )
+    if source_type != "research_report":
         return ""
     return (
         "\n\n현재 문서 문맥(서버 확정):\n"

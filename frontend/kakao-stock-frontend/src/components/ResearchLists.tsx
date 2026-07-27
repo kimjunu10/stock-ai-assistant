@@ -76,7 +76,7 @@ export function DisclosureList({ items, onAsk }: DisclosureListProps) {
               onAsk({
                 stockCode: item.stockCode,
                 sourceType: 'disclosure',
-                sourceId: String(item.id),
+                sourceId: item.sourceId ?? String(item.id),
                 title: item.title,
               })
             }

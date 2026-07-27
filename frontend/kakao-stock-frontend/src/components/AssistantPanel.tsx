@@ -30,6 +30,9 @@ export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) 
     title: context?.title,
     selectedText: context?.selectedText,
   }
+  const conversationKey = context
+    ? [context.sourceType, context.sourceId, context.page ?? '', context.selectedText ?? ''].join(':')
+    : 'empty'
 
   return (
     <>
@@ -46,7 +49,7 @@ export function AssistantPanel({ context, onClose, open }: AssistantPanelProps) 
             <Icon name="close" size={19} />
           </button>
         </header>
-        {context && <RagConversation context={ragContext} key={`${context.sourceType}:${context.sourceId}`} variant="panel" />}
+        {context && <RagConversation context={ragContext} key={conversationKey} variant="panel" />}
       </aside>
     </>
   )

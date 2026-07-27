@@ -45,9 +45,17 @@ def _has_topic(query: str | None) -> bool:
 
 def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolResult:
     try:
+        current_chunks = []
+        if inp.current_event_id:
+            current = retriever.get_news_event(
+                inp.current_event_id,
+                stock_code=inp.stock_code,
+            )
+            if current is not None:
+                current_chunks.append(current)
         if _has_topic(inp.query):
             # 특정 주제 있음 → 기존 하이브리드(semantic + lexical + RRF) 유지.
-            chunks = retriever.search(
+            related_chunks = retriever.search(
                 inp.query,
                 stock_code=inp.stock_code,
                 source_type="news_event",
@@ -58,13 +66,16 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
             )
         else:
             # 주제 없음 → 임베딩 호출 없이 종목·기간·감성 조건으로 사건 최신순 조회.
-            chunks = retriever.list_recent_news(
+            related_chunks = retriever.list_recent_news(
                 stock_code=inp.stock_code,
                 date_from=inp.date_from,
                 date_to=inp.date_to,
                 sentiment=inp.sentiment,
                 top_k=inp.limit,
             )
+        chunks = current_chunks + [
+            chunk for chunk in related_chunks if chunk.source_pk != inp.current_event_id
+        ]
     except Exception as e:  # noqa: BLE001
         log_tool_exception(e, layer="HybridRetriever.search_news")
         return error(sanitize_exception(e))

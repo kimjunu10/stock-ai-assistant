@@ -80,7 +80,26 @@ def test_no_document_context_without_source_id():
     assert "현재 문서 문맥" not in prompt
 
 
-def test_no_document_context_for_non_report_source_type():
-    """리포트가 아닌 문서 타입(예: 뉴스·공시)은 이 블록의 대상이 아니다."""
+def test_news_context_is_injected_as_primary_event():
+    """뉴스 상세에서 연 챗봇은 선택한 사건을 서버 확정 문맥으로 사용한다."""
     prompt = financial_agent_system_prompt(**_BASE, source_type="news_event", source_id="cluster-1")
+    assert "현재 뉴스 문맥(서버 확정)" in prompt
+    assert "cluster-1" in prompt
+    assert "최우선 근거" in prompt
+    assert "같은 종목의 다른 사건" in prompt
+
+
+def test_disclosure_context_is_injected():
+    prompt = financial_agent_system_prompt(
+        **_BASE, source_type="dart_document", source_id="20260727000123"
+    )
+    assert "현재 공시 문맥(서버 확정)" in prompt
+    assert "20260727000123" in prompt
+    assert "되묻지 않는다" in prompt
+
+
+def test_unknown_source_type_does_not_create_document_context():
+    prompt = financial_agent_system_prompt(**_BASE, source_type="unknown", source_id="x")
+    assert "현재 뉴스 문맥" not in prompt
+    assert "현재 공시 문맥" not in prompt
     assert "현재 문서 문맥" not in prompt
