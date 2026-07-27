@@ -12,6 +12,7 @@ from app.agent.tools.common import (
     ToolResult,
     clamp_text,
     error,
+    log_tool_exception,
     no_data,
     ok,
     sanitize_exception,
@@ -27,6 +28,7 @@ def run_lookup_financial_term(facts: FactsService, inp: FinancialTermInput) -> T
     try:
         row = facts.lookup_term(inp.term)
     except Exception as e:  # noqa: BLE001
+        log_tool_exception(e, layer="FactsService.lookup_term")
         return error(sanitize_exception(e))
     if not row:
         return no_data(f"'{inp.term}' 용어를 찾지 못했습니다.")

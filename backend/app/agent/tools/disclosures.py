@@ -19,6 +19,7 @@ from app.agent.tools.common import (
     clamp_text,
     error,
     iso,
+    log_tool_exception,
     no_data,
     ok,
     sanitize_exception,
@@ -43,6 +44,7 @@ def run_search_disclosures(facts: FactsService, inp: SearchDisclosuresInput) -> 
             limit=inp.limit,
         )
     except Exception as e:  # noqa: BLE001
+        log_tool_exception(e, layer="FactsService.get_latest_disclosures")
         return error(sanitize_exception(e))
     if not rows:
         return no_data("해당 조건의 공시를 찾지 못했습니다.")
@@ -118,6 +120,7 @@ def run_get_disclosure_values(facts: FactsService, inp: DisclosureValuesInput) -
             limit=inp.limit,
         )
     except Exception as e:  # noqa: BLE001
+        log_tool_exception(e, layer="FactsService.get_structured_values")
         return error(sanitize_exception(e))
     if not rows:
         return no_data("해당 조건의 구조화 공시 값을 찾지 못했습니다.")

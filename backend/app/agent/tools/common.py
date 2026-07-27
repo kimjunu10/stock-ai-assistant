@@ -12,6 +12,12 @@ ResearchReportSearch)를 재사용한다. Tool 내부에서 LLM 답변을 생성
 
 from __future__ import annotations
 
+import json
+import logging
+import re
+import traceback
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import date, datetime
 from typing import Any, Literal
 
@@ -31,6 +37,85 @@ SourceType = Literal[
 # snippet 을 짧게 유지해 모델 왕복 토큰·지연을 낮춘다(5.5-F 지연 결함 대응).
 MAX_RESULT_ITEMS = 8
 MAX_TEXT_CHARS = 500
+
+logger = logging.getLogger(__name__)
+
+_TOOL_LOG_CONTEXT: ContextVar[dict[str, Any]] = ContextVar(
+    "tool_runtime_log_context",
+    default={"tool_name": "unknown", "args": {}, "request_id": "unknown"},
+)
+_SENSITIVE_KEY_RE = re.compile(
+    r"(?:api[_-]?key|authorization|cookie|credential|password|secret|token)",
+    re.IGNORECASE,
+)
+_SECRET_VALUE_RE = re.compile(
+    r"(?i)(api[_-]?key|authorization|password|secret|token)(\s*[:=]\s*)([^\s,;]+)"
+)
+_URL_CREDENTIAL_RE = re.compile(r"([a-z][a-z0-9+.-]*://[^:/\s]+:)[^@\s]+(@)", re.IGNORECASE)
+_JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b")
+
+
+def mask_tool_args(args: dict[str, Any] | None) -> dict[str, Any]:
+    """내부 로그용 Tool 인자를 재귀적으로 마스킹하고 크기를 제한한다."""
+
+    def mask(value: Any, key: str = "") -> Any:
+        if _SENSITIVE_KEY_RE.search(key):
+            return "***"
+        if isinstance(value, dict):
+            return {str(k): mask(v, str(k)) for k, v in list(value.items())[:30]}
+        if isinstance(value, (list, tuple)):
+            return [mask(item, key) for item in list(value)[:30]]
+        if isinstance(value, str):
+            return value if len(value) <= 300 else value[:300] + "…"
+        if value is None or isinstance(value, (bool, int, float)):
+            return value
+        return str(value)[:300]
+
+    return mask(args or {})
+
+
+def _mask_exception_message(message: str) -> str:
+    masked = _SECRET_VALUE_RE.sub(r"\1\2***", message)
+    masked = _URL_CREDENTIAL_RE.sub(r"\1***\2", masked)
+    masked = _JWT_RE.sub("***", masked)
+    return masked if len(masked) <= 1000 else masked[:1000] + "…"
+
+
+@contextmanager
+def tool_runtime_log_context(
+    *, tool_name: str, args: dict[str, Any] | None, request_id: str | None
+):
+    """Tool 실행 동안 예외 로그에 필요한 안전한 호출 문맥을 보존한다."""
+
+    token = _TOOL_LOG_CONTEXT.set(
+        {
+            "tool_name": tool_name or "unknown",
+            "args": mask_tool_args(args),
+            "request_id": request_id or "unknown",
+        }
+    )
+    try:
+        yield
+    finally:
+        _TOOL_LOG_CONTEXT.reset(token)
+
+
+def log_tool_exception(exc: Exception, *, layer: str) -> None:
+    """사용자에게 노출하지 않는 Tool 내부 예외 감사 로그를 남긴다."""
+
+    ctx = _TOOL_LOG_CONTEXT.get()
+    stack = _mask_exception_message("".join(traceback.format_tb(exc.__traceback__)).strip())
+    logger.error(
+        "TOOL_RUNTIME_ERROR tool=%s args=%s exception_class=%s "
+        "exception_message=%s layer=%s correlation_id=%s stack_trace=%s",
+        ctx.get("tool_name", "unknown"),
+        json.dumps(ctx.get("args", {}), ensure_ascii=False, default=str),
+        type(exc).__name__,
+        _mask_exception_message(str(exc)),
+        layer,
+        ctx.get("request_id", "unknown"),
+        stack or "(no traceback)",
+    )
 
 
 class SourceRef(BaseModel):

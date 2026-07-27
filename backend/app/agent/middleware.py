@@ -14,11 +14,25 @@ import json
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
+from pydantic import ValidationError
+
+from app.agent.tools.common import (
+    error,
+    log_tool_exception,
+    tool_runtime_log_context,
+)
 
 
-def sanitize_tool_error(error: Exception) -> str:
-    """ToolErrorMiddleware.on_error 콜백. 내부 예외 메시지를 감춘 안전 문자열 반환."""
-    return f"이 Tool 은 일시적 오류({type(error).__name__})로 결과를 반환하지 못했습니다."
+def sanitize_tool_error(exc: Exception) -> str:
+    """ToolErrorMiddleware 콜백. 모든 예외를 표준 status=error JSON으로 반환한다."""
+
+    log_tool_exception(exc, layer="tool_wrapper")
+    public_message = (
+        "Tool 입력값이 허용된 형식과 맞지 않습니다. Tool 스키마의 enum·필수 형식을 확인하세요."
+        if isinstance(exc, ValidationError)
+        else f"이 Tool 은 일시적 오류({type(exc).__name__})로 결과를 반환하지 못했습니다."
+    )
+    return json.dumps(error(public_message).model_dump_agent(), ensure_ascii=False)
 
 
 def _args_key(name: str, args: dict[str, Any]) -> str:
@@ -78,3 +92,22 @@ class DuplicateToolCallMiddleware(AgentMiddleware):
                 name=str(name),
             )
         return handler(request)
+
+
+class ToolRuntimeObservabilityMiddleware(AgentMiddleware):
+    """요청별 Tool 이름·인자·correlation ID를 내부 예외 로그 문맥에 연결한다."""
+
+    def wrap_tool_call(self, request, handler):  # type: ignore[override]
+        tc = getattr(request, "tool_call", None)
+        tc = tc if isinstance(tc, dict) else {}
+        name = getattr(request, "tool_name", None) or tc.get("name") or "unknown"
+        args = tc.get("args") or {}
+        runtime = getattr(request, "runtime", None)
+        context = getattr(runtime, "context", None)
+        request_id = getattr(context, "request_id", None)
+        with tool_runtime_log_context(
+            tool_name=str(name),
+            args=args if isinstance(args, dict) else {"raw": args},
+            request_id=request_id,
+        ):
+            return handler(request)

@@ -1,0 +1,226 @@
+{
+  "status": "pass",
+  "executed_at": "2026-07-27T14:18:48.935139+09:00",
+  "agent_executed": false,
+  "rows": [
+    {
+      "tool": "lookup_financial_term_default",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": []
+    },
+    {
+      "tool": "lookup_financial_term_default",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": []
+    },
+    {
+      "tool": "lookup_financial_term_alternate",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": []
+    },
+    {
+      "tool": "lookup_financial_term_alternate",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": []
+    },
+    {
+      "tool": "get_financial_facts_default",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 3,
+      "warnings": []
+    },
+    {
+      "tool": "get_financial_facts_default",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 3,
+      "warnings": []
+    },
+    {
+      "tool": "get_financial_facts_optional",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": []
+    },
+    {
+      "tool": "get_financial_facts_optional",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": []
+    },
+    {
+      "tool": "search_news_default",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "search_news_default",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "search_news_optional",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "search_news_optional",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "get_disclosure_values_default",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "get_disclosure_values_default",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "get_disclosure_values_optional",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "get_disclosure_values_optional",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "search_research_reports_default",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": [
+        "증권사 목표주가·전망은 예측치이며 확정 실적이 아님.",
+        "목표주가 숫자는 target_price_status='stated' 인 target_price 값만 사용할 것. snippet 텍스트의 숫자를 목표주가로 인용하지 말 것."
+      ]
+    },
+    {
+      "tool": "search_research_reports_default",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": [
+        "증권사 목표주가·전망은 예측치이며 확정 실적이 아님.",
+        "목표주가 숫자는 target_price_status='stated' 인 target_price 값만 사용할 것. snippet 텍스트의 숫자를 목표주가로 인용하지 말 것."
+      ]
+    },
+    {
+      "tool": "search_research_reports_optional",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": [
+        "증권사 목표주가·전망은 예측치이며 확정 실적이 아님.",
+        "목표주가 숫자는 target_price_status='stated' 인 target_price 값만 사용할 것. snippet 텍스트의 숫자를 목표주가로 인용하지 말 것."
+      ]
+    },
+    {
+      "tool": "search_research_reports_optional",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": [
+        "증권사 목표주가·전망은 예측치이며 확정 실적이 아님.",
+        "목표주가 숫자는 target_price_status='stated' 인 target_price 값만 사용할 것. snippet 텍스트의 숫자를 목표주가로 인용하지 말 것."
+      ]
+    },
+    {
+      "tool": "get_stock_prices_default",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": []
+    },
+    {
+      "tool": "get_stock_prices_default",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 1,
+      "warnings": []
+    },
+    {
+      "tool": "get_stock_prices_optional",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 2,
+      "warnings": []
+    },
+    {
+      "tool": "get_stock_prices_optional",
+      "attempt": 2,
+      "status": "ok",
+      "source_count": 2,
+      "warnings": []
+    },
+    {
+      "tool": "mixed_financial",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 3,
+      "warnings": []
+    },
+    {
+      "tool": "mixed_news",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "mixed_disclosure",
+      "attempt": 1,
+      "status": "ok",
+      "source_count": 5,
+      "warnings": []
+    },
+    {
+      "tool": "missing_term",
+      "attempt": 1,
+      "status": "no_data",
+      "source_count": 0,
+      "warnings": [
+        "'__phase9_missing_term__' 용어를 찾지 못했습니다."
+      ]
+    },
+    {
+      "tool": "invalid_financial_args",
+      "attempt": 1,
+      "status": "error",
+      "source_count": 0,
+      "warnings": [
+        "Tool 입력값이 허용된 형식과 맞지 않습니다. Tool 스키마의 enum·필수 형식을 확인하세요."
+      ]
+    }
+  ]
+}

@@ -28,7 +28,11 @@ from langchain_openai import ChatOpenAI
 from pydantic import ValidationError
 
 from app.agent.context import QaRuntimeContext
-from app.agent.middleware import DuplicateToolCallMiddleware, sanitize_tool_error
+from app.agent.middleware import (
+    DuplicateToolCallMiddleware,
+    ToolRuntimeObservabilityMiddleware,
+    sanitize_tool_error,
+)
 from app.agent.prompts import financial_agent_system_prompt
 from app.agent.time_context import RelativePeriod, resolve_relative_date_range
 from app.agent.tools.common import ToolResult, error, no_data
@@ -475,6 +479,7 @@ def build_agent(cfg: Settings, *, api_key: str, base_url: str):
     )
     middleware = [
         _runtime_prompt,
+        ToolRuntimeObservabilityMiddleware(),
         ModelCallLimitMiddleware(run_limit=cfg.agent_max_model_calls, exit_behavior="end"),
         ToolCallLimitMiddleware(run_limit=cfg.agent_max_tool_calls, exit_behavior="end"),
         DuplicateToolCallMiddleware(max_repeats=cfg.agent_max_same_tool_args),

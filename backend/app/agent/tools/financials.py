@@ -19,7 +19,15 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.agent.tools.common import SourceRef, ToolResult, error, no_data, ok, sanitize_exception
+from app.agent.tools.common import (
+    SourceRef,
+    ToolResult,
+    error,
+    log_tool_exception,
+    no_data,
+    ok,
+    sanitize_exception,
+)
 from app.services.facts import FactsService
 
 # report_period → DART reprt_code (공식 매핑; 숫자 크기 순서 아님)
@@ -128,8 +136,10 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
             )
             rows = [r for r in rows if r.basis in ("연결", "CFS") or inp.fs_div == "OFS"]
         except Exception as e:  # noqa: BLE001
+            log_tool_exception(e, layer="FactsService.get_financials.compat")
             return error(sanitize_exception(e))
     except Exception as e:  # noqa: BLE001
+        log_tool_exception(e, layer="FactsService.get_financials")
         return error(sanitize_exception(e))
 
     if not rows:

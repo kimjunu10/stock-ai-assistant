@@ -16,6 +16,7 @@ from app.agent.tools.common import (
     clamp_text,
     error,
     iso,
+    log_tool_exception,
     no_data,
     ok,
     sanitize_exception,
@@ -65,6 +66,7 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
                 top_k=inp.limit,
             )
     except Exception as e:  # noqa: BLE001
+        log_tool_exception(e, layer="HybridRetriever.search_news")
         return error(sanitize_exception(e))
     if not chunks:
         return no_data("해당 조건의 뉴스를 찾지 못했습니다.")

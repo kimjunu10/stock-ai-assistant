@@ -19,6 +19,7 @@ from app.agent.tools.common import (
     clamp_items,
     clamp_text,
     error,
+    log_tool_exception,
     no_data,
     ok,
     sanitize_exception,
@@ -48,6 +49,7 @@ def run_search_research_reports(
         try:
             hits = svc.get_by_report_id(inp.report_id, stock_code=inp.stock_code)
         except Exception as e:  # noqa: BLE001
+            log_tool_exception(e, layer="ResearchReportSearch.get_by_report_id")
             return error(sanitize_exception(e))
         return _hits_to_result(hits, limit=inp.limit, time_context=None)
     # promptv2 §1: Agent 가 생략하면 current 를 기본값으로 쓴다(검색 계층과 동일 규칙).
@@ -65,6 +67,7 @@ def run_search_research_reports(
             as_of_date=inp.as_of_date,
         )
     except Exception as e:  # noqa: BLE001
+        log_tool_exception(e, layer="ResearchReportSearch.search")
         return error(sanitize_exception(e))
     return _hits_to_result(hits, limit=inp.limit, time_context=time_context)
 
