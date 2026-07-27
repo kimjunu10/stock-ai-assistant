@@ -16,7 +16,15 @@ from datetime import date, datetime, timedelta
 
 from pydantic import BaseModel, Field
 
-from app.agent.tools.common import SourceRef, ToolResult, error, no_data, ok, sanitize_exception
+from app.agent.tools.common import (
+    SourceRef,
+    ToolResult,
+    error,
+    log_tool_exception,
+    no_data,
+    ok,
+    sanitize_exception,
+)
 from app.services.stock_prices import (
     EventWindowReturn,
     PeriodReturn,
@@ -194,12 +202,15 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
         return ok(data, sources=sources)
 
     except StockPriceError as e:
+        log_tool_exception(e, layer="StockPriceService.get_stock_prices")
         return error(str(e))
     except TossApiError as e:
         if getattr(e, "code", "") == "stock_not_found":
             return no_data(f"{inp.stock_code} 종목을 찾을 수 없습니다.")
+        log_tool_exception(e, layer="TossStockApi.get_stock_prices")
         return error(sanitize_exception(e))
     except Exception as e:  # noqa: BLE001
+        log_tool_exception(e, layer="StockPriceService.get_stock_prices")
         return error(sanitize_exception(e))
 
 
@@ -248,12 +259,15 @@ def run_calculate_event_return(
         return _event_window_ok(inp, ew)
 
     except StockPriceError as e:
+        log_tool_exception(e, layer="StockPriceService.get_event_window_return")
         return error(str(e))
     except TossApiError as e:
         if getattr(e, "code", "") == "stock_not_found":
             return no_data(f"{inp.stock_code} 종목을 찾을 수 없습니다.")
+        log_tool_exception(e, layer="TossStockApi.get_event_window_return")
         return error(sanitize_exception(e))
     except Exception as e:  # noqa: BLE001
+        log_tool_exception(e, layer="StockPriceService.get_event_window_return")
         return error(sanitize_exception(e))
 
 

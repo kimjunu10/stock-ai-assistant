@@ -174,11 +174,12 @@ def test_agent_qa_extracts_answer_and_toolcalls():
 
 def test_agent_context_captures_timezone_aware_kst_request_time():
     svc = _svc_with(_FakeAgent())
-    ctx = svc._context("005930", None, None, None, None, None)
+    ctx = svc._context("005930", None, None, None, None, None, request_id="req-time")
     parsed = datetime.fromisoformat(ctx.current_datetime)
     assert ctx.current_date == parsed.date().isoformat()
     assert parsed.tzinfo is not None
     assert parsed.utcoffset() == ZoneInfo("Asia/Seoul").utcoffset(parsed)
+    assert ctx.request_id == "req-time"
 
 
 class _FakeStockNameFacts:
