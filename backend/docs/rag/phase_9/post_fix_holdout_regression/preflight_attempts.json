@@ -1,0 +1,25 @@
+{
+  "note": "Agent 실행 전 preflight 감사 기록. 첫 시도는 모든 검사를 통과한 뒤 상대 출력 경로 오류로 JSON 저장만 실패했고 Agent는 시작되지 않았다. 경로를 바로잡은 두 번째 시도가 최종 PASS했다.",
+  "attempts": [
+    {
+      "attempt": 1,
+      "checks_observed": "all_pass",
+      "process_status": "output_persistence_error",
+      "error_class": "FileNotFoundError",
+      "failed_layer": "preflight_result_write",
+      "agent_execution_started": false,
+      "reason": "backend 작업 디렉터리에서 존재하지 않는 상대 출력 디렉터리를 지정함"
+    },
+    {
+      "attempt": 2,
+      "evaluation_run_at": "2026-07-27T14:44:38.269260+09:00",
+      "checks_observed": "all_pass",
+      "process_status": "pass",
+      "n_holdout_cases": 40,
+      "canonical_news_resolved": "6/6",
+      "failed_checks": [],
+      "agent_execution_started": false
+    }
+  ],
+  "final_status": "pass"
+}

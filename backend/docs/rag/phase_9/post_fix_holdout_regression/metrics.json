@@ -1,0 +1,2233 @@
+{
+  "note": "Phase 9 수정 후 동일 홀드아웃 회귀 테스트. 최초 블라인드 홀드아웃이나 일반화 성능 측정이 아니다. Phase 8 최초 85% 결과는 불변이다.",
+  "classification": "post_fix_same_holdout_regression",
+  "execution": {
+    "production_revision": "b0c70aa95899463862948a9a1cb014fd107d3ee8",
+    "phase9_commit": "6c8940acafc9c1ef40348c8354db46a08c90fce8",
+    "preflight_status": "pass",
+    "n_cases": 40,
+    "n_attempts": 40,
+    "case_order_preserved": true,
+    "started_at": "2026-07-27T14:48:16.512272+09:00",
+    "completed_at": "2026-07-27T14:51:11.864781+09:00",
+    "external_retry_count": 0,
+    "external_events": [],
+    "devset_executed": false
+  },
+  "formal": {
+    "n_pass": 39,
+    "n_total": 40,
+    "pass_rate": 0.975,
+    "failures": [
+      {
+        "case_id": "h-fin-20",
+        "type": "정확한 재무 숫자",
+        "failures": [
+          "financial_value_mismatch"
+        ]
+      }
+    ]
+  },
+  "runtime": {
+    "n_tool_cases": 39,
+    "n_tool_success_cases": 38,
+    "tool_success_case_ids": [
+      "h-term-12",
+      "h-term-13",
+      "h-term-14",
+      "h-term-15",
+      "h-fin-20",
+      "h-fin-21",
+      "h-fin-22",
+      "h-fin-23",
+      "h-fin-24",
+      "h-fin-25",
+      "h-news-20",
+      "h-news-21",
+      "h-news-22",
+      "h-news-23",
+      "h-news-24",
+      "h-news-25",
+      "h-disc-16",
+      "h-disc-17",
+      "h-disc-18",
+      "h-disc-19",
+      "h-disc-20",
+      "h-report-16",
+      "h-report-17",
+      "h-report-18",
+      "h-report-19",
+      "h-report-20",
+      "h-mix-16",
+      "h-mix-17",
+      "h-mix-18",
+      "h-mix-19",
+      "h-mix-20",
+      "h-excl-12",
+      "h-excl-13",
+      "h-excl-14",
+      "h-excl-15",
+      "h-ctx-08",
+      "h-ctx-09",
+      "h-ctx-10"
+    ],
+    "status_counts": {
+      "ok": 47,
+      "no_data": 0,
+      "error": 0,
+      "null": 2
+    },
+    "step_limit_count": 0,
+    "step_limit_case_ids": [],
+    "final_answer_completed": 40,
+    "final_answer_incomplete_case_ids": [],
+    "actual_tool_or_completion_failures": 1,
+    "actual_failure_rows": [
+      {
+        "case_id": "h-na-09",
+        "type": "답변 불가능·모호",
+        "tool_failures": [
+          {
+            "name": "get_financial_facts",
+            "status": null
+          },
+          {
+            "name": "get_financial_facts",
+            "status": null
+          }
+        ],
+        "stop_reason": "completed",
+        "answer_empty": false
+      }
+    ]
+  },
+  "judge": {
+    "solar_success": 40,
+    "fallback": 0,
+    "fallback_rows": [],
+    "grounded_false_reference_only": []
+  },
+  "cost": {
+    "total_usd": 0.268444,
+    "per_question_usd": 0.006711
+  },
+  "overall": {
+    "n": 40,
+    "agent": {
+      "required_tool_recall": 1.0,
+      "forbidden_tool_call_rate": 0.0,
+      "unnecessary_tool_call_rate": 0.0816,
+      "tool_argument_accuracy": 1.0,
+      "multistep_completion_rate": 1.0,
+      "duplicate_call_rate": 0.025
+    },
+    "retrieval": {
+      "news_retrieval": {
+        "n_eval": 6,
+        "recall_hit": 2,
+        "recall_at_k": 0.3333,
+        "hit_at_1": 0.3333,
+        "mrr": 0.3333,
+        "missed_case_ids": [
+          "h-news-22",
+          "h-news-23",
+          "h-news-24",
+          "h-news-25"
+        ],
+        "missed_case_ids_stale_gold": [
+          "h-news-22",
+          "h-news-23",
+          "h-news-24"
+        ],
+        "missed_case_ids_retriever_failure": [
+          "h-news-25"
+        ]
+      },
+      "report_retrieval": {
+        "n_eval": 5,
+        "recall_hit": 5,
+        "recall_at_k": 1.0,
+        "hit_at_1": 0.6,
+        "mrr": 0.7667,
+        "missed_case_ids": [],
+        "missed_case_ids_stale_gold": [],
+        "missed_case_ids_retriever_failure": []
+      },
+      "report_page_accuracy": {
+        "n_eval": 14,
+        "hit": 3,
+        "page_accuracy": 0.2143
+      },
+      "news_retrieval_event_equivalent": {
+        "n_eval": 6,
+        "recall_hit": 2,
+        "recall_at_k": 0.3333,
+        "missed_case_ids": [
+          "h-news-22",
+          "h-news-23",
+          "h-news-24",
+          "h-news-25"
+        ]
+      },
+      "report_retrieval_event_equivalent": {
+        "n_eval": 5,
+        "recall_hit": 5,
+        "recall_at_k": 1.0,
+        "missed_case_ids": []
+      },
+      "news_product_failure": {
+        "n_eval": 6,
+        "failures": 1,
+        "failure_rate": 0.1667,
+        "failed_case_ids": [
+          "h-news-25"
+        ]
+      },
+      "report_product_failure": {
+        "n_eval": 5,
+        "failures": 0,
+        "failure_rate": 0.0,
+        "failed_case_ids": []
+      },
+      "structured_lookup": {
+        "row_hit_rate": 0.9333
+      },
+      "other_stock_contamination_rate": 0.0
+    },
+    "numbers": {
+      "number_exact_match": 0.8333,
+      "unit_accuracy": 1.0,
+      "period_accuracy": 1.0,
+      "trading_day_accuracy": null,
+      "value_kind_confusions": 0
+    },
+    "answer": {
+      "key_fact_coverage": 0.6667,
+      "citation_precision": 1.0,
+      "citation_coverage": 1.0,
+      "nonexistent_citations": 0,
+      "unsupported_numbers": 0,
+      "exclusion_violations": 0,
+      "overclaim_cases": 0,
+      "false_answer_on_unanswerable": 0
+    },
+    "ops": {
+      "latency_ms_p50": 3872.0,
+      "latency_ms_p95": 8073.0,
+      "avg_tool_calls": 1.23,
+      "avg_model_calls": 2.02,
+      "cost_usd_per_query": 0.006711,
+      "cost_usd_total": 0.268444
+    }
+  },
+  "news_event_equivalent_with_rank": {
+    "n_eval": 6,
+    "recall_hit": 2,
+    "recall_at_k": 0.3333,
+    "missed_case_ids": [
+      "h-news-22",
+      "h-news-23",
+      "h-news-24",
+      "h-news-25"
+    ],
+    "hit_at_1": 0.3333,
+    "mrr": 0.3333
+  },
+  "by_type": {
+    "금융용어": {
+      "n": 4,
+      "agent": {
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0,
+        "tool_argument_accuracy": 1.0,
+        "multistep_completion_rate": null,
+        "duplicate_call_rate": 0.0
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 0,
+          "hit": 0,
+          "page_accuracy": null
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "report_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": 1.0
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": null,
+        "unit_accuracy": null,
+        "period_accuracy": null,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": null,
+        "citation_precision": 1.0,
+        "citation_coverage": 1.0,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 2452.0,
+        "latency_ms_p95": 5515.0,
+        "avg_tool_calls": 1.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.005836,
+        "cost_usd_total": 0.023344
+      }
+    },
+    "정확한 재무 숫자": {
+      "n": 6,
+      "agent": {
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0,
+        "tool_argument_accuracy": 1.0,
+        "multistep_completion_rate": null,
+        "duplicate_call_rate": 0.0
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 0,
+          "hit": 0,
+          "page_accuracy": null
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "report_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": 0.8333
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": 0.8333,
+        "unit_accuracy": 1.0,
+        "period_accuracy": 1.0,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": null,
+        "citation_precision": 1.0,
+        "citation_coverage": 1.0,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 2817.0,
+        "latency_ms_p95": 2942.0,
+        "avg_tool_calls": 1.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.005887,
+        "cost_usd_total": 0.035319
+      }
+    },
+    "뉴스 사건·영향": {
+      "n": 6,
+      "agent": {
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0,
+        "tool_argument_accuracy": 1.0,
+        "multistep_completion_rate": null,
+        "duplicate_call_rate": 0.0
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 6,
+          "recall_hit": 2,
+          "recall_at_k": 0.3333,
+          "hit_at_1": 0.3333,
+          "mrr": 0.3333,
+          "missed_case_ids": [
+            "h-news-22",
+            "h-news-23",
+            "h-news-24",
+            "h-news-25"
+          ],
+          "missed_case_ids_stale_gold": [
+            "h-news-22",
+            "h-news-23",
+            "h-news-24"
+          ],
+          "missed_case_ids_retriever_failure": [
+            "h-news-25"
+          ]
+        },
+        "report_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 0,
+          "hit": 0,
+          "page_accuracy": null
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 6,
+          "recall_hit": 2,
+          "recall_at_k": 0.3333,
+          "missed_case_ids": [
+            "h-news-22",
+            "h-news-23",
+            "h-news-24",
+            "h-news-25"
+          ]
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 6,
+          "failures": 1,
+          "failure_rate": 0.1667,
+          "failed_case_ids": [
+            "h-news-25"
+          ]
+        },
+        "report_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": null
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": null,
+        "unit_accuracy": null,
+        "period_accuracy": null,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": null,
+        "citation_precision": 1.0,
+        "citation_coverage": 1.0,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 7016.0,
+        "latency_ms_p95": 10236.0,
+        "avg_tool_calls": 1.17,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.007538,
+        "cost_usd_total": 0.045228
+      }
+    },
+    "공시 설명·구조화 값": {
+      "n": 5,
+      "agent": {
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0,
+        "tool_argument_accuracy": 1.0,
+        "multistep_completion_rate": 1.0,
+        "duplicate_call_rate": 0.0
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 0,
+          "hit": 0,
+          "page_accuracy": null
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "report_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": 1.0
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": null,
+        "unit_accuracy": null,
+        "period_accuracy": null,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": null,
+        "citation_precision": 1.0,
+        "citation_coverage": 1.0,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 3481.0,
+        "latency_ms_p95": 5937.0,
+        "avg_tool_calls": 1.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.006518,
+        "cost_usd_total": 0.032592
+      }
+    },
+    "증권사 리포트": {
+      "n": 5,
+      "agent": {
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0,
+        "tool_argument_accuracy": 1.0,
+        "multistep_completion_rate": null,
+        "duplicate_call_rate": 0.0
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_retrieval": {
+          "n_eval": 5,
+          "recall_hit": 5,
+          "recall_at_k": 1.0,
+          "hit_at_1": 0.6,
+          "mrr": 0.7667,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 14,
+          "hit": 3,
+          "page_accuracy": 0.2143
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 5,
+          "recall_hit": 5,
+          "recall_at_k": 1.0,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "report_product_failure": {
+          "n_eval": 5,
+          "failures": 0,
+          "failure_rate": 0.0,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": null
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": null,
+        "unit_accuracy": null,
+        "period_accuracy": null,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": null,
+        "citation_precision": 1.0,
+        "citation_coverage": 1.0,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 4707.0,
+        "latency_ms_p95": 7984.0,
+        "avg_tool_calls": 1.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.006943,
+        "cost_usd_total": 0.034716
+      }
+    },
+    "복수 기능 혼합": {
+      "n": 5,
+      "agent": {
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0,
+        "tool_argument_accuracy": 1.0,
+        "multistep_completion_rate": 1.0,
+        "duplicate_call_rate": 0.0
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 0,
+          "hit": 0,
+          "page_accuracy": null
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "report_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": null
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": null,
+        "unit_accuracy": null,
+        "period_accuracy": null,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": null,
+        "citation_precision": 1.0,
+        "citation_coverage": 1.0,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 4371.0,
+        "latency_ms_p95": 8921.0,
+        "avg_tool_calls": 2.2,
+        "avg_model_calls": 2.2,
+        "cost_usd_per_query": 0.007959,
+        "cost_usd_total": 0.039795
+      }
+    },
+    "부정·제외·대조": {
+      "n": 4,
+      "agent": {
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0,
+        "tool_argument_accuracy": 1.0,
+        "multistep_completion_rate": null,
+        "duplicate_call_rate": 0.0
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 0,
+          "hit": 0,
+          "page_accuracy": null
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "report_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": null
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": null,
+        "unit_accuracy": null,
+        "period_accuracy": null,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": null,
+        "citation_precision": 1.0,
+        "citation_coverage": 1.0,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 2674.0,
+        "latency_ms_p95": 3474.0,
+        "avg_tool_calls": 1.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.005842,
+        "cost_usd_total": 0.023368
+      }
+    },
+    "현재 화면 문맥": {
+      "n": 3,
+      "agent": {
+        "required_tool_recall": 1.0,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 0.0,
+        "tool_argument_accuracy": 1.0,
+        "multistep_completion_rate": null,
+        "duplicate_call_rate": 0.0
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 0,
+          "hit": 0,
+          "page_accuracy": null
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "report_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": null
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": null,
+        "unit_accuracy": null,
+        "period_accuracy": null,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": 0.6667,
+        "citation_precision": 1.0,
+        "citation_coverage": 1.0,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 4114.0,
+        "latency_ms_p95": 4798.0,
+        "avg_tool_calls": 1.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.007126,
+        "cost_usd_total": 0.021379
+      }
+    },
+    "답변 불가능·모호": {
+      "n": 2,
+      "agent": {
+        "required_tool_recall": null,
+        "forbidden_tool_call_rate": 0.0,
+        "unnecessary_tool_call_rate": 1.0,
+        "tool_argument_accuracy": null,
+        "multistep_completion_rate": null,
+        "duplicate_call_rate": 0.5
+      },
+      "retrieval": {
+        "news_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_retrieval": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "hit_at_1": null,
+          "mrr": null,
+          "missed_case_ids": [],
+          "missed_case_ids_stale_gold": [],
+          "missed_case_ids_retriever_failure": []
+        },
+        "report_page_accuracy": {
+          "n_eval": 0,
+          "hit": 0,
+          "page_accuracy": null
+        },
+        "news_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "report_retrieval_event_equivalent": {
+          "n_eval": 0,
+          "recall_hit": 0,
+          "recall_at_k": null,
+          "missed_case_ids": []
+        },
+        "news_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "report_product_failure": {
+          "n_eval": 0,
+          "failures": 0,
+          "failure_rate": null,
+          "failed_case_ids": []
+        },
+        "structured_lookup": {
+          "row_hit_rate": null
+        },
+        "other_stock_contamination_rate": 0.0
+      },
+      "numbers": {
+        "number_exact_match": null,
+        "unit_accuracy": null,
+        "period_accuracy": null,
+        "trading_day_accuracy": null,
+        "value_kind_confusions": 0
+      },
+      "answer": {
+        "key_fact_coverage": null,
+        "citation_precision": 1.0,
+        "citation_coverage": null,
+        "nonexistent_citations": 0,
+        "unsupported_numbers": 0,
+        "exclusion_violations": 0,
+        "overclaim_cases": 0,
+        "false_answer_on_unanswerable": 0
+      },
+      "ops": {
+        "latency_ms_p50": 5950.0,
+        "latency_ms_p95": 5950.0,
+        "avg_tool_calls": 2.0,
+        "avg_model_calls": 2.0,
+        "cost_usd_per_query": 0.006352,
+        "cost_usd_total": 0.012703
+      }
+    }
+  },
+  "grades": [
+    {
+      "case_id": "h-term-12",
+      "type": "금융용어",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "lookup_financial_term.term_contains": true
+      },
+      "gold_source_hits": [
+        "term:자기자본이익률"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 자기자본이익률의 정의와 의미를 설명하며, 주어진 근거 목록인 '자기자본이익률 (한국은행)'과 일치하는 일반적인 금융 개념을 제시하고 있습니다. 근거가 없는 질문에 대한 단정적 답변이나 모순된 주장은 없습니다."
+    },
+    {
+      "case_id": "h-term-13",
+      "type": "금융용어",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "lookup_financial_term.term_contains": true
+      },
+      "gold_source_hits": [
+        "term:자기주식"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 '자기주식'이라는 용어에 대한 일반적인 정의를 제공하고 있으며, 주어진 근거 목록과 모순되지 않습니다. 근거가 없는 질문이므로 handled_correctly는 null입니다."
+    },
+    {
+      "case_id": "h-term-14",
+      "type": "금융용어",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "lookup_financial_term.term_contains": true
+      },
+      "gold_source_hits": [
+        "term:주가수익비율"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문이 근거 없이 답할 수 없는 경우가 아니며, 제공된 근거 목록(용어 정의)과 답변 내용이 일치하므로 grounded=true입니다. 제외 요청도 없으므로 exclusion_respected=null입니다."
+    },
+    {
+      "case_id": "h-term-15",
+      "type": "금융용어",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "lookup_financial_term.term_contains": true
+      },
+      "gold_source_hits": [
+        "term:주가순자산비율"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문이 근거 없이 답할 수 없는 경우가 아니며, 답변이 제공된 근거 목록과 모순되지 않고, 제외 요청도 없으므로 모든 판정이 null입니다."
+    },
+    {
+      "case_id": "h-fin-20",
+      "type": "정확한 재무 숫자",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_financial_facts.stock_code": true,
+        "get_financial_facts.account_name": true,
+        "get_financial_facts.business_year": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [
+        "034020/2025/11014/CFS/영업이익/quarter"
+      ],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": {
+        "exact": false,
+        "period_ok": true,
+        "unit_ok": true,
+        "value_kind_confused": false,
+        "gold_value_won": 137059000000
+      },
+      "period_ok": true,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 대한 근거 목록에 2025년 3분기 누적 영업이익 데이터가 포함되어 있으며, 답변은 해당 근거를 바탕으로 구체적인 수치를 제시하고 있습니다. 전망이나 예상치 관련 내용은 언급되지 않았습니다."
+    },
+    {
+      "case_id": "h-fin-21",
+      "type": "정확한 재무 숫자",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_financial_facts.stock_code": true,
+        "get_financial_facts.account_name": true,
+        "get_financial_facts.business_year": true
+      },
+      "gold_source_hits": [
+        "042660/2025/11011/CFS/영업이익/cumulative"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": {
+        "exact": true,
+        "period_ok": true,
+        "unit_ok": true,
+        "value_kind_confused": false,
+        "gold_value_won": 1167590137928
+      },
+      "period_ok": true,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '전망'이나 '예상치'를 제외해 달라고 요청했으나 답변은 실제 2025년 사업보고서(연간) 누적 연결 기준 영업이익 1.17조원을 제시하고 있어 제외 요청을 준수했으며, 근거 목록에 해당 자료가 명시되어 있어 모순되지 않는다."
+    },
+    {
+      "case_id": "h-fin-22",
+      "type": "정확한 재무 숫자",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_financial_facts.stock_code": true,
+        "get_financial_facts.account_name": true,
+        "get_financial_facts.business_year": true
+      },
+      "gold_source_hits": [
+        "042660/2025/11011/CFS/매출액/cumulative"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": {
+        "exact": true,
+        "period_ok": true,
+        "unit_ok": true,
+        "value_kind_confused": false,
+        "gold_value_won": 12783512278323
+      },
+      "period_ok": true,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '전망, 예상치'를 제외해 달라고 요청했으나 답변은 실제 2025년 사업보고서 누적 매출액 12.78조원을 제시하고 있어 제외 요청을 존중했으며, 근거 목록에 해당 자료가 명시되어 있어 모순되지 않는다."
+    },
+    {
+      "case_id": "h-fin-23",
+      "type": "정확한 재무 숫자",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_financial_facts.stock_code": true,
+        "get_financial_facts.account_name": true,
+        "get_financial_facts.business_year": true
+      },
+      "gold_source_hits": [
+        "042660/2025/11014/CFS/당기순이익/cumulative"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": {
+        "exact": true,
+        "period_ok": true,
+        "unit_ok": true,
+        "value_kind_confused": false,
+        "gold_value_won": 633589205196
+      },
+      "period_ok": true,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문이 2025년 3분기 당기순이익을 요청했고, 답변은 근거 목록에 있는 2025년 3분기보고서 누적 연결 당기순이익을 인용하여 구체적인 수치를 제시했으므로 근거가 있으며, 전망이나 예상치 관련 내용은 포함되지 않았다."
+    },
+    {
+      "case_id": "h-fin-24",
+      "type": "정확한 재무 숫자",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_financial_facts.stock_code": true,
+        "get_financial_facts.account_name": true,
+        "get_financial_facts.business_year": true
+      },
+      "gold_source_hits": [
+        "042660/2024/11011/CFS/영업이익/cumulative"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": {
+        "exact": true,
+        "period_ok": true,
+        "unit_ok": true,
+        "value_kind_confused": false,
+        "gold_value_won": 237876379317
+      },
+      "period_ok": true,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 대한 근거가 제공되어 있으며, 답변의 수치와 근거가 일치하고, 전망이나 예상치 관련 내용은 포함되지 않았다."
+    },
+    {
+      "case_id": "h-fin-25",
+      "type": "정확한 재무 숫자",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_financial_facts.stock_code": true,
+        "get_financial_facts.account_name": true,
+        "get_financial_facts.business_year": true
+      },
+      "gold_source_hits": [
+        "005930/2025/11013/CFS/매출액/cumulative"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": {
+        "exact": true,
+        "period_ok": true,
+        "unit_ok": true,
+        "value_kind_confused": false,
+        "gold_value_won": 79140503000000
+      },
+      "period_ok": true,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '전망, 예상치'를 제외해 달라고 요청했으나 답변은 실제 공시된 누적 매출액 수치를 제시했으며, 근거 목록에 해당 정보가 포함되어 있어 모순되지 않는다."
+    },
+    {
+      "case_id": "h-news-20",
+      "type": "뉴스 사건·영향",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 제공된 근거 목록의 내용과 일치하며, 근거가 없는 질문에 대한 처리나 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다."
+    },
+    {
+      "case_id": "h-news-21",
+      "type": "뉴스 사건·영향",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 근거 목록에 있는 '인텔리전트 아이웨어' 출시 관련 뉴스 이벤트들을 바탕으로 작성되었으며, 구체적인 제품 사양과 기능 설명이 근거 문서와 모순되지 않습니다. 제외 요청 사항이 없으므로 exclusion_respected는 null입니다."
+    },
+    {
+      "case_id": "h-news-22",
+      "type": "뉴스 사건·영향",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 미국 하원 세출위 관련 뉴스가 없음을 명확히 밝히고, 제공된 근거 목록의 내용과 일치하는 다른 뉴스들을 근거로 제시하고 있습니다."
+    },
+    {
+      "case_id": "h-news-23",
+      "type": "뉴스 사건·영향",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "주어진 근거 목록에 있는 뉴스 이벤트들을 바탕으로 답변이 작성되었으며, 근거와 모순되는 내용은 없고, 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다."
+    },
+    {
+      "case_id": "h-news-24",
+      "type": "뉴스 사건·영향",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "주어진 근거 목록에 포함된 모든 정보가 답변에 반영되어 있으며, 근거와 모순되는 내용이 없습니다. 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null입니다."
+    },
+    {
+      "case_id": "h-news-25",
+      "type": "뉴스 사건·영향",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 근거 목록에 있는 '삼성전자-브로드컴, 첨단 반도체 기술 파트너십 협약 체결' 뉴스 이벤트를 기반으로 협약 체결 사실, 공동 개발 내용, 투자 규모 미확정, 체결 일자 및 참석자 정보를 정확히 전달하고 있어 근거가 있는 답변으로 판단됩니다."
+    },
+    {
+      "case_id": "h-disc-16",
+      "type": "공시 설명·구조화 값",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [
+        "20260710000008"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 유상증자 관련 정보를 제공했으며, 증권사나 목표주가와 같은 제외 주제를 언급하지 않았다. 근거 목록에 'paid_in_capital_increase'가 포함되어 있어 유상증자 내용을 설명할 수 있는 자료이다."
+    },
+    {
+      "case_id": "h-disc-17",
+      "type": "공시 설명·구조화 값",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [
+        "20251030000466"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 증권사나 목표주가에 대한 제외 요청이 있었으나 답변에서는 해당 주제를 전혀 언급하지 않았고, 제공된 근거 목록(treasury_stock_disposal)이 자사주 처분 내역을 설명하는 데 사용되었으므로 모든 판정이 적절합니다."
+    },
+    {
+      "case_id": "h-disc-18",
+      "type": "공시 설명·구조화 값",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [
+        "20260713000395"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 대한 답변은 제공된 근거 목록(treasury_stock_disclosure) 내에서 확인할 수 있는 자기주식 처분 사례를 나열했으며, 증권사나 목표주가와 같은 제외 주제를 언급하지 않아 제외 요청을 준수했습니다. 근거 목록이 실제 수치나 본문을 포함하지 않지만, 답변의 내용이 해당 유형의 자료로 설명 가능한 범위 내에 있으므로 grounded=true로 판단했습니다."
+    },
+    {
+      "case_id": "h-disc-19",
+      "type": "공시 설명·구조화 값",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [
+        "20260413002228"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '증권사'와 '목표주가'를 제외해 달라고 요청했으나 답변에서는 해당 주제를 언급하지 않았고, 제공된 근거(treasury_stock_acquisition)에 기반한 자사주 매입 계획을 구체적으로 설명하고 있어 근거가 모순되지 않으며, 답변 내용이 근거 목록과 일치한다."
+    },
+    {
+      "case_id": "h-disc-20",
+      "type": "공시 설명·구조화 값",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [
+        "20260305000671"
+      ],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 제공된 근거 목록(structured_disclosure)에 포함된 자기주식 취득 정보를 바탕으로 작성되었으며, 증권사나 목표주가와 같은 제외 요청된 주제를 다루지 않았다."
+    },
+    {
+      "case_id": "h-report-16",
+      "type": "증권사 리포트",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_research_reports.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '확정, 보장'이라는 주제가 제외 요청되었으나 답변에서 해당 단어를 사용하지 않았고, 제공된 근거 목록과 모순되지 않는 내용을 포함하고 있습니다."
+    },
+    {
+      "case_id": "h-report-17",
+      "type": "증권사 리포트",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_research_reports.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 근거 목록에 있는 유안타증권(2026-07-06)의 research_report를 인용하여 목표주가를 제시했으며, '확정', '보장'이라는 제외 요청된 주제를 언급하지 않았다."
+    },
+    {
+      "case_id": "h-report-18",
+      "type": "증권사 리포트",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_research_reports.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 제공된 근거 목록의 출처와 일치하는 목표주가 정보를 제시하고 있으며, '확정'이나 '보장'이라는 단어를 사용하지 않아 제외 요청을 존중했습니다."
+    },
+    {
+      "case_id": "h-report-19",
+      "type": "증권사 리포트",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_research_reports.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 근거 목록에 있는 유안타증권 연구보고서를 인용하여 2026-06-16 현대차 투자의견을 HOLD로 명시했으며, '확정', '보장' 등의 제외 주제를 언급하지 않아 제외 요청을 존중했습니다."
+    },
+    {
+      "case_id": "h-report-20",
+      "type": "증권사 리포트",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_research_reports.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '확정, 보장'이라는 주제가 제외 요청되었으나 답변에서 해당 단어를 사용하지 않았고, 근거 목록에 있는 리포트 내용을 바탕으로 실적 수치와 투자의견을 요약하여 제시했기 때문에 제외 요청이 존중되었다."
+    },
+    {
+      "case_id": "h-mix-16",
+      "type": "복수 기능 혼합",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 제공된 근거 목록의 재무 데이터와 배당 관련 정보를 바탕으로 작성되었으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다."
+    },
+    {
+      "case_id": "h-mix-17",
+      "type": "복수 기능 혼합",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 제공된 근거 목록과 일치하는 배당 총액과 실적 수치를 제시하고 있으며, 근거가 없는 질문으로 처리되지 않았고 제외 요청도 없으므로 handled_correctly와 exclusion_respected는 null, grounded는 true로 판정됩니다."
+    },
+    {
+      "case_id": "h-mix-18",
+      "type": "복수 기능 혼합",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 제공된 근거 목록(배당, 당기순이익, 영업이익, 매출액)에 포함된 정보를 바탕으로 작성되었으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다."
+    },
+    {
+      "case_id": "h-mix-19",
+      "type": "복수 기능 혼합",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 제공된 근거 목록(2026년 1분기 누적 영업이익, 배당 관련 공시)에 기반하여 작성되었으며, 근거와 모순되는 내용이 없고, 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다."
+    },
+    {
+      "case_id": "h-mix-20",
+      "type": "복수 기능 혼합",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 제공된 근거 목록의 뉴스 이벤트와 재무 데이터를 기반으로 배당 정책 및 실적 상황을 설명하고 있으며, 근거와 모순되는 내용이 없고 제외 요청도 없으므로 모든 판정이 null입니다."
+    },
+    {
+      "case_id": "h-excl-12",
+      "type": "부정·제외·대조",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_stock_prices.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '목표주가'를 제외해 달라고 요청했으나 답변은 실제 주가만 제공했으며, 근거 목록에 2026-07-27 기준 주가 정보가 포함되어 있어 모순되지 않습니다."
+    },
+    {
+      "case_id": "h-excl-13",
+      "type": "부정·제외·대조",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_stock_prices.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '목표주가'를 제외해 달라고 요청했으나 답변은 주가만 제공했고, 근거 목록에 해당 주가 정보가 포함되어 있어 모순되지 않으며 제외 요청도 존중되었다."
+    },
+    {
+      "case_id": "h-excl-14",
+      "type": "부정·제외·대조",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_stock_prices.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 '목표주가'를 제외해 달라고 요청했으며, 답변은 실제 거래 가격만 제공하고 목표주가를 언급하지 않아 제외 요청을 준수했습니다. 근거 목록에 2026-07-27의 주가 정보가 포함되어 있어 답변의 수치와 일치합니다."
+    },
+    {
+      "case_id": "h-excl-15",
+      "type": "부정·제외·대조",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_stock_prices.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문에 명시된 '목표주가' 제외 요청을 답변에서 완전히 무시하고 해당 내용을 포함하지 않았으므로 제외 요청이 존중되지 않았습니다."
+    },
+    {
+      "case_id": "h-ctx-08",
+      "type": "현재 화면 문맥",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_research_reports.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 1,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "주어진 근거 목록에 포함된 증권사별 목표주가와 투자의견이 답변 내용과 일치하므로 근거가 명확히 제시되어 있다."
+    },
+    {
+      "case_id": "h-ctx-09",
+      "type": "현재 화면 문맥",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "search_news.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 1,
+      "fact_total": 1,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "주어진 근거 목록에 포함된 뉴스 이벤트들을 바탕으로 답변이 작성되었으며, 근거와 모순되는 내용은 없고, 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다."
+    },
+    {
+      "case_id": "h-ctx-10",
+      "type": "현재 화면 문맥",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {
+        "get_disclosure_values.stock_code": true
+      },
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 1,
+      "fact_total": 1,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": null,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "답변은 근거 목록에 있는 structured_disclosure 유형의 dividend_matter를 바탕으로 삼성전자의 배당 이력을 언급하고 있으며, 구체적인 수치도 근거 문서 내에 존재할 수 있는 정보로 판단되어 모순되지 않는다. 또한 제외 요청 사항이 없으므로 handled_correctly와 exclusion_respected는 null이다."
+    },
+    {
+      "case_id": "h-na-09",
+      "type": "답변 불가능·모호",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [
+        "get_financial_facts"
+      ],
+      "arg_results": {},
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": true,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되어 handled_correctly가 true이며, 답변은 삼성전자 실적을 근거 목록에 있는 2026년 1분기 누적 데이터로 제시하고 애플의 실적은 제공되지 않았다고 명시하여 근거와 모순되지 않아 grounded가 true입니다. 제외 요청은 없으므로 exclusion_respected는 null입니다."
+    },
+    {
+      "case_id": "h-na-10",
+      "type": "답변 불가능·모호",
+      "passed_required_tools": true,
+      "forbidden_violated": [],
+      "unnecessary_tools": [],
+      "arg_results": {},
+      "gold_source_hits": [],
+      "gold_source_misses": [],
+      "other_stock_sources": [],
+      "fact_hits": 0,
+      "fact_total": 0,
+      "number_results": [],
+      "financial_grade": null,
+      "period_ok": null,
+      "trading_day_ok": null,
+      "exclusion_violations": [],
+      "overclaim": false,
+      "unanswerable_handled": true,
+      "notes": [],
+      "judge_used": true,
+      "judge_error": null,
+      "judge_grounded": true,
+      "judge_reason": "질문이 '근거가 없어 답할 수 없는 질문'으로 표시되었고, 답변에서 '확실히 예측할 수 없습니다'라고 명시하여 근거 없음을 전달했으며, '오릅니다', '확실히', '보장'이라는 제외 주제를 전혀 언급하지 않았다."
+    }
+  ]
+}
