@@ -1,0 +1,138 @@
+{
+  "phase": "Phase 8 final holdout",
+  "status": "failed",
+  "decision": "abort_before_agent_execution",
+  "base_commit": "0e214b2",
+  "branch": "phase/8-final-holdout",
+  "planned_run_at": "2026-07-27T12:16:28.583778+09:00",
+  "agent_execution": {
+    "started": false,
+    "n_run": 0,
+    "retry_count": 0,
+    "cost_usd": 0.0,
+    "latency_ms_p50": null,
+    "latency_ms_p95": null
+  },
+  "checks": {
+    "holdout_case_count_and_split": {
+      "passed": true,
+      "n_cases": 40,
+      "expected_split": "holdout"
+    },
+    "schema_and_gold_format": {
+      "passed": true,
+      "manual_review_cases": 0,
+      "structurally_unevaluable_cases": 0
+    },
+    "structured_gold_identifiers": {
+      "passed": true,
+      "financial": {
+        "valid": 6,
+        "total": 6
+      },
+      "disclosure": {
+        "valid": 5,
+        "total": 5
+      },
+      "term": {
+        "valid": 4,
+        "total": 4
+      }
+    },
+    "research_report_gold": {
+      "passed": true,
+      "valid_chunks_and_pages": 14,
+      "total_chunks_and_pages": 14,
+      "stated_forecast_reports": 5,
+      "total_reports": 5
+    },
+    "news_gold_currentness": {
+      "passed": false,
+      "valid_sources": 3,
+      "total_sources": 7,
+      "affected_cases": [
+        "h-news-21",
+        "h-news-23",
+        "h-news-25"
+      ],
+      "invalid_sources": [
+        {
+          "case_id": "h-news-21",
+          "source_id": "c6151c73-7de2-429f-9a29-8202dd15ce90",
+          "gold_cluster_id": "7181",
+          "chunk_active": false,
+          "document_current": false
+        },
+        {
+          "case_id": "h-news-23",
+          "source_id": "518f14aa-691b-48aa-a319-5f89cb92be31",
+          "gold_cluster_id": "7108",
+          "chunk_active": true,
+          "document_current": false
+        },
+        {
+          "case_id": "h-news-23",
+          "source_id": "575e036e-771a-4f2b-a3e0-e91ed6e0648d",
+          "gold_cluster_id": "7108",
+          "chunk_active": true,
+          "document_current": false
+        },
+        {
+          "case_id": "h-news-25",
+          "source_id": "6a0c49ae-956e-43fd-87f5-aff90a1d12fc",
+          "gold_cluster_id": "7149",
+          "chunk_active": false,
+          "document_current": false
+        }
+      ]
+    },
+    "relative_gold_validity": {
+      "passed": false,
+      "checker_should_abort": true,
+      "recent_lookback_days": 2,
+      "computed_range": "2026-07-25~2026-07-27",
+      "stale_cases": [
+        {
+          "case_id": "h-news-20",
+          "gold_published_date": "2026-07-24"
+        },
+        {
+          "case_id": "h-news-22",
+          "gold_published_date": "2026-07-23"
+        },
+        {
+          "case_id": "h-news-23",
+          "gold_published_date": "2026-07-24"
+        },
+        {
+          "case_id": "h-news-24",
+          "gold_published_date": "2026-07-24"
+        }
+      ]
+    },
+    "event_equivalent_approvals": {
+      "passed": true,
+      "approval_entries": 3,
+      "holdout_approval_entries": 0,
+      "format_errors": []
+    }
+  },
+  "frozen_inputs_sha256": {
+    "backend/app/agent/prompts.py": "7682171ed45e2009abc5670ba896f150d7ca665b5f118314e5998f69e9604e88",
+    "backend/app/eval/grader.py": "9a2320dfb613f7cc848b7a97f14f3fb0b41c6b9cf25b40a9d861f4c01d7f1bf7",
+    "backend/app/eval/llm_judge.py": "e1b1860a30d8b9d00e88966c7611a2aa2eccdb9e9bc3fb34d276d4445dd60a66",
+    "backend/app/eval/metrics.py": "cfbe008406c4e8bbb4ee9e7e4d5d536ecffa27fdddf6c007f660f7bba0169b3d",
+    "backend/app/eval/recorder.py": "9e8af551b10294ee82a2681968d2447769ca48a70b3586d88ac7a25a9edd2b58",
+    "backend/app/eval/runner.py": "2a3e944374227747a4ec25f217c9706ea737d08f7e759b667d41f4e4c01d0e85",
+    "backend/app/eval/schema.py": "6ab594996c31b764e64802fe330657ced86fdaa46f995abad29aaa40a8d311cf",
+    "backend/docs/rag/phase_8/eval/event_equivalent_approvals.json": "9dc04dcb8df387dcaa285c3875299e1d06b5ee959c64fd226f5f9536b1a01764",
+    "backend/docs/rag/phase_8/eval/holdout.json": "a31fcebc6847a4433fd5dd1ab9266d641cbc3404953078d3506e05e6077f676a"
+  },
+  "artifacts_not_created_due_to_abort": [
+    "holdout raw Agent run records",
+    "final holdout metrics",
+    "devset-holdout comparison",
+    "failed Agent case analysis",
+    "presentation metrics summary"
+  ]
+}
