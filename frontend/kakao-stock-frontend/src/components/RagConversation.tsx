@@ -25,14 +25,12 @@ function contextLabel(context: RagContext) {
 function RagLoadingState({ label }: { label: string }) {
   return (
     <div className="rag-loading-state" role="status">
-      <span aria-hidden="true" className="rag-loading-state__mark">
+      <span aria-hidden="true" className="rag-loading-state__dots">
+        <i />
+        <i />
         <i />
       </span>
-      <span className="rag-loading-state__body">
-        <strong>{label || '답변을 준비하고 있어요'}</strong>
-        <span>뉴스·공시·리포트에서 근거를 확인하고 있어요</span>
-        <span aria-hidden="true" className="rag-loading-state__track"><i /></span>
-      </span>
+      <span>{label || '답변을 준비하고 있어요'}</span>
     </div>
   )
 }
@@ -119,12 +117,6 @@ export function RagConversation({
                 ref={message.role === 'user' && index === messages.length - 2 ? lastUserRef : undefined}
               >
                 <div>
-                  {message.role === 'assistant' && variant === 'panel' && (
-                    <div className="rag-message__identity">
-                      <span aria-hidden="true" className="moa-chat-avatar">M</span>
-                      <strong>Moa AI</strong>
-                    </div>
-                  )}
                   {message.text
                     ? message.role === 'assistant' ? <RagAnswer text={message.text} /> : <p>{message.text}</p>
                     : message.state === 'pending' && <RagLoadingState label={progress} />}

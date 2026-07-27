@@ -2407,60 +2407,30 @@
     box-shadow: none;
   }
   .rag-loading-state {
-    @apply flex min-h-[86px] w-full items-center gap-3.5 rounded-[20px] border border-white/75 bg-surface/80 px-4 py-3.5;
-    box-shadow:
-      inset 1px 1px 1px var(--clay-highlight),
-      7px 9px 20px color-mix(in srgb, var(--clay-shadow-deep) 42%, transparent),
-      -5px -5px 15px color-mix(in srgb, white 58%, transparent);
-    backdrop-filter: blur(16px);
+    @apply flex min-h-7 w-fit items-center gap-2.5 text-[13px] font-medium text-muted;
   }
-  .rag-loading-state__mark {
-    @apply relative flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-brand-soft;
-    box-shadow:
-      inset 1px 1px 1px rgba(255,255,255,.7),
-      inset -2px -2px 4px rgba(105,92,0,.12);
+  .rag-loading-state__dots {
+    @apply flex items-center gap-1;
   }
-  .rag-loading-state__mark::before {
-    @apply size-2.5 rounded-full bg-brand;
-    content: '';
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand) 16%, transparent);
-    animation: rag-loading-pulse 1.45s ease-in-out infinite;
+  .rag-loading-state__dots i {
+    @apply size-1.5 rounded-full bg-muted;
+    animation: rag-loading-bounce 1.2s ease-in-out infinite;
   }
-  .rag-loading-state__mark i {
-    @apply absolute size-1.5 rounded-full bg-brand-ink;
-    animation: rag-loading-orbit 1.6s linear infinite;
+  .rag-loading-state__dots i:nth-child(2) {
+    animation-delay: .15s;
   }
-  .rag-loading-state__body { @apply flex min-w-0 flex-1 flex-col; }
-  .rag-loading-state__body > strong { @apply text-[13px] font-extrabold text-ink; }
-  .rag-loading-state__body > span:not(.rag-loading-state__track) { @apply mt-1 truncate text-[10px] font-semibold text-faint; }
-  .rag-loading-state__track { @apply relative mt-3 h-1 overflow-hidden rounded-full bg-line/80; }
-  .rag-loading-state__track i {
-    @apply absolute inset-y-0 left-0 w-[42%] rounded-full;
-    background: linear-gradient(90deg, transparent, var(--brand), transparent);
-    animation: rag-loading-scan 1.25s ease-in-out infinite;
+  .rag-loading-state__dots i:nth-child(3) {
+    animation-delay: .3s;
   }
 }
 
-@keyframes rag-loading-pulse {
-  0%, 100% { transform: scale(.86); opacity: .62; }
-  50% { transform: scale(1.08); opacity: 1; }
-}
-
-@keyframes rag-loading-orbit {
-  from { transform: rotate(0deg) translateX(13px) rotate(0deg); }
-  to { transform: rotate(360deg) translateX(13px) rotate(-360deg); }
-}
-
-@keyframes rag-loading-scan {
-  0% { transform: translateX(-115%); opacity: .25; }
-  45% { opacity: 1; }
-  100% { transform: translateX(300%); opacity: .25; }
+@keyframes rag-loading-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .35; }
+  30% { transform: translateY(-3px); opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rag-loading-state__mark::before,
-  .rag-loading-state__mark i,
-  .rag-loading-state__track i {
+  .rag-loading-state__dots i {
     animation-duration: 3s;
   }
 }
@@ -2488,7 +2458,6 @@
     .answer-source__actions { @apply col-span-2 justify-start pl-[78px]; }
     .rag-conversation--page .rag-composer { @apply w-[calc(100%_-_28px)] pb-[calc(10px+env(safe-area-inset-bottom))]; }
     .rag-conversation--page .rag-message--assistant.is-pending > div { @apply max-w-[min(390px,92%)]; }
-    .rag-loading-state { @apply min-h-[78px] rounded-[18px] px-3.5 py-3; }
   }
 }
 
@@ -2565,5 +2534,95 @@
     .answer-price-chart__canvas {
       @apply h-[250px];
     }
+  }
+}
+
+/* Keep contextual chat spacing and answer rendering aligned with /ask. */
+@layer components {
+  .rag-conversation--panel.is-empty .rag-thread {
+    @apply flex flex-col;
+  }
+
+  .rag-conversation--panel .rag-empty {
+    @apply min-h-0 justify-start pt-12;
+  }
+
+  .rag-conversation--panel .rag-message--assistant > div {
+    @apply w-full max-w-none rounded-none border-0 bg-transparent p-0;
+    box-shadow: none;
+  }
+
+  .rag-conversation--panel .rag-message--user > div {
+    @apply border border-line bg-subtle px-4 py-3;
+    background: var(--subtle) !important;
+    border-color: var(--line) !important;
+    border-radius: 18px 18px 5px 18px;
+    box-shadow: none;
+  }
+
+  .rag-conversation--panel .rag-message--user > div > p {
+    @apply font-medium text-ink;
+  }
+
+  .rag-conversation--panel .rag-message--assistant > div > * {
+    margin-left: 0 !important;
+  }
+
+  .rag-conversation--panel .rag-answer {
+    @apply max-w-[760px] gap-3.5 text-[16px] leading-[1.7] text-ink;
+  }
+
+  .rag-conversation--panel .rag-answer__summary {
+    @apply rounded-none border-0 border-l-[3px] border-brand bg-transparent py-0 pr-0 pl-4;
+  }
+
+  .rag-conversation--panel .rag-answer__summary > span {
+    @apply mb-1 block text-[11px] font-bold tracking-normal text-muted normal-case;
+  }
+
+  .rag-conversation--panel .rag-answer__summary > p {
+    @apply text-[18px] leading-[1.55] font-bold text-ink;
+  }
+
+  .rag-conversation--panel .rag-answer ol,
+  .rag-conversation--panel .rag-answer ul {
+    @apply gap-2.5 p-0;
+  }
+
+  .rag-conversation--panel .rag-answer li {
+    @apply grid grid-cols-[7px_minmax(0,1fr)] gap-2.5 rounded-none border-0 bg-transparent px-0 py-0.5;
+  }
+
+  .rag-conversation--panel .rag-answer ul li::before {
+    @apply mt-[9px] size-1 rounded-full bg-brand-ink;
+  }
+
+  .rag-conversation--panel .rag-answer ol li {
+    @apply grid-cols-[20px_minmax(0,1fr)];
+  }
+
+  .rag-conversation--panel .rag-answer ol li::before {
+    @apply size-5 text-[9px];
+  }
+
+  .rag-conversation--panel .rag-answer li > span {
+    @apply leading-[1.65];
+  }
+
+  .rag-conversation--panel .rag-answer__note {
+    @apply mt-1 grid grid-cols-[max-content_minmax(0,1fr)] items-start gap-3 rounded-none border-0 border-t border-line bg-transparent px-0 pt-3.5 pb-0;
+  }
+
+  .rag-conversation--panel .rag-answer__note > span {
+    @apply m-0 rounded-full bg-subtle px-2.5 py-1 text-[11px] font-bold tracking-normal text-muted normal-case;
+  }
+
+  .rag-conversation--panel .rag-answer__note > p {
+    @apply pt-0.5 text-[15px] leading-[1.65] font-medium text-ink;
+  }
+
+  .rag-message--assistant.is-pending > div {
+    @apply w-full max-w-none rounded-none border-0 bg-transparent p-0;
+    box-shadow: none;
   }
 }
