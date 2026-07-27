@@ -28,7 +28,7 @@ def _mk_candle(day: str, close: float, *, o=None, h=None, low=None, vol=1000):
 
 
 class FakeToss:
-    """fetch_current_price / fetch_daily_candles_raw 만 구현한 가짜 클라이언트."""
+    """fetch_reference_quote / fetch_daily_candles_raw 만 구현한 가짜 클라이언트."""
 
     def __init__(self, candles: list[dict], *, current=None, raise_429_times=0, not_found=False):
         # candles 는 newest-first 로 저장(토스와 동일)
@@ -39,7 +39,7 @@ class FakeToss:
         self.daily_calls = 0
         self.current_calls = 0
 
-    def fetch_current_price(self, stock_code):
+    def fetch_reference_quote(self, stock_code):
         self.current_calls += 1
         if self.not_found:
             return {}
@@ -78,25 +78,29 @@ def _fake_clock():
 
 
 # ── 현재가 결과 계약 ────────────────────────────────────────────────
-def test_current_quote_contract():
-    candles = [_mk_candle("2026-07-23", 250000), _mk_candle("2026-07-22", 240000)]
+def test_current_quote_uses_toss_reference_price_not_daily_close():
+    # 일봉 closePrice가 252,500이어도 토스 전일 기준가(basePrice) 249,500을 사용한다.
+    candles = [_mk_candle("2026-07-24", 252500), _mk_candle("2026-07-23", 273000)]
     client = FakeToss(
         candles,
         current={
             "symbol": "005930",
-            "timestamp": "2026-07-24T15:30:00.000+09:00",
-            "lastPrice": "252500",
+            "timestamp": "2026-07-27T12:03:00.000+09:00",
+            "lastPrice": "248500",
+            "basePrice": "249500",
+            "changeRate": "-0.004",
             "currency": "KRW",
         },
     )
     q = _svc(client).get_current_quote("005930")
     assert q is not None
-    assert q.price == 252500.0
-    assert q.previous_close == 250000.0  # 07-24 미만 최신 = 07-23
-    assert q.change == 2500.0
-    assert q.change_rate == 1.0  # 2500/250000*100
-    assert q.trading_day == date(2026, 7, 24)
+    assert q.price == 248500.0
+    assert q.previous_close == 249500.0
+    assert q.change == -1000.0
+    assert q.change_rate == -0.4
+    assert q.trading_day == date(2026, 7, 27)
     assert q.currency == "KRW"
+    assert client.daily_calls == 0
 
 
 def test_current_quote_no_data_when_missing():

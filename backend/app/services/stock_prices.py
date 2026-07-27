@@ -1,10 +1,11 @@
 """StockPriceService — Phase 6 주가 조회·수익률 계산 (SPEC §7.7·§8.7).
 
-TossInvestClient(app/sources/prices.py)의 인증·토큰·응답을 재사용해 주가를 조회하고,
-현재가/기간 가격/사건 전후 수익률을 **백엔드에서 계산**한다. Agent 는 산술하지 않는다.
+TossInvestClient(app/sources/prices.py)의 인증·토큰·응답을 재사용해 주가를 조회한다.
+현재가의 전일 대비는 토스가 제공한 기준가·등락률을 쓰고, 기간·사건 수익률만 백엔드에서
+계산한다. Agent 는 산술하지 않는다.
 
 핵심 규칙:
-- 수익률·등락 계산은 이 모듈 한 곳에서만 수행한다(단위 테스트로 고정).
+- 현재가의 등락률은 토스 기준값을 보존하고, 기간·사건 수익률 계산은 이 모듈에서 수행한다.
 - 거래일 스냅: 기준일이 휴장이면 목적에 따라 직전/다음 거래일을 명시적으로 선택한다.
 - 일봉 count 최대 200 → 긴 구간은 nextBefore 페이징(제한된 페이지 수)으로만 확장.
 - 30초 메모리 캐시 + 종목별 fetch lock(동시 중복 호출 방지).
@@ -275,7 +276,7 @@ class StockPriceService:
 
     # ── 공개 API ────────────────────────────────────────────────────
     def get_current_quote(self, stock_code: str) -> PriceQuote | None:
-        """현재가 + 전일 대비(백엔드 계산). 미존재/데이터 없음이면 None(no_data)."""
+        """토스 현재가·전일 기준가·등락률. 미존재/데이터 없음이면 None(no_data)."""
         self._require_supported(stock_code)
         cache_key = f"quote:{stock_code}"
         cached = self._cache_get(cache_key)
@@ -287,27 +288,20 @@ class StockPriceService:
             if cached is not None:
                 return cached  # type: ignore[return-value]
 
-            raw = self._with_backoff(lambda: self._client.fetch_current_price(stock_code))
+            raw = self._with_backoff(lambda: self._client.fetch_reference_quote(stock_code))
             if not raw:
                 return None
             try:
                 price = float(raw["lastPrice"])
+                previous_close = float(raw["basePrice"])
+                change_rate = _round2(float(raw["changeRate"]) * 100)
                 as_of = datetime.fromisoformat(str(raw["timestamp"]))
                 currency = str(raw.get("currency") or "KRW")
             except (KeyError, TypeError, ValueError) as exc:
-                raise StockPriceError("현재가 응답 정규화 실패") from exc
+                raise StockPriceError("현재가·전일 기준가 응답 정규화 실패") from exc
 
             quote_day = as_of.date()
-            # 전일 종가: 비수정 일봉에서 quote_day 미만의 최신 종가(수정주가 배당 왜곡 회피).
-            ref = self._collect_daily(
-                stock_code, earliest=self._days_before(quote_day, 10), adjusted=False
-            )
-            prior = [c for c in ref if c.trading_day < quote_day]
-            if not prior:
-                return None
-            previous_close = max(prior, key=lambda c: c.trading_day).close
             change = price - previous_close
-            change_rate = _round2(change / previous_close * 100) if previous_close else 0.0
             quote = PriceQuote(
                 stock_code=stock_code,
                 price=price,
