@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-07-27T15:55:13.848835+09:00",
+  "classification": "phase10_product_fix_same_holdout_final_regression",
+  "no_additional_agent_execution": true,
+  "no_devset_execution": true,
+  "no_post_result_product_or_evaluator_change": true,
+  "artifacts": [
+    "PHASE_10_FINAL_REGRESSION.md",
+    "PRESENTATION_SUMMARY.md",
+    "execution.log",
+    "failure_causes.md",
+    "judge_cache.json",
+    "metrics.json",
+    "news_case_results.json",
+    "phase8_phase9_comparison.md",
+    "preflight.json",
+    "production_smoke.json",
+    "raw_agent_records.json",
+    "tool_traces.json"
+  ]
+}
