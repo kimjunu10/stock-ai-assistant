@@ -92,6 +92,7 @@ class AgentQaService:
         conversation_id,
         event_resolution: EventResolution | None = None,
         request_id: str | None = None,
+        user_question: str | None = None,
     ):
         request_now = current_seoul_datetime()
         res = event_resolution or EventResolution(status="none")
@@ -110,6 +111,7 @@ class AgentQaService:
             report_page=report_page,
             conversation_id=conversation_id,
             request_id=request_id,
+            user_question=user_question,
             current_datetime=request_now.isoformat(timespec="seconds"),
             current_date=request_now.date().isoformat(),
             timezone=SEOUL_TIMEZONE_NAME,
@@ -198,6 +200,7 @@ class AgentQaService:
             conversation_id,
             resolution,
             request_id,
+            question,
         )
         payload = {"messages": [{"role": "user", "content": question}]}
         # LangGraph 스텝 하드 상한: 모델·Tool loop 폭주를 그래프 레벨에서 차단(GraphRecursionError).

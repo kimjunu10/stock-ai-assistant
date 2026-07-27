@@ -45,6 +45,7 @@ class QaRuntimeContext:
     report_page: int | None = None
     conversation_id: str | None = None
     request_id: str | None = None
+    user_question: str | None = None
     current_datetime: str | None = None
     current_date: str | None = None
     timezone: str = "Asia/Seoul"

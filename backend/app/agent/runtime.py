@@ -34,7 +34,11 @@ from app.agent.middleware import (
     sanitize_tool_error,
 )
 from app.agent.prompts import financial_agent_system_prompt
-from app.agent.time_context import RelativePeriod, resolve_relative_date_range
+from app.agent.time_context import (
+    RelativePeriod,
+    effective_news_relative_period,
+    resolve_relative_date_range,
+)
 from app.agent.tools.common import ToolResult, error, no_data
 from app.agent.tools.disclosures import (
     DisclosureEventType,
@@ -219,12 +223,18 @@ def build_tools() -> list:
           positive(호재/긍정) | negative(악재/부정) | neutral. 없으면 생략.
 
         기간: relative_period(recent/today/yesterday/last_7_days/last_30_days/
-        this_week/this_month)로 상대 기간을 지정한다. recent는 KST 오늘부터 2일 전까지.
+        this_week/this_month/last_month)로 상대 기간을 지정한다. recent는 KST 오늘부터
+        2일 전까지. 사용자가 기간을 직접 말한 경우에만 지정하고, 특정 사건·인물·제품을
+        묻더라도 기간 표현이 없으면 반드시 생략한다.
         date_from/date_to는 사용자가 절대 날짜를 지정한 경우에만 쓴다.
         """
         svc, err = _services(runtime)
         if err:
             return _dump(err)
+        relative_period = effective_news_relative_period(
+            getattr(runtime.context, "user_question", None),
+            relative_period,
+        )
         if relative_period:
             current_date = getattr(runtime.context, "current_date", None)
             if not current_date:
