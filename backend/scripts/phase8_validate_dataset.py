@@ -25,6 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.eval.news_gold import resolve_news_gold_sources  # noqa: E402
 from app.eval.schema import TYPE_QUOTA, EvalCase, EvalSuite  # noqa: E402
 
 EVAL_DIR = Path(__file__).resolve().parents[1] / "docs" / "rag" / "phase_8" / "eval"
@@ -126,77 +127,34 @@ def check_overlap(dev: list[EvalCase], hold: list[EvalCase]) -> None:
     check("홀드아웃 40문항", len(hold) == 40, f"{len(hold)}문항")
 
 
-def check_chunk_sources(cases: list[EvalCase], client) -> None:
-    """뉴스·리포트 정답 청크가 실제로 존재하고 올바른 원본에 속하는지 확인한다(§7).
+def check_chunk_sources(cases: list[EvalCase], client) -> dict:
+    """뉴스 canonical 사건과 리포트 정답 청크의 현행성을 확인한다(§7).
 
-    - 뉴스: 청크가 활성 상태이고, 그 문서가 라벨에 적힌 news_clusters.id 의 현재 문서인가
+    - 뉴스: canonical cluster의 현재 문서·활성 청크를 실행 시점에 해석한다
     - 리포트: 청크가 라벨에 적힌 research_reports.id 에 속하고 페이지가 PDF 범위 안인가
     - 종목 혼입: 청크 종목이 질문 종목과 같은가
     """
-    news_items: list[tuple[str, str, str, str | None]] = []  # (case_id, chunk_id, cluster, stock)
     report_items: list[tuple[str, str, str, int | None, str | None]] = []
 
     for c in cases:
         want_stock = c.context.stock_code or c.stock_code
         for gs in c.gold_sources:
-            if not gs.source_id:
-                continue
             note = gs.note or ""
-            if gs.source_type == "news_event":
-                m = re.search(r"news_clusters\.id=(\d+)", note)
-                news_items.append((c.id, gs.source_id, m.group(1) if m else "", want_stock))
-            elif gs.source_type == "research_report":
+            if gs.source_type == "research_report" and gs.source_id:
                 m = re.search(r"research_reports\.id=([0-9a-f-]{36})", note)
                 report_items.append(
                     (c.id, gs.source_id, m.group(1) if m else "", gs.page, want_stock)
                 )
 
-    # ── 뉴스: 청크 실재 + 사건 연결 + 종목 일치 ──
-    news_bad: list[str] = []
-    news_ids = [cid for _, cid, _, _ in news_items]
-    chunk_rows: dict[str, dict] = {}
-    for i in range(0, len(news_ids), 50):
-        for row in (
-            client.table("rag_chunks")
-            .select("id,document_id,stock_code,is_active,source_type")
-            .in_("id", news_ids[i : i + 50])
-            .execute()
-            .data
-            or []
-        ):
-            chunk_rows[row["id"]] = row
-
-    doc_ids = sorted({r["document_id"] for r in chunk_rows.values()})
-    docs: dict[str, dict] = {}
-    for i in range(0, len(doc_ids), 50):
-        for d in (
-            client.table("rag_documents")
-            .select("id,source_pk,source_type,is_current,stock_code")
-            .in_("id", doc_ids[i : i + 50])
-            .execute()
-            .data
-            or []
-        ):
-            docs[d["id"]] = d
-
-    for case_id, chunk_id, cluster_id, want_stock in news_items:
-        ch = chunk_rows.get(chunk_id)
-        if not ch or not ch.get("is_active"):
-            news_bad.append(f"{case_id}:청크없음/비활성")
-            continue
-        doc = docs.get(ch["document_id"])
-        if not doc or not doc.get("is_current"):
-            news_bad.append(f"{case_id}:현재문서아님")
-            continue
-        if cluster_id and str(doc.get("source_pk")) != cluster_id:
-            news_bad.append(f"{case_id}:사건연결불일치")
-            continue
-        if want_stock and str(ch.get("stock_code")) != want_stock:
-            news_bad.append(f"{case_id}:종목혼입")
+    # ── 뉴스: canonical cluster → 실행 시점 현행 document/chunk 해석 ──
+    news_resolution = resolve_news_gold_sources(cases, client)
     check(
-        "뉴스 정답 청크 실재·사건 연결·종목 일치",
-        not news_bad,
-        f"{len(news_items) - len(news_bad)}/{len(news_items)} 확인, 문제 {news_bad[:3]}",
+        "뉴스 canonical Gold 현행 document/chunk 해석",
+        not news_resolution["should_abort"],
+        (
+            f"{news_resolution['n_resolved']}/{news_resolution['n_canonical_gold']} 확인, "
+            f"문제 {news_resolution['errors'][:3]}"
+        ),
     )
 
     # ── 리포트: 청크가 해당 리포트 소속 + 페이지 범위 + 종목 일치 ──
@@ -257,6 +215,7 @@ def check_chunk_sources(cases: list[EvalCase], client) -> None:
         not kind_bad,
         f"{len(report_ids) - len(kind_bad)}/{len(report_ids)} 확인, 문제 {kind_bad[:3]}",
     )
+    return news_resolution
 
 
 def check_review_status(cases: list[EvalCase]) -> None:

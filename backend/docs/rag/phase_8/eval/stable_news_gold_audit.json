@@ -1,0 +1,85 @@
+{
+  "phase": "Phase 8 stable news Gold",
+  "gold_review_evaluation_run_at": "2026-07-27T12:38:03+09:00",
+  "preflight_evaluation_run_at": "2026-07-27T13:14:37.852460+09:00",
+  "canonical_rule": "news_event Gold is news_clusters.id; document and chunk UUIDs are execution-time resolved audit values",
+  "event_equivalent_additional_approvals": [],
+  "cases": [
+    {
+      "case_id": "h-news-20",
+      "canonical_id": "news_clusters.id=7131",
+      "previous_chunk_ids": [
+        "dd8e7f2e-fcc5-478c-bb30-bfb24cfbefac"
+      ],
+      "resolved_document_id": "9b1b651f-1299-486d-8dc1-7e07565674a5",
+      "resolved_chunk_ids": [
+        "dd8e7f2e-fcc5-478c-bb30-bfb24cfbefac"
+      ],
+      "event_changed": false
+    },
+    {
+      "case_id": "h-news-21",
+      "canonical_id": "news_clusters.id=7181",
+      "previous_chunk_ids": [
+        "c6151c73-7de2-429f-9a29-8202dd15ce90"
+      ],
+      "resolved_document_id": "11fadd1d-d30e-41d8-ab36-4c1d59610dc5",
+      "resolved_chunk_ids": [
+        "44784745-5e5a-4d3a-b163-dd3f8b5b6bd6"
+      ],
+      "event_changed": false
+    },
+    {
+      "case_id": "h-news-22",
+      "canonical_id": "news_clusters.id=6889",
+      "previous_chunk_ids": [
+        "789d528d-85ef-4d0b-9ced-6c6670f71791"
+      ],
+      "resolved_document_id": "8457ebec-3b9e-45b1-b791-dbd918d2d72b",
+      "resolved_chunk_ids": [
+        "789d528d-85ef-4d0b-9ced-6c6670f71791"
+      ],
+      "event_changed": false
+    },
+    {
+      "case_id": "h-news-23",
+      "canonical_id": "news_clusters.id=7108",
+      "previous_chunk_ids": [
+        "518f14aa-691b-48aa-a319-5f89cb92be31",
+        "575e036e-771a-4f2b-a3e0-e91ed6e0648d"
+      ],
+      "reviewed_intermediate_chunk_ids": [
+        "8fa26850-893d-43a9-ba98-10ca5384355b"
+      ],
+      "resolved_document_id": "85545c69-9b42-4cd7-8ddd-3979b1df294d",
+      "resolved_chunk_ids": [
+        "5683c8fe-60bd-475c-9ce5-bb725b8c5fd2"
+      ],
+      "event_changed": false
+    },
+    {
+      "case_id": "h-news-24",
+      "canonical_id": "news_clusters.id=7014",
+      "previous_chunk_ids": [
+        "f226617d-352c-417b-8a91-1d32dca5bf21"
+      ],
+      "resolved_document_id": "acae810d-c7f8-426a-9dda-a3c9d867e161",
+      "resolved_chunk_ids": [
+        "f226617d-352c-417b-8a91-1d32dca5bf21"
+      ],
+      "event_changed": false
+    },
+    {
+      "case_id": "h-news-25",
+      "canonical_id": "news_clusters.id=7149",
+      "previous_chunk_ids": [
+        "6a0c49ae-956e-43fd-87f5-aff90a1d12fc"
+      ],
+      "resolved_document_id": "d8c8775e-f383-43c6-b022-84691f4e5884",
+      "resolved_chunk_ids": [
+        "e98f0d54-0c73-4f2a-a744-3460478eb4e2"
+      ],
+      "event_changed": false
+    }
+  ]
+}
