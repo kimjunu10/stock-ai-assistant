@@ -1,0 +1,1785 @@
+{
+  "note": "Final-attempt Tool traces in holdout dataset order.",
+  "n_cases": 40,
+  "traces": [
+    {
+      "position": 1,
+      "case_id": "h-term-12",
+      "question": "자기자본이익률 쉽게 설명해줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "자기자본이익률"
+          },
+          "status": "error",
+          "latency_ms": 2045
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 2,
+      "case_id": "h-term-13",
+      "question": "자기주식이 무슨 뜻이야?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "자기주식"
+          },
+          "status": "error",
+          "latency_ms": 5
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 3,
+      "case_id": "h-term-14",
+      "question": "주식 처음인데 주가수익비율 개념 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "주가수익비율"
+          },
+          "status": "error",
+          "latency_ms": 5
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 4,
+      "case_id": "h-term-15",
+      "question": "주가순자산비율은 어떻게 계산해?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "lookup_financial_term"
+      ],
+      "tool_calls": [
+        {
+          "name": "lookup_financial_term",
+          "args": {
+            "term": "주가순자산비율"
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 5,
+      "case_id": "h-fin-20",
+      "question": "두산에너빌리티(034020) 2025년 3분기 영업이익 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "034020",
+            "account_name": "영업이익",
+            "business_year": 2025,
+            "report_period": "q3"
+          },
+          "status": "error",
+          "latency_ms": 5
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 6,
+      "case_id": "h-fin-21",
+      "question": "2025년 한화오션 연간 영업이익 얼마나 나왔어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_name": "영업이익",
+            "business_year": 2025,
+            "report_period": "annual",
+            "amount_type": "cumulative",
+            "fs_div": "CFS"
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 7,
+      "case_id": "h-fin-22",
+      "question": "한화오션 2025년 연간 누적 매출액은 얼마야?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_name": "매출액",
+            "business_year": 2025,
+            "report_period": "annual",
+            "amount_type": "cumulative"
+          },
+          "status": "error",
+          "latency_ms": 2
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 8,
+      "case_id": "h-fin-23",
+      "question": "한화오션(042660) 2025년 3분기 당기순이익 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_name": "당기순이익",
+            "business_year": 2025,
+            "report_period": "q3",
+            "amount_type": "cumulative"
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 9,
+      "case_id": "h-fin-24",
+      "question": "2024년 한화오션 연간 영업이익 얼마나 나왔어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_name": "영업이익",
+            "business_year": 2024,
+            "report_period": "annual",
+            "amount_type": "cumulative",
+            "fs_div": "CFS"
+          },
+          "status": "error",
+          "latency_ms": 2
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 10,
+      "case_id": "h-fin-25",
+      "question": "삼성전자 2025년 1분기 누적 매출액은 얼마야?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "account_name": "매출액",
+            "business_year": 2025,
+            "report_period": "q1",
+            "amount_type": "cumulative"
+          },
+          "status": "error",
+          "latency_ms": 4
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 11,
+      "case_id": "h-news-20",
+      "question": "현대차 정의선 회장 건은 어떤 내용이야?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005380",
+            "query": "정의선 회장",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 272
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 12,
+      "case_id": "h-news-21",
+      "question": "삼성전자 삼성 AI 글래스 관련해서 무슨 일 있었어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005930",
+            "query": "삼성 AI 글래스",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 278
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 13,
+      "case_id": "h-news-22",
+      "question": "한화오션 美 하원 세출위 뉴스 어떻게 된 거야?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "042660",
+            "query": "美 하원 세출위",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 54
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 14,
+      "case_id": "h-news-23",
+      "question": "SK하이닉스 이재명 대통령 이슈 설명해줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "000660",
+            "query": "이재명 대통령",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 73
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 15,
+      "case_id": "h-news-24",
+      "question": "현대차 기아 관련 소식 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_news",
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005380",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 5
+        },
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "000270",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 4
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 16,
+      "case_id": "h-news-25",
+      "question": "삼성전자 브로드컴 건은 어떤 내용이야?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "005930",
+            "query": "브로드컴",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 62
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 17,
+      "case_id": "h-disc-16",
+      "question": "SK하이닉스 유상증자 공시 내용 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "000660",
+            "event_types": [
+              "paid_in_capital_increase"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 2
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 18,
+      "case_id": "h-disc-17",
+      "question": "현대차 자사주 처분한 내역 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005380",
+            "event_types": [
+              "treasury_stock_disposal"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 4
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 19,
+      "case_id": "h-disc-18",
+      "question": "삼성전자 자기주식 처분 공시 있어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005930",
+            "event_types": [
+              "treasury_stock_disposal"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 20,
+      "case_id": "h-disc-19",
+      "question": "두산에너빌리티 자사주 매입한 거 있어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "034020",
+            "event_types": [
+              "treasury_stock_acquisition"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 21,
+      "case_id": "h-disc-20",
+      "question": "한화오션 자기주식 취득 공시 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "042660",
+            "event_types": [
+              "treasury_stock_acquisition"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 22,
+      "case_id": "h-report-16",
+      "question": "삼성전자에 대한 키움증권 리포트 내용 요약해줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "005930",
+            "query": "키움증권"
+          },
+          "status": "error",
+          "latency_ms": 63
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 23,
+      "case_id": "h-report-17",
+      "question": "유안타증권에서 한화오션 목표주가 얼마로 봤어?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "042660",
+            "query": "목표주가",
+            "time_context": "current"
+          },
+          "status": "error",
+          "latency_ms": 63
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 24,
+      "case_id": "h-report-18",
+      "question": "하나증권 SK하이닉스 리포트 전망 어때?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "000660",
+            "query": "목표주가 전망"
+          },
+          "status": "error",
+          "latency_ms": 125
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 25,
+      "case_id": "h-report-19",
+      "question": "2026-06-16에 나온 유안타증권 현대차 투자의견 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "005380",
+            "query": "투자의견",
+            "date_from": "2026-06-16",
+            "date_to": "2026-06-16"
+          },
+          "status": "error",
+          "latency_ms": 57
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 26,
+      "case_id": "h-report-20",
+      "question": "삼성전자에 대한 미래에셋증권 리포트 내용 요약해줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "005930",
+            "broker": "미래에셋증권",
+            "query": ""
+          },
+          "status": "error",
+          "latency_ms": 4
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 27,
+      "case_id": "h-mix-16",
+      "question": "삼성전자 배당이랑 실적 같이 정리해줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_disclosure_values",
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005930",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 4
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 28,
+      "case_id": "h-mix-17",
+      "question": "SK하이닉스 배당 얼마 주고 실적은 어때?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts",
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "000660",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "error",
+          "latency_ms": 4
+        },
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "000660",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 29,
+      "case_id": "h-mix-18",
+      "question": "현대차 배당 내역이랑 재무 실적 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_disclosure_values",
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005380",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 5
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005380",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "error",
+          "latency_ms": 5
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 30,
+      "case_id": "h-mix-19",
+      "question": "두산에너빌리티 배당하고 영업이익 같이 보여줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts",
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "034020",
+            "account_names": [
+              "배당금",
+              "영업이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": null,
+          "latency_ms": 1
+        },
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "034020",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "error",
+          "latency_ms": 3
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 31,
+      "case_id": "h-mix-20",
+      "question": "한화오션 배당 정책이랑 실적 상황 정리해줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts",
+        "search_news",
+        "search_news",
+        "get_financial_facts",
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": null,
+          "latency_ms": 1
+        },
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "042660",
+            "query": "배당 정책",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 73
+        },
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "042660",
+            "query": "배당 정책",
+            "relative_period": "recent"
+          },
+          "status": "error",
+          "latency_ms": 0
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "042660",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 648
+        },
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "042660",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 155
+        }
+      ],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "step_limit",
+      "validation_errors": []
+    },
+    {
+      "position": 32,
+      "case_id": "h-excl-12",
+      "question": "SK하이닉스 지금 실제 주가만 알려줘, 목표주가 말고",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "000660"
+          },
+          "status": "ok",
+          "latency_ms": 1655
+        }
+      ],
+      "retrieved_ids": [
+        "price:000660:2026-07-27"
+      ],
+      "sources": [
+        {
+          "source_id": "price:000660:2026-07-27",
+          "source_type": "price",
+          "title": "000660 주가 · 2026-07-27",
+          "publisher": "토스증권 Open API",
+          "published_at": "2026-07-27",
+          "page": null,
+          "url": null,
+          "value_kind": "actual",
+          "locator": {
+            "stock_code": "000660",
+            "interval": "1d",
+            "provider": "toss",
+            "kind": "current",
+            "as_of": "2026-07-27T13:42:16.422000+09:00"
+          }
+        }
+      ],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 33,
+      "case_id": "h-excl-13",
+      "question": "증권사 목표가 빼고 현대차 현재 주가 알려줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "005380"
+          },
+          "status": "ok",
+          "latency_ms": 1
+        }
+      ],
+      "retrieved_ids": [
+        "price:005380:2026-07-27"
+      ],
+      "sources": [
+        {
+          "source_id": "price:005380:2026-07-27",
+          "source_type": "price",
+          "title": "005380 주가 · 2026-07-27",
+          "publisher": "토스증권 Open API",
+          "published_at": "2026-07-27",
+          "page": null,
+          "url": null,
+          "value_kind": "actual",
+          "locator": {
+            "stock_code": "005380",
+            "interval": "1d",
+            "provider": "toss",
+            "kind": "current",
+            "as_of": "2026-07-27T13:42:16.422000+09:00"
+          }
+        }
+      ],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 34,
+      "case_id": "h-excl-14",
+      "question": "두산에너빌리티 실제 거래되는 가격 알려줘. 목표주가는 빼고",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "034020"
+          },
+          "status": "ok",
+          "latency_ms": 0
+        }
+      ],
+      "retrieved_ids": [
+        "price:034020:2026-07-27"
+      ],
+      "sources": [
+        {
+          "source_id": "price:034020:2026-07-27",
+          "source_type": "price",
+          "title": "034020 주가 · 2026-07-27",
+          "publisher": "토스증권 Open API",
+          "published_at": "2026-07-27",
+          "page": null,
+          "url": null,
+          "value_kind": "actual",
+          "locator": {
+            "stock_code": "034020",
+            "interval": "1d",
+            "provider": "toss",
+            "kind": "current",
+            "as_of": "2026-07-27T13:42:16.422000+09:00"
+          }
+        }
+      ],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 35,
+      "case_id": "h-excl-15",
+      "question": "한화오션 현재가만 알려줘, 목표주가는 필요 없어",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_stock_prices"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_stock_prices",
+          "args": {
+            "stock_code": "042660"
+          },
+          "status": "ok",
+          "latency_ms": 1
+        }
+      ],
+      "retrieved_ids": [
+        "price:042660:2026-07-27"
+      ],
+      "sources": [
+        {
+          "source_id": "price:042660:2026-07-27",
+          "source_type": "price",
+          "title": "042660 주가 · 2026-07-27",
+          "publisher": "토스증권 Open API",
+          "published_at": "2026-07-27",
+          "page": null,
+          "url": null,
+          "value_kind": "actual",
+          "locator": {
+            "stock_code": "042660",
+            "interval": "1d",
+            "provider": "toss",
+            "kind": "current",
+            "as_of": "2026-07-27T13:42:16.422000+09:00"
+          }
+        }
+      ],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 36,
+      "case_id": "h-ctx-08",
+      "question": "이 회사에 대한 증권사 의견 있어?",
+      "context": {
+        "stock_code": "005380",
+        "context_source_type": "news_event",
+        "context_source_id": "7194",
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_research_reports"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_research_reports",
+          "args": {
+            "stock_code": "005380",
+            "query": "목표주가"
+          },
+          "status": "ok",
+          "latency_ms": 2685
+        }
+      ],
+      "retrieved_ids": [
+        "5407e5ef-2f9b-474e-b320-affa5f16228e",
+        "5f1a1d5a-8c95-4a9e-b17c-dc75331495ec",
+        "95f091be-8f3e-497c-90af-9525e22fd943",
+        "bba17998-c27b-4e98-ba3c-6e3c0b9f1da3",
+        "dd4daf6d-f400-42a8-9700-ff015f981565"
+      ],
+      "sources": [
+        {
+          "source_id": "bba17998-c27b-4e98-ba3c-6e3c0b9f1da3",
+          "source_type": "research_report",
+          "title": "2Q26 Preview 실적 저점 구간의 매수 기회",
+          "publisher": "유진투자증권",
+          "published_at": "2026-07-10",
+          "page": 7,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "2b7440e2-24f8-4778-98a2-5fdd67ebf174",
+            "page_number": 8,
+            "pdf_page": 7,
+            "source_page": null,
+            "target_price_source_page": 1,
+            "evidence": "-20.1 -5.4 2025-07-25 Buy 280,000 1년 -20.1 -5.4 2025-08-06 Buy 280,000 1년 -19.6 -5.4 2025-09-08 Buy 280,000 1년 -18.0 -5.4 2025-09-23 Buy 280,000 1년 -15.9 -5.4 2025-10-29 Buy 280,000 1년 -5.4 -5.4 2025-10-31 Buy 350,000 1년 -18.0 4.9 2025-11-12 Buy 350,000 1년 -17.2 4.9 150,000 350,000 550,000 750,000 950,000 1,150,000 24/07 25/01 25/07 26/01 26/07 (원) 현대차 목표주가",
+            "investment_opinion": "매수",
+            "target_price": 900000
+          }
+        },
+        {
+          "source_id": "dd4daf6d-f400-42a8-9700-ff015f981565",
+          "source_type": "research_report",
+          "title": "내러티브보다는 펀더멘털 회복 가능성에 주목",
+          "publisher": "키움증권",
+          "published_at": "2026-07-08",
+          "page": 1,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "fa6279c9-904b-4745-a587-178b9c50145b",
+            "page_number": 1,
+            "pdf_page": 0,
+            "source_page": 1,
+            "target_price_source_page": 1,
+            "evidence": "2026.07.08. Earnings Update BUY(Maintain) 목표주가: 700,000원(하향) 주가(07/07): 479,500원 시가총액: 981,813억 원 자동차 Analyst 신윤철 Stock Data KOSPI(07/07) 7,656.31pt 52 주 주가동향 최고가 최저가 최고/최저가 대비 750,000원 206,500원 등락률 -36.1% 132.2% 수익률 절대 상대 1M -31.5% -27.0% 6M 36.8% -18.7% 1Y 130.0% -8.1% Company Data 발행주식수 204,758 천주 일평균 거래량(3M) 1,628천주 외국인 지분율 24.9% 배당수익률(2026E) 2.4% BPS(2026E) 466,434원 주요 주주 현대모비스 외 9 인 30.7% 투자지표 (십억원, IFRS 연결) 2024 2025 2026F 2027F 매출액 175,231.2 186,254.5 191,294.2 198,227.1 영업이익 14,239.6 11…",
+            "investment_opinion": "BUY",
+            "target_price": 700000
+          }
+        },
+        {
+          "source_id": "5407e5ef-2f9b-474e-b320-affa5f16228e",
+          "source_type": "research_report",
+          "title": "둔화에서 회복, 기대에서 현실화",
+          "publisher": "한화투자증권",
+          "published_at": "2026-07-06",
+          "page": 7,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "b3b55fe6-854f-470b-beed-63dffb6644bf",
+            "page_number": 7,
+            "pdf_page": 6,
+            "source_page": 7,
+            "target_price_source_page": 1,
+            "evidence": "490,000 650,000 일 시 2026.04.07 2026.06.18 2026.07.06 투자의견 Buy Buy Buy 목표가격 660,000 760,000 760,000 [ 목표주가 변동 내역별 괴리율 ] 일자 투자의견 목표주가(원) 괴리율(%) 평균주가 대비 최고(최저)주가 대비 2025.01.14 Buy 335,000 -36.36 -33.73 2025.01.24 Buy 310,000 -36.65 -28.39 2025.07.01 Buy 270,000 -18.15 -1.85 2025.10.31 Buy 305,000 -8.09 3.44 2026.01.06 Buy 340,000 7.12 21.03 2026.01.15 Buy 490,000 -0.12 12.04 2026.01.30 Buy 650,000 -21.26 3.69 2026.04.07 Buy 660,000 -8.96 13.64 2026.06.18 Buy 760,000 0 200,000 400,000 600,000 800,00…",
+            "investment_opinion": "Buy",
+            "target_price": 760000
+          }
+        },
+        {
+          "source_id": "95f091be-8f3e-497c-90af-9525e22fd943",
+          "source_type": "research_report",
+          "title": "속성이 다른 이익에 기반한 밸류에이션 할증",
+          "publisher": "유안타증권",
+          "published_at": "2026-06-16",
+          "page": 6,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "e2ebcd35-3940-4f22-ab7a-ab2c63e7a98e",
+            "page_number": 6,
+            "pdf_page": 5,
+            "source_page": 6,
+            "target_price_source_page": 1,
+            "evidence": "00,000 400,000 500,000 600,000 700,000 800,000 24.06 24.12 25.06 25.12 26.06 주가 목표주가 (원)",
+            "investment_opinion": "HOLD",
+            "target_price": 690000
+          }
+        },
+        {
+          "source_id": "5f1a1d5a-8c95-4a9e-b17c-dc75331495ec",
+          "source_type": "research_report",
+          "title": "딱 예상한대로",
+          "publisher": "대신증권",
+          "published_at": "2026-04-24",
+          "page": 10,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "report_id": "0834bdf1-c2e8-4908-a4dd-467748b41c59",
+            "page_number": 10,
+            "pdf_page": 9,
+            "source_page": 10,
+            "target_price_source_page": 1,
+            "evidence": "Buy Buy Buy 목표주가 660,000 660,000 500,000 450,000 340,000 330,000 괴리율(평균,%) (22.57) 3.80 (27.15) (19.32) (17.93) 괴리율(최대/최소,%) 2.12 9.80 6.67 (7.21) (11.67) 제시일자 25.09.29 25.06.23 25.04.09 25.04.03 25.01.24 25.01.13 투자의견 Buy Buy Buy Buy Buy Buy 목표주가 259,000 270,000 280,000 330,000 310,000 325,000 괴리율(평균,%) (8.01) (20.30) (31.86) (44.43) (34.77) (34.40) 괴리율(최대/최소,%) 0.77 (17.22) (25.00) (41.88) (28.39) (31.69) 제시일자 24.10.10 24.07.08 24.04.26 투자의견 Buy Buy Buy 목표주가 340,000 400,000 330,000 괴리율(평균,%) (…",
+            "investment_opinion": "BUY",
+            "target_price": 660000
+          }
+        }
+      ],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 37,
+      "case_id": "h-ctx-09",
+      "question": "이 회사 다른 뉴스도 있어?",
+      "context": {
+        "stock_code": "042660",
+        "context_source_type": "news_event",
+        "context_source_id": "7190",
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "search_news"
+      ],
+      "tool_calls": [
+        {
+          "name": "search_news",
+          "args": {
+            "stock_code": "042660",
+            "relative_period": "recent"
+          },
+          "status": "ok",
+          "latency_ms": 135
+        }
+      ],
+      "retrieved_ids": [
+        "news_cluster:7190",
+        "news_cluster:7193",
+        "news_cluster:7241",
+        "news_cluster:7251",
+        "news_cluster:7269"
+      ],
+      "sources": [
+        {
+          "source_id": "news_cluster:7269",
+          "source_type": "news_event",
+          "title": "한화그룹, KAI 지분 추가 매입으로 14.64% 확보…인수설 재부상",
+          "publisher": null,
+          "published_at": "2026-07-27T01:08:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7269",
+            "document_id": "news_cluster:7269"
+          }
+        },
+        {
+          "source_id": "news_cluster:7251",
+          "source_type": "news_event",
+          "title": "한화로보틱스, 한화머시너리앤서비스홀딩스 편입 및 한화오션과 용접로봇 협업 예고",
+          "publisher": null,
+          "published_at": "2026-07-26T22:02:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7251",
+            "document_id": "news_cluster:7251"
+          }
+        },
+        {
+          "source_id": "news_cluster:7241",
+          "source_type": "news_event",
+          "title": "한화그룹 인적 분할 완료…김동관·김동선 3세 분업 승계 본격화",
+          "publisher": null,
+          "published_at": "2026-07-26T20:31:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7241",
+            "document_id": "news_cluster:7241"
+          }
+        },
+        {
+          "source_id": "news_cluster:7193",
+          "source_type": "news_event",
+          "title": "한미 조선협력센터 개소…국내 조선 3사, 미국 군함·특수선 시장 진출 본격화",
+          "publisher": null,
+          "published_at": "2026-07-26T00:33:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7193",
+            "document_id": "news_cluster:7193"
+          }
+        },
+        {
+          "source_id": "news_cluster:7190",
+          "source_type": "news_event",
+          "title": "한화오션, 남미·서아프리카 시장 겨냥 표준 FPSO 선급 인증 획득",
+          "publisher": null,
+          "published_at": "2026-07-26T00:30:00+00:00",
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "source_pk": "7190",
+            "document_id": "news_cluster:7190"
+          }
+        }
+      ],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 38,
+      "case_id": "h-ctx-10",
+      "question": "이 회사 배당 준 적 있어?",
+      "context": {
+        "stock_code": "005930",
+        "context_source_type": "news_event",
+        "context_source_id": "7189",
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_disclosure_values"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_disclosure_values",
+          "args": {
+            "stock_code": "005930",
+            "event_types": [
+              "dividend_matter"
+            ]
+          },
+          "status": "ok",
+          "latency_ms": 127
+        }
+      ],
+      "retrieved_ids": [
+        "20260515002181"
+      ],
+      "sources": [
+        {
+          "source_id": "20260515002181",
+          "source_type": "structured_disclosure",
+          "title": "dividend_matter",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": null,
+          "locator": {
+            "rcept_no": "20260515002181",
+            "event_type": "dividend_matter"
+          }
+        }
+      ],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 39,
+      "case_id": "h-na-09",
+      "question": "삼성전자랑 애플 실적 비교해줘",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [
+        "get_financial_facts",
+        "get_financial_facts"
+      ],
+      "tool_calls": [
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "005930",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 305
+        },
+        {
+          "name": "get_financial_facts",
+          "args": {
+            "stock_code": "AAPL",
+            "account_names": [
+              "매출액",
+              "영업이익",
+              "당기순이익"
+            ],
+            "period_mode": "latest"
+          },
+          "status": "ok",
+          "latency_ms": 301
+        }
+      ],
+      "retrieved_ids": [
+        "005930/2026/11013/CFS/당기순이익/cumulative",
+        "005930/2026/11013/CFS/매출액/cumulative",
+        "005930/2026/11013/CFS/영업이익/cumulative"
+      ],
+      "sources": [
+        {
+          "source_id": "005930/2026/11013/CFS/매출액/cumulative",
+          "source_type": "financial",
+          "title": "매출액 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/매출액/cumulative"
+          }
+        },
+        {
+          "source_id": "005930/2026/11013/CFS/영업이익/cumulative",
+          "source_type": "financial",
+          "title": "영업이익 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/영업이익/cumulative"
+          }
+        },
+        {
+          "source_id": "005930/2026/11013/CFS/당기순이익/cumulative",
+          "source_type": "financial",
+          "title": "당기순이익 · 2026년 1분기보고서 누적 · 연결",
+          "publisher": null,
+          "published_at": null,
+          "page": null,
+          "url": null,
+          "value_kind": "actual_value",
+          "locator": {
+            "source_type": "financials",
+            "source_key": "005930/2026/11013/CFS/당기순이익/cumulative"
+          }
+        }
+      ],
+      "stop_reason": "completed",
+      "validation_errors": []
+    },
+    {
+      "position": 40,
+      "case_id": "h-na-10",
+      "question": "내일 주가 오를까?",
+      "context": {
+        "stock_code": null,
+        "context_source_type": null,
+        "context_source_id": null,
+        "document_id": null,
+        "report_page": null,
+        "selected_event_id": null
+      },
+      "attempts": 1,
+      "tool_sequence": [],
+      "tool_calls": [],
+      "retrieved_ids": [],
+      "sources": [],
+      "stop_reason": "completed",
+      "validation_errors": []
+    }
+  ]
+}
