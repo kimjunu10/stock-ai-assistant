@@ -1475,6 +1475,15 @@
   }
 }
 
+@layer components {
+  .stock-select--attention select {
+    @apply border-brand ring-2 ring-brand/30;
+  }
+  .stock-select--attention > span {
+    @apply text-brand-ink;
+  }
+}
+
 /* Restore the original sidebar-led Ask layout while keeping the improved chat contents. */
 @layer components {
   .ask-page {

@@ -50,6 +50,9 @@ class QaRuntimeContext:
     current_date: str | None = None
     timezone: str = "Asia/Seoul"
     services: Any = field(default=None)  # ToolServices (직렬화 회피 위해 Any)
+    # Tool 이 authoritative 화면 종목과 다른/미지원 종목을 요청한 흔적.
+    # 모델 프롬프트에는 노출하지 않고 AgentQaService의 최종 안전 검증에만 쓴다.
+    stock_context_events: list[dict[str, Any]] = field(default_factory=list)
     # 사건 후속 질문 계약(prompt.md §4). 요청 시점에 코드가 확정한 결과만 담는다.
     # 모델이 사건을 고르지 않는다 — resolved 면 event_id·event_date 를 그대로 쓰고,
     # ambiguous/none 이면 사건 기반 계산 Tool 자체가 거부된다.

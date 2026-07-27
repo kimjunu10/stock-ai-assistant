@@ -38,4 +38,23 @@ describe('useRagConversation', () => {
     await waitFor(() => expect(result.current.phase).toBe('aborted'))
     expect(result.current.messages[1]?.state).toBe('aborted')
   })
+
+  it('preserves stock context error and removes previously received cards and sources', async () => {
+    const stream = [
+      'event: agent_start\ndata: {}\n\n',
+      'event: sources\ndata: {"sources":[{"source_id":"005930/2025","source_type":"financial","stock_code":"005930","locator":{}}],"visualizations":[{"type":"financial_series","title":"삼성전자 재무","data":{},"source_ids":["005930/2025"]}]}\n\n',
+      'event: error\ndata: {"message":"현재 애플은 지원하지 않는 종목입니다.\\n지원 종목을 선택한 뒤 다시 질문해 주세요.","stop_reason":"blocked","error_code":"UNSUPPORTED_STOCK"}\n\n',
+    ].join('')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(stream, { status: 200 }))
+    const { result } = renderHook(() => useRagConversation({ stockCode: '005930' }))
+
+    await act(async () => result.current.send('애플 올해 실적'))
+
+    await waitFor(() => expect(result.current.phase).toBe('error'))
+    expect(result.current.stockContextError).toBe('UNSUPPORTED_STOCK')
+    expect(result.current.messages[1]?.errorCode).toBe('UNSUPPORTED_STOCK')
+    expect(result.current.messages[1]?.sources).toEqual([])
+    expect(result.current.messages[1]?.visualizations).toEqual([])
+    expect(result.current.messages[1]?.text).toContain('지원하지 않는 종목')
+  })
 })

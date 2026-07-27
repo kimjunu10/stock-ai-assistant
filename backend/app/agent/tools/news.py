@@ -93,6 +93,7 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
             SourceRef(
                 source_id=c.chunk_id,
                 source_type="news_event",
+                stock_code=c.stock_code,
                 title=c.title,
                 publisher=c.publisher,
                 published_at=iso(c.published_at),

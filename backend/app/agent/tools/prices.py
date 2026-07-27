@@ -93,6 +93,7 @@ def _price_source(stock_code: str, *, trading_day: date, as_of: str, extra: dict
     return SourceRef(
         source_id=f"price:{stock_code}:{trading_day.isoformat()}",
         source_type="price",
+        stock_code=stock_code,
         title=f"{stock_code} 주가 · {trading_day.isoformat()}",
         publisher=_DATA_SOURCE,
         published_at=trading_day.isoformat(),

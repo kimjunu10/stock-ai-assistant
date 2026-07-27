@@ -7,6 +7,11 @@ export type RagPhase =
   | 'error'
   | 'aborted'
 
+export type StockContextErrorCode =
+  | 'STOCK_CONTEXT_MISMATCH'
+  | 'UNSUPPORTED_STOCK'
+  | 'MULTI_STOCK_NOT_SUPPORTED'
+
 export type RagSourceType =
   | 'financial'
   | 'term'
@@ -30,6 +35,7 @@ export interface RagContext {
 export interface RagSource {
   sourceId: string
   sourceType: RagSourceType
+  stockCode?: string
   title?: string
   publisher?: string
   publishedAt?: string
@@ -66,6 +72,7 @@ export interface RagMessage {
   visualizations: RagVisualization[]
   warnings: string[]
   state?: 'pending' | 'complete' | 'error' | 'aborted'
+  errorCode?: StockContextErrorCode
 }
 
 export interface QaStreamEvent {

@@ -108,6 +108,14 @@ class AgentExecution(BaseModel):
     tool_calls: list[AgentToolCallInfo] = Field(default_factory=list)
     model_calls: int = 0
     stop_reason: str | None = None
+    error_code: (
+        Literal[
+            "STOCK_CONTEXT_MISMATCH",
+            "UNSUPPORTED_STOCK",
+            "MULTI_STOCK_NOT_SUPPORTED",
+        ]
+        | None
+    ) = None
     # 5.5-E: 코드 검증 결과·근거 출처 식별자(내부추론·원문 본문 미포함).
     validation_errors: list[str] = Field(default_factory=list)
     source_ids: list[str] = Field(default_factory=list)
@@ -132,6 +140,14 @@ class BrokerOpinion(BaseModel):
 
 class QaResponse(BaseModel):
     answer: str
+    error_code: (
+        Literal[
+            "STOCK_CONTEXT_MISMATCH",
+            "UNSUPPORTED_STOCK",
+            "MULTI_STOCK_NOT_SUPPORTED",
+        ]
+        | None
+    ) = None
     sources: list[Source] = Field(default_factory=list)
     # Phase 4 결정론적 경로 통합: 숫자 출처(SQL)·용어를 추가로 반환한다.
     # 순수 뉴스 질문에서는 빈 값이라 기존 클라이언트 계약을 깨지 않는다.

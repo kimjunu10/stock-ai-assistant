@@ -69,10 +69,21 @@ def run_search_research_reports(
     except Exception as e:  # noqa: BLE001
         log_tool_exception(e, layer="ResearchReportSearch.search")
         return error(sanitize_exception(e))
-    return _hits_to_result(hits, limit=inp.limit, time_context=time_context)
+    return _hits_to_result(
+        hits,
+        limit=inp.limit,
+        time_context=time_context,
+        stock_code=inp.stock_code,
+    )
 
 
-def _hits_to_result(hits, *, limit: int, time_context: str | None = None) -> ToolResult:
+def _hits_to_result(
+    hits,
+    *,
+    limit: int,
+    time_context: str | None = None,
+    stock_code: str | None = None,
+) -> ToolResult:
     if not hits:
         return no_data("해당 조건의 증권사 리포트를 찾지 못했습니다.")
 
@@ -105,6 +116,7 @@ def _hits_to_result(hits, *, limit: int, time_context: str | None = None) -> Too
             SourceRef(
                 source_id=h.chunk_id,
                 source_type="research_report",
+                stock_code=stock_code,
                 title=h.title,
                 publisher=h.broker,
                 published_at=h.report_date,

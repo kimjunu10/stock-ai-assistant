@@ -3,6 +3,7 @@ import type {
   RagContext,
   RagSource,
   RagSourceType,
+  StockContextErrorCode,
   RagVisualization,
   RagVisualizationType,
 } from '../types/qa'
@@ -31,6 +32,28 @@ const VISUALIZATION_TYPES = new Set<RagVisualizationType>([
   'event_timeline',
   'term_definition',
 ])
+
+const STOCK_CONTEXT_ERROR_CODES = new Set<StockContextErrorCode>([
+  'STOCK_CONTEXT_MISMATCH',
+  'UNSUPPORTED_STOCK',
+  'MULTI_STOCK_NOT_SUPPORTED',
+])
+
+export class QaStreamError extends Error {
+  readonly code?: StockContextErrorCode
+
+  constructor(message: string, code?: StockContextErrorCode) {
+    super(message)
+    this.name = 'QaStreamError'
+    this.code = code
+  }
+}
+
+export function stockContextErrorCode(value: unknown): StockContextErrorCode | undefined {
+  return typeof value === 'string' && STOCK_CONTEXT_ERROR_CODES.has(value as StockContextErrorCode)
+    ? value as StockContextErrorCode
+    : undefined
+}
 
 export function parseSseBlock(block: string): QaStreamEvent | null {
   let event = ''
@@ -67,6 +90,7 @@ export function normalizeSources(value: unknown): RagSource[] {
     return [{
       sourceId,
       sourceType: sourceType as RagSourceType,
+      stockCode: typeof item.stock_code === 'string' ? item.stock_code : undefined,
       title: typeof item.title === 'string' ? item.title : undefined,
       publisher: typeof item.publisher === 'string' ? item.publisher : undefined,
       publishedAt: typeof item.published_at === 'string' ? item.published_at : undefined,

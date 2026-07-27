@@ -1,11 +1,19 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { RagConversation } from '../components/RagConversation'
 import { STOCKS } from '../data/mockData'
+import type { StockContextErrorCode } from '../types/qa'
 
 export function AskPage() {
   const [stockCode, setStockCode] = useState(STOCKS[0]?.code ?? '005930')
+  const [highlightStockSelect, setHighlightStockSelect] = useState(false)
+  const stockSelectRef = useRef<HTMLSelectElement>(null)
   const stock = STOCKS.find((item) => item.code === stockCode) ?? STOCKS[0]
+  const handleStockContextError = useCallback((code: StockContextErrorCode | null) => {
+    const shouldHighlight = code === 'STOCK_CONTEXT_MISMATCH'
+    setHighlightStockSelect(shouldHighlight)
+    if (shouldHighlight) stockSelectRef.current?.focus()
+  }, [])
 
   return (
     <main className="ask-page">
@@ -27,9 +35,17 @@ export function AskPage() {
             <span aria-hidden="true" className="moa-chat-avatar">M</span>
             <div><strong>Moa AI</strong><span>금융 자료를 근거로 답합니다</span></div>
           </div>
-          <label className="stock-select">
+          <label className={`stock-select${highlightStockSelect ? ' stock-select--attention' : ''}`}>
             <span>대화 종목</span>
-            <select aria-label="질문할 종목" onChange={(event) => setStockCode(event.target.value)} value={stockCode}>
+            <select
+              aria-label="질문할 종목"
+              onChange={(event) => {
+                setHighlightStockSelect(false)
+                setStockCode(event.target.value)
+              }}
+              ref={stockSelectRef}
+              value={stockCode}
+            >
               {STOCKS.map((item) => <option key={item.code} value={item.code}>{item.name} · {item.code}</option>)}
             </select>
           </label>
@@ -40,6 +56,7 @@ export function AskPage() {
             context={{ stockCode: stock.code, stockName: stock.name }}
             emptyTitle={`${stock.name}에 대해 무엇이 궁금한가요?`}
             key={stock.code}
+            onStockContextError={handleStockContextError}
             variant="page"
           />
         )}

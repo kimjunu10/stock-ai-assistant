@@ -39,21 +39,41 @@ def test_eight_tools_registered():
 
 class _FakeRuntime:
     def __init__(self, ctx_stock=None):
-        self.context = type("C", (), {"stock_code": ctx_stock})()
+        self.context = type(
+            "C",
+            (),
+            {"stock_code": ctx_stock, "stock_context_events": []},
+        )()
 
 
-def test_resolve_stock_code_keeps_valid_code():
+def test_resolve_stock_code_rejects_code_different_from_context():
     from app.agent.runtime import _resolve_stock_code
 
-    assert _resolve_stock_code("005930", _FakeRuntime(ctx_stock="000660")) == "005930"
+    runtime = _FakeRuntime(ctx_stock="000660")
+    assert _resolve_stock_code("005930", runtime, tool_name="get_financial_facts") == ""
+    assert runtime.context.stock_context_events == [
+        {
+            "code": "STOCK_CONTEXT_MISMATCH",
+            "tool_name": "get_financial_facts",
+            "provided_stock_code": "005930",
+            "selected_stock_code": "000660",
+        }
+    ]
 
 
-def test_resolve_stock_code_falls_back_to_context_on_company_name():
-    """Agent 가 stock_code 자리에 회사명('삼성')을 넣으면 문맥 종목코드로 폴백."""
+def test_resolve_stock_code_only_accepts_selected_company_alias_or_empty():
     from app.agent.runtime import _resolve_stock_code
 
-    assert _resolve_stock_code("삼성", _FakeRuntime(ctx_stock="005930")) == "005930"
+    assert _resolve_stock_code("삼성전자", _FakeRuntime(ctx_stock="005930")) == "005930"
     assert _resolve_stock_code("", _FakeRuntime(ctx_stock="005930")) == "005930"
+
+
+def test_resolve_stock_code_never_falls_back_unsupported_company_to_context():
+    from app.agent.runtime import _resolve_stock_code
+
+    runtime = _FakeRuntime(ctx_stock="005930")
+    assert _resolve_stock_code("AAPL", runtime, tool_name="get_financial_facts") == "AAPL"
+    assert runtime.context.stock_context_events[0]["code"] == "UNSUPPORTED_STOCK"
 
 
 def test_resolve_stock_code_no_context_keeps_original_for_safe_error():
@@ -129,8 +149,12 @@ class _FakeAgent:
         self._out = out or {"messages": []}
         self._raise = raise_exc
         self._hang = hang
+        self.invoke_count = 0
+        self.last_context = None
 
     def invoke(self, payload, context=None, config=None):
+        self.invoke_count += 1
+        self.last_context = context
         if self._raise:
             raise self._raise
         if self._hang:
@@ -150,10 +174,11 @@ def _svc_with(agent, timeout=8.0):
 
 
 class _Msg:
-    def __init__(self, type_, content="", tool_calls=None):
+    def __init__(self, type_, content="", tool_calls=None, name=None):
         self.type = type_
         self.content = content
         self.tool_calls = tool_calls or []
+        self.name = name
 
 
 def test_agent_qa_extracts_answer_and_toolcalls():
@@ -170,6 +195,104 @@ def test_agent_qa_extracts_answer_and_toolcalls():
     assert "6조원" in r.answer
     assert [c.name for c in r.tool_calls] == ["get_financial_facts"]
     assert r.model_calls == 2
+
+
+def test_agent_qa_allows_selected_context_with_or_without_same_company_name():
+    for question in ("올해 실적 알려줘", "삼성전자 올해 실적 알려줘"):
+        agent = _FakeAgent(out={"messages": [_Msg("ai", "정상 답변")]})
+        r = _svc_with(agent).answer(question, stock_code="005930")
+
+        assert r.stop_reason == "completed"
+        assert agent.invoke_count == 1
+        assert agent.last_context.stock_code == "005930"
+
+
+def test_agent_qa_blocks_different_supported_company_before_agent_and_tools():
+    agent = _FakeAgent()
+    r = _svc_with(agent).answer("현대차 올해 실적 알려줘", stock_code="005930")
+
+    assert r.error_code == "STOCK_CONTEXT_MISMATCH"
+    assert r.stop_reason == "blocked"
+    assert agent.invoke_count == 0
+    assert r.model_calls == 0
+    assert r.tool_calls == []
+    assert r.sources == []
+
+
+def test_agent_qa_blocks_unsupported_company_without_selected_stock_fallback():
+    agent = _FakeAgent()
+    r = _svc_with(agent).answer("애플 올해 실적 알려줘", stock_code="005930")
+
+    assert r.error_code == "UNSUPPORTED_STOCK"
+    assert agent.invoke_count == 0
+    assert r.tool_calls == []
+    assert r.sources == []
+    assert "삼성전자 005930" not in r.answer
+    assert "영업이익" not in r.answer
+
+
+def test_agent_qa_blocks_multi_stock_request_before_agent():
+    agent = _FakeAgent()
+    r = _svc_with(agent).answer("삼성전자와 애플 실적 비교", stock_code="005930")
+
+    assert r.error_code == "MULTI_STOCK_NOT_SUPPORTED"
+    assert agent.invoke_count == 0
+    assert r.tool_calls == []
+
+
+def test_agent_qa_blocks_stale_other_stock_event_context_before_agent():
+    agent = _FakeAgent()
+    event = type("Event", (), {"stock_code": "000660"})()
+
+    r = _svc_with(agent).answer(
+        "이 뉴스 이후 주가 알려줘",
+        stock_code="005930",
+        event_context=[event],
+    )
+
+    assert r.error_code == "STOCK_CONTEXT_MISMATCH"
+    assert agent.invoke_count == 0
+    assert r.tool_calls == []
+
+
+def test_agent_qa_blocks_final_answer_when_source_stock_differs(caplog):
+    payload = {
+        "status": "ok",
+        "data": {"facts": []},
+        "sources": [
+            {
+                "source_id": "000660/2025/영업이익",
+                "source_type": "financial",
+                "stock_code": "000660",
+            }
+        ],
+    }
+    out = {
+        "messages": [
+            _Msg(
+                "ai",
+                "",
+                [
+                    {
+                        "name": "get_financial_facts",
+                        "args": {"stock_code": "005930"},
+                    }
+                ],
+            ),
+            _Msg("tool", json.dumps(payload), name="get_financial_facts"),
+            _Msg("ai", "오염된 최종 답변"),
+        ]
+    }
+
+    r = _svc_with(_FakeAgent(out=out)).answer("올해 실적 알려줘", stock_code="005930")
+
+    assert r.error_code == "STOCK_CONTEXT_MISMATCH"
+    assert r.stop_reason == "blocked"
+    assert r.answer != "오염된 최종 답변"
+    assert r.sources == []
+    assert r.visualizations == []
+    assert "STOCK_CONTEXT_CONTAMINATION" in caplog.text
+    assert "failed_layer=tool_source_validation" in caplog.text
 
 
 def test_agent_context_captures_timezone_aware_kst_request_time():

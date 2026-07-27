@@ -33,6 +33,22 @@ class _FakeAgentService:
         return _FakeAgentResult()
 
 
+class _BlockedAgentService:
+    def answer(self, q, **k):
+        from app.services.agent_qa import AgentQaResult
+
+        return AgentQaResult(
+            answer=(
+                "현재 애플은 지원하지 않는 종목입니다.\n지원 종목을 선택한 뒤 다시 질문해 주세요."
+            ),
+            stop_reason="blocked",
+            error=(
+                "현재 애플은 지원하지 않는 종목입니다.\n지원 종목을 선택한 뒤 다시 질문해 주세요."
+            ),
+            error_code="UNSUPPORTED_STOCK",
+        )
+
+
 def _client(monkeypatch, *, agent):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
@@ -87,6 +103,53 @@ def test_agent_stream_emits_sse_events_in_order(monkeypatch):
     order = ["agent_start", "tool_start", "tool_end", "sources", "delta", "done"]
     idxs = [text.index(f"event: {ev}") for ev in order]
     assert idxs == sorted(idxs), f"SSE 이벤트 순서 위반: {idxs}"
+
+
+def test_regular_api_exposes_safe_stock_error_without_sources(monkeypatch):
+    monkeypatch.setattr(qa_route, "get_agent_qa_service", lambda: _BlockedAgentService())
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    app = FastAPI()
+    app.include_router(qa_route.router)
+    body = (
+        TestClient(app)
+        .post(
+            "/qa",
+            json={"question": "애플 올해 실적", "stock_code": "005930"},
+        )
+        .json()
+    )
+
+    assert body["error_code"] == "UNSUPPORTED_STOCK"
+    assert body["execution"]["error_code"] == "UNSUPPORTED_STOCK"
+    assert body["execution"]["model_calls"] == 0
+    assert body["execution"]["tool_calls"] == []
+    assert body["sources"] == []
+    assert body["visualizations"] == []
+
+
+def test_stream_api_exposes_same_safe_stock_error_without_tool_events(monkeypatch):
+    monkeypatch.setattr(qa_route, "get_agent_qa_service", lambda: _BlockedAgentService())
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    app = FastAPI()
+    app.include_router(qa_route.router)
+    with TestClient(app).stream(
+        "POST",
+        "/qa/stream",
+        json={"question": "애플 올해 실적", "stock_code": "005930"},
+    ) as response:
+        text = "".join(response.iter_text())
+
+    assert '"error_code": "UNSUPPORTED_STOCK"' in text
+    assert "event: agent_start" not in text
+    assert "event: tool_start" not in text
+    assert "event: tool_end" not in text
+    assert '"sources": []' in text
+    assert '"visualizations": []' in text
+    assert "event: delta" not in text
 
 
 def test_phase7_context_fields_are_accepted(monkeypatch):
