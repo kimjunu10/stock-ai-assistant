@@ -13,17 +13,15 @@ describe('QA SSE contract', () => {
     expect(parseSseBlock('event: delta\ndata: not-json')).toBeNull()
   })
 
-  it('ignores unknown visualizations and charts without source ids', () => {
+  it('ignores unknown visualizations but keeps valid charts without source ids', () => {
     expect(normalizeVisualizations([
       { type: 'invented_chart', title: '위험', data: {}, source_ids: ['s1'] },
       { type: 'price_line', title: '출처 없음', data: {}, source_ids: [] },
       { type: 'event_return', title: '검증됨', data: { return_pct: 2 }, source_ids: ['p1'] },
-    ])).toEqual([{
-      type: 'event_return',
-      title: '검증됨',
-      data: { return_pct: 2 },
-      sourceIds: ['p1'],
-    }])
+    ])).toEqual([
+      { type: 'price_line', title: '출처 없음', data: {}, sourceIds: [] },
+      { type: 'event_return', title: '검증됨', data: { return_pct: 2 }, sourceIds: ['p1'] },
+    ])
   })
 
   it('normalizes only known source types and safe URLs', () => {

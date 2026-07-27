@@ -92,6 +92,58 @@ describe('RagVisualizations', () => {
     expect(screen.getByText('271,000원')).toBeTruthy()
   })
 
+  it('renders the current event-return horizon contract', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'event_return',
+      title: '발표 전후 주가 변화',
+      data: {
+        event_date: '2026-07-20',
+        baseline_trading_day: '2026-07-17',
+        baseline_close: 85000,
+        currency: 'KRW',
+        horizons: [
+          { horizon_days: 1, trading_day: '2026-07-21', close: 87000, return_pct: 2.35 },
+          { horizon_days: 3, trading_day: '2026-07-23', close: 89000, return_pct: 4.7 },
+        ],
+      },
+      sourceIds: ['n1', 'p1'],
+    }]} />)
+    expect(screen.getByText('85,000원')).toBeTruthy()
+    expect(screen.getByText('발표 후 1거래일')).toBeTruthy()
+    expect(screen.getByText('+4.7%')).toBeTruthy()
+  })
+
+  it('falls back to the matched source URL for a news card', () => {
+    render(<RagVisualizations
+      sources={[{
+        sourceId: 'n1',
+        sourceType: 'news_event',
+        title: '연결된 뉴스',
+        url: 'https://example.com/source-news',
+        locator: {},
+      }]}
+      visualizations={[{
+        type: 'news_cards',
+        title: '최근 뉴스',
+        data: { items: [{ source_id: 'n1', title: '연결된 뉴스' }] },
+        sourceIds: ['n1'],
+      }]}
+    />)
+    expect(screen.getByRole('link', { name: /연결된 뉴스/ }).getAttribute('href'))
+      .toBe('https://example.com/source-news')
+  })
+
+  it('keeps a news card clickable when the backend has no original URL', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'news_cards',
+      title: '최근 뉴스',
+      data: { items: [{ source_id: 'n1', title: '원문 주소가 없는 뉴스' }] },
+      sourceIds: ['n1'],
+    }]} />)
+    expect(screen.getByRole('link', { name: /원문 주소가 없는 뉴스/ }).getAttribute('href'))
+      .toContain('search.naver.com/search.naver?where=news')
+  })
+
   it('ignores unknown visualization types safely', () => {
     const { container } = render(<RagVisualizations visualizations={[{
       // @ts-expect-error unknown type on purpose

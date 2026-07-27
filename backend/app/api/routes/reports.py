@@ -122,3 +122,41 @@ def download_report(
     if not signed_url:
         raise HTTPException(status_code=502, detail="리포트 다운로드 링크를 만들지 못했어요.")
     return RedirectResponse(url=str(signed_url), status_code=307)
+
+
+@router.get("/{stock_code}/reports/{report_id}/view")
+def view_report(
+    stock_code: str,
+    report_id: str,
+    client: Annotated[Client, Depends(get_supabase_client)],
+) -> RedirectResponse:
+    """Redirect to an inline short-lived signed URL for PDF preview."""
+
+    _validate_stock_code(stock_code)
+    response = (
+        client.table("research_reports")
+        .select("id,stock_code,storage_bucket,storage_path")
+        .eq("id", report_id)
+        .eq("stock_code", stock_code)
+        .limit(1)
+        .execute()
+    )
+    rows = response.data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail="해당 증권사 리포트를 찾지 못했어요.")
+
+    row = rows[0]
+    try:
+        signed = client.storage.from_(str(row["storage_bucket"])).create_signed_url(
+            str(row["storage_path"]),
+            SIGNED_URL_TTL_SECONDS,
+        )
+    except Exception as exc:  # noqa: BLE001 - Storage SDK 오류를 API 경계에서 변환
+        raise HTTPException(
+            status_code=502,
+            detail="리포트 미리보기 링크를 만들지 못했어요.",
+        ) from exc
+    signed_url = signed.get("signedURL") or signed.get("signedUrl")
+    if not signed_url:
+        raise HTTPException(status_code=502, detail="리포트 미리보기 링크를 만들지 못했어요.")
+    return RedirectResponse(url=str(signed_url), status_code=307)
