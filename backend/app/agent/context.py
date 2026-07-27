@@ -38,6 +38,7 @@ class QaRuntimeContext:
     """
 
     stock_code: str | None = None
+    company_name: str | None = None
     source_type: str | None = None
     source_id: str | None = None
     document_id: str | None = None

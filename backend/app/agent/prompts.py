@@ -212,22 +212,35 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
 """
 
 
-def _stock_context_block(stock_code: str | None) -> str:
+def _stock_context_block(stock_code: str | None, company_name: str | None) -> str:
     """UI 문맥으로 확정된 종목을 프롬프트에 싣는다(종목 되묻기 방지).
 
-    화면에서 종목이 이미 선택돼 있거나 특정 종목 뉴스를 보는 중이면 서버가 그 종목코드를
-    넘긴다. 모델이 "어떤 종목인가요?"라고 되묻지 않도록 확정 값으로 명시한다.
+    화면에서 종목이 이미 선택돼 있거나 특정 종목 뉴스를 보는 중이면 서버가 그 종목코드와
+    공식 회사명을 넘긴다. 모델이 "어떤 종목인가요?"라고 되묻거나 코드만 보고 회사명을
+    추측하지 않도록 확정 값으로 명시한다.
     질문 문자열에서 회사명을 파싱하거나 코드로 매핑하지 않는다(하드코딩·라우터 아님).
     """
     if not stock_code:
         return ""
-    return (
+    lines = [
         "\n\n현재 종목 문맥(서버 확정):\n"
-        f"- 종목코드: {stock_code}\n"
+        f"- 종목코드: {stock_code}\n",
+    ]
+    name = (company_name or "").strip()
+    if name:
+        lines.append(f"- 종목(코드 / 공식 회사명): {stock_code} / {name}\n")
+    else:
+        lines.append(
+            "- 공식 회사명: 확인 불가\n"
+            "- 공식 회사명이 제공되지 않았다. 종목코드만 보고 회사명을 추측하거나 "
+            "만들어내지 않는다.\n"
+        )
+    lines.append(
         "- 사용자가 종목을 말하지 않은 질문은 이 종목에 대한 질문이다.\n"
         "- 종목을 되묻지 않는다. Tool 의 stock_code 인자에 이 코드를 그대로 넣는다.\n"
         "- 사용자가 다른 종목을 명시한 경우에만 그 종목을 쓴다."
     )
+    return "".join(lines)
 
 
 def _event_context_block(
@@ -289,6 +302,7 @@ def financial_agent_system_prompt(
     current_date: str | None,
     timezone: str,
     stock_code: str | None = None,
+    company_name: str | None = None,
     event_status: str = "none",
     event_title: str | None = None,
     event_date: str | None = None,
@@ -307,7 +321,7 @@ def financial_agent_system_prompt(
             f"- 시간대: {timezone}\n"
             "- 위 값은 서버가 요청 시점에 계산한 신뢰 가능한 값이다."
         )
-        + _stock_context_block(stock_code)
+        + _stock_context_block(stock_code, company_name)
         + _event_context_block(
             event_status=event_status,
             event_title=event_title,

@@ -53,6 +53,21 @@ class FactsService:
     def __init__(self, client: Client) -> None:
         self._db = client
 
+    def get_stock_name(self, stock_code: str) -> str | None:
+        """종목 마스터에서 코드와 일치하는 공식 회사명을 조회한다."""
+
+        rows = (
+            self._db.table("stocks")
+            .select("name")
+            .eq("code", stock_code)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        name = rows[0].get("name") if rows else None
+        return str(name).strip() if name and str(name).strip() else None
+
     # -- 재무 숫자 -------------------------------------------------------
     def get_financials(
         self,

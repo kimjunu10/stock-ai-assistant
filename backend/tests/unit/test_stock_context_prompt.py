@@ -4,7 +4,8 @@
 "어제 주가 어케됨?" 에 Agent 가 종목을 되물었다. 원인은 프롬프트에 문맥 종목이
 주입되지 않아 모델이 어떤 종목인지 알 수 없었던 것.
 
-질문 문자열을 파싱하거나 회사명을 코드로 매핑하지 않는다 — 서버가 확정한 코드만 싣는다.
+질문 문자열을 파싱하거나 회사명을 코드로 매핑하지 않는다 — 서버가 확정한 코드와
+공식 회사명만 싣는다.
 """
 
 from __future__ import annotations
@@ -19,10 +20,19 @@ _BASE = {
 
 
 def test_stock_context_is_injected_when_present():
-    prompt = financial_agent_system_prompt(**_BASE, stock_code="005930")
+    prompt = financial_agent_system_prompt(
+        **_BASE, stock_code="005380", company_name="현대자동차"
+    )
     assert "현재 종목 문맥(서버 확정)" in prompt
-    assert "005930" in prompt
+    assert "005380 / 현대자동차" in prompt
     assert "종목을 되묻지 않는다" in prompt
+
+
+def test_stock_context_does_not_guess_company_name_when_missing():
+    prompt = financial_agent_system_prompt(**_BASE, stock_code="005380", company_name=None)
+    assert "공식 회사명: 확인 불가" in prompt
+    assert "종목코드만 보고 회사명을 추측하거나 만들어내지 않는다" in prompt
+    assert "현대" not in prompt
 
 
 def test_no_stock_context_block_without_stock_code():
@@ -33,7 +43,9 @@ def test_no_stock_context_block_without_stock_code():
 
 def test_stock_context_allows_user_specified_other_stock():
     """문맥 종목이 있어도 사용자가 다른 종목을 말하면 그 종목을 쓰라고 지시한다."""
-    prompt = financial_agent_system_prompt(**_BASE, stock_code="005930")
+    prompt = financial_agent_system_prompt(
+        **_BASE, stock_code="005930", company_name="삼성전자"
+    )
     assert "사용자가 다른 종목을 명시한 경우에만 그 종목을 쓴다" in prompt
 
 
@@ -42,6 +54,7 @@ def test_stock_and_event_context_coexist():
     prompt = financial_agent_system_prompt(
         **_BASE,
         stock_code="005930",
+        company_name="삼성전자",
         event_status="resolved",
         event_title="엔비디아 본사 회동",
         event_date="2026-07-25",

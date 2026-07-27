@@ -181,6 +181,34 @@ def test_agent_context_captures_timezone_aware_kst_request_time():
     assert parsed.utcoffset() == ZoneInfo("Asia/Seoul").utcoffset(parsed)
 
 
+class _FakeStockNameFacts:
+    def __init__(self, names):
+        self.names = names
+
+    def get_stock_name(self, stock_code):
+        return self.names.get(stock_code)
+
+
+def test_agent_context_resolves_company_name_by_stock_code():
+    svc = _svc_with(_FakeAgent())
+    svc._services.facts = _FakeStockNameFacts({"005380": "현대자동차"})
+
+    ctx = svc._context("005380", None, None, None, None, None)
+
+    assert ctx.stock_code == "005380"
+    assert ctx.company_name == "현대자동차"
+
+
+def test_agent_context_keeps_company_name_empty_when_lookup_has_no_match():
+    svc = _svc_with(_FakeAgent())
+    svc._services.facts = _FakeStockNameFacts({})
+
+    ctx = svc._context("005380", None, None, None, None, None)
+
+    assert ctx.stock_code == "005380"
+    assert ctx.company_name is None
+
+
 def test_agent_qa_timeout_returns_safe_error():
     svc = _svc_with(_FakeAgent(hang=True), timeout=0.5)
     r = svc.answer("느린 질문", stock_code="005930")
