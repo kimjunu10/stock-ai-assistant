@@ -27,7 +27,7 @@
 | `backend/docs/rag/phase_7/` | 프런트엔드 UI 데이터 계약 |
 | `backend/docs/rag/phase_8/` | 160문항 평가셋 구축, 개발셋 baseline 4라운드, 지표 감사, 뉴스 감사, 최초 홀드아웃 |
 | `backend/docs/rag/phase_9/` | Tool runtime 근본원인 + 동일 홀드아웃 회귀 |
-| `backend/docs/rag/phase_10/` | 뉴스 기간 정책 감사 + 최소 수정 |
+| `backend/docs/rag/phase_10/` | 뉴스 기간 정책 감사·최소 수정 + **동일 40문항 최종 회귀 산출물** |
 | `backend/docs/rag/STOCK_CONTEXT_SAFETY_GUARD.md` | PR #76 종목 문맥 오염 방지 |
 | `backend/app/eval/` | 평가 패키지(스키마·지표·채점기·judge·recorder·runner) |
 | `backend/scripts/phase8_*.py`, `phase9_*.py` | 실행기·분석기·감사 스크립트 |
@@ -40,7 +40,7 @@
 |---|---|---|
 | **검색기 단독 실험** | Retriever 랭킹만. Agent·LLM 없음 | Phase 3(뉴스), Phase 5(리포트) |
 | **Agent 전체 평가** | Tool 선택·인자·답변·출처까지 end-to-end | Phase 8 개발셋 4라운드, Phase 8 최초 홀드아웃 |
-| **동일 문항 회귀** | 수정 전후 같은 문항 비교. 일반화 성능 아님 | Phase 9 홀드아웃 회귀 |
+| **동일 문항 회귀** | 수정 전후 같은 문항 비교. 일반화 성능 아님 | Phase 9·Phase 10 홀드아웃 회귀 |
 | **production smoke** | 운영 환경에서 소수 시나리오 계약 확인 | Phase 5.5-G, Phase 6, Phase 9 tool smoke, PR #76·77 |
 | **브라우저 수동 테스트** | 화면 동작 확인 | PR #78, #79 |
 
@@ -73,8 +73,9 @@
 | 21 | 2026-07-27 | Phase 9 Tool runtime 근본원인 | 제품 수정 | validation 예외 → 표준 error | #73 |
 | 22 | 2026-07-27 | **Phase 9 동일 문항 회귀** | 동일문항 회귀 | **formal 97.50%**, 뉴스 Recall 33.33% | #74 |
 | 23 | 2026-07-27 | Phase 10 뉴스 기간 감사 + 수정 | 감사 + 제품 수정 | 사용자 명시 기간만 적용 | #75 |
-| 24 | 2026-07-27 | PR #76 종목 문맥 오염 방지 | 제품 수정 + smoke | 테스트 576 통과 | #76 |
-| 25 | 2026-07-27 | 제품 QA(안내 렌더링·UI·주가·뉴스링크) | 브라우저 수동 | — | #77·#78·#79 |
+| 24 | 2026-07-27 | **Phase 10 동일 문항 최종 회귀** | 동일문항 회귀 | **formal 97.50%, 뉴스 Recall 33.33%, 고위험 종목 무결성 결함 확인** | 원시 산출물 보존 PR #80 |
+| 25 | 2026-07-27 | PR #76 종목 문맥 오염 방지 | 제품 수정 + smoke | 테스트 576 통과 | #76 |
+| 26 | 2026-07-27 | 제품 QA(안내 렌더링·UI·주가·뉴스링크) | 브라우저 수동 | — | #77·#78·#79 |
 
 ---
 
@@ -692,9 +693,25 @@ judge 실패 시 폴백에서, `_handled_as_unanswerable`(`grader.py:846-860`)�
 | 수정 내용 | 요청 원문을 `QaRuntimeContext.user_question`으로 Tool 경계에 전달. 일반 한국어 시간 표현을 `RelativePeriod`로 해석하는 순수 함수 추가. **사용자 원문의 명시적 기간을 모델이 만든 기간보다 우선.** 기간 표현 없으면 `relative_period=None`. 질문 원문이 없는 직접 Tool 호출은 기존 인자 보존 |
 | 하드코딩 부재 | 제품 코드는 시간 표현만 검사한다. 홀드아웃 case ID·cluster/document/chunk ID·회사명·종목코드 목록·뉴스 제목·사건명·인물명·제품명·특정 날짜를 **참조하지 않는다** |
 | 검증 | 기간 없는 사건 질문 → `None`, 최근 뉴스 → `recent`, 지난달 → 이전 달 달력 범위, 명시 기간 → 유지, 직접 Tool 호출 → 계약 유지. Ruff PASS. 전체 unit/agent 회귀 **545 passed, warning 1** |
-| **결과의 정확한 의미** | **홀드아웃 40문항을 재실행하지 않았다.** 따라서 **"Phase 10 수정 후 뉴스 Recall 수치"는 존재하지 않는다.** 검증은 유닛 테스트 수준이다 |
+| 감사·수정 단계의 의미 | 이 표는 **수정 전 읽기 전용 감사와 유닛 테스트**의 기록이다. 이후 별도 production smoke와 동일 40문항 최종 회귀가 수행됐으며, 그 실행 결과는 바로 아래 실험 16-B에 분리해 기록한다 |
 | 남은 한계 | `h-news-25`는 원인 계층을 증명할 데이터가 없어 candidate/ranking을 수정하지 않았다. Retriever 후보 생성·hybrid ranking·top_k·Gold·채점기·평가 데이터 무변경 |
 | 근거 파일 | `phase_10/PHASE_10_NEWS_RETRIEVAL_AUDIT.md`, `PHASE_10_NEWS_RETRIEVAL_IMPLEMENTATION.md`, PR #75 |
+
+### 실험 16-B — Phase 10 제품 수정 후 동일 홀드아웃 최종 회귀 ★
+
+| 항목 | 내용 |
+|---|---|
+| 성격 | **Phase 8·9와 같은 `holdout.json` 40문항을 재사용한 최종 회귀**다. 최초 블라인드 평가나 일반화 성능 측정이 아니다 |
+| 실행 기준 | production revision `ae049871418b7ed2102f38fa0fca629f348657b2`, production CI/CD 및 뉴스 smoke PASS |
+| 실행 통제 | 데이터 순서대로 40문항을 정확히 1회 실행. 외부 장애 재시도 0회·외부 장애 0건·개발셋 120문항 미실행. preflight PASS |
+| formal / 검색 지표 | automatic formal-condition pass **39/40 = 97.50%**. 뉴스 canonical-cluster Recall@K **2/6 = 33.33%**(strict/event-equivalent 동일). formal 조건은 뉴스 적중·Tool status를 포함하지 않으므로 두 수치를 섞어 RAG 정확도라고 부르면 안 된다 |
+| Tool·답변 지표 | 실제 Tool 실행 성공 **37/39 문항 = 94.87%**, 최종 답변 완료 **40/40**, status ok/no_data/error/null = **47/0/0/3**, step_limit 0 |
+| 품질·검색·운영 지표 | 숫자/단위/기간 **83.33%/100%/100%**, 리포트 Recall/Hit@1/MRR **100%/60%/0.7667**, 구조화 조회 **93.33%**, citation coverage **100%**, Solar 성공/fallback **40/0**, P50/P95 **4,496/8,086ms**, 비용 **$0.272251** |
+| 뉴스 기간 수정 효과 | 6/6 기간 없는 질문에서 `relative_period=None`이 실제 적용됐고 `h-news-22`는 canonical cluster rank 1로 회복했다. 그러나 `h-news-20` 순위 하락과 `h-news-23`·`h-news-24`·`h-news-25` 미적중으로 전체 Recall은 **2/6 그대로**다 |
+| 실제 실패 2건 | `h-mix-20`의 status=null 1건과 `h-na-09`의 status=null 2건이다. `h-na-09`는 삼성전자 수치를 애플에도 같다고 답한 **실제 허위 비교 답변**이며 Solar Judge가 `handled_correctly=true`, `grounded=true`로 통과시킨 **false positive**다 |
+| 종료 판정 | 가용성·CI/CD·production 뉴스 smoke는 정상이었지만, 타 회사 수치를 다른 회사에 적용할 수 있는 **고위험 금융정보 무결성 결함**이 발견돼 종료 불가로 기록했다. 이 결함이 이후 PR #76의 종목 문맥 안전장치로 이어졌다 |
+| PR #76 이후 | PR #76 및 이후 PR #77~79 뒤에는 40문항 전체 평가를 다시 실행하지 않았다 |
+| 근거 파일 | `phase_10/final_regression/PHASE_10_FINAL_REGRESSION.md`, `metrics.json`, `raw_agent_records.json`, `tool_traces.json`, `news_case_results.json`, `failure_causes.md`, `phase8_phase9_comparison.md` |
 
 ### 실험 17 — PR #76 종목 문맥 오염 방지와 production smoke
 
@@ -729,24 +746,24 @@ judge 실패 시 폴백에서, `_handled_as_unanswerable`(`grader.py:846-860`)�
 
 ### 6.1 요구된 6개 결과 비교 (metrics JSON 검증값)
 
-| 구분 | 개발셋 최초 baseline (round1) | 개발셋 수정 후 (final, PR #67) | **Phase 8 최초 홀드아웃** | **Phase 9 동일 문항 회귀** | Phase 10 | PR #76 smoke |
+| 구분 | 개발셋 최초 baseline (round1) | 개발셋 수정 후 (final, PR #67) | **Phase 8 최초 홀드아웃** | **Phase 9 동일 문항 회귀** | **Phase 10 동일 문항 최종 회귀** | PR #76 smoke |
 |---|---:|---:|---:|---:|---:|---:|
-| 성격 | Agent 전체(개발셋) | Agent 전체(개발셋) | **최초 블라인드** | **동일 문항 회귀** | 감사+수정 | targeted smoke |
-| n | 120 | 120 | 40 | 40 | 0 실행 | — |
-| formal 통과율 | (무결점 42/120) | **97.44%** (114/117) | **85.00%** (34/40) | **97.50%** (39/40) | **미실행** | — |
-| 필수 Tool 호출률 | 0.9449 | 0.9685 (외부제외 0.9919) | **1.000** | **1.000** | 미실행 | — |
-| Tool 인자 정확도 | 0.8733 | 0.9799 (외부제외 0.9932) | **1.000** | **1.000** | 미실행 | — |
-| 뉴스 strict Recall@K | 0.3333* | 0.6316 | **0.0000** | **0.3333** | 미실행 | — |
-| 리포트 Recall@K | 0.3333* | 0.8667 | 0.0000 | **1.0000** | 미실행 | — |
-| 구조화 조회 row_hit | — | 0.7778 | 0.0000 | 0.9333 | 미실행 | — |
-| 숫자 Exact Match | 0.7368 | 0.9474 | **0.0000** | 0.8333 | 미실행 | — |
-| 기간 정확도 | 0.7105 | 1.0000 | 1.0000 | 1.0000 | 미실행 | — |
-| citation coverage | 0.8559 | 0.9464 | **0.1892** | **1.0000** | 미실행 | — |
-| 실제 Tool·완료 실패 | — | — | **31건** | **1건** | 미실행 | — |
-| Tool status ok/error/null | — | — | 11 / **36** / 2 | **47 / 0 / 2** | 미실행 | 전부 ok |
-| P50 / P95 (ms) | 3741 / 9123 | — | 2396 / 7370 | 3872 / 8073 | 미실행 | — |
-| 총비용 | $0.546 | $0.778 | $0.2298 | $0.2684 | — | — |
-| 테스트 통과 | — | — | — | — | 545 passed | 576 passed |
+| 성격 | Agent 전체(개발셋) | Agent 전체(개발셋) | **최초 블라인드** | **동일 문항 회귀** | **동일 문항 회귀** | targeted smoke |
+| n | 120 | 120 | 40 | 40 | 40 | — |
+| formal 통과율 | (무결점 42/120) | **97.44%** (114/117) | **85.00%** (34/40) | **97.50%** (39/40) | **97.50%** (39/40) | — |
+| 필수 Tool 호출률 | 0.9449 | 0.9685 (외부제외 0.9919) | **1.000** | **1.000** | **1.000** | — |
+| Tool 인자 정확도 | 0.8733 | 0.9799 (외부제외 0.9932) | **1.000** | **1.000** | **1.000** | — |
+| 뉴스 strict Recall@K | 0.3333* | 0.6316 | **0.0000** | **0.3333** | **0.3333** | — |
+| 리포트 Recall@K | 0.3333* | 0.8667 | 0.0000 | **1.0000** | **1.0000** | — |
+| 구조화 조회 row_hit | — | 0.7778 | 0.0000 | 0.9333 | 0.9333 | — |
+| 숫자 Exact Match | 0.7368 | 0.9474 | **0.0000** | 0.8333 | 0.8333 | — |
+| 기간 정확도 | 0.7105 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | — |
+| citation coverage | 0.8559 | 0.9464 | **0.1892** | **1.0000** | **1.0000** | — |
+| 실제 Tool·완료 실패 | — | — | **31건** | **1건** | **2건** | — |
+| Tool status ok/error/null | — | — | 11 / **36** / 2 | **47 / 0 / 2** | **47 / 0 / 3** | 전부 ok |
+| P50 / P95 (ms) | 3741 / 9123 | — | 2396 / 7370 | 3872 / 8073 | 4496 / 8086 | — |
+| 총비용 | $0.546 | $0.778 | $0.2298 | $0.2684 | $0.272251 | — |
+| 테스트 통과 | — | — | — | — | production CI/smoke + 최종 40문항 | 576 passed |
 
 \* round1의 Recall은 뉴스·리포트를 합친 청크 단위 구 정의값이다(§5 실험 9). 이후 라운드와 직접 비교할 수 없다.
 
@@ -755,8 +772,8 @@ judge 실패 시 폴백에서, `_handled_as_unanswerable`(`grader.py:846-860`)�
 | 수치 | 정확한 이름 | 실험 | 근거 |
 |---|---|---|---|
 | **85%** | 최초 홀드아웃 **automatic formal-condition pass** (34/40) | Phase 8 최초 블라인드 | `final_holdout_metrics.json` → `overall_pass.pass_rate_all_40 = 0.85` |
-| **97.5%** | 수정 후 **동일 문항 회귀** formal pass (39/40) | Phase 9 회귀 | `phase_9/.../metrics.json` → `formal.pass_rate = 0.975`, `classification = "post_fix_same_holdout_regression"` |
-| **33.33%** | 뉴스 **canonical-cluster Recall@K** (2/6) | Phase 9 회귀 | 같은 파일 → `overall.retrieval.news_retrieval.recall_at_k = 0.3333` |
+| **97.5%** | 수정 후 **동일 문항 회귀** formal pass (39/40) | Phase 9·Phase 10 회귀 | 각 `metrics.json` → `formal.pass_rate = 0.975`; 새 블라인드·일반화 성능이 아님 |
+| **33.33%** | 뉴스 **canonical-cluster Recall@K** (2/6) | Phase 9·Phase 10 회귀 | 각 `metrics.json` → `overall.retrieval.news_retrieval.recall_at_k = 0.3333` |
 
 ---
 
@@ -804,9 +821,9 @@ Phase 10 감사가 이를 문항별로 입증했다. `h-news-22`·`23`·`24`는 
 ### 8.3 Phase 9·10이 새로운 홀드아웃 평가가 아닌 이유
 
 - **Phase 9**: Phase 8과 **동일한** `holdout.json` 40문항을 재사용했다. 문항을 새로 만들거나 보충하지 않았다. 홀드아웃의 원래 규칙(§3.3)은 "홀드아웃 실패를 보고 수정하면 그 질문은 개발셋으로 옮기고 새 홀드아웃을 보충한다"였는데, 이 보충은 수행되지 않았다. 따라서 Phase 9 이후 이 40문항은 **더 이상 블라인드가 아니다.**
-- **Phase 10**: 홀드아웃을 **아예 실행하지 않았다.** 저장된 trace의 읽기 전용 감사 + 코드 수정 + 유닛 테스트 545건이 전부다. **"Phase 10 회귀 수치"는 존재하지 않는다.**
+- **Phase 10**: 기간 정책 수정 전 단계는 저장 trace의 읽기 전용 감사 + 유닛 테스트 545건이었다. 그러나 그 뒤 production smoke PASS를 확인하고 **동일한 40문항을 데이터 순서대로 정확히 1회 실행**했다. 따라서 Phase 10에는 회귀 수치가 존재한다(formal 39/40, 뉴스 canonical Recall@K 2/6). 이 역시 같은 문항 재사용이므로 블라인드·일반화 성능이 아니다.
 
-### 8.4 h-na-09가 보여준 평가의 한계
+### 8.4 h-na-09가 보여준 평가의 한계 — Phase 9와 Phase 10을 구분한다
 
 `h-na-09` 원시 기록을 직접 확인했다.
 
@@ -819,7 +836,9 @@ Phase 10 감사가 이를 문항별로 입증했다. `h-news-22`·`23`·`24`는 
 
 즉 **judge와 formal pass는 "내부적으로 무슨 일이 있었는지"를 검증하지 않는다.** Phase 9가 이 문항을 formal pass에도 불구하고 **runtime 실패로 유지한** 이유이며(*"앞선 상태 누락을 성공으로 숨기지 않고 실제 runtime 실패로 유지한다"*), Phase 8 홀드아웃에서 formal 85%와 실제 실패 31건이 벌어진 것과 같은 구조다.
 
-**용어 주의**: 이 사례를 "Solar Judge false positive"로 부르는 것은 부분적으로만 맞다. Judge의 `handled_correctly` 판정 자체는 답변 내용에 대해 옳았다. 정확한 서술은 **"judge와 formal 조건의 관측 범위가 Tool 내부 실패를 포함하지 않아, 내부 실패가 있는 문항이 통과로 집계됐다"**이다.
+**Phase 9의 용어 주의**: 이 실행을 "Solar Judge false positive"로 부르면 안 된다. Judge의 `handled_correctly` 판정 자체는 답변 내용에 대해 옳았다. 정확한 서술은 **"judge와 formal 조건의 관측 범위가 Tool 내부 실패를 포함하지 않아, 내부 실패가 있는 문항이 통과로 집계됐다"**이다.
+
+**Phase 10에서는 결과가 다르다.** 같은 질문·같은 4회 `get_financial_facts` 호출(초기 `순이익` 2건 null, `당기순이익` 2건 ok) 뒤 최종 답변이 삼성전자 수치 133.87조원·57.23조원·47.23조원을 **애플에도 동일하다고 복제**했다. Solar Judge는 이 답변을 `handled_correctly=true`, `grounded=true`로 통과시켰고 formal도 pass였다. 이것은 실제 **Solar Judge false positive**다. 이 고위험 금융정보 무결성 결함이 이후 PR #76의 종목 문맥 안전장치(사전 차단·Tool/source 종목코드 대조)로 이어졌다.
 
 ### 8.5 그밖에 증명되지 않은 것
 
@@ -839,14 +858,14 @@ Phase 10 감사가 이를 문항별로 입증했다. `h-news-22`·`23`·`24`는 
 
 | # | 한계 | 근거 |
 |---|---|---|
-| 1 | 뉴스 canonical Recall이 낮다 — 홀드아웃 33.33%, 개발셋 최고 63.16% | `phase_9/.../metrics.json` |
+| 1 | 뉴스 canonical Recall이 낮다 — Phase 9·10 동일문항 회귀 모두 33.33%, 개발셋 최고 63.16% | `phase_10/final_regression/metrics.json` |
 | 2 | `h-news-25`는 원인 계층 미확정 — 저장 trace가 상위 5개만 보존해 후보 생성/ranking 구분 불가 | `PHASE_10_NEWS_RETRIEVAL_AUDIT.md` |
 | 3 | 같은 사건이 여러 cluster로 분리 색인된다. `ACTIVE_WINDOW_HOURS` 24→48로 후보 누락만 완화했고, news-13(2.7시간 차)은 유사도/LLM 판정 문제로 미해결 | `PHASE_8_NEWS_FINAL_CORRECTION.md` |
-| 4 | `h-na-09` validation `status=null` 경로가 남아 있다 | `phase_9/.../failure_causes.md` |
+| 4 | `h-na-09` validation `status=null` 경로가 남았고, Phase 10에서는 삼성전자 수치를 애플에 복제한 허위 비교 답변을 Solar가 통과시켰다 | `phase_10/final_regression/raw_agent_records.json`, `failure_causes.md` |
 | 5 | Phase 8 홀드아웃의 36개 Tool error는 실제 예외가 소실돼 사후 확정 불가 | `PHASE_9_TOOL_RUNTIME_ROOT_CAUSE.md` |
 | 6 | 회사명 환각 — 종목코드는 맞게 쓰면서 회사명을 지어낸다. 원인은 `_stock_context_block()`이 코드만 전달하는 것 | `PHASE_8_FINAL_EVALUATION_AFTER_PROMPT.md` §5-D. PR #68이 회사명 전달을 추가했으나 이후 평가셋 재측정 없음 |
 | 7 | "단독" 해석 불안정 — `fin-10`이 `fs_div=OFS`로 오호출(신규 3/3, 구 프롬프트 1/3) | 같은 문서 §5-A |
-| 8 | 리포트 페이지 정확도가 낮다 — 홀드아웃 21.43%, 개발셋 27.08% | metrics JSON |
+| 8 | 리포트 페이지 정확도가 낮다 — Phase 9 21.43%, Phase 10 28.57%, 개발셋 27.08% | metrics JSON |
 | 9 | 리포트 `page_start`/`page_end` 컬럼이 4,350건 전부 NULL, `target_price_source_chunk_id` 비어 있음, 목표주가 근거 청크가 없는 리포트 존재 | `PHASE_8_LABEL_REVIEW.md` §7 |
 | 10 | OpenAI RateLimitError로 개발셋 3건(2.5%)이 유실됐다. 40문항 홀드아웃이면 1건이 통째로 날아간다 | `PHASE_8_FINAL_EVALUATION_AFTER_PROMPT.md` §7 |
 | 11 | 5종목·읽기 전용·토스 IP 허용목록 의존 | `PHASE_6_COMPLETION.md` §7 |
@@ -865,7 +884,7 @@ Phase 10 감사가 이를 문항별로 입증했다. `h-news-22`·`23`·`24`는 
 | 19 | n=40은 1문항이 2.5%p다 | — |
 | 20 | round1과 round2+ 의 Recall 정의가 달라 직접 비교 불가 | `PHASE_8_METRIC_AUDIT.md` |
 | 21 | 뉴스 감사 재현이 참조일(07-26 vs 07-27)에 따라 달라져 news-10/18 원인 계층 미확정 | `PHASE_8_NEWS_RETRIEVAL_AUDIT.md` §2 |
-| 22 | **Phase 10·PR #76~79 이후 평가셋 수치가 없다** | — |
+| 22 | **PR #76~79 이후 평가셋 수치는 없다.** 단, PR #75 직후에는 Phase 10 동일 40문항 최종 회귀가 수행됐다 | `phase_10/final_regression/metrics.json` |
 
 ---
 
@@ -882,7 +901,7 @@ Phase 10 감사가 이를 문항별로 입증했다. `h-news-22`·`23`·`24`는 
 | 5 | 개발셋 문서검색 Recall 공식값 0.0 | round2·3·final-dev 문서에 0.0으로 기재 | PR #63 재채점: 뉴스 0.5263 / 리포트 0.9333 | **재채점값 채택.** 0.0은 집계 결함값임이 `PHASE_8_METRIC_AUDIT.md`에서 규명됨 |
 | 6 | 최종 개발셋 통과율 표기 | "97.44%" | `final_after_prompt_metrics.json`: `pass_rate=0.9744`(114/117), `pass_rate_including_environment=0.95`(114/120) | **분모를 반드시 병기.** 97.44%는 외부장애 3건 제외 값 |
 | 7 | h-na-09 성격 | prompt.md가 "Solar Judge false positive"로 지칭 | 원시 기록: judge `handled_correctly` 판정은 답변에 대해 옳았고, 문제는 Tool `status=null`이 formal·judge 관측 범위 밖이었던 것 | **§8.4에서 정확한 서술로 교정** |
-| 8 | Phase 10 회귀 수치 | prompt.md가 "Phase 10 동일 문항 회귀" 결과를 요구 | `PHASE_10_NEWS_RETRIEVAL_IMPLEMENTATION.md`: 홀드아웃 재실행 없음. 유닛 테스트 545 passed만 | **Phase 10 회귀 수치는 존재하지 않음**을 명시 |
+| 8 | Phase 10 회귀 수치 | 초기 구현 문서는 "홀드아웃 재실행 없음"(수정 전 단계)을 기록 | 별도 worktree의 `phase_10/final_regression/`에 production smoke, preflight, 40문항 원시 기록·trace·metrics가 보존돼 있음 | **최종 회귀는 실제 수행됐다.** 같은 40문항 재사용이므로 새 블라인드·일반화 수치로 쓰지 않는다 |
 | 9 | Phase 9 `overall_pass` 키 | — | Phase 9 metrics JSON에는 `overall_pass`가 **null**이고 `formal.pass_rate`에 0.975가 있다 | Phase 8과 키 구조가 달라 스크립트로 두 파일을 같은 키로 읽으면 오류가 난다. `formal` 키 사용 |
 | 10 | **Phase 3 개발 exact_token 하이브리드 MRR** | `PHASE_3_COMPLETION.md:81`: **0.456**(굵게 강조) | `eval_result.json:26`: **0.449** | **JSON 채택. 0.456을 인용하면 안 된다.** 같은 실행의 recall은 정확히 일치하므로 전사 오류로 판단 |
 | 11 | Phase 3 지연 | 세 곳이 서로 다르다 — `PHASE_3_COMPLETION.md:85` "의미 ~129ms / 하이브리드 ~616ms", `:138` "~635ms", `RAG_PHASE_EXECUTION_PLAN.md:1222` "~134ms / ~635ms" | 개발 **119 / 607**, 홀드아웃 **179 / 797** | **JSON 채택.** 지연은 wall-clock이고 마이그레이션 0018 적용 후 재실행된 기록이 있어 산문 수치는 JSON이 덮어써진 실행의 것으로 추정 |
@@ -915,7 +934,7 @@ Phase 10 감사가 이를 문항별로 입증했다. `h-news-22`·`23`·`24`는 
 | 13 | `h-news-25` 미적중의 원인 계층 | 저장 trace가 최종 상위 5개만 보존 |
 | 14 | news-10/18 재현 차이의 원인 | 참조 시각 미세 차이 또는 임베딩 API 비결정성으로 **추정**되나 확정 불가 |
 | 15 | PR #68(회사명 전달) 이후 회사명 환각의 평가셋 재측정 | 이후 평가셋을 실행하지 않았다 |
-| 16 | Phase 10·PR #76~79 반영 후의 홀드아웃/개발셋 지표 | 재실행하지 않았다 |
+| 16 | PR #76~79 반영 후의 홀드아웃/개발셋 지표 | Phase 10 최종 회귀는 **PR #75 직후·PR #76 이전** 실행이다. PR #76~79 반영 후 평가셋 재실행은 하지 않았다 |
 | 17 | 사람 평가 결과 | 수행되지 않았다 |
 | 18 | 뉴스 클러스터링 자체의 품질 지표 | `docs/finish/clustering_eval_*.csv`는 평가 대상이 달라 이번 조사에서 사용하지 않았다 |
 | 19 | 다중 Gold / 등급형 관련성(graded relevance) 평가 | 모든 검색기 단독 실험이 이진 단일 Gold 자기 회수를 쓴다(Phase 5는 종목 단위 이진) |
@@ -965,6 +984,7 @@ Phase 10 감사가 이를 문항별로 입증했다. `h-news-22`·`23`·`24`는 
 | `phase_9/post_fix_holdout_regression/metrics.json` | **동일 문항 회귀(97.50%, 뉴스 33.33%)** |
 | `phase_9/post_fix_holdout_regression/raw_agent_records.json` | 회귀 원시 기록(h-na-09 포함) |
 | `phase_9/tool_runtime_smoke.json` | 배포 전 실제 DB/API smoke |
+| `phase_10/final_regression/` | **Phase 10 동일 40문항 최종 회귀 원본** — production smoke·preflight·raw Agent 기록·Tool trace·metrics·뉴스 6문항·실패 원인·비교표·Solar cache·실행 log |
 
 ### 12.3 PR 목록
 
@@ -995,6 +1015,7 @@ Phase 10 감사가 이를 문항별로 입증했다. `h-news-22`·`23`·`24`는 
 | #77 | 안전 차단 안내 렌더링 | 제품 QA |
 | #78 | Ask RAG 경험 개편 | 제품 QA |
 | #79 | 시장 데이터·채팅 UX 개선 | 제품 QA |
+| #80 | Phase 10 최종 회귀 원본 보존 + 실험 통합 문서 정정 | 문서·원시 산출물 |
 
 ### 12.4 금지 표현 (근거와 함께)
 

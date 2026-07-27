@@ -1,0 +1,47 @@
+{
+  "note": "production 환경의 실제 DB를 사용한 Agent-free search_news smoke",
+  "production_revision": "ae049871418b7ed2102f38fa0fca629f348657b2",
+  "container_image": "ghcr.io/kimjunu10/stock-ai-assistant-backend:ae049871418b7ed2102f38fa0fca629f348657b2",
+  "container_health": "healthy",
+  "final_status": "pass",
+  "observer_attempts": [
+    {
+      "attempt": 1,
+      "status": "observer_assertion_failure",
+      "product_error_observed": false,
+      "reason": "no_data 응답에는 applied_filters가 없어 첫 검증기의 관측 assertion이 실패했다. Agent/holdout은 실행하지 않았다."
+    },
+    {
+      "attempt": 2,
+      "status": "pass",
+      "change": "실제 Retriever 호출 인자를 기록하는 읽기 전용 proxy로 관측 보완"
+    }
+  ],
+  "status_counts": {
+    "ok": 4,
+    "no_data": 1,
+    "error": 0,
+    "null": 0
+  },
+  "step_limit": 0,
+  "checks": {
+    "default_first": "ok/5 sources",
+    "default_repeat": "ok/5 sources",
+    "event_without_period": {
+      "status": "ok",
+      "query": "반도체 공급 협력",
+      "date_from": null,
+      "date_to": null
+    },
+    "explicit_recent": {
+      "status": "ok",
+      "date_from": "2026-07-25",
+      "date_to": "2026-07-27"
+    },
+    "explicit_last_month": {
+      "status": "no_data",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-30"
+    }
+  }
+}

@@ -1,0 +1,493 @@
+{
+  "note": "Phase 10 제품 수정 후 동일 홀드아웃 최종 회귀의 뉴스 6문항 감사. 최초 블라인드 또는 일반화 결과가 아니다.",
+  "production_revision": "ae049871418b7ed2102f38fa0fca629f348657b2",
+  "all_questions_have_no_explicit_relative_period": true,
+  "all_effective_relative_periods": null,
+  "strict": {
+    "n_eval": 6,
+    "recall_hit": 2,
+    "recall_at_k": 0.3333,
+    "hit_at_1": 0.3333,
+    "mrr": 0.3333,
+    "missed_case_ids": [
+      "h-news-20",
+      "h-news-23",
+      "h-news-24",
+      "h-news-25"
+    ],
+    "missed_case_ids_stale_gold": [],
+    "missed_case_ids_retriever_failure": [
+      "h-news-20",
+      "h-news-23",
+      "h-news-24",
+      "h-news-25"
+    ]
+  },
+  "event_equivalent": {
+    "n_eval": 6,
+    "recall_hit": 2,
+    "recall_at_k": 0.3333,
+    "missed_case_ids": [
+      "h-news-20",
+      "h-news-23",
+      "h-news-24",
+      "h-news-25"
+    ],
+    "hit_at_1": 0.3333,
+    "mrr": 0.3333
+  },
+  "cases": [
+    {
+      "case_id": "h-news-20",
+      "question": "현대차 정의선 회장 건은 어떤 내용이야?",
+      "canonical_gold_cluster_id": "7131",
+      "gold_title": "정의선 회장, 엔비디아 본사 방문…자율주행·로봇·제조 AI 협력 후속 논의",
+      "gold_date": "2026-07-24",
+      "search_news_calls": [
+        {
+          "stock_code": "005380",
+          "query": "정의선 회장",
+          "model_requested_relative_period": null,
+          "effective_relative_period": null,
+          "effective_date_from": null,
+          "effective_date_to": null,
+          "status": "ok"
+        }
+      ],
+      "returned_clusters": [
+        {
+          "rank": 1,
+          "cluster_id": "4528",
+          "title": "정의선 회장, 사재 1200억 추가 투입으로 보스턴다이내믹스 지분 25% 확보",
+          "published_at": "2026-07-19T01:28:00+00:00"
+        },
+        {
+          "rank": 2,
+          "cluster_id": "4534",
+          "title": "정의선 회장, 사재 1200억원 추가 투입해 보스턴다이내믹스 지분 25%로 확대",
+          "published_at": "2026-07-19T02:02:00+00:00"
+        },
+        {
+          "rank": 3,
+          "cluster_id": "4525",
+          "title": "정의선 회장, 개인 자금 1천200억 원 투입해 보스턴다이내믹스 지분 25%로 확대",
+          "published_at": "2026-07-19T01:02:00+00:00"
+        },
+        {
+          "rank": 4,
+          "cluster_id": "4518",
+          "title": "정의선 회장, 보스턴다이내믹스 지분 25%로 확대…사재 1200억원 추가 투입",
+          "published_at": "2026-07-19T00:30:00+00:00"
+        },
+        {
+          "rank": 5,
+          "cluster_id": "4499",
+          "title": "정의선 회장, 보스턴다이내믹스 지분 25%로 확대…사재 1천200억원 추가 투입",
+          "published_at": "2026-07-18T20:55:00+00:00"
+        }
+      ],
+      "gold_rank": null,
+      "strict_hit": false,
+      "event_equivalent_hit": false,
+      "approved_event_equivalent_clusters": [],
+      "final_answer_source_clusters": [
+        "4528",
+        "4534",
+        "4525",
+        "4518",
+        "4499"
+      ],
+      "solar_judge": {
+        "used": true,
+        "grounded": true,
+        "reason": "답변은 근거 목록에 있는 '정의선 회장, 사재 1200억원 추가 투입으로 보스턴다이내믹스 지분 25% 확보' 등의 뉴스 이벤트와 일치하며, 구체적인 수치와 지분 구조 변화를 제시하고 있어 근거가 있는 것으로 판단됩니다. 제외 요청 사항이 없으므로 exclusion_respected는 null입니다."
+      },
+      "formal_pass": true,
+      "retrieval_result_explanation": "기간 필터는 제거됐지만 query='정의선 회장'이 넓어 Gold의 엔비디아 협력 사건 대신 보스턴다이내믹스 지분 사건 5건이 상위 K를 차지했다. 저장된 top-K만으로 후보 생성과 ranking 중 어느 계층이 단독 원인인지는 분리할 수 없다."
+    },
+    {
+      "case_id": "h-news-21",
+      "question": "삼성전자 삼성 AI 글래스 관련해서 무슨 일 있었어?",
+      "canonical_gold_cluster_id": "7181",
+      "gold_title": "삼성 AI 글래스, 안경처럼 가볍고 편안한 착용감 구현",
+      "gold_date": "2026-07-25",
+      "search_news_calls": [
+        {
+          "stock_code": "005930",
+          "query": "삼성 AI 글래스",
+          "model_requested_relative_period": null,
+          "effective_relative_period": null,
+          "effective_date_from": null,
+          "effective_date_to": null,
+          "status": "ok"
+        }
+      ],
+      "returned_clusters": [
+        {
+          "rank": 1,
+          "cluster_id": "7181",
+          "title": "삼성, 연내 AI 글래스 '인텔리전트 아이웨어' 출시…경량화·착용감·프라이버시 강조",
+          "published_at": "2026-07-27T01:00:00+00:00"
+        },
+        {
+          "rank": 2,
+          "cluster_id": "6223",
+          "title": "삼성전자, 갤럭시 언팩서 AI 글래스·워치9·갤럭시 카드 공개 예정",
+          "published_at": "2026-07-21T08:54:00+00:00"
+        },
+        {
+          "rank": 3,
+          "cluster_id": "3708",
+          "title": "삼성전자, 갤럭시 언팩서 AI 글래스 공개…메타와 시장 경쟁 본격화",
+          "published_at": "2026-07-23T21:46:00+00:00"
+        },
+        {
+          "rank": 4,
+          "cluster_id": "3473",
+          "title": "삼성전자, 갤럭시 언팩 2026에서 AI 글래스 포함한 신제품 공개 예정",
+          "published_at": "2026-07-19T06:28:00+00:00"
+        },
+        {
+          "rank": 5,
+          "cluster_id": "5550",
+          "title": "삼성전자, 22일 영국 런던서 갤럭시 언팩 2026 개최…신형 폴더블폰 3종·AI 글래스 공개 예정",
+          "published_at": "2026-07-21T07:22:00+00:00"
+        }
+      ],
+      "gold_rank": 1,
+      "strict_hit": true,
+      "event_equivalent_hit": true,
+      "approved_event_equivalent_clusters": [],
+      "final_answer_source_clusters": [
+        "7181",
+        "6223",
+        "3708",
+        "3473",
+        "5550"
+      ],
+      "solar_judge": {
+        "used": true,
+        "grounded": true,
+        "reason": "답변은 근거 목록에 있는 뉴스 이벤트들을 바탕으로 AI 글래스 출시, 기능, 특허, 시장 경쟁 등을 설명하고 있으며, 근거와 모순되는 내용이 없고, 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다."
+      },
+      "formal_pass": true,
+      "retrieval_result_explanation": "canonical cluster rank 1 적중"
+    },
+    {
+      "case_id": "h-news-22",
+      "question": "한화오션 美 하원 세출위 뉴스 어떻게 된 거야?",
+      "canonical_gold_cluster_id": "6889",
+      "gold_title": "美 하원 세출위, HD현대중공업·한화오션·삼성중공업 조선소 방문",
+      "gold_date": "2026-07-23",
+      "search_news_calls": [
+        {
+          "stock_code": "042660",
+          "query": "美 하원 세출위",
+          "model_requested_relative_period": null,
+          "effective_relative_period": null,
+          "effective_date_from": null,
+          "effective_date_to": null,
+          "status": "ok"
+        }
+      ],
+      "returned_clusters": [
+        {
+          "rank": 1,
+          "cluster_id": "6889",
+          "title": "美 하원 세출위, HD현대중공업·한화오션·삼성중공업 조선소 방문",
+          "published_at": "2026-07-23T15:48:00+00:00"
+        },
+        {
+          "rank": 2,
+          "cluster_id": "4972",
+          "title": "한·미 조선협력센터 개소 및 미 군함 시장 진출 가능성",
+          "published_at": "2026-07-13T15:09:00+00:00"
+        },
+        {
+          "rank": 3,
+          "cluster_id": "7037",
+          "title": "한미 조선협력센터 개소 및 미 해군 RFI 발송, 국내 조선업계 미국 시장 진출 기대",
+          "published_at": "2026-07-22T06:30:00+00:00"
+        },
+        {
+          "rank": 4,
+          "cluster_id": "6940",
+          "title": "미국, 국방수권법안에 한국 조선 협력 명시…중국 견제 및 한미일 협력 강화",
+          "published_at": "2026-07-23T08:33:00+00:00"
+        },
+        {
+          "rank": 5,
+          "cluster_id": "5763",
+          "title": "트럼프 대통령, 한미 조선협력 강화 및 미 해군력 재건 계획 발표",
+          "published_at": "2026-07-15T22:21:00+00:00"
+        }
+      ],
+      "gold_rank": 1,
+      "strict_hit": true,
+      "event_equivalent_hit": true,
+      "approved_event_equivalent_clusters": [],
+      "final_answer_source_clusters": [
+        "6889",
+        "4972",
+        "7037",
+        "6940",
+        "5763"
+      ],
+      "solar_judge": {
+        "used": true,
+        "grounded": true,
+        "reason": "답변은 제공된 근거 목록의 내용을 바탕으로 한화오션의 미국 하원 세출위 방문 및 관련 협력 상황을 설명하고 있으며, 근거와 모순되는 주장은 없습니다."
+      },
+      "formal_pass": true,
+      "retrieval_result_explanation": "canonical cluster rank 1 적중"
+    },
+    {
+      "case_id": "h-news-23",
+      "question": "SK하이닉스 이재명 대통령 이슈 설명해줘",
+      "canonical_gold_cluster_id": "7108",
+      "gold_title": "이재명 대통령 방미 계기 한미 AI 협력, 9500억달러 규모 반도체·AI 인프라 계약 체결",
+      "gold_date": "2026-07-24",
+      "search_news_calls": [
+        {
+          "stock_code": "000660",
+          "query": "이재명 대통령",
+          "model_requested_relative_period": null,
+          "effective_relative_period": null,
+          "effective_date_from": null,
+          "effective_date_to": null,
+          "status": "ok"
+        }
+      ],
+      "returned_clusters": [
+        {
+          "rank": 1,
+          "cluster_id": "6281",
+          "title": "이재명 대통령, 레버리지 ETF 보완책 신속 마련 주문",
+          "published_at": "2026-07-21T10:04:00+00:00"
+        },
+        {
+          "rank": 2,
+          "cluster_id": "6279",
+          "title": "이재명 대통령, 부동산 불로소득 과세 예고 및 단일종목 레버리지 ETF·대기업 성과급 문제 언급",
+          "published_at": "2026-07-21T09:01:00+00:00"
+        },
+        {
+          "rank": 3,
+          "cluster_id": "5599",
+          "title": "이재명 대통령, 영업이익 배분 쟁의 대상 아니라고 밝혀…삼성전자 노조, SK하이닉스 사례 언급하며 교섭 관행 강조",
+          "published_at": "2026-07-21T20:33:00+00:00"
+        },
+        {
+          "rank": 4,
+          "cluster_id": "4143",
+          "title": "이재명 대통령, 삼전·닉스 레버리지 상품 정책 보완 지시",
+          "published_at": "2026-07-21T02:06:00+00:00"
+        },
+        {
+          "rank": 5,
+          "cluster_id": "5601",
+          "title": "이재명 대통령, 영업이익 배분·공장 설립은 노동쟁의 대상 아니라고 강조",
+          "published_at": "2026-07-21T15:21:00+00:00"
+        }
+      ],
+      "gold_rank": null,
+      "strict_hit": false,
+      "event_equivalent_hit": false,
+      "approved_event_equivalent_clusters": [],
+      "final_answer_source_clusters": [
+        "6281",
+        "6279",
+        "5599",
+        "4143",
+        "5601"
+      ],
+      "solar_judge": {
+        "used": true,
+        "grounded": true,
+        "reason": "답변은 제공된 근거 목록의 내용을 정확히 요약하고 있으며, 근거와 모순되는 주장이 없고, 특정 주제 제외 요청도 없으므로 모든 판정이 null입니다."
+      },
+      "formal_pass": true,
+      "retrieval_result_explanation": "기간 필터는 제거됐지만 query='이재명 대통령'이 넓어 레버리지 ETF·노동쟁의 관련 사건이 상위 K를 차지했고 canonical cluster 7108은 반환되지 않았다."
+    },
+    {
+      "case_id": "h-news-24",
+      "question": "현대차 기아 관련 소식 알려줘",
+      "canonical_gold_cluster_id": "7014",
+      "gold_title": "기아, 2분기 역대 최대 매출 달성…전동화 판매 확대로 수익성 회복세",
+      "gold_date": "2026-07-24",
+      "search_news_calls": [
+        {
+          "stock_code": "005380",
+          "query": "기아",
+          "model_requested_relative_period": null,
+          "effective_relative_period": null,
+          "effective_date_from": null,
+          "effective_date_to": null,
+          "status": "ok"
+        },
+        {
+          "stock_code": "005380",
+          "query": "현대차",
+          "model_requested_relative_period": null,
+          "effective_relative_period": null,
+          "effective_date_from": null,
+          "effective_date_to": null,
+          "status": "ok"
+        }
+      ],
+      "returned_clusters": [
+        {
+          "rank": 1,
+          "cluster_id": "4251",
+          "title": "현대차·기아·제네시스, 여름 휴가철 맞아 27일부터 5일간 전국 서비스 거점서 무상점검 실시",
+          "published_at": "2026-07-16T00:54:00+00:00"
+        },
+        {
+          "rank": 2,
+          "cluster_id": "4193",
+          "title": "현대차·기아, 상반기 중국서 779건 특허 승인…GS칼텍스·LG전자와 공동 특허 및 전고체 배터리·로봇 기술 확보",
+          "published_at": "2026-07-15T22:56:00+00:00"
+        },
+        {
+          "rank": 3,
+          "cluster_id": "7034",
+          "title": "기아, 2분기 역대 최대 매출·최대 판매 달성…EV·HEV 호조 속 영업이익 소폭 감소",
+          "published_at": "2026-07-24T07:31:00+00:00"
+        },
+        {
+          "rank": 4,
+          "cluster_id": "7324",
+          "title": "현대차·기아, 호주 시장 상반기 판매 선방…중국 BYD 124% 급증 속 HEV·SUV로 경쟁력 유지",
+          "published_at": "2026-07-27T05:58:00+00:00"
+        },
+        {
+          "rank": 5,
+          "cluster_id": "4277",
+          "title": "현대차그룹 계열사 노사 갈등 확산…부분파업 및 쟁의권 확보로 공급망 동시 마비 우려",
+          "published_at": "2026-07-16T02:11:00+00:00"
+        },
+        {
+          "rank": 6,
+          "cluster_id": "4553",
+          "title": "현대차, 2027 캐스퍼·넥쏘 연식변경 및 벤츠 AMG GT 43 출시",
+          "published_at": "2026-07-19T07:00:00+00:00"
+        },
+        {
+          "rank": 7,
+          "cluster_id": "4585",
+          "title": "현대차, '포레스트런 2026' 참가자 모집 및 사헬 지역 나무 식재 계획 발표",
+          "published_at": "2026-07-22T08:40:00+00:00"
+        },
+        {
+          "rank": 8,
+          "cluster_id": "6853",
+          "title": "LS전선, 현대차 배터리 공장 전력 인프라 공급",
+          "published_at": "2026-07-22T08:34:00+00:00"
+        },
+        {
+          "rank": 9,
+          "cluster_id": "6957",
+          "title": "현대차, 인도 첸나이 인근 이룽가투코타이 공장 2284억원 투자 현대화",
+          "published_at": "2026-07-23T23:00:00+00:00"
+        },
+        {
+          "rank": 10,
+          "cluster_id": "6852",
+          "title": "현대차, 미국 공장서 300대 물류 로봇 관제…노바테크 70억 투자 유치",
+          "published_at": "2026-07-22T08:32:00+00:00"
+        }
+      ],
+      "gold_rank": null,
+      "strict_hit": false,
+      "event_equivalent_hit": false,
+      "approved_event_equivalent_clusters": [],
+      "final_answer_source_clusters": [
+        "4251",
+        "4193",
+        "7034",
+        "7324",
+        "4277",
+        "4553",
+        "4585",
+        "6853",
+        "6957",
+        "6852"
+      ],
+      "solar_judge": {
+        "used": true,
+        "grounded": true,
+        "reason": "주어진 근거 목록에 포함된 모든 정보가 답변에 반영되어 있으며, 근거와 모순되는 내용은 없습니다."
+      },
+      "formal_pass": true,
+      "retrieval_result_explanation": "Agent가 query='기아'와 query='현대차'로 나눠 검색했다. canonical 7014는 없었지만 같은 2분기 실적 주제로 보이는 cluster 7034가 통합 순서 3위였다. 별도 cluster의 event-equivalent 승인은 없으므로 strict/equivalent 모두 miss다."
+    },
+    {
+      "case_id": "h-news-25",
+      "question": "삼성전자 브로드컴 건은 어떤 내용이야?",
+      "canonical_gold_cluster_id": "7149",
+      "gold_title": "삼성전자-브로드컴, 5년간 2000억달러 규모 AI 반도체 파운드리 협력 체결",
+      "gold_date": "2026-07-25",
+      "search_news_calls": [
+        {
+          "stock_code": "005930",
+          "query": "브로드컴",
+          "model_requested_relative_period": null,
+          "effective_relative_period": null,
+          "effective_date_from": null,
+          "effective_date_to": null,
+          "status": "ok"
+        }
+      ],
+      "returned_clusters": [
+        {
+          "rank": 1,
+          "cluster_id": "7136",
+          "title": "이재명 대통령, 브로드컴 CEO와 회동...AI 생태계 협력 논의",
+          "published_at": "2026-07-25T00:08:00+00:00"
+        },
+        {
+          "rank": 2,
+          "cluster_id": "7107",
+          "title": "삼성·SK, 美빅테크와 1375조 반도체 장기공급 계약 체결",
+          "published_at": "2026-07-27T02:00:00+00:00"
+        },
+        {
+          "rank": 3,
+          "cluster_id": "7163",
+          "title": "삼성전자·SK·현대차·네이버, 글로벌 빅테크와 9500억달러 AI·반도체 협력 체결",
+          "published_at": "2026-07-27T05:48:00+00:00"
+        },
+        {
+          "rank": 4,
+          "cluster_id": "7151",
+          "title": "삼성전자-브로드컴, 첨단 반도체 기술 파트너십 협약 체결",
+          "published_at": "2026-07-25T05:06:00+00:00"
+        },
+        {
+          "rank": 5,
+          "cluster_id": "7004",
+          "title": "이재용·정의선·네이버 총수 동행…샌프란시스코서 9500억 달러 AI 협력 체결",
+          "published_at": "2026-07-27T02:34:00+00:00"
+        }
+      ],
+      "gold_rank": null,
+      "strict_hit": false,
+      "event_equivalent_hit": false,
+      "approved_event_equivalent_clusters": [],
+      "final_answer_source_clusters": [
+        "7136",
+        "7107",
+        "7163",
+        "7151",
+        "7004"
+      ],
+      "solar_judge": {
+        "used": true,
+        "grounded": true,
+        "reason": "답변은 근거 목록에 있는 '삼성전자-브로드컴, 첨단 반도체 기술 파트너십 협약 체결 (2026-07-25)' 및 'news_event' 유형의 기사들을 바탕으로 작성되었으며, 구체적인 수치(2000억 달러)와 협력 내용(5년간 첨단 메모리 반도체 공급, AI 칩 파운드리 협력)이 근거 문서에서 확인 가능한 정보로 보입니다. 따라서 근거가 없는 질문으로 보기 어렵고, 답변 내용이 근거와 모순되지 않으며, 제외 요청도 없으므로 모든 판정은 null입니다."
+      },
+      "formal_pass": true,
+      "retrieval_result_explanation": "query='브로드컴' 결과에 canonical 7149가 없었다. 관련 파트너십 cluster 7151이 4위였지만 별도 cluster event-equivalent 승인이 없어 miss다. top-K 기록만으로 후보 생성과 hybrid ranking을 더 세분화할 수 없다."
+    }
+  ]
+}
