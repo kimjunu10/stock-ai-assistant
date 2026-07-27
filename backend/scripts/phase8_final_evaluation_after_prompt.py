@@ -56,12 +56,26 @@ _spec.loader.exec_module(_dryrun)
 
 # 외부 환경 문제로 볼 종료 상태(제품 정확성 실패와 분리해 집계한다).
 _ENV_STOP_REASONS = {"timeout", "error", "runner_error"}
+# 모델 API 장애가 답변 본문으로 새어 나온 경우의 식별 조각. LangChain 미들웨어가
+# 재시도를 소진하면 stop_reason 은 completed 인 채 answer 에 오류 문자열이 담긴다
+# — 이걸 제품 실패로 세면 답변 품질 지표가 왜곡된다.
+_ENV_ANSWER_MARKERS = (
+    "RateLimitError",
+    "Model call failed after",
+    "Error code: 429",
+    "APIConnectionError",
+    "InternalServerError",
+)
 
 
 def is_environment_failure(rec: RunRecord) -> tuple[bool, str]:
     """일시적 외부 문제인지 판정한다(제품 정확성 실패와 섞이면 지표가 왜곡된다)."""
     if rec.stop_reason in _ENV_STOP_REASONS:
         return True, f"stop_reason={rec.stop_reason}" + (f" ({rec.error})" if rec.error else "")
+    answer = rec.answer or ""
+    hit = next((m for m in _ENV_ANSWER_MARKERS if m in answer), None)
+    if hit:
+        return True, f"모델 API 오류가 답변에 노출됨({hit})"
     bad = [c["name"] for c in rec.tool_calls if c.get("status") == "error"]
     if bad and not rec.answer.strip():
         return True, f"모든 Tool 실패({bad})로 답변 없음"
@@ -187,20 +201,31 @@ def main() -> int:
     ]
     judge_cache.save()
 
-    # --- 전체 조건 통과율 ---
-    pass_rows = []
-    for c, g in zip(ran_cases, grades, strict=True):
-        ok, fails = case_passed(c, g)
-        if not ok:
-            pass_rows.append({"id": c.id, "type": c.type, "fails": fails})
-    n_pass = len(ran_cases) - len(pass_rows)
-
     # --- 외부 환경 실패(제품 실패와 분리) ---
     env_rows = []
+    env_ids: set[str] = set()
     for c, r in zip(ran_cases, records, strict=True):
         env, why = is_environment_failure(r)
         if env:
             env_rows.append({"id": c.id, "type": c.type, "reason": why})
+            env_ids.add(c.id)
+
+    # --- 전체 조건 통과율 ---
+    # 모델 API 장애(429 등)로 답변 자체가 생성되지 못한 문항은 제품 실패로 세지
+    # 않는다. 그 문항을 분모에 남겨두면 외부 장애가 제품 품질처럼 보인다.
+    pass_rows = []
+    env_failed_rows = []
+    for c, g in zip(ran_cases, grades, strict=True):
+        ok, fails = case_passed(c, g)
+        if ok:
+            continue
+        row = {"id": c.id, "type": c.type, "fails": fails}
+        if c.id in env_ids:
+            env_failed_rows.append(row)
+        else:
+            pass_rows.append(row)
+    n_eligible = len(ran_cases) - len(env_ids)
+    n_pass = n_eligible - len(pass_rows)
 
     # --- Solar judge 성공/폴백 분리 ---
     judge_used = sum(1 for g in grades if g.judge_used)
@@ -221,9 +246,15 @@ def main() -> int:
         "elapsed_sec": round(elapsed, 1),
         "overall_pass": {
             "n_pass": n_pass,
-            "n_total": len(ran_cases),
-            "pass_rate": round(n_pass / len(ran_cases), 4) if ran_cases else None,
+            "n_eligible": n_eligible,
+            "n_total_ran": len(ran_cases),
+            "n_excluded_environment": len(env_ids),
+            "pass_rate": round(n_pass / n_eligible, 4) if n_eligible else None,
+            "pass_rate_including_environment": (
+                round(n_pass / len(ran_cases), 4) if ran_cases else None
+            ),
             "failed_cases": pass_rows,
+            "environment_failed_cases": env_failed_rows,
         },
         "judge": {
             "solar_success": judge_used,
@@ -240,7 +271,10 @@ def main() -> int:
     METRICS_PATH.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"\n=== 실행 {len(ran_cases)}건 / {elapsed:.0f}초 / 외부환경 실패 {len(env_rows)}건 ===")
-    print(f"전체 조건 통과: {n_pass}/{len(ran_cases)} ({out['overall_pass']['pass_rate']})")
+    print(
+        f"전체 조건 통과: {n_pass}/{n_eligible} ({out['overall_pass']['pass_rate']}) "
+        f"— 외부장애 {len(env_ids)}건 제외"
+    )
     print(f"Solar judge 성공 {judge_used} / 폴백 {len(judge_fallback)}")
     print(f"비용 합계: ${cost_total}")
     print(json.dumps(overall, ensure_ascii=False, indent=2))
