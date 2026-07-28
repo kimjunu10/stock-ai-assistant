@@ -483,9 +483,7 @@ def test_price_driver_news_applies_sentiment_to_returned_cards():
             purpose="price_driver_down",
         ),
     )
-    assert [item["title"] for item in result.data["news"]] == [
-        "삼성전자 주가 급락과 공급 우려"
-    ]
+    assert [item["title"] for item in result.data["news"]] == ["삼성전자 주가 급락과 공급 우려"]
     assert result.data["applied_filters"]["sentiment"] == "negative"
 
 
