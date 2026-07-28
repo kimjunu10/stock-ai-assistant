@@ -142,7 +142,7 @@ describe('RagVisualizations', () => {
     expect(screen.getByText('2026-07-28 최근 체결가')).toBeTruthy()
   })
 
-  it('renders the current event-return horizon contract', () => {
+  it('renders only the event-return candlestick chart without the duplicate summary', () => {
     render(<RagVisualizations visualizations={[{
       type: 'event_return',
       title: '발표 전후 주가 변화',
@@ -163,11 +163,14 @@ describe('RagVisualizations', () => {
       },
       sourceIds: ['n1', 'p1'],
     }]} />)
-    expect(screen.getByText('85,000원')).toBeTruthy()
-    expect(screen.getByText('발표 후 1거래일')).toBeTruthy()
-    expect(screen.getByText('+4.7%')).toBeTruthy()
+    expect(screen.getAllByText(/최저/).some((element) => element.textContent?.includes('85,000원'))).toBe(true)
     expect(screen.getByRole('img', { name: /발표 전후 토스증권 주가 흐름/ })).toBeTruthy()
     expect(screen.getByText('실제 일봉')).toBeTruthy()
+    expect(screen.getByText('발표 전후 주가 흐름')).toBeTruthy()
+    expect(screen.queryByText('발표 전후 주가 변화')).toBeNull()
+    expect(screen.queryByText('기준 거래일')).toBeNull()
+    expect(screen.queryByText('발표 후 1거래일')).toBeNull()
+    expect(screen.queryByText('+4.7%')).toBeNull()
   })
 
   it('falls back to the matched source URL for a news card', () => {
