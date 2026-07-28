@@ -61,6 +61,46 @@ def test_multiple_distinct_events_are_ambiguous():
     assert {c.event_id for c in r.candidates} == {"news:a", "news:b"}
 
 
+def test_question_reuses_the_single_matching_disclosure_in_previous_sources():
+    r = resolve_event(
+        [
+            _ev(
+                "20260715000004",
+                title="증권발행실적보고서",
+                published_at="2026-07-15",
+                stock_code="000660",
+            ),
+            _ev(
+                "20260715800045",
+                title="유상증자또는주식관련사채등의발행결과(자율공시)",
+                published_at="2026-07-15",
+                stock_code="000660",
+            ),
+            _ev(
+                "20260716000582",
+                title="임원ㆍ주요주주특정증권등소유상황보고서",
+                published_at="2026-07-16",
+                stock_code="000660",
+            ),
+        ],
+        question="유상증자 공시 뜨고 하이닉스 주가 어떻게 됐어?",
+    )
+    assert r.status == "resolved"
+    assert r.event.event_id == "20260715800045"
+    assert event_date_of(r.event).isoformat() == "2026-07-15"
+
+
+def test_generic_followup_does_not_guess_between_multiple_events():
+    r = resolve_event(
+        [
+            _ev("a", title="유상증자 결정", published_at="2026-07-10"),
+            _ev("b", title="유상증자 발행결과", published_at="2026-07-15"),
+        ],
+        question="그 공시 이후 주가 어떻게 됐어?",
+    )
+    assert r.status == "ambiguous"
+
+
 def test_clarification_message_lists_title_and_date():
     r = resolve_event(
         [

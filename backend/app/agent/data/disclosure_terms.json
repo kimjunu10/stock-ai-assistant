@@ -1,0 +1,16 @@
+[
+  {
+    "term": "임원ㆍ주요주주특정증권등소유상황보고서",
+    "aliases": [
+      "임원 주요주주 특정증권등 소유상황보고서",
+      "임원ㆍ주요주주 소유보고",
+      "임원 주요주주 소유보고"
+    ],
+    "english_name": "Report on Ownership of Specific Securities by Executives and Major Shareholders",
+    "official_definition": "주권상장법인의 임원 또는 주요주주가 자신이 소유한 해당 법인의 특정증권 현황과 변동 내용을 금융위원회와 거래소에 보고하는 지분 공시입니다.",
+    "easy_definition": "회사 임원이나 주요주주가 그 회사 주식을 얼마나 가지고 있고, 보유 수량이 어떻게 바뀌었는지 알리는 공시입니다. 회사의 유상증자나 자금 조달 공시와는 다른 종류입니다.",
+    "source_name": "금융감독원 전자공시시스템",
+    "source_title": "기업공시 길라잡이 - 임원·주요주주의 특정증권 소유상황 보고",
+    "source_url": "https://dart.fss.or.kr/info/main.do?menu=320"
+  }
+]

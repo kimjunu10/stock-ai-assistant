@@ -169,6 +169,9 @@ _PRICE_MOVEMENT_TOKENS = (
     "급락",
     "움직",
 )
+_PRICE_REASON_TOKENS = ("왜", "이유", "원인", "배경", "호재", "악재", "영향")
+_EVENT_REFERENCE_TOKENS = ("뉴스", "기사", "소식", "발표", "공시", "사건", "이슈")
+_EVENT_TEMPORAL_TOKENS = ("이후", "전후", "발표후", "공시후", "나온뒤", "뜨고", "뒤주가")
 
 
 def is_price_movement_question(question: str | None) -> bool:
@@ -182,6 +185,26 @@ def is_price_movement_question(question: str | None) -> bool:
     compact = "".join((question or "").lower().split())
     return any(token in compact for token in _PRICE_CONTEXT_TOKENS) and any(
         token in compact for token in _PRICE_MOVEMENT_TOKENS
+    )
+
+
+def is_price_driver_question(question: str | None) -> bool:
+    """실제 가격 움직임의 원인·배경까지 요구한 질문인지 판정한다."""
+
+    compact = "".join((question or "").lower().split())
+    return any(token in compact for token in _PRICE_CONTEXT_TOKENS) and any(
+        token in compact for token in _PRICE_REASON_TOKENS
+    )
+
+
+def is_event_return_question(question: str | None) -> bool:
+    """특정 뉴스·공시 발표 전후의 가격 변화를 묻는 질문인지 판정한다."""
+
+    compact = "".join((question or "").lower().split())
+    return (
+        any(token in compact for token in _PRICE_CONTEXT_TOKENS)
+        and any(token in compact for token in _EVENT_REFERENCE_TOKENS)
+        and any(token in compact for token in _EVENT_TEMPORAL_TOKENS)
     )
 
 

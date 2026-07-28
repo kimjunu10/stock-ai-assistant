@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
@@ -86,10 +88,35 @@ def _cluster_key(event: EventContext) -> tuple:
     return ("id", event.event_id)
 
 
+def _reference_match_score(question: str | None, title: str | None) -> int:
+    """질문과 사건 제목의 가장 긴 공통 구절 길이.
+
+    회사별·공시별 키워드 목록을 두지 않고, 사용자가 직전 제목의 구체적인 표현을 다시
+    언급했는지만 본다. 네 글자 미만의 일반 표현(뉴스·공시·주가 등)은 사건 선택 근거로
+    쓰지 않는다.
+    """
+
+    def compact(value: str | None) -> str:
+        return re.sub(
+            r"[^0-9a-z가-힣]",
+            "",
+            unicodedata.normalize("NFKC", value or "").casefold(),
+        )
+
+    q, t = compact(question), compact(title)
+    if not q or not t:
+        return 0
+    for size in range(min(len(q), len(t)), 3, -1):
+        if any(t[start : start + size] in q for start in range(len(t) - size + 1)):
+            return size
+    return 0
+
+
 def resolve_event(
     event_context: list[EventContext],
     *,
     selected_event_id: str | None = None,
+    question: str | None = None,
 ) -> EventResolution:
     """구조화 사건 문맥에서 대상 사건을 확정한다(§4 우선순위)."""
     events = [e for e in event_context if e and e.event_id]
@@ -115,10 +142,18 @@ def resolve_event(
         group = next(iter(clusters.values()))
         return EventResolution(status="resolved", event=_representative(group))
 
-    # (3) 그 외에는 자동 확정하지 않는다.
+    # (3) 사용자가 직전 사건 제목의 구체적 표현을 다시 언급했고 유일하게 일치하면 연결.
+    representatives = [_representative(group) for group in clusters.values()]
+    scored = [(event, _reference_match_score(question, event.title)) for event in representatives]
+    best = max((score for _, score in scored), default=0)
+    matched = [event for event, score in scored if score == best and score >= 4]
+    if len(matched) == 1:
+        return EventResolution(status="resolved", event=matched[0])
+
+    # (4) 그 외에는 자동 확정하지 않는다.
     return EventResolution(
         status="ambiguous",
-        candidates=_candidates([_representative(g) for g in clusters.values()]),
+        candidates=_candidates(representatives),
     )
 
 

@@ -11,6 +11,7 @@ from app.agent.validator import (
     sanitize_answer_style,
     sanitize_causal_language,
     sanitize_conflicting_document_price_claims,
+    sanitize_price_movement_claims,
     sanitize_unfinalized_close_claim,
 )
 from app.services.agent_qa import AgentQaService
@@ -57,6 +58,44 @@ def test_conflicting_news_directions_are_not_combined_without_price_tool():
     assert "서로 엇갈려" in answer
     assert "3%" not in answer
     assert "5%" not in answer
+
+
+def test_news_summary_does_not_receive_repetitive_causal_notice():
+    evidence = ToolEvidence(has_documents=True)
+    answer, changed = sanitize_causal_language(
+        ("삼성전자와 SK하이닉스 주가가 하락했습니다. 중국 업체 상장이 투자심리를 악화시켰습니다."),
+        evidence,
+        include_notice=False,
+    )
+    assert changed
+    assert "직접적인 원인이라고 단정" not in answer
+
+
+def test_news_explanation_does_not_emit_document_direction_conflict_notice():
+    evidence = ToolEvidence(has_documents=True)
+    original = "한 기사는 상승을, 다른 기사는 하락을 언급했습니다."
+    answer, changed = sanitize_conflicting_document_price_claims(
+        original,
+        evidence,
+        enabled=False,
+    )
+    assert changed is False
+    assert answer == original
+
+
+def test_event_return_mismatch_does_not_claim_price_lookup_failed():
+    evidence = ToolEvidence(
+        has_price=True,
+        has_event_return=True,
+        price_change_rates={2.31, 13.85, 18.77},
+    )
+    answer, changed = sanitize_price_movement_claims(
+        "발표 후 주가는 99% 하락했습니다.",
+        evidence,
+    )
+    assert changed
+    assert "가격 데이터 조회가 완료되지 않아" not in answer
+    assert "99%" not in answer
 
 
 def test_unfinalized_today_close_is_replaced_with_quote_contract():

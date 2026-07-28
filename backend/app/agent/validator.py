@@ -314,6 +314,10 @@ def sanitize_price_movement_claims(
                     f"**{evidence.current_price:,}원**, 전일 대비 "
                     f"**{evidence.current_change_rate_pct:+.2f}%**입니다."
                 )
+            elif evidence.has_event_return:
+                # 사건 전후 가격은 확보됐지만 현재가 snapshot은 없는 정상 상태다.
+                # 검증되지 않은 문장만 제거하고 "가격 조회 실패"라는 거짓 안내를 만들지 않는다.
+                pass
             else:
                 kept.append(
                     "현재 가격 데이터 조회가 완료되지 않아 실제 등락률은 확인하지 "
@@ -323,7 +327,12 @@ def sanitize_price_movement_claims(
     return "\n".join(kept).strip(), changed
 
 
-def sanitize_causal_language(answer: str, evidence: ToolEvidence) -> tuple[str, bool]:
+def sanitize_causal_language(
+    answer: str,
+    evidence: ToolEvidence,
+    *,
+    include_notice: bool = True,
+) -> tuple[str, bool]:
     """근거 없는 뉴스→주가 직접 인과 문장을 제거하고 한계를 명시한다."""
 
     if not evidence.has_documents:
@@ -341,21 +350,26 @@ def sanitize_causal_language(answer: str, evidence: ToolEvidence) -> tuple[str, 
         previous_described_move = describes_move
     if len(kept) == len(sentences):
         return answer, False
+    body = "\n\n".join(kept)
+    if not include_notice:
+        return body, True
     caveat = (
         "뉴스와 주가 움직임이 같은 시기에 확인됐지만, 해당 뉴스가 등락의 직접적인 "
         "원인이라고 단정할 수는 없습니다."
     )
-    body = "\n\n".join(kept)
     suffix = "\n\n" + body if body else ""
     return caveat + suffix, True
 
 
 def sanitize_conflicting_document_price_claims(
-    answer: str, evidence: ToolEvidence
+    answer: str,
+    evidence: ToolEvidence,
+    *,
+    enabled: bool = True,
 ) -> tuple[str, bool]:
     """문서끼리 등락 방향이 충돌하면 실제 가격 근거 없이 방향을 합성하지 않는다."""
 
-    if not evidence.has_documents or evidence.has_price:
+    if not enabled or not evidence.has_documents or evidence.has_price:
         return answer, False
     sentences = [part.strip() for part in _SENTENCE_SPLIT_RE.split(answer) if part.strip()]
     movement = [

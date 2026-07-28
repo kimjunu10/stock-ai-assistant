@@ -76,6 +76,7 @@ class _Runtime:
                 "stock_code": "005930",
                 "user_question": question,
                 "current_date": "2026-07-27",
+                "event_status": "none",
             },
         )()
 
@@ -153,3 +154,26 @@ def test_tool_applies_explicit_last_month_without_changing_query(monkeypatch):
     assert inp.query == "배당 정책"
     assert inp.date_from == "2026-06-01"
     assert inp.date_to == "2026-06-30"
+
+
+def test_event_return_only_question_does_not_fetch_unrelated_recent_news(monkeypatch):
+    called = False
+
+    def fake_run(_retriever, _inp):
+        nonlocal called
+        called = True
+        return ok({"news": []})
+
+    monkeypatch.setattr("app.agent.runtime.run_search_news", fake_run)
+    runtime = _Runtime("유상증자 공시 뜨고 주가 어떻게 됐어?")
+    runtime.context.event_status = "resolved"
+    payload = json.loads(
+        _search_news_tool().func(
+            stock_code="005930",
+            runtime=runtime,
+            query=None,
+        )
+    )
+
+    assert payload["status"] == "no_data"
+    assert called is False
