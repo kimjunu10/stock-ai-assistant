@@ -19,7 +19,7 @@ from __future__ import annotations
 import threading
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 
 from app.sources.prices import SUPPORTED_STOCK_CODES, TossApiError, TossInvestClient
@@ -107,6 +107,9 @@ class EventWindowReturn:
     horizons: list[EventHorizonReturn]
     currency: str
     adjusted: bool
+    # 발표 전 기준 거래일부터 마지막으로 계산 가능한 지평까지의 실제 일봉.
+    # 호출부는 이 값을 다시 조회하거나 계산하지 않고 UI 캔들 차트에 그대로 사용한다.
+    daily: list[DailyClose] = field(default_factory=list)
 
     @property
     def has_post_data(self) -> bool:
@@ -485,6 +488,14 @@ class StockPriceService:
                     return_pct=_round2(change / baseline.close * 100) if baseline.close else 0.0,
                 )
             )
+        last_trading_day = (
+            result_horizons[-1].trading_day if result_horizons else baseline.trading_day
+        )
+        window_candles = [
+            c
+            for c in candles
+            if baseline.trading_day <= c.trading_day <= last_trading_day
+        ]
         return EventWindowReturn(
             stock_code=stock_code,
             event_date=event_date,
@@ -493,6 +504,7 @@ class StockPriceService:
             horizons=result_horizons,
             currency=baseline.currency,
             adjusted=adjusted,
+            daily=window_candles,
         )
 
     def get_daily_candles(

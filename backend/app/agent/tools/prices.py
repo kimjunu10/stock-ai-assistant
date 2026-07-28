@@ -322,6 +322,9 @@ def _event_window_ok(inp: CalculateEventReturnInput, ew: EventWindowReturn) -> T
             }
             for h in ew.horizons
         ],
+        # 발표 전 기준 거래일부터 마지막 관측 지평까지의 실제 OHLCV.
+        # 모델은 horizons를 사용하고, UI는 이 값을 캔들 차트로 그린다.
+        "daily_full": [_candle_point(c) for c in ew.daily],
         # 실제 사용한 시작·종료 거래일(계약 필수 항목).
         "start_trading_day": ew.baseline_trading_day.isoformat(),
         "end_trading_day": last.trading_day.isoformat(),

@@ -2354,6 +2354,16 @@
   .answer-event-return__horizons article > div i { @apply block h-full rounded-full; }
   .answer-event-return__horizons i.is-up { @apply bg-rose-400; }
   .answer-event-return__horizons i.is-down { @apply bg-blue-400; }
+  .answer-event-return__chart { @apply mt-5 border-t border-line pt-5; }
+  .answer-event-return__chart > header,
+  .answer-event-return__chart > footer { @apply flex items-center justify-between gap-3; }
+  .answer-event-return__chart > header > div { @apply flex flex-col; }
+  .answer-event-return__chart > header span { @apply text-[10px] font-extrabold tracking-[.5px] text-brand-ink; }
+  .answer-event-return__chart > header strong { @apply mt-0.5 text-[15px] font-black text-ink; }
+  .answer-event-return__chart > header em {
+    @apply rounded-full bg-subtle px-2.5 py-1 text-[10px] font-bold not-italic text-muted;
+  }
+  .answer-event-return__chart > footer { @apply mt-2 text-[9px] font-semibold text-faint; }
   .answer-event-return > p { @apply mt-4 mb-0 text-[9px] text-faint; }
 
   .answer-news-list { @apply rounded-[21px]; }
@@ -2401,6 +2411,9 @@
   }
   .rag-conversation--page .rag-message--assistant.is-pending {
     @apply mb-6;
+  }
+  .rag-conversation--page .rag-message--assistant:last-child {
+    min-height: calc(100dvh - 260px);
   }
   .rag-conversation--page .rag-message--assistant.is-pending > div {
     @apply w-full max-w-[390px] rounded-none border-0 bg-transparent p-0;

@@ -59,6 +59,18 @@ describe('RagVisualizations', () => {
     expect(document.querySelector('.news-list-item.is-sentiment-negative')).toBeTruthy()
   })
 
+  it('accepts the cluster sentiment field name defensively', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'news_cards',
+      title: '최근 뉴스',
+      data: {
+        items: [{ source_id: 'n1', title: '호재 소식', sentiment_label: 'positive' }],
+      },
+      sourceIds: ['n1'],
+    }]} />)
+    expect(screen.getByText('호재')).toBeTruthy()
+  })
+
   it('renders event timeline merging news and disclosures newest-first', () => {
     render(<RagVisualizations visualizations={[{
       type: 'event_timeline',
@@ -105,12 +117,19 @@ describe('RagVisualizations', () => {
           { horizon_days: 1, trading_day: '2026-07-21', close: 87000, return_pct: 2.35 },
           { horizon_days: 3, trading_day: '2026-07-23', close: 89000, return_pct: 4.7 },
         ],
+        daily_full: [
+          { trading_day: '2026-07-17', open: 84500, high: 85500, low: 84000, close: 85000, volume: 1000 },
+          { trading_day: '2026-07-21', open: 85000, high: 87500, low: 84800, close: 87000, volume: 1200 },
+          { trading_day: '2026-07-23', open: 87200, high: 89500, low: 87000, close: 89000, volume: 900 },
+        ],
       },
       sourceIds: ['n1', 'p1'],
     }]} />)
     expect(screen.getByText('85,000원')).toBeTruthy()
     expect(screen.getByText('발표 후 1거래일')).toBeTruthy()
     expect(screen.getByText('+4.7%')).toBeTruthy()
+    expect(screen.getByRole('img', { name: /발표 전후 토스증권 주가 흐름/ })).toBeTruthy()
+    expect(screen.getByText('실제 일봉')).toBeTruthy()
   })
 
   it('falls back to the matched source URL for a news card', () => {

@@ -69,7 +69,7 @@ export function RagConversation({
   useEffect(() => {
     if (messages.length > 0) {
       const frame = window.requestAnimationFrame(() => {
-        endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
+        lastUserRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
       })
       return () => window.cancelAnimationFrame(frame)
     }

@@ -214,9 +214,54 @@ class HybridRetriever:
             deduped.sort(key=lambda c: c.source_pk != context_source_id)
         final = deduped[:top_k]
 
+        self._hydrate_news_cluster_metadata(final)
         if expand_parent:
             self._expand_parents(final)
         return final
+
+    def _hydrate_news_cluster_metadata(self, chunks: list[RetrievedChunk]) -> None:
+        """하이브리드 RPC에 없는 뉴스 클러스터 메타데이터를 보강한다.
+
+        뉴스 감성은 인덱싱 이후 ``news_clusters``에 기록될 수 있으므로, 최신 뉴스
+        조회와 하이브리드 검색이 같은 카드 계약을 갖도록 원본 클러스터에서 읽는다.
+        감성 보강 실패가 핵심 검색 결과까지 막지는 않게 안전하게 건너뛴다.
+        """
+        cluster_ids = sorted(
+            {
+                int(chunk.source_pk)
+                for chunk in chunks
+                if chunk.source_type == "news_event"
+                and str(chunk.source_pk or "").isdigit()
+            }
+        )
+        if not cluster_ids:
+            return
+        try:
+            rows = (
+                self._db.table("news_clusters")
+                .select("id,sentiment_label")
+                .in_("id", cluster_ids)
+                .execute()
+            ).data or []
+        except Exception:  # noqa: BLE001 - 선택 메타데이터 실패로 검색 자체를 막지 않는다.
+            return
+        sentiment_by_id = {
+            int(row["id"]): row.get("sentiment_label")
+            for row in rows
+            if isinstance(row, dict) and str(row.get("id", "")).isdigit()
+        }
+        for chunk in chunks:
+            if not (
+                chunk.source_type == "news_event"
+                and str(chunk.source_pk or "").isdigit()
+            ):
+                continue
+            cluster_id = int(chunk.source_pk)
+            locator = dict(chunk.source_locator or {})
+            locator.setdefault("cluster_id", cluster_id)
+            if cluster_id in sentiment_by_id:
+                locator["sentiment_label"] = sentiment_by_id[cluster_id]
+            chunk.source_locator = locator
 
     def get_news_event(
         self,

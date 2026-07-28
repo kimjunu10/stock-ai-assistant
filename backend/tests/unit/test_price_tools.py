@@ -215,6 +215,26 @@ def _event_window(horizons=(1, 3, 5), *, baseline=100000.0):
         ],
         currency="KRW",
         adjusted=True,
+        daily=[
+            DailyClose(
+                trading_day=day,
+                close=close,
+                open=close - 500,
+                high=close + 1000,
+                low=close - 1000,
+                volume=1000,
+                currency="KRW",
+            )
+            for day, close in [
+                (date(2026, 7, 21), baseline),
+                (date(2026, 7, 23), 103000.0),
+                (date(2026, 7, 24), 104000.0),
+                (date(2026, 7, 27), 105000.0),
+                (date(2026, 7, 28), 101000.0),
+                (date(2026, 7, 29), 98000.0),
+            ]
+            if not horizons or day <= days[max(horizons)]
+        ],
     )
 
 
@@ -237,6 +257,15 @@ def test_calculate_event_return_contract():
     # 실제 사용한 시작·종료 거래일
     assert r.data["start_trading_day"] == "2026-07-21"
     assert r.data["end_trading_day"] == "2026-07-29"
+    assert [point["trading_day"] for point in r.data["daily_full"]] == [
+        "2026-07-21",
+        "2026-07-23",
+        "2026-07-24",
+        "2026-07-27",
+        "2026-07-28",
+        "2026-07-29",
+    ]
+    assert r.data["daily_full"][0]["open"] == 99500.0
     assert "발표 전 마지막 거래일" in r.data["note"]  # 인과 아님
     # baseline 1건 + 지평 3건
     assert len(r.sources) == 4
