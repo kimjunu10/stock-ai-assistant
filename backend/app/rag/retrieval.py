@@ -230,8 +230,7 @@ class HybridRetriever:
             {
                 int(chunk.source_pk)
                 for chunk in chunks
-                if chunk.source_type == "news_event"
-                and str(chunk.source_pk or "").isdigit()
+                if chunk.source_type == "news_event" and str(chunk.source_pk or "").isdigit()
             }
         )
         if not cluster_ids:
@@ -251,10 +250,7 @@ class HybridRetriever:
             if isinstance(row, dict) and str(row.get("id", "")).isdigit()
         }
         for chunk in chunks:
-            if not (
-                chunk.source_type == "news_event"
-                and str(chunk.source_pk or "").isdigit()
-            ):
+            if not (chunk.source_type == "news_event" and str(chunk.source_pk or "").isdigit()):
                 continue
             cluster_id = int(chunk.source_pk)
             locator = dict(chunk.source_locator or {})

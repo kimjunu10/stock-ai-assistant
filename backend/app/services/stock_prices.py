@@ -492,9 +492,7 @@ class StockPriceService:
             result_horizons[-1].trading_day if result_horizons else baseline.trading_day
         )
         window_candles = [
-            c
-            for c in candles
-            if baseline.trading_day <= c.trading_day <= last_trading_day
+            c for c in candles if baseline.trading_day <= c.trading_day <= last_trading_day
         ]
         return EventWindowReturn(
             stock_code=stock_code,
