@@ -7,7 +7,7 @@ TossInvestClient 를 가짜로 주입해 거래일 스냅·수익률 계산·30�
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 
@@ -64,6 +64,7 @@ class FakeToss:
 
 def _svc(client, **kw):
     kw.setdefault("clock", _fake_clock())
+    kw.setdefault("now", lambda: datetime.fromisoformat("2026-07-27T12:05:00+09:00"))
     kw.setdefault("sleep", lambda s: None)
     return StockPriceService(client, **kw)
 
@@ -101,6 +102,27 @@ def test_current_quote_uses_toss_reference_price_not_daily_close():
     assert q.trading_day == date(2026, 7, 27)
     assert q.currency == "KRW"
     assert client.daily_calls == 0
+
+
+def test_closed_market_uses_request_time_and_labels_previous_quote_as_latest():
+    client = FakeToss(
+        [],
+        current={
+            "symbol": "000660",
+            "timestamp": "2026-07-28T19:59:59+09:00",
+            "lastPrice": "1525000",
+            "basePrice": "1785000",
+            "currency": "KRW",
+        },
+    )
+    request_now = datetime.fromisoformat("2026-07-29T01:24:00+09:00")
+    quote = _svc(client, now=lambda: request_now).get_current_quote("000660")
+
+    assert quote is not None
+    assert quote.as_of.isoformat() == "2026-07-28T19:59:59+09:00"
+    assert quote.market_status == "closed"
+    assert quote.market_status_as_of == request_now
+    assert quote.price_kind == "latest"
 
 
 def test_current_quote_no_data_when_missing():
