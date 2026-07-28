@@ -264,6 +264,14 @@ def test_event_window_return_1_3_5_trading_days():
     assert r.horizons[1].return_pct == pytest.approx(2.0, abs=0.01)
     assert r.horizons[2].trading_day == date(2026, 7, 29)
     assert r.horizons[2].return_pct == pytest.approx(-2.0, abs=0.01)
+    assert [c.trading_day for c in r.daily] == [
+        date(2026, 7, 21),
+        date(2026, 7, 23),
+        date(2026, 7, 24),
+        date(2026, 7, 27),
+        date(2026, 7, 28),
+        date(2026, 7, 29),
+    ]
 
 
 def test_event_window_baseline_excludes_event_day_close():
@@ -289,6 +297,7 @@ def test_event_window_no_post_trading_day():
     assert r.has_post_data is False
     assert r.horizons == []
     assert r.baseline_trading_day == date(2026, 7, 21)
+    assert [c.trading_day for c in r.daily] == [date(2026, 7, 21)]
 
 
 def test_event_window_partial_horizons_not_extrapolated():

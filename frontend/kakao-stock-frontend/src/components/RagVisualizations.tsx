@@ -70,7 +70,7 @@ function NewsResults({ sources, visualization }: { sources: RagSource[]; visuali
               key={`${text(item.source_id)}-${index}`}
               publishedAt={typeof item.published_at === 'string' ? item.published_at : source?.publishedAt}
               publisher={typeof item.publisher === 'string' ? item.publisher : source?.publisher}
-              sentiment={sentiment(item.sentiment)}
+              sentiment={sentiment(item.sentiment ?? item.sentiment_label)}
               snippet={typeof item.snippet === 'string' ? item.snippet : undefined}
               stockCode={typeof item.stock_code === 'string' ? item.stock_code : undefined}
               title={text(item.title, '제목 없는 뉴스')}
@@ -155,6 +155,18 @@ function EventReturn({ visualization }: { visualization: RagVisualization }) {
     typeof item.horizon_days === 'number' && typeof item.return_pct === 'number'
   ))
   if (horizons.length === 0) return null
+  const daily = records(data.daily_full).filter(
+    (point) => typeof point.close === 'number' && typeof point.trading_day === 'string',
+  )
+  const chartPoints: RagPricePoint[] = daily.map((point) => ({
+    tradingDay: point.trading_day as string,
+    close: point.close as number,
+    open: typeof point.open === 'number' ? point.open : undefined,
+    high: typeof point.high === 'number' ? point.high : undefined,
+    low: typeof point.low === 'number' ? point.low : undefined,
+    volume: typeof point.volume === 'number' ? point.volume : undefined,
+  }))
+  const dailyValues = daily.map((point) => point.close as number)
   const largest = Math.max(...horizons.map((item) => Math.abs(item.return_pct as number)), 1)
   return (
     <section className="answer-event-return">
@@ -179,6 +191,23 @@ function EventReturn({ visualization }: { visualization: RagVisualization }) {
           )
         })}
       </div>
+      {chartPoints.length >= 2 && (
+        <section className="answer-event-return__chart">
+          <header>
+            <div><span>실제 일봉</span><strong>발표 전후 주가 흐름</strong></div>
+            <em>토스증권</em>
+          </header>
+          <RagPriceChart
+            label={`${text(daily[0]?.trading_day)}부터 ${text(daily.at(-1)?.trading_day)}까지 발표 전후 토스증권 주가 흐름`}
+            points={chartPoints}
+          />
+          <footer>
+            <span>{text(daily[0]?.trading_day)} 기준 종가</span>
+            <span>최저 {won(Math.min(...dailyValues))} · 최고 {won(Math.max(...dailyValues))}</span>
+            <span>{text(daily.at(-1)?.trading_day)} 마지막 관측</span>
+          </footer>
+        </section>
+      )}
       <p>발표 전후 거래일의 가격 변화이며 직접적인 인과관계를 뜻하지 않습니다.</p>
     </section>
   )
