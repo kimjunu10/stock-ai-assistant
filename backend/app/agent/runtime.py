@@ -38,7 +38,8 @@ from app.agent.prompts import financial_agent_system_prompt
 from app.agent.time_context import (
     RelativePeriod,
     effective_news_relative_period,
-    is_price_movement_question,
+    is_event_return_question,
+    is_price_driver_question,
     resolve_financial_time_context,
     resolve_relative_date_range,
 )
@@ -292,7 +293,7 @@ def build_tools() -> list:
 
     @tool
     def lookup_financial_term(term: str, runtime: ToolRuntime[QaRuntimeContext]) -> str:
-        """금융/경제 용어의 정의를 조회한다(한국은행 경제금융용어 등)."""
+        """금융·경제·공시 양식 용어의 정의를 공식 출처 사전에서 조회한다."""
         svc, err = _services(runtime)
         if err:
             return _dump(err)
@@ -340,11 +341,23 @@ def build_tools() -> list:
         svc, err = _services(runtime)
         if err:
             return _dump(err)
+        question = getattr(runtime.context, "user_question", None)
+        if (
+            getattr(runtime.context, "event_status", "none") == "resolved"
+            and is_event_return_question(question)
+            and not is_price_driver_question(question)
+        ):
+            return _dump(
+                no_data(
+                    "사용자가 지정한 사건의 발표 전후 가격만 묻고 있어 최신 뉴스를 "
+                    "추가 검색하지 않았습니다."
+                )
+            )
         relative_period = effective_news_relative_period(
-            getattr(runtime.context, "user_question", None),
+            question,
             relative_period,
         )
-        if is_price_movement_question(getattr(runtime.context, "user_question", None)):
+        if is_price_driver_question(question):
             purpose = "price_driver"
         if relative_period:
             current_date = getattr(runtime.context, "current_date", None)

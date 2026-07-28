@@ -17,6 +17,8 @@ import pytest
 from pydantic import ValidationError
 
 from app.agent.time_context import (
+    is_event_return_question,
+    is_price_driver_question,
     is_price_movement_question,
     resolve_financial_time_context,
     resolve_relative_date_range,
@@ -309,11 +311,31 @@ def test_price_movement_intent_requires_both_price_context_and_movement():
     assert not is_price_movement_question("현재가 알려줘")
 
 
+def test_price_driver_and_event_return_intents_are_separate():
+    assert is_price_driver_question("오늘 주가 왜 내렸어? 악재가 뭐야?")
+    assert not is_price_driver_question("유상증자 공시 뜨고 주가 어떻게 됐어?")
+    assert is_event_return_question("유상증자 공시 뜨고 주가 어떻게 됐어?")
+    assert is_event_return_question("그 뉴스 이후 주가 흐름 알려줘")
+    assert not is_event_return_question("요즘 주가 흐름 알려줘")
+
+
 # ── term ──
 def test_term_lookup_and_no_data():
     facts = _FakeFacts()
     assert run_lookup_financial_term(facts, FinancialTermInput(term="PER")).status == "ok"
     assert run_lookup_financial_term(facts, FinancialTermInput(term="없는용어")).status == "no_data"
+
+
+def test_disclosure_term_uses_official_glossary_when_financial_dictionary_has_no_entry():
+    facts = _FakeFacts()
+    result = run_lookup_financial_term(
+        facts,
+        FinancialTermInput(term="임원 · 주요주주 특정증권등 소유상황보고서"),
+    )
+    assert result.status == "ok"
+    assert "임원이나 주요주주" in result.data["easy_definition"]
+    assert result.sources[0].publisher == "금융감독원 전자공시시스템"
+    assert result.sources[0].url == "https://dart.fss.or.kr/info/main.do?menu=320"
 
 
 # ── disclosures: latest_only 기본 ──

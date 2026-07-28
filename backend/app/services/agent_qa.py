@@ -31,6 +31,7 @@ from app.agent.runtime import build_agent
 from app.agent.time_context import (
     SEOUL_TIMEZONE_NAME,
     current_seoul_datetime,
+    is_price_driver_question,
     is_price_movement_question,
 )
 from app.agent.trace import AgentTrace, ToolTrace
@@ -490,7 +491,11 @@ class AgentQaService:
             return self._blocked(request_id, decision)
 
         # 사건 확정은 코드가 한다(§4). 모델은 사건을 고르지 않는다.
-        resolution = resolve_event(list(event_context or []), selected_event_id=selected_event_id)
+        resolution = resolve_event(
+            list(event_context or []),
+            selected_event_id=selected_event_id,
+            question=question,
+        )
         ctx = self._context(
             stock_code,
             source_type,
@@ -604,8 +609,17 @@ class AgentQaService:
             evidence,
             require_price_evidence=is_price_movement_question(question),
         )
-        answer, causal_sanitized = sanitize_causal_language(answer, evidence)
-        answer, conflict_sanitized = sanitize_conflicting_document_price_claims(answer, evidence)
+        price_driver_question = is_price_driver_question(question)
+        answer, causal_sanitized = sanitize_causal_language(
+            answer,
+            evidence,
+            include_notice=price_driver_question,
+        )
+        answer, conflict_sanitized = sanitize_conflicting_document_price_claims(
+            answer,
+            evidence,
+            enabled=price_driver_question,
+        )
         validation = validate_answer(answer, evidence)
         if price_sanitized:
             validation.errors.append("가격 Tool과 불일치하거나 미검증인 등락률 문장을 교체함")

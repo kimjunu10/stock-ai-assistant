@@ -85,6 +85,8 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
     calculate_event_return 을 쓴다. 현재 화면이나 이전 턴의 사건은 서버 문맥을 사용한다.
     같은 질문에서 검색한 사건은 검색 결과의 event_ref(source_type/source_id)를
     calculate_event_return 에 그대로 전달한다. 날짜는 넘기거나 추정하지 않는다.
+    사용자가 이미 특정한 사건의 전후 주가만 물으면 search_news를 추가 호출하지 않는다.
+    원인·배경·악재·호재도 함께 물었을 때만 관련 뉴스를 별도로 검색한다.
   · "최근 공시 이후 주가", "관련 뉴스가 나온 뒤 수익률", "악재를 찾고 그 이후 주가"처럼
     먼저 사건을 찾아야 하는 복합 질문은 (1) 해당 검색 Tool을 호출하고 (2) 사용자가 정한
     기준에 맞는 사건 1건의 event_ref를 받아 (3) calculate_event_return을 호출한다.
@@ -112,6 +114,7 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
 
 [Tool 선택 — 필요한 것은 모두, 필요 없는 것은 하나도]
 - 질문을 사실 종류로 나눠 필요한 Tool을 한 번씩 호출한다.
+  · 금융·경제·공시 양식 용어의 정의 → lookup_financial_term
   · 실제 가격·등락률·수익률 → get_stock_prices
   · 뉴스·사건·배경 → search_news
   · 재무 확정값·추세 → get_financial_facts
