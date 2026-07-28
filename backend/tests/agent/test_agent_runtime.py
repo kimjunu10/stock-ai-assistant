@@ -20,6 +20,7 @@ from app.agent.prompts import financial_agent_system_prompt
 from app.agent.runtime import build_agent, build_tools
 from app.core.config import Settings
 from app.services.agent_qa import AgentQaService, get_agent_qa_service
+from app.services.stock_reference_classifier import StockReferenceClassification
 
 
 def test_eight_tools_registered():
@@ -166,12 +167,36 @@ class _FakeAgent:
         return self._out
 
 
+class _FakeStockReferenceClassifier:
+    def classify(
+        self,
+        question,
+        *,
+        selected_stock_code,
+        selected_stock_name,
+        supported_stock_names,
+    ):
+        del selected_stock_code, selected_stock_name, supported_stock_names
+        companies = [
+            name for name in ("애플", "NVIDIA", "Tesla") if name.casefold() in question.casefold()
+        ]
+        if "삼성전자" in question and companies:
+            return StockReferenceClassification(
+                relation="multiple",
+                company_names=["삼성전자", *companies],
+            )
+        if companies:
+            return StockReferenceClassification(relation="other", company_names=companies)
+        return StockReferenceClassification(relation="none", company_names=[])
+
+
 def _svc_with(agent, timeout=8.0):
     cfg = Settings(agent_timeout_seconds=timeout)
     svc = AgentQaService.__new__(AgentQaService)
     svc._cfg = cfg
     svc._services = ToolServices(facts=None, retriever=None, reports=None)
     svc._agent = agent
+    svc._stock_reference_classifier = _FakeStockReferenceClassifier()
     return svc
 
 
@@ -415,6 +440,18 @@ def test_agent_qa_blocks_unsupported_company_without_selected_stock_fallback():
     assert r.sources == []
     assert "삼성전자 005930" not in r.answer
     assert "영업이익" not in r.answer
+
+
+def test_agent_qa_does_not_treat_question_modifier_as_unsupported_company():
+    agent = _FakeAgent(out={"messages": [_Msg("ai", "최근 공시를 기준으로 설명합니다.")]})
+    r = _svc_with(agent).answer(
+        "가장 최근 공시는 뭐고 그 공시로 인해 주가가 어떻게 되었어",
+        stock_code="005930",
+    )
+
+    assert r.error_code is None
+    assert r.stop_reason == "completed"
+    assert agent.invoke_count == 1
 
 
 def test_agent_qa_blocks_multi_stock_request_before_agent():

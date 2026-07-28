@@ -39,10 +39,11 @@ def test_no_stock_context_block_without_stock_code():
     assert "현재 종목 문맥" not in prompt
 
 
-def test_stock_context_allows_user_specified_other_stock():
-    """문맥 종목이 있어도 사용자가 다른 종목을 말하면 그 종목을 쓰라고 지시한다."""
+def test_stock_context_refuses_to_substitute_selected_stock_for_other_company():
+    """다른 회사 질문에 선택 종목 자료로 대신 답하지 않도록 지시한다."""
     prompt = financial_agent_system_prompt(**_BASE, stock_code="005930", company_name="삼성전자")
-    assert "사용자가 다른 종목을 명시한 경우에만 그 종목을 쓴다" in prompt
+    assert "사용자가 다른 회사를 명시하면 이 종목의 자료로 대신 답하지 않는다" in prompt
+    assert "종목 선택을 변경해 달라고 안내" in prompt
 
 
 def test_stock_and_event_context_coexist():
