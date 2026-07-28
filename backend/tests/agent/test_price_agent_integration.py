@@ -165,7 +165,7 @@ class FakeReports:
         return []
 
 
-def _run(script, *, prices=None, reports=None, event=None):
+def _run(script, *, prices=None, reports=None, facts=None, retriever=None, event=None):
     """실제 build_agent 대신, runtime.build_tools() 를 create_agent 로 직접 조립한다.
 
     event 는 서버가 확정한 사건 문맥(dict). 사건 기준 Tool 은 이 문맥에서만 발표일을
@@ -176,8 +176,8 @@ def _run(script, *, prices=None, reports=None, event=None):
     from app.agent.runtime import build_tools
 
     svc = ToolServices(
-        facts=object(),
-        retriever=object(),
+        facts=facts or object(),
+        retriever=retriever or object(),
         reports=reports or FakeReports(),
         prices=prices or FakePriceSvc(),
     )
@@ -284,6 +284,72 @@ def test_event_return_uses_event_tool():
     assert payload["data"]["basis"] == "event"
     assert payload["data"]["event_id"] == "news:evt-1"
     assert [h["horizon_days"] for h in payload["data"]["horizons"]] == [1, 3, 5]
+
+
+def test_search_disclosure_then_event_return_rehydrates_event_ref():
+    """같은 질문에서 찾은 공시 ID를 다음 Tool이 원문 재조회해 발표일을 확정한다."""
+
+    class Facts:
+        def get_latest_disclosures(self, stock_code, **kwargs):
+            assert stock_code == "005930"
+            return [
+                {
+                    "rcept_no": "20260722000123",
+                    "title": "공급계약 체결",
+                    "disclosed_at": "2026-07-22T09:00:00+09:00",
+                    "correction_status": None,
+                    "is_latest": True,
+                }
+            ]
+
+        def get_disclosure_by_id(self, rcept_no, *, stock_code):
+            if rcept_no != "20260722000123" or stock_code != "005930":
+                return None
+            return {
+                "rcept_no": rcept_no,
+                "title": "공급계약 체결",
+                "disclosed_at": "2026-07-22T09:00:00+09:00",
+            }
+
+    prices = FakePriceSvc()
+    script = [
+        AIMessage(
+            content="",
+            tool_calls=[
+                _tool_call(
+                    "search_disclosures",
+                    {"stock_code": "005930", "query": "", "limit": 1},
+                )
+            ],
+        ),
+        AIMessage(
+            content="",
+            tool_calls=[
+                _tool_call(
+                    "calculate_event_return",
+                    {
+                        "stock_code": "005930",
+                        "event_source_type": "dart_document",
+                        "event_source_id": "20260722000123",
+                    },
+                )
+            ],
+        ),
+        AIMessage(content="공시 발표 이후 1거래일에 3.0% 상승했습니다."),
+    ]
+    out = _run(script, prices=prices, facts=Facts())
+
+    search_payload = _tool_payload(out, "search_disclosures")
+    assert search_payload["data"]["disclosures"][0]["event_ref"] == {
+        "source_type": "dart_document",
+        "source_id": "20260722000123",
+        "stock_code": "005930",
+    }
+    assert ("event_window", "005930", "2026-07-22") in prices.calls
+    event_payload = _tool_payload(out, "calculate_event_return")
+    assert event_payload["status"] == "ok"
+    assert event_payload["data"]["event"]["source_id"] == "20260722000123"
+    assert event_payload["sources"][0]["source_type"] == "dart_document"
 
 
 def test_event_tool_ignores_model_supplied_event_date():

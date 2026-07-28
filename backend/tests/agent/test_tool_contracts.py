@@ -252,6 +252,7 @@ def test_search_disclosures_latest_only_default():
     facts = _FakeFacts()
     r = run_search_disclosures(facts, SearchDisclosuresInput(stock_code="005930"))
     assert r.status == "ok" and r.sources[0].source_type == "dart_document"
+    assert r.data["disclosures"][0]["event_ref"]["source_id"] == "R1"
 
 
 def test_search_disclosures_pins_exact_ui_selected_document():
@@ -328,6 +329,11 @@ def test_search_news_surfaces_exclude_topics():
     assert any("제외" in w for w in r.warnings)
     assert r.data["applied_filters"]["exclude_topics"] == ["실적", "영업이익"]
     assert r.data["news"][0]["source_id"] == "c1"
+    assert r.data["news"][0]["event_ref"] == {
+        "source_type": "news_event",
+        "source_id": "1",
+        "stock_code": "005930",
+    }
     assert r.data["news"][0]["url"] == "/news?cluster=1"
     assert r.sources[0].locator["original_url"] == "http://x"
 

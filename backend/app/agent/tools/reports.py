@@ -51,7 +51,12 @@ def run_search_research_reports(
         except Exception as e:  # noqa: BLE001
             log_tool_exception(e, layer="ResearchReportSearch.get_by_report_id")
             return error(sanitize_exception(e))
-        return _hits_to_result(hits, limit=inp.limit, time_context=None)
+        return _hits_to_result(
+            hits,
+            limit=inp.limit,
+            time_context=None,
+            stock_code=inp.stock_code,
+        )
     # promptv2 §1: Agent 가 생략하면 current 를 기본값으로 쓴다(검색 계층과 동일 규칙).
     # 키워드 분기 없이 '안전한 기본값'만 제공한다.
     time_context = inp.time_context if inp.time_context in TIME_CONTEXTS else "current"
@@ -94,6 +99,12 @@ def _hits_to_result(
         # 목표주가는 status='stated' 인 구조화 값만 노출. 그 외엔 값 대신 상태만 알린다.
         tp_stated = h.target_price_status == "stated" and h.target_price is not None
         item = {
+            "report_id": h.report_id,
+            "event_ref": {
+                "source_type": "research_report",
+                "source_id": h.report_id,
+                "stock_code": stock_code,
+            },
             "title": h.title,
             "broker": h.broker,
             "report_date": h.report_date,

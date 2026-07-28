@@ -188,6 +188,9 @@ def test_get_prices_daily_summary():
     assert r.data["daily"][0]["open"] == 99500.0
     assert r.data["daily"][0]["high"] == 101000.0
     assert r.data["daily"][0]["low"] == 99000.0
+    assert r.data["daily"][1]["previous_close"] == 100000.0
+    assert r.data["daily"][1]["change"] == 100.0
+    assert r.data["daily"][1]["change_rate_pct"] == 0.1
 
 
 # ── 사건 전후 수익률 (fix/phase-7-exit-gate: 일반 기간 대체 차단) ──────

@@ -37,9 +37,22 @@ export interface RagHistoryMessage {
   content: string
 }
 
+export interface RagEventContext {
+  eventId: string
+  stockCode?: string
+  publishedAt?: string
+  title?: string
+  sourceType: Extract<
+    RagSourceType,
+    'news_event' | 'dart_document' | 'structured_disclosure' | 'research_report'
+  >
+  userSelected?: boolean
+}
+
 export interface RagConversationRequest {
   conversationId: string
   history: RagHistoryMessage[]
+  eventContext: RagEventContext[]
 }
 
 export interface RagSource {

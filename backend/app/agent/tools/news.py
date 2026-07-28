@@ -93,6 +93,17 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
         data.append(
             {
                 "source_id": c.chunk_id,
+                # 다음 Tool 이 이 사건을 정확히 다시 조회할 때 쓰는 불투명 참조다.
+                # 날짜는 모델이 복사하지 않고, 서버가 이 ID로 원문을 다시 조회한다.
+                "event_ref": (
+                    {
+                        "source_type": "news_event",
+                        "source_id": cluster_id,
+                        "stock_code": c.stock_code,
+                    }
+                    if cluster_id.isdigit()
+                    else None
+                ),
                 "title": c.title,
                 "snippet": clamp_text(c.content),
                 "published_at": iso(c.published_at),
