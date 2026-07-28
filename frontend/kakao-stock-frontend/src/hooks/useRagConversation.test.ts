@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { RagMessage } from '../types/qa'
-import { completedConversationHistory } from './useRagConversation'
+import {
+  completedConversationEventContext,
+  completedConversationHistory,
+} from './useRagConversation'
 
 function message(
   role: RagMessage['role'],
@@ -34,5 +37,40 @@ describe('completedConversationHistory', () => {
     expect(history).toHaveLength(20)
     expect(history[0]).toEqual({ role: 'user', content: '질문 2' })
     expect(history.at(-1)).toEqual({ role: 'assistant', content: '답변 11' })
+  })
+})
+
+describe('completedConversationEventContext', () => {
+  it('uses canonical source locators from only the latest completed answer', () => {
+    expect(completedConversationEventContext([
+      message('user', '뉴스 알려줘'),
+      {
+        ...message('assistant', '첫 답변', 'complete'),
+        sources: [{
+          sourceId: 'old',
+          sourceType: 'news_event',
+          stockCode: '005930',
+          locator: { cluster_id: 1 },
+        }],
+      },
+      message('user', '최근 공시는?'),
+      {
+        ...message('assistant', '최근 공시입니다.', 'complete'),
+        sources: [{
+          sourceId: 'chunk-r7',
+          sourceType: 'dart_document',
+          stockCode: '005930',
+          title: '공급계약',
+          publishedAt: '2026-07-22',
+          locator: { rcept_no: 'R7' },
+        }],
+      },
+    ])).toEqual([{
+      eventId: 'R7',
+      stockCode: '005930',
+      publishedAt: '2026-07-22',
+      title: '공급계약',
+      sourceType: 'dart_document',
+    }])
   })
 })

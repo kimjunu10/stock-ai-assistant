@@ -65,6 +65,15 @@ def run_search_disclosures(facts: FactsService, inp: SearchDisclosuresInput) -> 
         data.append(
             {
                 "rcept_no": r.get("rcept_no"),
+                "event_ref": (
+                    {
+                        "source_type": "dart_document",
+                        "source_id": str(r.get("rcept_no")),
+                        "stock_code": inp.stock_code,
+                    }
+                    if r.get("rcept_no")
+                    else None
+                ),
                 "title": r.get("title"),
                 "disclosed_at": iso(r.get("disclosed_at")),
                 "correction_status": r.get("correction_status"),
@@ -142,6 +151,15 @@ def run_get_disclosure_values(facts: FactsService, inp: DisclosureValuesInput) -
         data.append(
             {
                 "rcept_no": r.get("rcept_no"),
+                "event_ref": (
+                    {
+                        "source_type": "structured_disclosure",
+                        "source_id": str(r.get("rcept_no")),
+                        "stock_code": inp.stock_code,
+                    }
+                    if r.get("rcept_no")
+                    else None
+                ),
                 "event_type": r.get("event_type"),
                 "announced_at": iso(r.get("announced_at")),
                 "summary": clamp_text(r.get("summary_text")),

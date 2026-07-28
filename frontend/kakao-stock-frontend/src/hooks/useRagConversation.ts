@@ -9,6 +9,7 @@ import {
 import type {
   QaStreamEvent,
   RagContext,
+  RagEventContext,
   RagHistoryMessage,
   RagMessage,
   RagPhase,
@@ -45,6 +46,50 @@ export function completedConversationHistory(messages: RagMessage[]): RagHistory
     index += 1
   }
   return history.slice(-20)
+}
+
+const EVENT_SOURCE_TYPES = new Set([
+  'news_event',
+  'dart_document',
+  'structured_disclosure',
+  'research_report',
+])
+
+function canonicalEventId(source: RagMessage['sources'][number]) {
+  if (source.sourceType === 'news_event') {
+    const clusterId = source.locator.cluster_id
+    if (typeof clusterId === 'string' || typeof clusterId === 'number') return String(clusterId)
+  }
+  if (source.sourceType === 'research_report') {
+    const reportId = source.locator.report_id
+    if (typeof reportId === 'string' || typeof reportId === 'number') return String(reportId)
+  }
+  if (source.sourceType === 'dart_document' || source.sourceType === 'structured_disclosure') {
+    const receiptNo = source.locator.rcept_no
+    if (typeof receiptNo === 'string' || typeof receiptNo === 'number') return String(receiptNo)
+  }
+  return source.sourceId
+}
+
+export function completedConversationEventContext(messages: RagMessage[]): RagEventContext[] {
+  const latest = [...messages].reverse().find(
+    (message) => message.role === 'assistant' && message.state === 'complete',
+  )
+  if (!latest) return []
+  const unique = new Map<string, RagEventContext>()
+  for (const source of latest.sources) {
+    if (!EVENT_SOURCE_TYPES.has(source.sourceType)) continue
+    const eventId = canonicalEventId(source)
+    const key = `${source.sourceType}:${eventId}`
+    unique.set(key, {
+      eventId,
+      stockCode: source.stockCode,
+      publishedAt: source.publishedAt,
+      title: source.title,
+      sourceType: source.sourceType as RagEventContext['sourceType'],
+    })
+  }
+  return [...unique.values()].slice(0, 10)
 }
 
 export function useRagConversation(context: RagContext) {
@@ -156,6 +201,7 @@ export function useRagConversation(context: RagContext) {
         {
           conversationId: conversationId.current,
           history: completedConversationHistory(messages),
+          eventContext: completedConversationEventContext(messages),
         },
         controller.signal,
         handleEvent,

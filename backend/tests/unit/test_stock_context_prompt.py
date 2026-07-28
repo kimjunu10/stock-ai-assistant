@@ -110,6 +110,23 @@ def test_primary_news_content_is_pinned_for_short_follow_up_questions():
     assert "LNG 운반선 4척" in prompt
     assert "'호재야/악재야'" in prompt
     assert "최근 호재·악재 목록 요청이 아니라" in prompt
+    assert "어떤 자료인지 되묻지 않는다" in prompt
+    assert "요약해 되풀이하지 말고" in prompt
+
+
+def test_beginner_document_explanation_is_semantic_not_article_restatement():
+    prompt = financial_agent_system_prompt(**_BASE)
+    assert "첫 문장은 반드시 `쉽게 말해, ...`" in prompt
+    assert "용어 = 쉬운 뜻" in prompt
+    assert "원문 문장을 줄이거나 순서만 바꾼 요약을 하지 않는다" in prompt
+    assert "없는 배수·수익·주가 방향은 만들지 않는다" in prompt
+
+
+def test_compound_event_question_uses_search_event_ref_then_return_tool():
+    prompt = financial_agent_system_prompt(**_BASE)
+    assert "검색 결과의 event_ref(source_type/source_id)" in prompt
+    assert "calculate_event_return을 호출한다" in prompt
+    assert "날짜는 넘기거나 추정하지 않는다" in prompt
 
 
 def test_disclosure_context_is_injected():

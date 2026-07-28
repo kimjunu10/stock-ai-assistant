@@ -51,6 +51,13 @@ describe('QA SSE contract', () => {
         { role: 'user', content: '이 리포트 요약해줘' },
         { role: 'assistant', content: '매출 성장 전망을 다룬 리포트입니다.' },
       ],
+      eventContext: [{
+        eventId: 'report-7',
+        stockCode: '005930',
+        publishedAt: '2026-07-22',
+        title: '반도체 전망',
+        sourceType: 'research_report',
+      }],
     }, new AbortController().signal, () => {})
     const init = fetchMock.mock.calls[0]?.[1]
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>
@@ -65,6 +72,14 @@ describe('QA SSE contract', () => {
         { role: 'user', content: '이 리포트 요약해줘' },
         { role: 'assistant', content: '매출 성장 전망을 다룬 리포트입니다.' },
       ],
+      event_context: [{
+        event_id: 'report-7',
+        stock_code: '005930',
+        published_at: '2026-07-22',
+        title: '반도체 전망',
+        source_type: 'research_report',
+        user_selected: false,
+      }],
     })
   })
 })

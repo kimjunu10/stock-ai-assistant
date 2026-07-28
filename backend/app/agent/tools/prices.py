@@ -428,6 +428,22 @@ def _daily_payload(
         points.sort(key=lambda point: point["trading_day"])
     if not points:
         return {"daily": [], "daily_full": []}
+    # 일봉을 이용한 모든 후속 분석(하락일, 상승일, 변동 폭 등)에 공통으로 쓸 수 있도록
+    # 인접 거래일 변화량을 서버에서 계산한다. 특정 질문 문구나 상승/하락 조건을
+    # 하드코딩하지 않고, 모델이 검증된 파생값을 선택해 설명하게 한다.
+    for index in range(1, len(points)):
+        previous_close = points[index - 1].get("close")
+        current_close = points[index].get("close")
+        if not isinstance(previous_close, (int, float)) or not isinstance(
+            current_close, (int, float)
+        ):
+            continue
+        change = current_close - previous_close
+        points[index]["previous_close"] = previous_close
+        points[index]["change"] = round(change, 4)
+        points[index]["change_rate_pct"] = (
+            round(change / previous_close * 100, 4) if previous_close else None
+        )
     summary = points if len(points) <= 6 else points[:3] + points[-3:]
     ui, sampled = _sample_points(points)
     return {

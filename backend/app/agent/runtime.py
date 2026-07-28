@@ -28,6 +28,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import ValidationError
 
 from app.agent.context import QaRuntimeContext
+from app.agent.event_source_lookup import EventSourceType, resolve_verified_event_ref
 from app.agent.middleware import (
     DuplicateToolCallMiddleware,
     ToolRuntimeObservabilityMiddleware,
@@ -467,6 +468,8 @@ def build_tools() -> list:
         stock_code: str,
         runtime: ToolRuntime[QaRuntimeContext],
         window: str = "5d",
+        event_source_type: EventSourceType | None = None,
+        event_source_id: str | None = None,
     ) -> str:
         """특정 뉴스·공시 **발표 전후**의 실제 주가 변화를 백엔드가 계산해 반환한다.
 
@@ -474,10 +477,13 @@ def build_tools() -> list:
         질문에만 쓴다. 최근 한 달·일주일 같은 **일반 기간** 수익률은 이 Tool 이 아니라
         get_stock_prices(lookback=...)를 쓴다.
 
-        사건 발표일은 서버 문맥에서 확정된 값을 사용한다. Agent 는 사건 날짜를 인자로
-        넘기지 않으며, 답변 텍스트나 기억으로 발표일을 추정하지 않는다. 사건이 확정되지
-        않았거나 여러 개면 이 Tool 은 계산을 거부하고 무엇이 필요한지 알려준다. 이때
-        일반 기간 수익률로 대체하지 말고 사용자에게 사건을 되묻는다.
+        사건 발표일은 서버가 확정한다. 현재 화면/후속 질문의 사건은 인자 없이 사용한다.
+        같은 질문에서 search_news·search_disclosures·search_research_reports 로 사건을
+        찾았다면, 결과의 event_ref에 있는 source_type/source_id만 그대로 넘긴다.
+        발표일을 인자로 넘기거나 기억으로 추정하지 않는다. 서버는 ID로 원문을 다시
+        조회해 종목과 날짜를 검증한다. 검색 결과가 여러 개인데 사용자가 특정하지 않았다면
+        임의로 고르지 말고, '최근/가장 최근/첫 번째'처럼 기준이 명확할 때만 해당 1건의
+        event_ref를 사용한다.
 
         결과는 발표 전 마지막 확정 거래일 종가 기준, 발표 후 1·3·5거래일 종가·수익률이다.
         발표 이후 확정 거래일이 없으면 no_data 이며 다른 기간으로 대체하지 않는다.
@@ -490,10 +496,52 @@ def build_tools() -> list:
         if svc.prices is None:
             return _dump(error("주가 조회가 현재 구성되어 있지 않습니다."))
 
-        # 사건은 코드가 확정한 문맥에서만 온다(모델 선택·추정 차단).
+        # 사건 날짜·종목은 코드가 원문으로 확정한다(모델 선택·추정 차단).
         ctx = runtime.context
         status = getattr(ctx, "event_status", "none")
-        if status == "ambiguous":
+        selected_stock_code = _resolve_stock_code(
+            getattr(ctx, "event_stock_code", None) or stock_code,
+            runtime,
+            tool_name="calculate_event_return",
+        )
+        event_date = getattr(ctx, "event_date", None) if status == "resolved" else None
+        event_id = getattr(ctx, "event_id", None) if event_date else None
+        verified = None
+
+        # 현재 화면의 정확한 뉴스·공시·리포트도 별도 event_context 없이 사건 기준이 된다.
+        primary = getattr(ctx, "primary_source", None)
+        primary_type = primary.get("source_type") if isinstance(primary, dict) else None
+        primary_id = primary.get("context_source_id") if isinstance(primary, dict) else None
+        if not event_date and primary_type and primary_id:
+            verified = resolve_verified_event_ref(
+                svc,
+                stock_code=selected_stock_code,
+                source_type=primary_type,
+                source_id=str(primary_id),
+            )
+
+        # 같은 턴의 검색 결과 EventRef. 모델이 전달한 날짜는 받지 않고 ID로 재조회한다.
+        if not event_date and verified is None and event_source_type and event_source_id:
+            verified = resolve_verified_event_ref(
+                svc,
+                stock_code=selected_stock_code,
+                source_type=event_source_type,
+                source_id=event_source_id,
+            )
+            if verified is None:
+                return _dump(
+                    _event_blocked(
+                        "검색 결과의 사건 참조를 원문에서 확인할 수 없어 사건 전후 주가를 "
+                        "계산하지 않았습니다. 다른 사건이나 최근 기간 수익률로 대체하지 마십시오.",
+                        None,
+                    )
+                )
+
+        if verified is not None:
+            event_date = verified.event_date
+            event_id = verified.source_id
+
+        if not event_date and status == "ambiguous":
             return _dump(
                 _event_blocked(
                     "서로 다른 사건이 여러 개라 어떤 사건인지 확정할 수 없습니다. "
@@ -502,7 +550,6 @@ def build_tools() -> list:
                     getattr(ctx, "event_candidates", None),
                 )
             )
-        event_date = getattr(ctx, "event_date", None) if status == "resolved" else None
         if not event_date:
             return _dump(
                 _event_blocked(
@@ -514,16 +561,23 @@ def build_tools() -> list:
             )
 
         inp = CalculateEventReturnInput(
-            stock_code=_resolve_stock_code(
-                getattr(ctx, "event_stock_code", None) or stock_code,
-                runtime,
-                tool_name="calculate_event_return",
-            ),
+            stock_code=selected_stock_code,
             event_date=event_date,
-            event_id=getattr(ctx, "event_id", None),
+            event_id=event_id,
             window=window,
         )
-        return _dump(run_calculate_event_return(svc.prices, inp))
+        result = run_calculate_event_return(svc.prices, inp)
+        if verified is not None:
+            result.sources.insert(0, verified.source)
+            if isinstance(result.data, dict):
+                result.data["event"] = {
+                    "source_type": verified.source_type,
+                    "source_id": verified.source_id,
+                    "stock_code": verified.stock_code,
+                    "title": verified.title,
+                    "published_at": verified.event_date,
+                }
+        return _dump(result)
 
     return [
         get_financial_facts,
