@@ -125,10 +125,16 @@ def test_list_recent_news_no_embedding_and_filters():
     assert db.tables == ["news_clusters"]  # 벡터 RPC 아님
     assert db.log["eq"]["stock_code"] == "005930"
     assert db.log["eq"]["sentiment_label"] == "negative"
+    assert db.log["gte"]["last_active_at"] == "2026-07-24"
+    assert db.log["lte"]["last_active_at"] == "2026-07-24T23:59:59+09:00"
     assert ("last_active_at", True) in db.log["order"]  # 최신순 desc
     assert len(out) == 2
     assert all(c.source_type == "news_event" for c in out)
     assert all(c.stock_code == "005930" for c in out)  # 타 종목 혼입 없음
+    assert [c.published_at for c in out] == [
+        "2026-07-24T10:00:00+09:00",
+        "2026-07-24T08:30:00+09:00",
+    ]
 
 
 def test_list_recent_news_dedupes_by_cluster():

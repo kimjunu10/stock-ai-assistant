@@ -335,7 +335,7 @@ class HybridRetriever:
             q = q.gte("last_active_at", date_from)
         if date_to:
             # date_to 는 날짜(YYYY-MM-DD)일 수 있으므로 종료일 끝까지 포함.
-            q = q.lte("first_published_at", _inclusive_end(date_to))
+            q = q.lte("last_active_at", _inclusive_end(date_to))
         if sentiment:
             q = q.eq("sentiment_label", sentiment)
         rows = (
@@ -357,7 +357,8 @@ class HybridRetriever:
                     value_kind=None,
                     stock_code=r.get("stock_code"),
                     source_type="news_event",
-                    published_at=r.get("first_published_at"),
+                    # 기간 필터·정렬과 사용자에게 노출하는 날짜는 같은 사건 활동시각을 쓴다.
+                    published_at=r.get("last_active_at"),
                     source_pk=str(r["id"]),
                     title=title,
                     publisher=None,

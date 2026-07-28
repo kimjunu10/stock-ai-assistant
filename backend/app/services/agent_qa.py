@@ -943,9 +943,23 @@ def _visualization_for_tool(
     """Tool 이름은 라우팅이 아니라 이미 실행된 typed 결과의 view 종류만 결정한다."""
     if tool_name == "search_news" and isinstance(data.get("news"), list):
         filters = data.get("applied_filters")
+        sentiment = filters.get("sentiment") if isinstance(filters, dict) else None
+        purpose = filters.get("purpose") if isinstance(filters, dict) else None
+        if purpose == "price_driver_down" and sentiment == "negative":
+            title = "하락 관련 뉴스"
+        elif purpose == "price_driver_up" and sentiment == "positive":
+            title = "상승 관련 뉴스"
+        elif sentiment == "negative":
+            title = "악재 뉴스"
+        elif sentiment == "positive":
+            title = "호재 뉴스"
+        elif isinstance(filters, dict) and (filters.get("date_from") or filters.get("date_to")):
+            title = "해당 기간 뉴스"
+        else:
+            title = "조회된 뉴스"
         return {
             "type": "news_cards",
-            "title": "최근 뉴스",
+            "title": title,
             "data": {
                 "items": data["news"],
                 "date_from": filters.get("date_from") if isinstance(filters, dict) else None,

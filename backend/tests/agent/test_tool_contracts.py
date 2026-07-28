@@ -362,7 +362,7 @@ def test_search_disclosures_pins_exact_ui_selected_document():
 
 
 # ── news: 검색 주제 유무에 따른 경로 분리(prompt.md phase_7 빈 검색어 결함) ──
-def _news_chunk(chunk_id, title, published_at, source_pk="1"):
+def _news_chunk(chunk_id, title, published_at, source_pk="1", sentiment="negative"):
     from app.rag.retrieval import RetrievedChunk
 
     return RetrievedChunk(
@@ -378,6 +378,7 @@ def _news_chunk(chunk_id, title, published_at, source_pk="1"):
         publisher="언론사",
         source_url="http://x",
         similarity=0.9,
+        source_locator={"sentiment_label": sentiment},
     )
 
 
@@ -450,9 +451,42 @@ def test_price_driver_news_excludes_indirect_title_match():
     )
     result = run_search_news(
         fake,
-        SearchNewsInput(stock_code="005930", purpose="price_driver"),
+        SearchNewsInput(stock_code="005930", purpose="price_driver_down"),
     )
     assert [item["title"] for item in result.data["news"]] == ["삼성전자 주가 급락"]
+
+
+def test_price_driver_news_applies_sentiment_to_returned_cards():
+    fake = _FakeRetriever(
+        recent=[
+            _news_chunk(
+                "news_cluster:1",
+                "삼성전자 투자 회수 이익 전망",
+                "2026-07-28",
+                "1",
+                "positive",
+            ),
+            _news_chunk(
+                "news_cluster:2",
+                "삼성전자 주가 급락과 공급 우려",
+                "2026-07-28",
+                "2",
+                "negative",
+            ),
+        ]
+    )
+    result = run_search_news(
+        fake,
+        SearchNewsInput(
+            stock_code="005930",
+            sentiment="negative",
+            purpose="price_driver_down",
+        ),
+    )
+    assert [item["title"] for item in result.data["news"]] == [
+        "삼성전자 주가 급락과 공급 우려"
+    ]
+    assert result.data["applied_filters"]["sentiment"] == "negative"
 
 
 def test_sentiment_news_prefers_direct_company_titles_when_available():
