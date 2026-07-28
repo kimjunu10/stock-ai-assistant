@@ -104,6 +104,7 @@ function PriceChart({ visualization }: { visualization: RagVisualization }) {
   const last = points.at(-1)
   const returnPct = typeof period.return_pct === 'number' ? period.return_pct : undefined
   const lastIsCurrent = last?.price_kind === 'current' || period.end_price_kind === 'current'
+  const lastIsLatest = last?.price_kind === 'latest' || period.end_price_kind === 'latest'
   const sampled = visualization.data.sampled === true
 
   return (
@@ -126,7 +127,10 @@ function PriceChart({ visualization }: { visualization: RagVisualization }) {
       <footer>
         <span>{text(points[0]?.trading_day)}</span>
         <span>{sampled ? '전체 기간 대표 거래일 · ' : ''}토스증권 Open API · 최저 {won(min)} · 최고 {won(max)}</span>
-        <span>{text(last?.trading_day)}{lastIsCurrent ? ' 현재가' : ''}</span>
+        <span>
+          {text(last?.trading_day)}
+          {lastIsCurrent ? ' 현재가' : lastIsLatest ? ' 최근 체결가' : ''}
+        </span>
       </footer>
     </section>
   )
@@ -135,6 +139,7 @@ function PriceChart({ visualization }: { visualization: RagVisualization }) {
 function PriceSnapshot({ visualization }: { visualization: RagVisualization }) {
   const quote = record(visualization.data.quote)
   const period = record(visualization.data.period)
+  const priceLabel = quote.price_kind === 'latest' ? '최근 체결가' : '현재가'
   if (Object.keys(quote).length === 0 && Object.keys(period).length === 0) return null
   return (
     <section className="answer-metrics">
@@ -142,7 +147,7 @@ function PriceSnapshot({ visualization }: { visualization: RagVisualization }) {
         <div><span>시장 데이터</span><strong>{visualization.title}</strong></div>
       </header>
       <div>
-        {typeof quote.price === 'number' && <article><small>현재가</small><strong>{won(quote.price, quote.currency)}</strong><span>{text(quote.trading_day)}</span></article>}
+        {typeof quote.price === 'number' && <article><small>{priceLabel}</small><strong>{won(quote.price, quote.currency)}</strong><span>{text(quote.trading_day)}</span></article>}
         {typeof period.return_pct === 'number' && <article><small>기간 수익률</small><strong>{period.return_pct > 0 ? '+' : ''}{period.return_pct}%</strong><span>{text(period.start_trading_day)} → {text(period.end_trading_day)}</span></article>}
       </div>
     </section>

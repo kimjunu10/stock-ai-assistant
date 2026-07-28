@@ -117,6 +117,27 @@ def test_unfinalized_today_close_is_replaced_with_quote_contract():
     assert "218,000원" in answer
 
 
+def test_stale_quote_is_called_latest_trade_and_uses_current_market_status():
+    evidence = ToolEvidence(
+        has_price=True,
+        current_price=1_525_000,
+        price_kind="latest",
+        market_status="closed",
+        price_as_of="2026-07-28T19:59:59+09:00",
+        market_status_as_of="2026-07-29T01:24:00+09:00",
+    )
+    answer, changed = sanitize_unfinalized_close_claim(
+        "오늘 종가는 1,525,000원입니다.",
+        evidence,
+        asks_today_close=True,
+    )
+    assert changed
+    assert "최근 체결가" in answer
+    assert "현재가:" not in answer
+    assert "거래 종료" in answer
+    assert "2026-07-28T19:59:59+09:00 기준" in answer
+
+
 def test_generic_flow_defaults_to_one_month_but_point_price_does_not():
     assert resolve_price_lookback("주가 흐름 보여줘", None) == "1m"
     assert resolve_price_lookback("현재가 알려줘", None) is None

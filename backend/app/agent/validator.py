@@ -60,6 +60,7 @@ class ToolEvidence:
     current_change_rate_pct: float | None = None
     price_kind: str | None = None
     market_status: str | None = None
+    market_status_as_of: str | None = None
     price_as_of: str | None = None
     price_change_rates: set[float] = field(default_factory=set)
     # 사건 전후 주가 근거(prompt.md §6). "이 뉴스 이후" 주장의 필수 근거.
@@ -241,6 +242,8 @@ def _collect_price_numbers(data: Any, ev: ToolEvidence) -> None:
             ev.price_kind = str(quote["price_kind"])
         if quote.get("market_status"):
             ev.market_status = str(quote["market_status"])
+        if quote.get("market_status_as_of"):
+            ev.market_status_as_of = str(quote["market_status_as_of"])
         if quote.get("as_of"):
             ev.price_as_of = str(quote["as_of"])
     period = data.get("period")
@@ -412,7 +415,11 @@ def sanitize_unfinalized_close_claim(
 ) -> tuple[str, bool]:
     """미확정 현재가를 오늘 종가로 부르는 답변을 실제 quote 계약으로 교체한다."""
 
-    if not asks_today_close or evidence.price_kind != "current" or evidence.current_price is None:
+    if (
+        not asks_today_close
+        or evidence.price_kind not in {"current", "latest"}
+        or evidence.current_price is None
+    ):
         return answer, False
     status_labels = {
         "pre_market": "장 시작 전",
@@ -426,11 +433,12 @@ def sanitize_unfinalized_close_claim(
         evidence.market_status or "", evidence.market_status or "상태 미확인"
     )
     as_of = f" ({evidence.price_as_of} 기준)" if evidence.price_as_of else ""
+    price_label = "최근 체결가" if evidence.price_kind == "latest" else "현재가"
     return (
         "오늘 확정 종가는 아직 확인되지 않았습니다.\n\n"
-        f"- 현재가: **{evidence.current_price:,.0f}원**{as_of}\n"
+        f"- {price_label}: **{evidence.current_price:,.0f}원**{as_of}\n"
         f"- 시장 상태: **{status}**\n\n"
-        "현재가는 이후 거래로 달라질 수 있어 확정 종가와 구분했습니다.",
+        f"{price_label}는 확정 종가와 구분했습니다.",
         True,
     )
 

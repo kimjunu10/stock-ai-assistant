@@ -99,12 +99,34 @@ def test_get_current_price_contract_and_source():
     assert q["unit"] == "원"
     assert q["currency"] == "KRW"
     assert q["trading_day"] == "2026-07-24"
+    assert q["market_status_as_of"] is None
     assert len(r.sources) == 1
     s = r.sources[0]
     assert s.source_type == "price"
     assert s.publisher == "토스증권 Open API"
     assert s.published_at == "2026-07-24"
     assert s.value_kind == "actual"
+
+
+def test_latest_quote_contract_preserves_price_time_and_market_status_time():
+    quote = _quote()
+    quote.price_kind = "latest"
+    quote.market_status = "closed"
+    quote.market_status_as_of = datetime.fromisoformat("2026-07-25T01:24:00+09:00")
+    result = run_get_stock_prices(
+        FakeSvc(
+            quote=quote,
+            daily=[DailyClose(date(2026, 7, 23), 250000, 0, 0, 0, 1000, "KRW")],
+        ),
+        GetStockPricesInput(stock_code="005930"),
+    )
+
+    payload = result.data["quote"]
+    assert payload["price_kind"] == "latest"
+    assert payload["as_of"] == "2026-07-24T15:30:00+09:00"
+    assert payload["market_status"] == "closed"
+    assert payload["market_status_as_of"] == "2026-07-25T01:24:00+09:00"
+    assert result.data["daily_full"][-1]["price_kind"] == "latest"
 
 
 def test_current_price_chart_is_only_previous_close_to_live_price():
