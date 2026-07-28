@@ -1,5 +1,6 @@
 import type {
   QaStreamEvent,
+  RagConversationRequest,
   RagContext,
   RagSource,
   RagSourceType,
@@ -143,6 +144,7 @@ async function readApiError(response: Response) {
 export async function streamQa(
   question: string,
   context: RagContext,
+  conversation: RagConversationRequest,
   signal: AbortSignal,
   onEvent: (event: QaStreamEvent) => void,
 ) {
@@ -159,6 +161,8 @@ export async function streamQa(
       context_source_id: context.sourceId,
       document_id: context.documentId,
       report_page: context.page,
+      conversation_id: conversation.conversationId,
+      history: conversation.history,
       stream: true,
     }),
     signal,

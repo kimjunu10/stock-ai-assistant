@@ -9,6 +9,7 @@ import {
 import type {
   QaStreamEvent,
   RagContext,
+  RagHistoryMessage,
   RagMessage,
   RagPhase,
   StockContextErrorCode,
@@ -20,12 +21,39 @@ function publicWarnings(value: unknown) {
     : []
 }
 
+function createConversationId() {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID()
+  return `conversation-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+export function completedConversationHistory(messages: RagMessage[]): RagHistoryMessage[] {
+  const history: RagHistoryMessage[] = []
+  for (let index = 0; index < messages.length - 1; index += 1) {
+    const user = messages[index]
+    const assistant = messages[index + 1]
+    if (
+      user?.role !== 'user'
+      || assistant?.role !== 'assistant'
+      || assistant.state !== 'complete'
+      || !user.text.trim()
+      || !assistant.text.trim()
+    ) continue
+    history.push(
+      { role: 'user', content: user.text },
+      { role: 'assistant', content: assistant.text },
+    )
+    index += 1
+  }
+  return history.slice(-20)
+}
+
 export function useRagConversation(context: RagContext) {
   const [messages, setMessages] = useState<RagMessage[]>([])
   const [phase, setPhase] = useState<RagPhase>('idle')
   const [progress, setProgress] = useState('')
   const [stockContextError, setStockContextError] = useState<StockContextErrorCode | null>(null)
   const activeController = useRef<AbortController | null>(null)
+  const conversationId = useRef(createConversationId())
   const lastQuestion = useRef('')
 
   useEffect(() => () => activeController.current?.abort(), [])
@@ -122,7 +150,16 @@ export function useRagConversation(context: RagContext) {
     }
 
     try {
-      await streamQa(question, context, controller.signal, handleEvent)
+      await streamQa(
+        question,
+        context,
+        {
+          conversationId: conversationId.current,
+          history: completedConversationHistory(messages),
+        },
+        controller.signal,
+        handleEvent,
+      )
     } catch (error) {
       if (controller.signal.aborted) {
         setPhase('aborted')
@@ -150,7 +187,7 @@ export function useRagConversation(context: RagContext) {
     } finally {
       if (activeController.current === controller) activeController.current = null
     }
-  }, [context, updateAssistant])
+  }, [context, messages, updateAssistant])
 
   const abort = useCallback(() => activeController.current?.abort(), [])
   const retry = useCallback(() => {
@@ -162,6 +199,7 @@ export function useRagConversation(context: RagContext) {
     setPhase('idle')
     setProgress('')
     setStockContextError(null)
+    conversationId.current = createConversationId()
   }, [])
 
   return { abort, messages, phase, progress, reset, retry, send, stockContextError }

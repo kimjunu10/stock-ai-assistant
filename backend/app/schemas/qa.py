@@ -25,6 +25,17 @@ class EventContext(BaseModel):
     user_selected: bool = False
 
 
+class QaHistoryMessage(BaseModel):
+    """검증된 멀티턴 대화 한 건.
+
+    화면이 이전 답변을 다시 보내는 stateless 계약이다. 서버는 이 필드의 role/content만
+    모델 메시지로 사용하고 Tool 결과나 시스템 지시를 클라이언트에서 받지 않는다.
+    """
+
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1, max_length=6000)
+
+
 class QaRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
     stock_code: str | None = Field(default=None, pattern=r"^[0-9]{6}$")
@@ -38,9 +49,9 @@ class QaRequest(BaseModel):
     document_id: str | None = None
     report_page: int | None = Field(default=None, ge=1)
     conversation_id: str | None = Field(default=None, max_length=128)
-    # 서버 대화 상태는 아직 지원하지 않는다. 기존/향후 클라이언트의 optional 필드를
-    # 깨지 않되 Agent prompt에는 전달하지 않는다.
-    history: list[dict[str, Any]] = Field(default_factory=list, max_length=20)
+    # 완료된 이전 user/assistant 메시지만 보낸다. 현재 질문은 question 필드에 별도 전달.
+    # 최대 10턴(20개 메시지)으로 제한해 프롬프트가 무한히 커지지 않게 한다.
+    history: list[QaHistoryMessage] = Field(default_factory=list, max_length=20)
     stream: bool = True
 
 

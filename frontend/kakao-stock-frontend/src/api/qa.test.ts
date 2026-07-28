@@ -45,6 +45,12 @@ describe('QA SSE contract', () => {
       sourceId: 'report-7',
       documentId: 'document-7',
       page: 3,
+    }, {
+      conversationId: 'conversation-7',
+      history: [
+        { role: 'user', content: '이 리포트 요약해줘' },
+        { role: 'assistant', content: '매출 성장 전망을 다룬 리포트입니다.' },
+      ],
     }, new AbortController().signal, () => {})
     const init = fetchMock.mock.calls[0]?.[1]
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>
@@ -54,6 +60,11 @@ describe('QA SSE contract', () => {
       context_source_id: 'report-7',
       document_id: 'document-7',
       report_page: 3,
+      conversation_id: 'conversation-7',
+      history: [
+        { role: 'user', content: '이 리포트 요약해줘' },
+        { role: 'assistant', content: '매출 성장 전망을 다룬 리포트입니다.' },
+      ],
     })
   })
 })

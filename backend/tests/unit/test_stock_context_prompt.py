@@ -89,6 +89,28 @@ def test_news_context_is_injected_as_primary_event():
     assert "같은 종목의 다른 사건" in prompt
 
 
+def test_primary_news_content_is_pinned_for_short_follow_up_questions():
+    prompt = financial_agent_system_prompt(
+        **_BASE,
+        source_type="news_event",
+        source_id="77",
+        primary_source={
+            "context_source_id": "77",
+            "source_type": "news_event",
+            "title": "한화오션 LNG선 수주",
+            "published_at": "2026-07-27",
+            "sentiment": "positive",
+            "content": "한화오션이 고부가가치 LNG 운반선 4척을 수주했다.",
+        },
+    )
+
+    assert "모든 대화 턴에 고정" in prompt
+    assert "한화오션 LNG선 수주" in prompt
+    assert "LNG 운반선 4척" in prompt
+    assert "'호재야/악재야'" in prompt
+    assert "최근 호재·악재 목록 요청이 아니라" in prompt
+
+
 def test_disclosure_context_is_injected():
     prompt = financial_agent_system_prompt(
         **_BASE, source_type="dart_document", source_id="20260727000123"

@@ -32,6 +32,16 @@ export interface RagContext {
   selectedText?: string
 }
 
+export interface RagHistoryMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface RagConversationRequest {
+  conversationId: string
+  history: RagHistoryMessage[]
+}
+
 export interface RagSource {
   sourceId: string
   sourceType: RagSourceType

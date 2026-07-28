@@ -151,10 +151,12 @@ class _FakeAgent:
         self._hang = hang
         self.invoke_count = 0
         self.last_context = None
+        self.last_payload = None
 
     def invoke(self, payload, context=None, config=None):
         self.invoke_count += 1
         self.last_context = context
+        self.last_payload = payload
         if self._raise:
             raise self._raise
         if self._hang:
@@ -205,6 +207,190 @@ def test_agent_qa_allows_selected_context_with_or_without_same_company_name():
         assert r.stop_reason == "completed"
         assert agent.invoke_count == 1
         assert agent.last_context.stock_code == "005930"
+
+
+def test_agent_qa_passes_completed_history_before_current_question():
+    agent = _FakeAgent(out={"messages": [_Msg("ai", "후속 답변")]})
+    svc = _svc_with(agent)
+
+    svc.answer(
+        "왜?",
+        stock_code="005930",
+        conversation_id="conversation-1",
+        history=[
+            {"role": "user", "content": "호재야?"},
+            {"role": "assistant", "content": "수주 확대 측면에서 호재입니다."},
+        ],
+    )
+
+    assert agent.last_payload == {
+        "messages": [
+            {"role": "user", "content": "호재야?"},
+            {"role": "assistant", "content": "수주 확대 측면에서 호재입니다."},
+            {"role": "user", "content": "왜?"},
+        ]
+    }
+
+
+class _PrimaryNewsRetriever:
+    def __init__(self):
+        self.calls = 0
+
+    def get_news_event(self, cluster_id, *, stock_code=None):
+        self.calls += 1
+        assert cluster_id == "77"
+        assert stock_code == "005930"
+        return type(
+            "Chunk",
+            (),
+            {
+                "chunk_id": "news_cluster:77",
+                "stock_code": "005930",
+                "title": "한화오션 LNG선 수주",
+                "publisher": None,
+                "published_at": "2026-07-27T09:00:00+09:00",
+                "content": "한화오션이 고부가가치 LNG 운반선 4척을 수주했다.",
+                "source_locator": {"cluster_id": 77, "sentiment_label": "positive"},
+            },
+        )()
+
+
+def test_agent_context_rehydrates_exact_primary_news_on_every_request():
+    svc = _svc_with(_FakeAgent())
+    svc._services.retriever = _PrimaryNewsRetriever()
+
+    ctx = svc._context("005930", "news_event", "77", None, None, "conversation-1")
+
+    assert ctx.primary_source["context_source_id"] == "77"
+    assert ctx.primary_source["source_id"] == "news_cluster:77"
+    assert ctx.primary_source["title"] == "한화오션 LNG선 수주"
+    assert ctx.primary_source["sentiment"] == "positive"
+    assert "LNG 운반선 4척" in ctx.primary_source["content"]
+
+
+def test_primary_news_is_rehydrated_again_for_each_follow_up_turn():
+    agent = _FakeAgent(out={"messages": [_Msg("ai", "현재 뉴스 기준 답변")]})
+    retriever = _PrimaryNewsRetriever()
+    svc = _svc_with(agent)
+    svc._services.retriever = retriever
+
+    svc.answer(
+        "호재야?",
+        stock_code="005930",
+        source_type="news_event",
+        source_id="77",
+    )
+    svc.answer(
+        "왜?",
+        stock_code="005930",
+        source_type="news_event",
+        source_id="77",
+        history=[
+            {"role": "user", "content": "호재야?"},
+            {"role": "assistant", "content": "수주 확대 측면에서 호재입니다."},
+        ],
+    )
+
+    assert retriever.calls == 2
+    assert agent.last_context.primary_source["context_source_id"] == "77"
+    assert agent.last_payload["messages"][-1] == {"role": "user", "content": "왜?"}
+
+
+class _PrimaryDisclosureFacts:
+    def get_disclosure_by_id(self, rcept_no, *, stock_code):
+        assert rcept_no == "20260727000123"
+        assert stock_code == "005930"
+        return {
+            "title": "단일판매·공급계약 체결",
+            "disclosed_at": "2026-07-27",
+            "raw_text": "계약금액 1조원, 계약기간 3년",
+        }
+
+
+class _PrimaryReportSearch:
+    def get_by_report_id(self, report_id, *, stock_code):
+        assert report_id == "report-7"
+        assert stock_code == "005930"
+        return [
+            type(
+                "Hit",
+                (),
+                {
+                    "chunk_id": "report-chunk-7",
+                    "stock_code": "005930",
+                    "report_id": "report-7",
+                    "title": "하반기 실적 개선 전망",
+                    "broker": "테스트증권",
+                    "report_date": "2026-07-27",
+                    "source_page": 3,
+                    "pdf_page": 2,
+                    "page_number": 3,
+                    "content": "수주잔고 증가로 하반기 매출 개선을 전망한다.",
+                },
+            )()
+        ]
+
+
+def test_agent_context_rehydrates_exact_disclosure_and_report():
+    svc = _svc_with(_FakeAgent())
+    svc._services.facts = _PrimaryDisclosureFacts()
+    svc._services.reports = _PrimaryReportSearch()
+
+    disclosure = svc._context(
+        "005930",
+        "dart_document",
+        "20260727000123",
+        None,
+        None,
+        "disclosure-conversation",
+    )
+    report = svc._context(
+        "005930",
+        "research_report",
+        "report-7",
+        None,
+        3,
+        "report-conversation",
+    )
+
+    assert disclosure.primary_source["title"] == "단일판매·공급계약 체결"
+    assert "계약금액 1조원" in disclosure.primary_source["content"]
+    assert report.primary_source["source_id"] == "report-chunk-7"
+    assert report.primary_source["page"] == 3
+    assert "하반기 매출 개선" in report.primary_source["content"]
+
+
+def test_primary_news_is_kept_as_answer_source_without_optional_related_search():
+    agent = _FakeAgent(out={"messages": [_Msg("ai", "이 뉴스는 수주 확대 측면에서 호재입니다.")]})
+    svc = _svc_with(agent)
+    svc._services.retriever = _PrimaryNewsRetriever()
+
+    result = svc.answer(
+        "호재야?",
+        stock_code="005930",
+        source_type="news_event",
+        source_id="77",
+    )
+
+    assert result.source_ids == ["news_cluster:77"]
+    assert result.sources[0]["source_id"] == "news_cluster:77"
+    assert result.sources[0]["locator"]["cluster_id"] == 77
+
+
+def test_context_chat_does_not_fall_back_to_general_rag_when_primary_source_is_missing():
+    agent = _FakeAgent(out={"messages": [_Msg("ai", "종목 전체 뉴스를 대신 요약")]})
+    svc = _svc_with(agent)
+
+    result = svc.answer(
+        "호재야?",
+        stock_code="005930",
+        source_type="news_event",
+        source_id="999",
+    )
+
+    assert result.stop_reason == "no_data"
+    assert "자료 원문을 확인할 수 없어" in result.answer
+    assert agent.invoke_count == 0
 
 
 def test_agent_qa_blocks_different_supported_company_before_agent_and_tools():
