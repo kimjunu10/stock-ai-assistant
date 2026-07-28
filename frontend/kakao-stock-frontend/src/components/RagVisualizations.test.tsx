@@ -104,6 +104,44 @@ describe('RagVisualizations', () => {
     expect(screen.getByText('271,000원')).toBeTruthy()
   })
 
+  it('labels a stale closed-session quote as the latest trade instead of current price', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'price_snapshot',
+      title: '실제 주가',
+      data: {
+        quote: {
+          price: 1525000,
+          currency: 'KRW',
+          trading_day: '2026-07-28',
+          as_of: '2026-07-28T19:59:59+09:00',
+          price_kind: 'latest',
+          market_status: 'closed',
+        },
+        period: null,
+      },
+      sourceIds: ['price:000660:2026-07-28'],
+    }]} />)
+    expect(screen.getByText('최근 체결가')).toBeTruthy()
+    expect(screen.queryByText('현재가')).toBeNull()
+  })
+
+  it('labels the final price-line point as the latest trade when the backend says latest', () => {
+    render(<RagVisualizations visualizations={[{
+      type: 'price_line',
+      title: '2026-07-27 ~ 2026-07-28 주가',
+      data: {
+        points: [
+          { trading_day: '2026-07-27', close: 1800000 },
+          { trading_day: '2026-07-28', close: 1525000, price_kind: 'latest' },
+        ],
+        quote: { price: 1525000, currency: 'KRW', price_kind: 'latest' },
+        period: { end_price_kind: 'latest' },
+      },
+      sourceIds: ['price:000660:2026-07-28'],
+    }]} />)
+    expect(screen.getByText('2026-07-28 최근 체결가')).toBeTruthy()
+  })
+
   it('renders the current event-return horizon contract', () => {
     render(<RagVisualizations visualizations={[{
       type: 'event_return',

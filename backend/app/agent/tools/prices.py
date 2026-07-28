@@ -150,6 +150,9 @@ def _quote_payload(q: PriceQuote) -> dict:
         "as_of": q.as_of.isoformat(),
         "price_kind": q.price_kind,
         "market_status": q.market_status,
+        "market_status_as_of": (
+            q.market_status_as_of.isoformat() if q.market_status_as_of is not None else None
+        ),
         "unit": "원",
     }
 
@@ -462,8 +465,13 @@ def _daily_payload(
             "close": live_quote.price,
             "volume": existing.get("volume") if existing else None,
             "currency": live_quote.currency,
-            "price_kind": "current",
+            "price_kind": live_quote.price_kind,
             "as_of": live_quote.as_of.isoformat(),
+            "market_status_as_of": (
+                live_quote.market_status_as_of.isoformat()
+                if live_quote.market_status_as_of is not None
+                else None
+            ),
         }
         if existing and existing.get("high", 0) > 0 and existing.get("low", 0) > 0:
             live_point["high"] = max(existing["high"], live_quote.price)
@@ -529,8 +537,11 @@ def _quote_comparison_payload(
         "close": quote.price,
         "volume": current.volume if current else None,
         "currency": quote.currency,
-        "price_kind": "current",
+        "price_kind": quote.price_kind,
         "as_of": quote.as_of.isoformat(),
+        "market_status_as_of": (
+            quote.market_status_as_of.isoformat() if quote.market_status_as_of is not None else None
+        ),
     }
     if current and current.high > 0 and current.low > 0:
         live["high"] = max(current.high, quote.price)

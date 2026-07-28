@@ -22,12 +22,14 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from datetime import time as wall_time
+from zoneinfo import ZoneInfo
 
 from app.sources.prices import SUPPORTED_STOCK_CODES, TossApiError, TossInvestClient
 
 # 토스 일봉 1회 최대(상위에서 재확인). 긴 구간은 페이징으로만 확장한다.
 # 시각은 토스가 KST(+09:00) offset 을 명시해 주므로 별도 변환 없이 그대로 파싱한다.
 MAX_CANDLES_PER_CALL = 200
+SEOUL_TIMEZONE = ZoneInfo("Asia/Seoul")
 
 
 class StockPriceError(RuntimeError):
@@ -49,7 +51,7 @@ class DailyClose:
 
 @dataclass
 class PriceQuote:
-    """현재가 + 전일 대비(백엔드 계산)."""
+    """가장 최근 시세 + 전일 대비(백엔드 계산)."""
 
     stock_code: str
     price: float
@@ -62,18 +64,19 @@ class PriceQuote:
     # 제공자 현재가 endpoint의 값은 확정 종가로 승격하지 않는다.
     price_kind: str = "current"
     market_status: str = "unknown"
+    market_status_as_of: datetime | None = None
 
 
-def market_status_at(as_of: datetime) -> str:
-    """한국 주식 거래 세션을 현재가 timestamp 기준으로 분류한다.
+def market_status_at(now: datetime) -> str:
+    """한국 주식 거래 세션을 요청 현재시각 기준으로 분류한다.
 
-    토스 현재가 API가 확정 종가 여부를 별도로 주지 않으므로 정규장과 NXT 장후거래를
-    구분해 노출한다. 휴일 캘린더는 일봉 데이터가 담당하며 여기서는 주말만 확정한다.
+    시세 timestamp는 가격의 기준 시각일 뿐 현재 시장 상태가 아니다. 휴일 캘린더는
+    일봉 데이터가 담당하며 여기서는 주말만 확정한다.
     """
 
-    if as_of.weekday() >= 5:
+    if now.weekday() >= 5:
         return "closed"
-    current = as_of.timetz().replace(tzinfo=None)
+    current = now.timetz().replace(tzinfo=None)
     if wall_time(8, 0) <= current < wall_time(8, 50):
         return "pre_market"
     if wall_time(9, 0) <= current < wall_time(15, 30):
@@ -163,6 +166,7 @@ class StockPriceService:
         rate_limit_backoff_seconds: float = 1.5,
         max_candle_pages: int = 4,
         clock: Callable[[], float] = time.monotonic,
+        now: Callable[[], datetime] | None = None,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._client = client
@@ -171,6 +175,7 @@ class StockPriceService:
         self._rate_limit_backoff = rate_limit_backoff_seconds
         self._max_candle_pages = max(1, max_candle_pages)
         self._clock = clock
+        self._now = now or (lambda: datetime.now(SEOUL_TIMEZONE))
         self._sleep = sleep
         self._lock = threading.RLock()
         self._cache: dict[str, _CacheEntry] = {}
@@ -330,6 +335,8 @@ class StockPriceService:
                 raise StockPriceError("현재가·전일 기준가 응답 정규화 실패") from exc
 
             quote_day = as_of.date()
+            request_now = self._now()
+            market_status = market_status_at(request_now)
             change = price - previous_close
             change_rate = _round2(change / previous_close * 100) if previous_close else 0.0
             quote = PriceQuote(
@@ -341,8 +348,13 @@ class StockPriceService:
                 currency=currency,
                 as_of=as_of,
                 trading_day=quote_day,
-                price_kind="current",
-                market_status=market_status_at(as_of),
+                price_kind=(
+                    "latest"
+                    if market_status == "closed" or quote_day != request_now.date()
+                    else "current"
+                ),
+                market_status=market_status,
+                market_status_as_of=request_now,
             )
             self._cache_put(cache_key, quote)
             return quote
@@ -401,7 +413,7 @@ class StockPriceService:
             return_pct=return_pct,
             currency=start_c.currency,
             adjusted=adjusted,
-            end_price_kind="current" if use_live_end else "close",
+            end_price_kind=live_quote.price_kind if use_live_end else "close",
         )
 
     def get_event_return(
