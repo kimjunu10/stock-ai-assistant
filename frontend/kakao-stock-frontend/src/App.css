@@ -2355,6 +2355,7 @@
   .answer-event-return__horizons i.is-up { @apply bg-rose-400; }
   .answer-event-return__horizons i.is-down { @apply bg-blue-400; }
   .answer-event-return__chart { @apply mt-5 border-t border-line pt-5; }
+  .answer-event-return__chart.is-only { @apply mt-0 border-t-0 pt-0; }
   .answer-event-return__chart > header,
   .answer-event-return__chart > footer { @apply flex items-center justify-between gap-3; }
   .answer-event-return__chart > header > div { @apply flex flex-col; }

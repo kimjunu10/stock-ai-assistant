@@ -156,13 +156,10 @@ function PriceSnapshot({ visualization }: { visualization: RagVisualization }) {
 
 function EventReturn({ visualization }: { visualization: RagVisualization }) {
   const data = visualization.data
-  const horizons = records(data.horizons).filter((item) => (
-    typeof item.horizon_days === 'number' && typeof item.return_pct === 'number'
-  ))
-  if (horizons.length === 0) return null
   const daily = records(data.daily_full).filter(
     (point) => typeof point.close === 'number' && typeof point.trading_day === 'string',
   )
+  if (daily.length < 2) return null
   const chartPoints: RagPricePoint[] = daily.map((point) => ({
     tradingDay: point.trading_day as string,
     close: point.close as number,
@@ -172,47 +169,23 @@ function EventReturn({ visualization }: { visualization: RagVisualization }) {
     volume: typeof point.volume === 'number' ? point.volume : undefined,
   }))
   const dailyValues = daily.map((point) => point.close as number)
-  const largest = Math.max(...horizons.map((item) => Math.abs(item.return_pct as number)), 1)
   return (
     <section className="answer-event-return">
-      <header className="answer-section-heading">
-        <div><span>사건 영향</span><strong>{visualization.title}</strong></div>
-        <em>{text(data.event_date)}</em>
-      </header>
-      <div className="answer-event-return__baseline">
-        <span>기준 거래일</span>
-        <strong>{won(data.baseline_close, data.currency)}</strong>
-        <time>{text(data.baseline_trading_day)}</time>
-      </div>
-      <div className="answer-event-return__horizons">
-        {horizons.map((item) => {
-          const value = item.return_pct as number
-          return (
-            <article key={text(item.horizon_days)}>
-              <header><span>발표 후 {text(item.horizon_days)}거래일</span><strong className={value >= 0 ? 'is-up' : 'is-down'}>{value > 0 ? '+' : ''}{value}%</strong></header>
-              <div><i className={value >= 0 ? 'is-up' : 'is-down'} style={{ width: `${Math.max(8, Math.abs(value) / largest * 100)}%` }} /></div>
-              <footer><span>{text(item.trading_day)}</span><span>{won(item.close, data.currency)}</span></footer>
-            </article>
-          )
-        })}
-      </div>
-      {chartPoints.length >= 2 && (
-        <section className="answer-event-return__chart">
-          <header>
-            <div><span>실제 일봉</span><strong>발표 전후 주가 흐름</strong></div>
-            <em>토스증권</em>
-          </header>
-          <RagPriceChart
-            label={`${text(daily[0]?.trading_day)}부터 ${text(daily.at(-1)?.trading_day)}까지 발표 전후 토스증권 주가 흐름`}
-            points={chartPoints}
-          />
-          <footer>
-            <span>{text(daily[0]?.trading_day)} 기준 종가</span>
-            <span>최저 {won(Math.min(...dailyValues))} · 최고 {won(Math.max(...dailyValues))}</span>
-            <span>{text(daily.at(-1)?.trading_day)} 마지막 관측</span>
-          </footer>
-        </section>
-      )}
+      <section className="answer-event-return__chart is-only">
+        <header>
+          <div><span>실제 일봉</span><strong>발표 전후 주가 흐름</strong></div>
+          <em>토스증권</em>
+        </header>
+        <RagPriceChart
+          label={`${text(daily[0]?.trading_day)}부터 ${text(daily.at(-1)?.trading_day)}까지 발표 전후 토스증권 주가 흐름`}
+          points={chartPoints}
+        />
+        <footer>
+          <span>{text(daily[0]?.trading_day)} 기준 종가</span>
+          <span>최저 {won(Math.min(...dailyValues))} · 최고 {won(Math.max(...dailyValues))}</span>
+          <span>{text(daily.at(-1)?.trading_day)} 마지막 관측</span>
+        </footer>
+      </section>
       <p>발표 전후 거래일의 가격 변화이며 직접적인 인과관계를 뜻하지 않습니다.</p>
     </section>
   )
