@@ -11,6 +11,9 @@
 
 from __future__ import annotations
 
+import re
+import unicodedata
+
 from pydantic import BaseModel, Field
 
 from app.agent.tools.common import (
@@ -25,6 +28,18 @@ from app.agent.tools.common import (
     sanitize_exception,
 )
 from app.services.research_reports import TIME_CONTEXTS, ResearchReportSearch
+
+_BROKER_IN_QUESTION_RE = re.compile(r"([가-힣A-Za-z]{2,20}(?:투자)?증권)")
+
+
+def resolve_report_broker(question: str | None, requested: str | None = None) -> str | None:
+    """질문에 명시된 증권사를 Unicode 정규화 후 검색 필터로 고정한다."""
+
+    normalized = unicodedata.normalize("NFKC", question or "")
+    match = _BROKER_IN_QUESTION_RE.search(normalized)
+    if match:
+        return unicodedata.normalize("NFC", match.group(1))
+    return unicodedata.normalize("NFC", requested) if requested else None
 
 
 class SearchResearchReportsInput(BaseModel):

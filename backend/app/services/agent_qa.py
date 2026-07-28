@@ -14,6 +14,7 @@ from __future__ import annotations
 import concurrent.futures
 import json
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -37,8 +38,11 @@ from app.agent.validator import (
     collect_evidence,
     collect_report_opinions,
     sanitize_answer,
+    sanitize_answer_style,
     sanitize_causal_language,
+    sanitize_conflicting_document_price_claims,
     sanitize_price_movement_claims,
+    sanitize_unfinalized_close_claim,
     validate_answer,
 )
 from app.core.config import Settings, settings
@@ -188,6 +192,15 @@ class AgentQaService:
                     "published_at": hit.report_date,
                     "page": page,
                     "content": _clip_primary_text(hit.content),
+                    "target_price": (
+                        int(hit.target_price)
+                        if getattr(hit, "target_price_status", None) == "stated"
+                        and getattr(hit, "target_price", None) is not None
+                        else None
+                    ),
+                    "target_price_status": getattr(hit, "target_price_status", None),
+                    "target_price_currency": getattr(hit, "target_price_currency", None),
+                    "investment_opinion": getattr(hit, "investment_opinion", None),
                     "locator": {
                         "report_id": hit.report_id,
                         "page_number": hit.page_number,
@@ -278,10 +291,23 @@ class AgentQaService:
 
         if not primary_source or not primary_source.get("source_id"):
             return None
+        data: dict = {"primary_source": True}
+        if primary_source.get("source_type") == "research_report":
+            data["reports"] = [
+                {
+                    "broker": primary_source.get("publisher"),
+                    "report_date": primary_source.get("published_at"),
+                    "title": primary_source.get("title"),
+                    "investment_opinion": primary_source.get("investment_opinion"),
+                    "target_price": primary_source.get("target_price"),
+                    "target_price_status": primary_source.get("target_price_status"),
+                    "target_price_currency": primary_source.get("target_price_currency"),
+                }
+            ]
         return {
             "_tool_name": "primary_source",
             "status": "ok",
-            "data": {"primary_source": True},
+            "data": data,
             "sources": [
                 {
                     key: value
@@ -422,6 +448,7 @@ class AgentQaService:
                     relation=classification.relation,
                     company_names=classification.company_names,
                     selected_stock_code=stock_code,
+                    question=question,
                 )
                 if not semantic_decision.allowed:
                     logger.warning(
@@ -566,17 +593,28 @@ class AgentQaService:
 
         # ── 코드 검증(SPEC §12.2): 숫자를 고치지 않고 오류만 기록 ──
         evidence = collect_evidence(tool_payloads)
+        answer, _ = sanitize_answer_style(answer)
+        answer, close_sanitized = sanitize_unfinalized_close_claim(
+            answer,
+            evidence,
+            asks_today_close=bool(re.search(r"(?:오늘|금일|당일).{0,8}(?:종가|마감가)", question)),
+        )
         answer, price_sanitized = sanitize_price_movement_claims(
             answer,
             evidence,
             require_price_evidence=is_price_movement_question(question),
         )
         answer, causal_sanitized = sanitize_causal_language(answer, evidence)
+        answer, conflict_sanitized = sanitize_conflicting_document_price_claims(answer, evidence)
         validation = validate_answer(answer, evidence)
         if price_sanitized:
             validation.errors.append("가격 Tool과 불일치하거나 미검증인 등락률 문장을 교체함")
+        if close_sanitized:
+            validation.errors.append("미확정 현재가를 오늘 종가로 표현한 답변을 교체함")
         if causal_sanitized:
             validation.errors.append("뉴스와 주가 움직임의 직접 인과 단정에 주의 문구를 추가함")
+        if conflict_sanitized:
+            validation.errors.append("문서 간 상충하는 주가 방향 주장을 답변에서 제거함")
         # 근거 없는 증권사·목표주가 문장은 제거(prompt.md §7). 숫자 재추측 없음.
         answer, sanitized = sanitize_answer(answer, evidence)
         if sanitized:

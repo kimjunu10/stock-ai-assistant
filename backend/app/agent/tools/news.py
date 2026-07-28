@@ -40,6 +40,8 @@ class SearchNewsInput(BaseModel):
     include_topics: list[str] = Field(default_factory=list)
     exclude_topics: list[str] = Field(default_factory=list)
     current_event_id: str | None = None
+    # 현재 화면의 기사 자체를 묻는 질문이면 관련 뉴스 확장을 금지한다.
+    context_only: bool = False
     purpose: NewsSearchPurpose = "general"
     limit: int = Field(default=5, ge=1, le=12)
 
@@ -69,7 +71,9 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
             )
             if current is not None:
                 current_chunks.append(current)
-        if _has_topic(inp.query):
+        if inp.context_only and current_chunks:
+            related_chunks = []
+        elif _has_topic(inp.query):
             # 특정 주제 있음 → 기존 하이브리드(semantic + lexical + RRF) 유지.
             related_chunks = retriever.search(
                 inp.query,

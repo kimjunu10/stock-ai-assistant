@@ -83,6 +83,12 @@ _COMPANY_SUFFIX_RE = re.compile(
     r"company|holdings)$",
     re.IGNORECASE,
 )
+_PERSON_ROLE_RE = re.compile(
+    r"(?:대통령|총리|장관|위원장|회장|대표(?:이사)?|사장|부회장|CEO|CFO|임원|애널리스트)$",
+    re.IGNORECASE,
+)
+_REPORT_TOPIC_RE = re.compile(r"리포트|보고서|투자의견|목표주가|애널리스트|증권사")
+_BROKER_RE = re.compile(r"(?:투자)?증권$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -342,16 +348,51 @@ def decision_from_semantic_stock_reference(
     relation: Literal["none", "selected", "other", "multiple"],
     company_names: list[str],
     selected_stock_code: str | None,
+    question: str | None = None,
 ) -> StockContextDecision:
     """Convert semantic company-reference output into the existing safety contract."""
 
     selected_name = stock_name(selected_stock_code)
-    names = [name.strip() for name in company_names if name and name.strip()]
-    if relation in {"none", "selected"}:
+    normalized_question = unicodedata.normalize("NFKC", question or "")
+    names = []
+    for raw_name in company_names:
+        name = unicodedata.normalize("NFKC", raw_name or "").strip()
+        if not name:
+            continue
+        # 뉴스 속 인물과 리포트 발행 증권사는 분석 대상 회사가 아니다.
+        if _PERSON_ROLE_RE.search(name):
+            continue
+        if _REPORT_TOPIC_RE.search(normalized_question) and _BROKER_RE.search(name):
+            continue
+        names.append(name)
+
+    selected_mentions = [
+        mention
+        for name in names
+        for _, mention in _supported_mentions(name)
+        if mention.stock_code == selected_stock_code
+    ]
+    foreign_names = [
+        name
+        for name in names
+        if not any(
+            mention.stock_code == selected_stock_code for _, mention in _supported_mentions(name)
+        )
+    ]
+
+    if relation in {"none", "selected"} or not names:
         return StockContextDecision(
             allowed=True,
             selected_stock_code=selected_stock_code,
             selected_stock_name=selected_name,
+        )
+
+    if relation == "multiple" and not foreign_names and selected_mentions:
+        return StockContextDecision(
+            allowed=True,
+            selected_stock_code=selected_stock_code,
+            selected_stock_name=selected_name,
+            mentions=tuple(selected_mentions),
         )
 
     if relation == "multiple":
@@ -362,7 +403,7 @@ def decision_from_semantic_stock_reference(
             selected_stock_code=selected_stock_code,
             selected_stock_name=selected_name,
             mentions=tuple(
-                StockMention(stock_code=None, name=name, supported=False) for name in names
+                StockMention(stock_code=None, name=name, supported=False) for name in foreign_names
             ),
         )
 

@@ -13,6 +13,8 @@ const UNORDERED_ITEM = /^[-*•]\s+(.+)$/
 const EMPHASIS = /(\*\*[^*\n]+\*\*)/g
 const LABELED_NOTE = /^(투자자가 볼 점|왜 중요한가|핵심 의미|주의할 점)\s*[:：]\s*(.+)$/
 const CLOSING_PARAGRAPH = /^(이런|따라서|즉[,\s]|결국|요약하면|다만|주의할 점)/
+const LONG_PROSE_MIN_LENGTH = 120
+const SENTENCE = /[^.!?。！？]+[.!?。！？]?/g
 
 function inlineText(value: string) {
   return value.split(EMPHASIS).filter(Boolean).map((part, index) => (
@@ -63,6 +65,16 @@ function parseAnswer(text: string): AnswerBlock[] {
 }
 
 function structureAnswer(blocks: AnswerBlock[]): AnswerBlock[] {
+  if (blocks.length === 1 && blocks[0]?.kind === 'paragraph' && blocks[0].text.length >= LONG_PROSE_MIN_LENGTH) {
+    const sentences = (blocks[0].text.match(SENTENCE) ?? []).map((sentence) => sentence.trim()).filter(Boolean)
+    if (sentences.length >= 3) {
+      return [
+        { kind: 'paragraph', text: sentences[0] },
+        { kind: 'unordered', items: sentences.slice(1) },
+      ]
+    }
+  }
+
   const allParagraphs = blocks.every(
     (block): block is Extract<AnswerBlock, { kind: 'paragraph' }> => block.kind === 'paragraph',
   )

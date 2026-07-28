@@ -165,10 +165,11 @@ def test_financial_tool_documents_period_and_fs_div_rules():
     assert "OFS" in schema
 
 
-def test_financial_tool_documents_ambiguous_quarter_policy():
-    """'3분기 영업이익'의 누적/3개월 모호성을 몰래 한쪽으로 강제하지 않는다."""
+def test_financial_tool_documents_quarter_policy():
+    """'3분기'는 3개월치, 누적은 명시할 때만 조회하는 제품 계약을 공개한다."""
     schema = _openai_schema("get_financial_facts")
-    assert "되묻" in schema or "확인" in schema
+    assert "3개월치" in schema
+    assert "누적" in schema
 
 
 def test_eight_tools_still_registered():

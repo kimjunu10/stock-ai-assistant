@@ -53,4 +53,17 @@ describe('RagAnswer', () => {
     expect(answer.getByText('투자자가 볼 점')).toBeTruthy()
     expect(answer.getByText('실제 매출로 이어지는지 확인해야 합니다.')).toBeTruthy()
   })
+
+  it('breaks a long single paragraph into a summary and readable points', () => {
+    const view = render(<RagAnswer text={[
+      '이 뉴스는 레버리지 상품의 신용거래 위험이 커졌다는 내용입니다.',
+      '관련 상품 거래가 늘면서 담보 가치가 빠르게 변할 수 있습니다.',
+      '반대매매가 증가하면 주가 변동성도 함께 커질 수 있습니다.',
+      '투자자는 상품 구조와 손실 가능성을 먼저 확인해야 합니다.',
+    ].join(' ')} />)
+
+    const answer = within(view.container)
+    expect(answer.getByText('한눈에 보기')).toBeTruthy()
+    expect(answer.getAllByRole('listitem')).toHaveLength(3)
+  })
 })
