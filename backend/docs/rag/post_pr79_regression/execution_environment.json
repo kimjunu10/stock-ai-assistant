@@ -1,0 +1,79 @@
+{
+  "classification": "post_pr79_regression_execution_environment",
+  "repository": "kakao_project",
+  "branch": "docs/post-pr79-rag-regression",
+  "origin_main_commit": "7fb0ba758e14c570e2f85ccf08c6cf847a0c01f3",
+  "tested_revision": "7fb0ba758e14c570e2f85ccf08c6cf847a0c01f3",
+  "origin_main_equal_tested_revision": true,
+  "latest_merge": "PR #88: Merge pull request #88 from kimjunu10/codex/rag-demo-reliability",
+  "worktree": "/private/tmp/kakao-post-pr79-regression",
+  "timezone": "Asia/Seoul",
+  "platform": {
+    "os": "macOS 15.6 (24G84)",
+    "kernel": "Darwin 24.6.0 arm64",
+    "python": "3.13.5",
+    "uv": "0.11.8",
+    "node": "v22.19.0",
+    "npm": "10.9.3",
+    "git": "2.51.1"
+  },
+  "frozen_assets": {
+    "devset": {
+      "path": "docs/rag/phase_8/eval/devset.json",
+      "count": 120,
+      "sha256": "747675e0c7128ec6fce6bf2aae30285ee711b0f3ae9f9cbba3dd41230851bf01",
+      "question_gold_order_split_modified": false
+    },
+    "holdout": {
+      "path": "docs/rag/phase_8/eval/holdout.json",
+      "count": 40,
+      "sha256": "ea3f6e3421427955dc5f64811b0c05286a939a7bc7045211b86ceb22f2df7ff7",
+      "question_gold_order_split_modified": false
+    }
+  },
+  "execution_policy": {
+    "source_order_preserved": true,
+    "devset_attempts": 120,
+    "holdout_attempts": 40,
+    "case_retry_count": 0,
+    "selective_reruns": 0,
+    "external_failures": 0,
+    "prior_judge_cache_reused": false
+  },
+  "preflight": {
+    "dataset_validator": "PASS 24/24",
+    "holdout_preflight": "PASS 40/40",
+    "gold_modified_to_pass": false
+  },
+  "baseline_tests": [
+    {
+      "command": ".venv/bin/ruff check .",
+      "result": "pass"
+    },
+    {
+      "command": ".venv/bin/ruff format --check .",
+      "result": "pass (265 files formatted)"
+    },
+    {
+      "command": ".venv/bin/pytest",
+      "result": "pass (620 passed, 1 deprecation warning)"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass"
+    },
+    {
+      "command": "npm test",
+      "result": "pass (38 passed)"
+    },
+    {
+      "command": "npm run build",
+      "result": "pass"
+    }
+  ],
+  "code_changes_during_validation": false,
+  "notes": [
+    "The first pytest launcher attempt was prevented before test collection by sandbox access to the global uv cache; the installed frozen .venv executable was then used. No test case was retried.",
+    "Targeted API scenarios are separate and are not mixed with either frozen evaluation split."
+  ]
+}

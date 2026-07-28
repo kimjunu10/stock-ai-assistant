@@ -1,0 +1,198 @@
+{
+  "status": "pass",
+  "evaluation_run_at": "2026-07-28T22:12:38.661808+09:00",
+  "agent_execution_started": false,
+  "n_holdout_cases": 40,
+  "checks": [
+    {
+      "name": "홀드아웃 40문항·split",
+      "passed": true,
+      "detail": "40문항"
+    },
+    {
+      "name": "확정 라벨의 근거 존재",
+      "passed": true,
+      "detail": "누락 []"
+    },
+    {
+      "name": "답변 가능 질문의 필수 기능 지정",
+      "passed": true,
+      "detail": "누락 []"
+    },
+    {
+      "name": "답변 불가 질문의 기대 행동 지정",
+      "passed": true,
+      "detail": "누락 []"
+    },
+    {
+      "name": "질문 문자열 비어있지 않음",
+      "passed": true,
+      "detail": "빈 질문 []"
+    },
+    {
+      "name": "기대 숫자에 단위 존재",
+      "passed": true,
+      "detail": "누락 []"
+    },
+    {
+      "name": "거래일 YYYY-MM-DD 형식",
+      "passed": true,
+      "detail": "형식 오류 []"
+    },
+    {
+      "name": "사업연도 4자리 형식",
+      "passed": true,
+      "detail": "형식 오류 []"
+    },
+    {
+      "name": "종목코드 6자리 형식",
+      "passed": true,
+      "detail": "형식 오류 []"
+    },
+    {
+      "name": "확정 라벨의 원본 추적 가능",
+      "passed": true,
+      "detail": "추적 불가 []"
+    },
+    {
+      "name": "미확정 라벨에 사유 기록",
+      "passed": true,
+      "detail": "미확정 0건, 사유 누락 []"
+    },
+    {
+      "name": "재무 정답 식별자 DB 실재",
+      "passed": true,
+      "detail": "6/6 확인, 누락 []"
+    },
+    {
+      "name": "공시 정답 접수번호 DB 실재",
+      "passed": true,
+      "detail": "5/5 확인, 누락 []"
+    },
+    {
+      "name": "용어 정답 표제어 DB 실재",
+      "passed": true,
+      "detail": "4/4 확인, 누락 []"
+    },
+    {
+      "name": "뉴스 canonical Gold 현행 document/chunk 해석",
+      "passed": true,
+      "detail": "6/6 확인, 문제 []"
+    },
+    {
+      "name": "리포트 정답 청크 실재·리포트 연결·페이지 범위",
+      "passed": true,
+      "detail": "14/14 확인, 문제 []"
+    },
+    {
+      "name": "리포트 목표주가 stated(전망값) 구분",
+      "passed": true,
+      "detail": "5/5 확인, 문제 []"
+    },
+    {
+      "name": "상대 기간 Gold 유효성",
+      "passed": true,
+      "detail": "{\"planned_run_at\": \"2026-07-28T22:12:38.661808+09:00\", \"recent_lookback_days\": 2, \"n_cases\": 40, \"n_checked\": 0, \"n_skipped_non_relative\": 40, \"n_skipped_no_gold_date\": 0, \"n_stale\": 0, \"stale_cases\": [], \"should_abort\": false}"
+    },
+    {
+      "name": "event-equivalent 승인 데이터 형식",
+      "passed": true,
+      "detail": "오류 []"
+    }
+  ],
+  "relative_gold": {
+    "planned_run_at": "2026-07-28T22:12:38.661808+09:00",
+    "recent_lookback_days": 2,
+    "n_cases": 40,
+    "n_checked": 0,
+    "n_skipped_non_relative": 40,
+    "n_skipped_no_gold_date": 0,
+    "n_stale": 0,
+    "stale_cases": [],
+    "should_abort": false
+  },
+  "news_gold_resolution": {
+    "n_canonical_gold": 6,
+    "n_resolved": 6,
+    "n_errors": 0,
+    "should_abort": false,
+    "resolutions": [
+      {
+        "case_id": "h-news-20",
+        "canonical_id": "news_clusters.id=7131",
+        "cluster_id": "7131",
+        "stock_code": "005380",
+        "cluster_title": "정의선 회장, 엔비디아 본사 방문…자율주행·로봇·제조 AI 협력 후속 논의",
+        "cluster_first_published_at": "2026-07-24T23:15:00+00:00",
+        "resolved_document_id": "9b1b651f-1299-486d-8dc1-7e07565674a5",
+        "resolved_chunk_ids": [
+          "dd8e7f2e-fcc5-478c-bb30-bfb24cfbefac"
+        ]
+      },
+      {
+        "case_id": "h-news-21",
+        "canonical_id": "news_clusters.id=7181",
+        "cluster_id": "7181",
+        "stock_code": "005930",
+        "cluster_title": "삼성, 연내 AI 글래스 '인텔리전트 아이웨어' 출시…경량화·착용감·프라이버시 강조",
+        "cluster_first_published_at": "2026-07-25T23:00:00+00:00",
+        "resolved_document_id": "11fadd1d-d30e-41d8-ab36-4c1d59610dc5",
+        "resolved_chunk_ids": [
+          "44784745-5e5a-4d3a-b163-dd3f8b5b6bd6"
+        ]
+      },
+      {
+        "case_id": "h-news-22",
+        "canonical_id": "news_clusters.id=6889",
+        "cluster_id": "6889",
+        "stock_code": "042660",
+        "cluster_title": "美 하원 세출위, HD현대중공업·한화오션·삼성중공업 조선소 방문",
+        "cluster_first_published_at": "2026-07-23T00:13:00+00:00",
+        "resolved_document_id": "8457ebec-3b9e-45b1-b791-dbd918d2d72b",
+        "resolved_chunk_ids": [
+          "789d528d-85ef-4d0b-9ced-6c6670f71791"
+        ]
+      },
+      {
+        "case_id": "h-news-23",
+        "canonical_id": "news_clusters.id=7108",
+        "cluster_id": "7108",
+        "stock_code": "000660",
+        "cluster_title": "이재용·최태원·정의선·이해진, 미국 빅테크와 9500억달러 규모 AI 협력 발표",
+        "cluster_first_published_at": "2026-07-24T11:13:00+00:00",
+        "resolved_document_id": "8d96f7aa-727d-4d7e-909b-db8f97e5e82b",
+        "resolved_chunk_ids": [
+          "3245f33a-baf5-4135-9e0b-c9acf0ccd98a",
+          "e911351c-6b5a-4e05-b51e-0c8189a7e9d1"
+        ]
+      },
+      {
+        "case_id": "h-news-24",
+        "canonical_id": "news_clusters.id=7014",
+        "cluster_id": "7014",
+        "stock_code": "005380",
+        "cluster_title": "기아, 2분기 역대 최대 매출 달성…전동화 판매 확대로 수익성 회복세",
+        "cluster_first_published_at": "2026-07-24T05:13:00+00:00",
+        "resolved_document_id": "acae810d-c7f8-426a-9dda-a3c9d867e161",
+        "resolved_chunk_ids": [
+          "f226617d-352c-417b-8a91-1d32dca5bf21"
+        ]
+      },
+      {
+        "case_id": "h-news-25",
+        "canonical_id": "news_clusters.id=7149",
+        "cluster_id": "7149",
+        "stock_code": "005930",
+        "cluster_title": "삼성전자-브로드컴, 5년간 2000억달러 규모 AI 반도체 파운드리 협력 체결",
+        "cluster_first_published_at": "2026-07-25T04:02:00+00:00",
+        "resolved_document_id": "0dfcafa1-b47d-45eb-adc9-506383395c20",
+        "resolved_chunk_ids": [
+          "9037f81f-63d6-46d2-98a1-266f0de262ad"
+        ]
+      }
+    ],
+    "errors": []
+  },
+  "event_equivalent_additional_approvals": 0,
+  "failed_checks": []
+}
