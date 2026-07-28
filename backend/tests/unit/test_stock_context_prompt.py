@@ -122,6 +122,13 @@ def test_beginner_document_explanation_is_semantic_not_article_restatement():
     assert "없는 배수·수익·주가 방향은 만들지 않는다" in prompt
 
 
+def test_answer_style_is_not_a_rigid_template():
+    prompt = financial_agent_system_prompt(**_BASE)
+    assert "고정된 출력 틀을 사용하지 않는다" in prompt
+    assert "반드시 아래 3단 구조" not in prompt
+    assert "`투자자가 볼 점` 같은 고정 맺음말" in prompt
+
+
 def test_compound_event_question_uses_search_event_ref_then_return_tool():
     prompt = financial_agent_system_prompt(**_BASE)
     assert "검색 결과의 event_ref(source_type/source_id)" in prompt

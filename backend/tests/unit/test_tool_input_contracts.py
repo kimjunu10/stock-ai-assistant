@@ -14,7 +14,12 @@ import pytest
 from pydantic import ValidationError
 
 from app.agent.runtime import build_tools
-from app.agent.tools.disclosures import DisclosureEventType, DisclosureValuesInput
+from app.agent.tools.disclosures import (
+    DisclosureEventType,
+    DisclosureValuesInput,
+    resolve_disclosure_metric,
+    run_get_disclosure_values,
+)
 
 
 def _tool(name: str):
@@ -62,6 +67,58 @@ def test_valid_event_type_accepted():
 def test_empty_event_types_allowed():
     """유형 미지정은 정상(전체 최신 공시 조회)."""
     assert DisclosureValuesInput(stock_code="005930").event_types == []
+
+
+def test_dividend_metric_is_required_for_numeric_dividend_lookup():
+    class _Facts:
+        def get_structured_values(self, *args, **kwargs):
+            raise AssertionError("metric 검증 전에 DB를 호출하면 안 됨")
+
+    result = run_get_disclosure_values(
+        _Facts(),
+        DisclosureValuesInput(stock_code="005930", event_types=["dividend_matter"]),
+    )
+    assert result.status == "error"
+    assert "metric" in result.warnings[0]
+
+
+def test_dividend_metric_excludes_eps_and_returns_only_dps():
+    class _Facts:
+        def get_structured_values(self, *args, **kwargs):
+            return [
+                {
+                    "rcept_no": "R1",
+                    "event_type": "dividend_matter",
+                    "normalized_data": {"se": "(연결)주당순이익(원)", "thstrm": 7123},
+                },
+                {
+                    "rcept_no": "R1",
+                    "event_type": "dividend_matter",
+                    "normalized_data": {"se": "주당 현금배당금(원)", "thstrm": 361},
+                },
+            ]
+
+    result = run_get_disclosure_values(
+        _Facts(),
+        DisclosureValuesInput(
+            stock_code="005930",
+            event_types=["dividend_matter"],
+            metric="cash_dividend_per_share",
+        ),
+    )
+    assert result.status == "ok"
+    assert len(result.data["values"]) == 1
+    assert result.data["values"][0]["metric_value"]["value"] == 361
+    assert result.data["values"][0]["metric_value"]["metric"] == "cash_dividend_per_share"
+
+
+def test_everyday_dividend_question_resolves_to_per_share_not_total_or_eps():
+    assert (
+        resolve_disclosure_metric("올해 배당 얼마 줘?", "total_cash_dividend")
+        == "cash_dividend_per_share"
+    )
+    assert resolve_disclosure_metric("현금배당 총액은?", None) == "total_cash_dividend"
+    assert resolve_disclosure_metric("배당수익률 알려줘", None) == "dividend_yield"
 
 
 def test_event_type_enum_exposed_to_model():

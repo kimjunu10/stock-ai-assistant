@@ -7,6 +7,8 @@ include/exclude_topics·sentiment 는 Tool 인자로 받아 결과 요약에 명
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from app.agent.tools.common import (
@@ -22,6 +24,9 @@ from app.agent.tools.common import (
     sanitize_exception,
 )
 from app.rag.retrieval import HybridRetriever
+from app.services.relevance import classify_stock_relevance
+
+NewsSearchPurpose = Literal["general", "price_driver"]
 
 
 class SearchNewsInput(BaseModel):
@@ -35,12 +40,23 @@ class SearchNewsInput(BaseModel):
     include_topics: list[str] = Field(default_factory=list)
     exclude_topics: list[str] = Field(default_factory=list)
     current_event_id: str | None = None
+    purpose: NewsSearchPurpose = "general"
     limit: int = Field(default=5, ge=1, le=12)
 
 
 def _has_topic(query: str | None) -> bool:
     """검색 주제가 실제로 있는지 판정(None·빈·공백 = 없음)."""
     return bool(query and query.strip())
+
+
+def _direct_title_match(chunk, stock_code: str) -> bool:
+    decision = classify_stock_relevance(
+        stock_code=stock_code,
+        title=chunk.title,
+        body=None,
+        description=None,
+    )
+    return decision.relevance == "relevant"
 
 
 def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolResult:
@@ -79,6 +95,16 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
     except Exception as e:  # noqa: BLE001
         log_tool_exception(e, layer="HybridRetriever.search_news")
         return error(sanitize_exception(e))
+    if inp.purpose == "price_driver":
+        # 주가 원인 후보는 제목부터 해당 기업을 직접 식별하는 사건만 남긴다. 본문 어딘가에
+        # 종목명이 한 번 등장한 일반 소비자 기사까지 "악재"로 노출되는 것을 막는다.
+        chunks = [chunk for chunk in chunks if _direct_title_match(chunk, inp.stock_code)]
+    elif inp.sentiment in {"positive", "negative"}:
+        # 호재/악재 목록은 직접 관련 기사가 하나라도 있으면 그것만 사용한다. 직접 기사가
+        # 전혀 없는 경우에는 산업·정책 같은 간접 영향을 놓치지 않도록 원래 결과를 유지한다.
+        direct_chunks = [chunk for chunk in chunks if _direct_title_match(chunk, inp.stock_code)]
+        if direct_chunks:
+            chunks = direct_chunks
     if not chunks:
         return no_data("해당 조건의 뉴스를 찾지 못했습니다.")
 
@@ -147,6 +173,7 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
                 "date_to": inp.date_to,
                 "sentiment": inp.sentiment,
                 "mode": "hybrid_search" if _has_topic(inp.query) else "recent_events",
+                "purpose": inp.purpose,
             },
         },
         sources=sources,

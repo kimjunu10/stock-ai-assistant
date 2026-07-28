@@ -111,6 +111,31 @@ DisclosureEventType = Literal[
     "overseas_listing_decision",
 ]
 
+DisclosureMetric = Literal[
+    "cash_dividend_per_share",
+    "total_cash_dividend",
+    "dividend_yield",
+]
+
+
+def resolve_disclosure_metric(
+    question: str | None, requested: DisclosureMetric | None
+) -> DisclosureMetric | None:
+    """배당 질문의 지표 의미를 질문 원문에서 결정해 모델의 임의 선택을 막는다."""
+
+    if not question:
+        return requested
+    compact = "".join(question.lower().split())
+    if "배당" not in compact:
+        return requested
+    if "수익률" in compact:
+        return "dividend_yield"
+    if any(token in compact for token in ("총액", "전체배당", "배당규모")):
+        return "total_cash_dividend"
+    # 일상적인 "배당 얼마 줘?"는 투자자 한 주 기준 질문으로 해석한다.
+    return "cash_dividend_per_share"
+
+
 _EVENT_TYPE_GUIDE = (
     "조회할 공시 유형(영문 코드만 허용). 사용자 표현 → 코드 대응: "
     "배당·배당금·주당배당금 → dividend_matter / "
@@ -131,23 +156,71 @@ class DisclosureValuesInput(BaseModel):
     event_types: list[DisclosureEventType] = Field(
         default_factory=list, description=_EVENT_TYPE_GUIDE
     )
+    metric: DisclosureMetric | None = Field(
+        default=None,
+        description=(
+            "배당 수치의 의미를 고정한다. 주당 현금배당금=cash_dividend_per_share, "
+            "현금배당금 총액=total_cash_dividend, 배당수익률=dividend_yield. "
+            "EPS(주당순이익)는 배당금이 아니므로 반환하지 않는다."
+        ),
+    )
     limit: int = Field(default=5, ge=1, le=12)
 
 
+def _matches_metric(row: dict, metric: DisclosureMetric) -> bool:
+    normalized = row.get("normalized_data")
+    if not isinstance(normalized, dict):
+        return False
+    label = "".join(str(normalized.get("se") or "").lower().split())
+    if metric == "cash_dividend_per_share":
+        return "주당" in label and "배당" in label and "순이익" not in label
+    if metric == "total_cash_dividend":
+        return "현금배당금총액" in label
+    return "배당수익률" in label
+
+
+def _metric_value(row: dict, metric: DisclosureMetric) -> dict:
+    normalized = row.get("normalized_data") if isinstance(row.get("normalized_data"), dict) else {}
+    value = normalized.get("thstrm")
+    unit = {
+        "cash_dividend_per_share": "원",
+        "total_cash_dividend": "백만원",
+        "dividend_yield": "%",
+    }[metric]
+    return {
+        "metric": metric,
+        "value": value,
+        "unit": unit,
+        "period_end": normalized.get("stlm_dt"),
+        "label": normalized.get("se"),
+    }
+
+
 def run_get_disclosure_values(facts: FactsService, inp: DisclosureValuesInput) -> ToolResult:
+    if "dividend_matter" in inp.event_types and inp.metric is None:
+        return error(
+            "배당 수치는 metric을 지정해야 합니다: cash_dividend_per_share, "
+            "total_cash_dividend, dividend_yield"
+        )
     try:
         rows = facts.get_structured_values(
             inp.stock_code,
             event_types=inp.event_types or None,
-            limit=inp.limit,
+            # 한 접수번호의 여러 지표 중 요청 metric만 고르므로 필터 전에는 넉넉히 조회한다.
+            limit=20 if inp.metric else inp.limit,
         )
     except Exception as e:  # noqa: BLE001
         log_tool_exception(e, layer="FactsService.get_structured_values")
         return error(sanitize_exception(e))
     if not rows:
         return no_data("해당 조건의 구조화 공시 값을 찾지 못했습니다.")
+    if inp.metric:
+        rows = [row for row in rows if _matches_metric(row, inp.metric)]
+        if not rows:
+            return no_data(f"요청한 배당 지표({inp.metric})를 찾지 못했습니다.")
     data, sources = [], []
     for r in clamp_items(rows, inp.limit):
+        metric_value = _metric_value(r, inp.metric) if inp.metric else None
         data.append(
             {
                 "rcept_no": r.get("rcept_no"),
@@ -164,6 +237,7 @@ def run_get_disclosure_values(facts: FactsService, inp: DisclosureValuesInput) -
                 "announced_at": iso(r.get("announced_at")),
                 "summary": clamp_text(r.get("summary_text")),
                 "normalized_data": r.get("normalized_data"),
+                "metric_value": metric_value,
             }
         )
         sources.append(

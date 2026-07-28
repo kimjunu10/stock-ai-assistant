@@ -13,6 +13,7 @@ calculate_event_return: 특정일/사건/기간 전후 수익률(백엔드 계�
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -53,10 +54,21 @@ EVENT_WINDOWS = {
 _DATA_SOURCE = "토스증권 Open API"
 
 
+def normalize_price_lookback(value: str | None) -> str | None:
+    """모델의 1일 표현을 현재가 계약으로 정규화하고 허용 기간만 통과시킨다."""
+
+    normalized = (value or "").strip().lower()
+    if normalized in {"", "1d"}:
+        return None
+    if normalized not in LOOKBACK_DAYS:
+        raise ValueError(f"지원하지 않는 기간입니다: {value}")
+    return normalized
+
+
 class GetStockPricesInput(BaseModel):
     stock_code: str = Field(pattern=r"^[0-9]{6}$")
     # 기간 미지정 → 현재가만. lookback 지정 → 기간 수익률+시작/종료 거래일.
-    lookback: str | None = None  # LOOKBACK_DAYS 키만 유효
+    lookback: Literal["1w", "2w", "1m", "3m", "6m", "1y"] | None = None
     start_date: str | None = None  # YYYY-MM-DD (명시 구간)
     end_date: str | None = None  # YYYY-MM-DD
     include_daily: bool = False  # 일봉 목록 포함 여부(기본 미포함, 요약만)

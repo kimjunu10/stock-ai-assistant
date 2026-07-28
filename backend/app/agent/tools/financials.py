@@ -28,7 +28,7 @@ from app.agent.tools.common import (
     ok,
     sanitize_exception,
 )
-from app.services.facts import FactsService
+from app.services.facts import FactsService, NumericFact
 
 # report_period → DART reprt_code (공식 매핑; 숫자 크기 순서 아님)
 PERIOD_TO_REPRT = {"q1": "11013", "half": "11012", "q3": "11014", "annual": "11011"}
@@ -121,7 +121,7 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
             reprt_code=reprt_code,
             amount_type=amount_type,
             fs_div=inp.fs_div,
-            limit=8,
+            limit=40 if inp.period_mode == "history" else 8,
         )
     except TypeError:
         # 기존 FactsService 가 fs_div 인자를 아직 안 받는 경우(리팩터 전) 안전 처리.
@@ -172,6 +172,30 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
                     preferred.append(row)
             if preferred:
                 rows = preferred
+    elif (
+        inp.period_mode == "history"
+        and inp.business_year is None
+        and inp.report_period is None
+        and rows
+    ):
+        # "요즘 좋아지고 있어?" 같은 추세 질문은 최신 보고기간과 동일한 과거 기간만
+        # 비교한다. 1분기와 3분기처럼 길이가 다른 누적값을 비교하는 오류를 차단한다.
+        latest_meta = rows[0].extra
+        target_report = latest_meta.get("reprt_code")
+        target_amount_type = inp.amount_type or (
+            "point_in_time" if requested_accounts[0] in BALANCE_ACCOUNTS else "cumulative"
+        )
+        comparable = [
+            row
+            for row in rows
+            if row.extra.get("reprt_code") == target_report
+            and row.extra.get("amount_type") == target_amount_type
+        ]
+        years = sorted(
+            {row.extra.get("bsns_year") for row in comparable if row.extra.get("bsns_year")},
+            reverse=True,
+        )[:2]
+        rows = [row for row in comparable if row.extra.get("bsns_year") in years]
 
     from app.rag.prompting import format_won
 
@@ -201,9 +225,37 @@ def run_get_financial_facts(facts: FactsService, inp: FinancialFactsInput) -> To
                 locator={"source_type": f.source_type, "source_key": f.source_key},
             )
         )
+    comparisons = []
+    if inp.period_mode == "history":
+        by_label: dict[str, list[NumericFact]] = {}
+        for row in rows:
+            by_label.setdefault(row.label, []).append(row)
+        for label, series in by_label.items():
+            if len(series) < 2:
+                continue
+            current, previous = series[0], series[1]
+            change = current.value - previous.value
+            comparisons.append(
+                {
+                    "label": label,
+                    "current_period": current.period,
+                    "current_value_won": current.value,
+                    "current_value_display": format_won(current.value),
+                    "previous_period": previous.period,
+                    "previous_value_won": previous.value,
+                    "previous_value_display": format_won(previous.value),
+                    "change_won": change,
+                    "change_display": format_won(change),
+                    "change_rate_pct": (
+                        round(change / previous.value * 100, 2) if previous.value else None
+                    ),
+                    "basis": current.basis,
+                }
+            )
     return ok(
         {
             "facts": data,
+            "comparisons": comparisons,
             "selection": {
                 "period_mode": inp.period_mode,
                 "latest_available_period": data[0]["period"] if latest_selected and data else None,

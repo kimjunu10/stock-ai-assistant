@@ -14,6 +14,7 @@ from pydantic import ValidationError
 from app.agent.tools.prices import (
     CalculateEventReturnInput,
     GetStockPricesInput,
+    normalize_price_lookback,
     run_calculate_event_return,
     run_get_stock_prices,
 )
@@ -136,6 +137,17 @@ def test_get_prices_with_lookback_period():
     assert p["end_trading_day"] == "2026-07-24"
     assert p["lookback"] == "1m"
     assert p["unit"] == "원"
+
+
+def test_one_day_lookback_is_rejected_by_typed_contract():
+    """오늘/전일 대비는 lookback 없이 현재가 계약을 써야 한다."""
+    with pytest.raises(ValidationError):
+        GetStockPricesInput(stock_code="005930", lookback="1d")
+
+
+def test_one_day_model_alias_normalizes_to_current_quote_contract():
+    assert normalize_price_lookback("1d") is None
+    assert normalize_price_lookback("1m") == "1m"
 
 
 # ── 명시 구간(start/end) ───────────────────────────────────────────

@@ -56,6 +56,9 @@ class ToolEvidence:
     # 주가 근거(Phase 6): 실제 가격·수익률은 주가 Tool 결과값만 인용 가능
     has_price: bool = False  # 주가 Tool 이 결과를 냈는가
     price_numeric_cores: set[str] = field(default_factory=set)  # 가격·시작/종료가 정수 문자열
+    current_price: int | None = None
+    current_change_rate_pct: float | None = None
+    price_change_rates: set[float] = field(default_factory=set)
     # 사건 전후 주가 근거(prompt.md §6). "이 뉴스 이후" 주장의 필수 근거.
     has_event_return: bool = False  # 사건 기준(basis="event") 계산 결과가 ok 로 있는가
     event_ids: set[str] = field(default_factory=set)
@@ -225,14 +228,107 @@ def _collect_price_numbers(data: Any, ev: ToolEvidence) -> None:
     if isinstance(quote, dict):
         for k in ("price", "previous_close"):
             _add(quote.get(k))
+        if isinstance(quote.get("price"), (int, float)):
+            ev.current_price = int(quote["price"])
+        if isinstance(quote.get("change_rate_pct"), (int, float)):
+            rate = float(quote["change_rate_pct"])
+            ev.current_change_rate_pct = rate
+            ev.price_change_rates.add(round(abs(rate), 2))
     period = data.get("period")
     if isinstance(period, dict):
         for k in ("start_close", "end_close"):
             _add(period.get(k))
+        if isinstance(period.get("return_pct"), (int, float)):
+            ev.price_change_rates.add(round(abs(float(period["return_pct"])), 2))
     # calculate_event_return 은 data 최상위에 start_close/end_close 를 둔다.
     for k in ("start_close", "end_close", "price", "previous_close"):
         if k in data:
             _add(data.get(k))
+    if isinstance(data.get("return_pct"), (int, float)):
+        ev.price_change_rates.add(round(abs(float(data["return_pct"])), 2))
+    for horizon in data.get("horizons") or []:
+        if isinstance(horizon, dict) and isinstance(horizon.get("return_pct"), (int, float)):
+            ev.price_change_rates.add(round(abs(float(horizon["return_pct"])), 2))
+
+
+_PRICE_MOVE_LINE_RE = re.compile(
+    r"(?:주가|현재가|전일\s*대비).*(?:\d+(?:\.\d+)?\s*%).*(?:상승|하락|급등|급락|올랐|내렸|빠졌)"
+    r"|(?:주가|현재가|전일\s*대비).*(?:상승|하락|급등|급락|올랐|내렸|빠졌)"
+    r".*(?:\d+(?:\.\d+)?\s*%)"
+)
+_PERCENT_RE = re.compile(r"(-?\d+(?:\.\d+)?)\s*%")
+_MOVE_WORD_RE = re.compile(r"주가|등락|상승|하락|급등|급락|올랐|내렸|빠졌")
+_CAUSAL_WORD_RE = re.compile(
+    r"때문|원인|영향으로|영향(?:을|이|도)\s*(?:받아|미쳐|줬|컸|있었)"
+    r"|악재로\s*작용|투자심리를\s*(?:악화|개선)"
+)
+
+
+def sanitize_price_movement_claims(
+    answer: str,
+    evidence: ToolEvidence,
+    *,
+    require_price_evidence: bool = False,
+) -> tuple[str, bool]:
+    """가격 질문에서 가격 Tool과 불일치하는 등락률 문장을 안전하게 대체한다.
+
+    뉴스 자체에 포함된 과거 등락률까지 무조건 지우지 않는다. 실제 주가 움직임을 묻는
+    요청이거나 가격 Tool 결과가 있을 때만 이 계약을 적용한다.
+    """
+
+    if not evidence.has_price and not require_price_evidence:
+        return answer, False
+
+    lines = answer.splitlines()
+    kept: list[str] = []
+    changed = False
+    replacement_added = False
+    for line in lines:
+        if not _PRICE_MOVE_LINE_RE.search(line):
+            kept.append(line)
+            continue
+        claimed = [abs(float(value)) for value in _PERCENT_RE.findall(line)]
+        supported = evidence.has_price and any(
+            any(abs(value - allowed) <= 0.02 for allowed in evidence.price_change_rates)
+            for value in claimed
+        )
+        if supported:
+            kept.append(line)
+            continue
+        changed = True
+        if not replacement_added:
+            if evidence.current_price is not None and evidence.current_change_rate_pct is not None:
+                kept.append(
+                    "실제 가격 데이터 기준 현재가는 "
+                    f"**{evidence.current_price:,}원**, 전일 대비 "
+                    f"**{evidence.current_change_rate_pct:+.2f}%**입니다."
+                )
+            else:
+                kept.append(
+                    "현재 가격 데이터 조회가 완료되지 않아 실제 등락률은 확인하지 "
+                    "못했습니다. 뉴스는 관련 배경 후보일 뿐 직접 원인으로 단정할 수 없습니다."
+                )
+            replacement_added = True
+    return "\n".join(kept).strip(), changed
+
+
+def sanitize_causal_language(answer: str, evidence: ToolEvidence) -> tuple[str, bool]:
+    """뉴스와 주가 움직임의 직접 인과를 단정한 답변에 안전한 한계를 명시한다."""
+
+    if not evidence.has_documents:
+        return answer, False
+    risky = any(
+        _MOVE_WORD_RE.search(line) and _CAUSAL_WORD_RE.search(line) for line in answer.splitlines()
+    )
+    if not risky:
+        return answer, False
+    caveat = (
+        "뉴스와 주가 움직임이 같은 시기에 확인됐지만, 해당 뉴스가 등락의 직접적인 "
+        "원인이라고 단정할 수는 없습니다."
+    )
+    if answer.startswith(caveat):
+        return answer, False
+    return f"{caveat}\n\n{answer}", True
 
 
 def _collect_event_evidence(payload: dict, data: Any, ev: ToolEvidence) -> None:
