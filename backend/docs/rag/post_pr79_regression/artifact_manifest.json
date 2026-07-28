@@ -1,0 +1,65 @@
+{
+  "revision": "7fb0ba758e14c570e2f85ccf08c6cf847a0c01f3",
+  "artifacts": {
+    "FINAL_REGRESSION_REPORT.md": {
+      "bytes": 4248,
+      "sha256": "d14daa3d9d79f9e52a2a4240235059570efbf72a709b3218548ae5410527531d"
+    },
+    "devset_judge_cache.json": {
+      "bytes": 54370,
+      "sha256": "6f0e66dcd05550ca83bf902c2a112a9e5704ccb3262efde7cdf56f1ad1f38f12"
+    },
+    "devset_metrics.json": {
+      "bytes": 160773,
+      "sha256": "732b659c78266844b87f066893d2da3f68ea8763c3b2c534d9b3f74bf3d102ae"
+    },
+    "devset_raw_records.json": {
+      "bytes": 543832,
+      "sha256": "153adc507f07fe22b948dedebf3fd61396206dc040b50fb35506310467b49807"
+    },
+    "devset_tool_traces.json": {
+      "bytes": 436761,
+      "sha256": "ee6fa3baa6517ac5dd4fc691b8800d8503f6fa01b155a7455c1a4c85a1839a9c"
+    },
+    "execution_environment.json": {
+      "bytes": 2458,
+      "sha256": "752238fdd85938e629692f1976882c1e94ec9e3d13b65bb81c66b2a011455b90"
+    },
+    "failure_analysis.md": {
+      "bytes": 4697,
+      "sha256": "6e41640f501e0371b5a8d85aba1aba8c8c26fbaa8ee79dab99780a18853343a2"
+    },
+    "holdout_judge_cache.json": {
+      "bytes": 18005,
+      "sha256": "37a62958413e6290f8b025ba46ff0d1bfc756cff6d6a6f7b0096ef2c65e08c5f"
+    },
+    "holdout_metrics.json": {
+      "bytes": 73324,
+      "sha256": "bef5d8799e1ef0eaa1e9bb6432ccfce1655369fe2d66ff044762dd495d74781a"
+    },
+    "holdout_raw_records.json": {
+      "bytes": 158566,
+      "sha256": "36fd71c23f5b86297ed58fbb301e3f95881aab8b0b16505e5a9f7ebae3313793"
+    },
+    "holdout_tool_traces.json": {
+      "bytes": 128465,
+      "sha256": "2163711950da6f4131aa895ec38d3034f06aafc65432f2f575dd7d1a60e8727d"
+    },
+    "phase8_phase9_phase10_comparison.md": {
+      "bytes": 2577,
+      "sha256": "d8f178326c729ab3822813943ea77d1a9215aef760a025585c0e80a2a985c08b"
+    },
+    "preflight.json": {
+      "bytes": 6439,
+      "sha256": "a1f3e2dd60ee5c5887e0318295daa1023348dba1c5fb287ac11f8efc4d2cb03f"
+    },
+    "preflight_dataset.log": {
+      "bytes": 1572,
+      "sha256": "59a23b8f5651d6d1062087c22300eec73fafcf040fc222c9fe75486527e50482"
+    },
+    "targeted_api_results.json": {
+      "bytes": 119732,
+      "sha256": "9adacfe00d98f5d7cf81b1aa43549f0ef4c1da9f5dd2e75711ecf259a4943d96"
+    }
+  }
+}
