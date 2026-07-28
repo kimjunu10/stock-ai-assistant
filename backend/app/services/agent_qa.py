@@ -988,7 +988,7 @@ def _visualization_for_tool(
     if tool_name == "calculate_event_return":
         return {
             "type": "event_return",
-            "title": "발표 전후 주가 변화",
+            "title": "발표 전후 주가 흐름",
             "data": data,
             "source_ids": source_ids,
         }
