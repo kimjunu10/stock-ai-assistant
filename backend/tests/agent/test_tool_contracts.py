@@ -16,7 +16,11 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from app.agent.time_context import resolve_relative_date_range
+from app.agent.time_context import (
+    is_price_movement_question,
+    resolve_financial_time_context,
+    resolve_relative_date_range,
+)
 from app.agent.tools.common import (
     ToolResult,
     clamp_items,
@@ -223,6 +227,44 @@ def test_financial_broad_request_uses_core_metrics_in_one_query():
     assert facts.last_kwargs["account_names"] == ["매출액", "영업이익", "당기순이익"]
 
 
+def test_financial_history_compares_same_official_period_only():
+    facts = _FakeFacts(
+        rows=[
+            _dated_fact("2026", "11013", "cumulative", 133),
+            _dated_fact("2026", "11013", "quarter", 133),
+            _dated_fact("2025", "11014", "cumulative", 239),
+            _dated_fact("2025", "11013", "cumulative", 121),
+            _dated_fact("2024", "11013", "cumulative", 110),
+        ]
+    )
+    result = run_get_financial_facts(
+        facts,
+        FinancialFactsInput(
+            stock_code="005930",
+            account_name="영업이익",
+            period_mode="history",
+        ),
+    )
+    assert result.status == "ok"
+    assert [item["value_won"] for item in result.data["facts"]] == [133, 121]
+    assert all("테스트 기간" in item["period"] for item in result.data["facts"])
+    assert result.data["comparisons"] == [
+        {
+            "label": "영업이익",
+            "current_period": "2026년 테스트 기간",
+            "current_value_won": 133,
+            "current_value_display": "133원",
+            "previous_period": "2025년 테스트 기간",
+            "previous_value_won": 121,
+            "previous_value_display": "121원",
+            "change_won": 12,
+            "change_display": "12원",
+            "change_rate_pct": 9.92,
+            "basis": "연결",
+        }
+    ]
+
+
 def test_relative_date_ranges_use_server_reference_date():
     reference = date(2026, 7, 25)
     assert resolve_relative_date_range("recent", reference_date=reference) == (
@@ -237,6 +279,34 @@ def test_relative_date_ranges_use_server_reference_date():
         "2026-07-19",
         "2026-07-25",
     )
+
+
+def test_financial_quarter_without_year_uses_current_business_year():
+    assert resolve_financial_time_context(
+        "2분기 실적 알려줘",
+        reference_date=date(2026, 7, 28),
+        requested_year=2025,
+        requested_period="half",
+        requested_mode="latest",
+    ) == (2026, "half", "exact")
+
+
+def test_financial_trend_uses_one_history_query():
+    year, period, mode = resolve_financial_time_context(
+        "요즘 실적 좋아지고 있어?",
+        reference_date=date(2026, 7, 28),
+        requested_year=None,
+        requested_period=None,
+        requested_mode="latest",
+    )
+    assert (year, period, mode) == (None, None, "history")
+
+
+def test_price_movement_intent_requires_both_price_context_and_movement():
+    assert is_price_movement_question("오늘 주가 왜 이렇게 내렸어?")
+    assert is_price_movement_question("현재가 급등 배경이 뭐야?")
+    assert not is_price_movement_question("오늘 뭐 악재 있었어?")
+    assert not is_price_movement_question("현재가 알려줘")
 
 
 # ── term ──
@@ -347,6 +417,34 @@ def test_search_news_with_topic_uses_hybrid_search():
     assert r.status == "ok"
     assert fake.search_called and not fake.recent_called
     assert r.data["applied_filters"]["mode"] == "hybrid_search"
+
+
+def test_price_driver_news_excludes_indirect_title_match():
+    fake = _FakeRetriever(
+        recent=[
+            _news_chunk("news_cluster:1", "삼성전자 주가 급락", "2026-07-28", "1"),
+            _news_chunk("news_cluster:2", "공기청정기 호환필터 안전성 논란", "2026-07-28", "2"),
+        ]
+    )
+    result = run_search_news(
+        fake,
+        SearchNewsInput(stock_code="005930", purpose="price_driver"),
+    )
+    assert [item["title"] for item in result.data["news"]] == ["삼성전자 주가 급락"]
+
+
+def test_sentiment_news_prefers_direct_company_titles_when_available():
+    fake = _FakeRetriever(
+        recent=[
+            _news_chunk("news_cluster:1", "삼성전자 공급 차질 우려", "2026-07-28", "1"),
+            _news_chunk("news_cluster:2", "공기청정기 호환필터 안전성 논란", "2026-07-28", "2"),
+        ]
+    )
+    result = run_search_news(
+        fake,
+        SearchNewsInput(stock_code="005930", sentiment="negative"),
+    )
+    assert [item["title"] for item in result.data["news"]] == ["삼성전자 공급 차질 우려"]
 
 
 def test_search_news_pins_exact_ui_selected_event_before_related_results():

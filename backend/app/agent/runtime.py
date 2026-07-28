@@ -38,21 +38,26 @@ from app.agent.prompts import financial_agent_system_prompt
 from app.agent.time_context import (
     RelativePeriod,
     effective_news_relative_period,
+    is_price_movement_question,
+    resolve_financial_time_context,
     resolve_relative_date_range,
 )
 from app.agent.tools.common import ToolResult, error, no_data
 from app.agent.tools.disclosures import (
     DisclosureEventType,
+    DisclosureMetric,
     DisclosureValuesInput,
     SearchDisclosuresInput,
+    resolve_disclosure_metric,
     run_get_disclosure_values,
     run_search_disclosures,
 )
 from app.agent.tools.financials import FinancialFactsInput, run_get_financial_facts
-from app.agent.tools.news import SearchNewsInput, run_search_news
+from app.agent.tools.news import NewsSearchPurpose, SearchNewsInput, run_search_news
 from app.agent.tools.prices import (
     CalculateEventReturnInput,
     GetStockPricesInput,
+    normalize_price_lookback,
     run_calculate_event_return,
     run_get_stock_prices,
 )
@@ -202,6 +207,15 @@ def build_tools() -> list:
         svc, err = _services(runtime)
         if err:
             return _dump(err)
+        current_date = getattr(runtime.context, "current_date", None)
+        if current_date:
+            business_year, report_period, period_mode = resolve_financial_time_context(
+                getattr(runtime.context, "user_question", None),
+                reference_date=date.fromisoformat(current_date),
+                requested_year=business_year,
+                requested_period=report_period,
+                requested_mode=period_mode,
+            )
         inp = FinancialFactsInput(
             stock_code=_resolve_stock_code(
                 stock_code,
@@ -237,6 +251,7 @@ def build_tools() -> list:
         date_from: str | None = None,
         date_to: str | None = None,
         relative_period: RelativePeriod | None = None,
+        purpose: NewsSearchPurpose = "general",
     ) -> str:
         """종목 뉴스 사건을 검색한다.
 
@@ -259,6 +274,10 @@ def build_tools() -> list:
         2일 전까지. 사용자가 기간을 직접 말한 경우에만 지정하고, 특정 사건·인물·제품을
         묻더라도 기간 표현이 없으면 반드시 생략한다.
         date_from/date_to는 사용자가 절대 날짜를 지정한 경우에만 쓴다.
+
+        purpose: 일반 뉴스는 general. "오늘 주가가 왜 내렸어?", "상승 배경은?"처럼
+        실제 등락의 관련 요인을 찾을 때는 price_driver를 쓴다. price_driver는 제목부터
+        해당 기업을 직접 식별하는 사건만 반환한다.
         """
         svc, err = _services(runtime)
         if err:
@@ -267,6 +286,8 @@ def build_tools() -> list:
             getattr(runtime.context, "user_question", None),
             relative_period,
         )
+        if is_price_movement_question(getattr(runtime.context, "user_question", None)):
+            purpose = "price_driver"
         if relative_period:
             current_date = getattr(runtime.context, "current_date", None)
             if not current_date:
@@ -294,6 +315,7 @@ def build_tools() -> list:
                 if getattr(runtime.context, "source_type", None) == "news_event"
                 else None
             ),
+            purpose=purpose,
         )
         return _dump(run_search_news(svc.retriever, inp))
 
@@ -336,6 +358,7 @@ def build_tools() -> list:
         stock_code: str,
         runtime: ToolRuntime[QaRuntimeContext],
         event_types: list[DisclosureEventType] | None = None,
+        metric: DisclosureMetric | None = None,
     ) -> str:
         """공시의 정확한 구조화 값(배당·증자·자기주식 등 금액/수량/날짜)을 조회한다.
 
@@ -345,12 +368,19 @@ def build_tools() -> list:
         발행주식수·상장주식수 → stock_total_status, 자본금 변동·증자/감자 →
         capital_change_status, 유상증자 → paid_in_capital_increase,
         해외상장 → overseas_listing / overseas_listing_decision.
-        생략하면 최신 구조화 공시를 유형 구분 없이 조회한다.
+        배당 금액을 물으면 metric을 반드시 지정한다:
+        주당 배당금=cash_dividend_per_share, 배당 총액=total_cash_dividend,
+        배당수익률=dividend_yield. EPS(주당순이익)는 배당금이 아니다.
+        event_types를 생략하면 최신 구조화 공시를 유형 구분 없이 조회한다.
         """
         svc, err = _services(runtime)
         if err:
             return _dump(err)
         try:
+            metric = resolve_disclosure_metric(
+                getattr(runtime.context, "user_question", None),
+                metric,
+            )
             inp = DisclosureValuesInput(
                 stock_code=_resolve_stock_code(
                     stock_code,
@@ -358,6 +388,7 @@ def build_tools() -> list:
                     tool_name="get_disclosure_values",
                 ),
                 event_types=event_types or [],
+                metric=metric,
             )
         except ValidationError:
             # 허용되지 않은 값은 '데이터 없음'이 아니라 입력 오류로 알린다.
@@ -450,6 +481,10 @@ def build_tools() -> list:
             return _dump(err)
         if svc.prices is None:
             return _dump(error("주가 조회가 현재 구성되어 있지 않습니다."))
+        try:
+            lookback = normalize_price_lookback(lookback)
+        except ValueError as exc:
+            return _dump(error(str(exc)))
         inp = GetStockPricesInput(
             stock_code=_resolve_stock_code(
                 stock_code,

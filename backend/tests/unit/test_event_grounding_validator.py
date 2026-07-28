@@ -7,7 +7,12 @@
 
 from __future__ import annotations
 
-from app.agent.validator import collect_evidence, validate_answer
+from app.agent.validator import (
+    collect_evidence,
+    sanitize_causal_language,
+    sanitize_price_movement_claims,
+    validate_answer,
+)
 
 _EVENT_OK_PAYLOAD = {
     "_tool_name": "calculate_event_return",
@@ -83,6 +88,102 @@ def test_non_event_period_answer_is_not_checked():
         [_PERIOD_ONLY_PAYLOAD],
     )
     assert not [e for e in errors if "사건" in e]
+
+
+def test_wrong_news_price_percentage_is_replaced_with_price_tool_value():
+    payload = {
+        "_tool_name": "get_stock_prices",
+        "status": "ok",
+        "data": {
+            "quote": {
+                "price": 1_525_000,
+                "previous_close": 1_816_000,
+                "change_rate_pct": -16.02,
+            }
+        },
+        "sources": [{"source_id": "price:000660:2026-07-28", "source_type": "price"}],
+    }
+    evidence = collect_evidence([payload])
+    answer, changed = sanitize_price_movement_claims(
+        "SK하이닉스 주가가 전일 대비 48% 급락했습니다.",
+        evidence,
+    )
+    assert changed is True
+    assert "48%" not in answer
+    assert "16.02%" in answer
+    assert "1,525,000원" in answer
+
+
+def test_news_only_question_does_not_delete_document_percentage_without_price_evidence():
+    evidence = collect_evidence(
+        [
+            {
+                "status": "ok",
+                "data": {"news": []},
+                "sources": [{"source_id": "n1", "source_type": "news_event"}],
+            }
+        ]
+    )
+    answer = "기사에는 관련 종목이 12% 하락했다고 적혀 있습니다."
+    sanitized, changed = sanitize_price_movement_claims(answer, evidence)
+    assert changed is False
+    assert sanitized == answer
+
+
+def test_price_reason_question_fails_closed_when_price_tool_has_no_evidence():
+    evidence = collect_evidence(
+        [
+            {
+                "status": "ok",
+                "data": {"news": []},
+                "sources": [{"source_id": "n1", "source_type": "news_event"}],
+            }
+        ]
+    )
+    answer, changed = sanitize_price_movement_claims(
+        "주가가 전일 대비 48% 급락했습니다.",
+        evidence,
+        require_price_evidence=True,
+    )
+    assert changed is True
+    assert "48%" not in answer
+    assert "가격 데이터 조회가 완료되지 않아" in answer
+
+
+def test_causal_price_news_claim_gets_explicit_limit():
+    evidence = collect_evidence(
+        [
+            {
+                "status": "ok",
+                "data": {"news": []},
+                "sources": [{"source_id": "n1", "source_type": "news_event"}],
+            }
+        ]
+    )
+    answer, changed = sanitize_causal_language(
+        "오늘 주가가 악재 때문에 하락했습니다.",
+        evidence,
+    )
+    assert changed is True
+    assert answer.startswith("뉴스와 주가 움직임이 같은 시기에 확인됐지만")
+
+
+def test_causal_limit_covers_common_investor_sentiment_wording():
+    evidence = collect_evidence(
+        [
+            {
+                "status": "ok",
+                "data": {"news": []},
+                "sources": [{"source_id": "n1", "source_type": "news_event"}],
+            }
+        ]
+    )
+    answer, changed = sanitize_causal_language(
+        "주가가 하락했고 외국인 순매도의 영향도 컸으며 투자심리를 악화시켰습니다.",
+        evidence,
+    )
+    assert changed is True
+    assert answer.startswith("뉴스와 주가 움직임이 같은 시기에 확인됐지만")
 
 
 # ── 실패: 이번 결함의 핵심 재현 ───────────────────────────────────

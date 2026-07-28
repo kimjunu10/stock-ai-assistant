@@ -27,12 +27,18 @@ from app.agent.event_reference import (
     resolve_event,
 )
 from app.agent.runtime import build_agent
-from app.agent.time_context import SEOUL_TIMEZONE_NAME, current_seoul_datetime
+from app.agent.time_context import (
+    SEOUL_TIMEZONE_NAME,
+    current_seoul_datetime,
+    is_price_movement_question,
+)
 from app.agent.trace import AgentTrace, ToolTrace
 from app.agent.validator import (
     collect_evidence,
     collect_report_opinions,
     sanitize_answer,
+    sanitize_causal_language,
+    sanitize_price_movement_claims,
     validate_answer,
 )
 from app.core.config import Settings, settings
@@ -560,7 +566,17 @@ class AgentQaService:
 
         # ── 코드 검증(SPEC §12.2): 숫자를 고치지 않고 오류만 기록 ──
         evidence = collect_evidence(tool_payloads)
+        answer, price_sanitized = sanitize_price_movement_claims(
+            answer,
+            evidence,
+            require_price_evidence=is_price_movement_question(question),
+        )
+        answer, causal_sanitized = sanitize_causal_language(answer, evidence)
         validation = validate_answer(answer, evidence)
+        if price_sanitized:
+            validation.errors.append("가격 Tool과 불일치하거나 미검증인 등락률 문장을 교체함")
+        if causal_sanitized:
+            validation.errors.append("뉴스와 주가 움직임의 직접 인과 단정에 주의 문구를 추가함")
         # 근거 없는 증권사·목표주가 문장은 제거(prompt.md §7). 숫자 재추측 없음.
         answer, sanitized = sanitize_answer(answer, evidence)
         if sanitized:
