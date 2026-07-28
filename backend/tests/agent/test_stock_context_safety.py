@@ -9,6 +9,8 @@ from app.agent.runtime import build_tools
 from app.agent.tools.common import ok
 from app.services.relevance import STOCK_MENTION_RULES
 from app.services.stock_context_safety import (
+    decision_from_semantic_stock_reference,
+    natural_company_candidates,
     validate_execution_stock_context,
     validate_input_source_stock_context,
     validate_question_stock_context,
@@ -60,7 +62,7 @@ def test_different_supported_company_is_blocked_before_agent():
     assert "종목을 현대차로 변경" in (decision.message or "")
 
 
-def test_unsupported_company_is_detected_without_company_specific_blocklist():
+def test_natural_company_candidate_is_deferred_to_semantic_classification():
     for question in (
         "애플 올해 실적 알려줘",
         "애플 알려줘",
@@ -68,17 +70,43 @@ def test_unsupported_company_is_detected_without_company_specific_blocklist():
         "Tesla 올해 실적 알려줘",
     ):
         decision = validate_question_stock_context(question, "005930")
-        assert not decision.allowed, question
-        assert decision.error_code == "UNSUPPORTED_STOCK", question
+        assert decision.allowed, question
+        assert natural_company_candidates(question), question
 
 
-def test_multiple_supported_and_unsupported_companies_are_blocked():
+def test_semantic_multiple_company_result_is_blocked():
     for question in ("삼성전자와 애플 실적 비교해줘", "삼성전자와 애플 비교해줘"):
         decision = validate_question_stock_context(question, "005930")
+        semantic_decision = decision_from_semantic_stock_reference(
+            relation="multiple",
+            company_names=["삼성전자", "애플"],
+            selected_stock_code="005930",
+        )
 
-        assert not decision.allowed
-        assert decision.error_code == "MULTI_STOCK_NOT_SUPPORTED"
-        assert decision.message == "현재 화면에서는 한 종목씩 조회할 수 있습니다."
+        assert decision.allowed
+        assert not semantic_decision.allowed
+        assert semantic_decision.error_code == "MULTI_STOCK_NOT_SUPPORTED"
+        assert semantic_decision.message == "현재 화면에서는 한 종목씩 조회할 수 있습니다."
+
+
+def test_semantic_other_company_result_is_blocked_as_unsupported():
+    decision = decision_from_semantic_stock_reference(
+        relation="other",
+        company_names=["애플"],
+        selected_stock_code="005930",
+    )
+
+    assert not decision.allowed
+    assert decision.error_code == "UNSUPPORTED_STOCK"
+    assert "현재 애플은 지원하지 않는 종목" in (decision.message or "")
+
+
+def test_explicit_unsupported_ticker_is_blocked_without_model_classification():
+    decision = validate_question_stock_context("$AAPL 주가 알려줘", "005930")
+
+    assert not decision.allowed
+    assert decision.error_code == "UNSUPPORTED_STOCK"
+    assert decision.mentions[0].name.upper() == "AAPL"
 
 
 def test_multiple_supported_companies_are_blocked():
@@ -177,6 +205,7 @@ def test_normal_financial_tool_receives_authoritative_selected_stock(monkeypatch
         "다른 증권사 의견과 비교해줘",
         "회사 발표 내용만 알려줘",
         "반도체 업황 뉴스 알려줘",
+        "가장 최근 공시는 뭐고 그 공시로 인해 주가가 어떻게 되었어",
     ],
 )
 def test_existing_single_stock_questions_are_not_false_positive_company_mentions(question):

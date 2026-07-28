@@ -2,8 +2,9 @@
 
 The stock selected by the UI is authoritative.  A question may omit a company
 or name that same company, but it must not silently switch to another company.
-This module is deterministic and runs before the Agent; it does not ask a model
-to classify the request.
+This module is the deterministic layer: known stock aliases, explicit tickers,
+and runtime/tool/source codes are enforced here.  Ambiguous natural-language
+candidates are only surfaced for a separate semantic classifier.
 """
 
 from __future__ import annotations
@@ -195,13 +196,14 @@ def _looks_like_company_candidate(value: str) -> bool:
     return _COMPANY_SUFFIX_RE.search(normalized) is not None
 
 
-def _unsupported_name_candidates(question: str) -> list[tuple[int, str]]:
-    """Extract explicit company slots without a company-specific blocklist.
+def natural_company_candidates(question: str) -> tuple[str, ...]:
+    """Find text that may be a natural-language company mention.
 
     The single-stock UI primarily receives financial questions.  A noun phrase
     before a financial topic ("Acme 올해 실적") or an explicit subject/ticker
-    is a company mention.  Pure context questions ("올해 실적") reduce to an
-    empty candidate and therefore keep the selected stock.
+    may be a company mention.  Pure context questions ("올해 실적") reduce to an
+    empty candidate.  These candidates only decide whether semantic
+    classification is needed; they never block a request by themselves.
     """
 
     masked = _mask_supported_terms(question)
@@ -226,6 +228,22 @@ def _unsupported_name_candidates(question: str) -> list[tuple[int, str]]:
         if _looks_like_company_candidate(name):
             candidates.append((match.start("name"), name))
 
+    unique: list[str] = []
+    seen: set[str] = set()
+    for _, name in sorted(candidates, key=lambda item: item[0]):
+        key = _normalize(name)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(name)
+    return tuple(unique)
+
+
+def _explicit_unsupported_identifiers(question: str) -> list[tuple[int, str]]:
+    """Extract unambiguous unsupported tickers or six-digit stock codes."""
+
+    masked = _mask_supported_terms(question)
+    candidates: list[tuple[int, str]] = []
     for match in _EXPLICIT_TICKER_RE.finditer(masked):
         ticker = match.group("ticker")
         if ticker.casefold() not in {"ai", "per", "pbr", "roe", "mou", "etf"}:
@@ -264,7 +282,7 @@ def validate_question_stock_context(
         )
 
     supported = _supported_mentions(question)
-    unsupported = _unsupported_name_candidates(question)
+    unsupported = _explicit_unsupported_identifiers(question)
     mentions = tuple(
         [item[1] for item in supported]
         + [StockMention(stock_code=None, name=name, supported=False) for _, name in unsupported]
@@ -316,6 +334,73 @@ def validate_question_stock_context(
         selected_stock_code=selected_stock_code,
         selected_stock_name=selected_name,
         mentions=mentions,
+    )
+
+
+def decision_from_semantic_stock_reference(
+    *,
+    relation: Literal["none", "selected", "other", "multiple"],
+    company_names: list[str],
+    selected_stock_code: str | None,
+) -> StockContextDecision:
+    """Convert semantic company-reference output into the existing safety contract."""
+
+    selected_name = stock_name(selected_stock_code)
+    names = [name.strip() for name in company_names if name and name.strip()]
+    if relation in {"none", "selected"}:
+        return StockContextDecision(
+            allowed=True,
+            selected_stock_code=selected_stock_code,
+            selected_stock_name=selected_name,
+        )
+
+    if relation == "multiple":
+        return StockContextDecision(
+            allowed=False,
+            error_code="MULTI_STOCK_NOT_SUPPORTED",
+            message="현재 화면에서는 한 종목씩 조회할 수 있습니다.",
+            selected_stock_code=selected_stock_code,
+            selected_stock_name=selected_name,
+            mentions=tuple(
+                StockMention(stock_code=None, name=name, supported=False) for name in names
+            ),
+        )
+
+    requested_name = names[0] if names else "다른 회사"
+    supported = _supported_mentions(requested_name)
+    if supported:
+        requested = supported[0][1]
+        if requested.stock_code == selected_stock_code:
+            return StockContextDecision(
+                allowed=True,
+                selected_stock_code=selected_stock_code,
+                selected_stock_name=selected_name,
+                mentions=(requested,),
+            )
+        message = (
+            f"현재 {selected_name or selected_stock_code}가 선택되어 있습니다.\n"
+            f"{requested.name} 정보를 확인하려면 종목을 {requested.name}로 변경해 주세요."
+        )
+        return StockContextDecision(
+            allowed=False,
+            error_code="STOCK_CONTEXT_MISMATCH",
+            message=message,
+            selected_stock_code=selected_stock_code,
+            selected_stock_name=selected_name,
+            mentions=(requested,),
+        )
+
+    message = (
+        f"현재 {requested_name}{_subject_particle(requested_name)} 지원하지 않는 종목입니다.\n"
+        "지원 종목을 선택한 뒤 다시 질문해 주세요."
+    )
+    return StockContextDecision(
+        allowed=False,
+        error_code="UNSUPPORTED_STOCK",
+        message=message,
+        selected_stock_code=selected_stock_code,
+        selected_stock_name=selected_name,
+        mentions=(StockMention(stock_code=None, name=requested_name, supported=False),),
     )
 
 

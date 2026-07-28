@@ -36,12 +36,16 @@ from app.agent.validator import (
     validate_answer,
 )
 from app.core.config import Settings, settings
+from app.services.relevance import STOCK_MENTION_RULES
 from app.services.stock_context_safety import (
     StockContextDecision,
+    decision_from_semantic_stock_reference,
+    natural_company_candidates,
     validate_execution_stock_context,
     validate_input_source_stock_context,
     validate_question_stock_context,
 )
+from app.services.stock_reference_classifier import StockReferenceClassifier
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +92,11 @@ class AgentQaService:
         self._cfg = cfg
         self._services = services
         self._agent = build_agent(cfg, api_key=api_key, base_url=base_url)
+        self._stock_reference_classifier = StockReferenceClassifier(
+            cfg,
+            api_key=api_key,
+            base_url=base_url,
+        )
 
     @lru_cache(maxsize=128)
     def _stock_name(self, stock_code: str) -> str | None:
@@ -366,6 +375,7 @@ class AgentQaService:
         selected_event_id: str | None = None,
     ) -> AgentQaResult:
         request_id = request_id or uuid.uuid4().hex
+        preflight_model_calls = 0
         stock_decision = validate_question_stock_context(question, stock_code)
         if not stock_decision.allowed:
             logger.warning(
@@ -383,6 +393,44 @@ class AgentQaService:
                 request_id or "unknown",
             )
             return self._blocked(request_id, stock_decision)
+
+        candidates = natural_company_candidates(question)
+        classifier = getattr(self, "_stock_reference_classifier", None)
+        if stock_code and candidates and classifier is not None:
+            preflight_model_calls = 1
+            try:
+                classification = classifier.classify(
+                    question,
+                    selected_stock_code=stock_code,
+                    selected_stock_name=stock_decision.selected_stock_name,
+                    supported_stock_names=[rule.name for rule in STOCK_MENTION_RULES.values()],
+                )
+            except Exception as exc:  # noqa: BLE001 - 본 Agent의 안전장치로 계속 검증
+                logger.warning(
+                    "STOCK_REFERENCE_CLASSIFIER_FAILED error_type=%s correlation_id=%s",
+                    type(exc).__name__,
+                    request_id,
+                )
+            else:
+                semantic_decision = decision_from_semantic_stock_reference(
+                    relation=classification.relation,
+                    company_names=classification.company_names,
+                    selected_stock_code=stock_code,
+                )
+                if not semantic_decision.allowed:
+                    logger.warning(
+                        "STOCK_CONTEXT_BLOCKED code=%s selected_stock_code=%s "
+                        "semantic_relation=%s correlation_id=%s",
+                        semantic_decision.error_code,
+                        stock_code,
+                        classification.relation,
+                        request_id,
+                    )
+                    return self._blocked(
+                        request_id,
+                        semantic_decision,
+                        model_calls=preflight_model_calls,
+                    )
 
         input_source_violation = validate_input_source_stock_context(
             selected_stock_code=stock_code,
@@ -432,6 +480,7 @@ class AgentQaService:
                     "현재 화면의 자료 원문을 확인할 수 없어 이 자료를 기준으로 답변하지 "
                     "않았습니다. 자료를 다시 연 뒤 질문해 주세요."
                 ),
+                model_calls=preflight_model_calls,
                 stop_reason="no_data",
                 warnings=["현재 화면의 주 자료를 조회하지 못했습니다."],
             )
@@ -470,6 +519,7 @@ class AgentQaService:
             )
 
         answer, tool_calls, model_calls, tool_payloads, in_tok, out_tok = self._extract(out)
+        model_calls += preflight_model_calls
         primary_payload = self._primary_source_payload(ctx.primary_source)
         if primary_payload is not None:
             tool_payloads.insert(0, primary_payload)
