@@ -1,0 +1,33 @@
+{
+  "classification": {
+    "devset": "post_contract_hardening_devset_regression",
+    "holdout": "post_contract_hardening_same_holdout_regression",
+    "targeted": "targeted_api_validation"
+  },
+  "base_origin_main": "7fb0ba758e14c570e2f85ccf08c6cf847a0c01f3",
+  "tested_revision": "7e74180484fa2642183e0e01e08e047bc1e0b304",
+  "branch": "codex/rag-contract-hardening",
+  "timezone": "Asia/Seoul",
+  "python": "3.13.5",
+  "node": "22.19.0",
+  "npm": "10.9.3",
+  "fastapi": "0.139.2",
+  "langchain": "1.3.14",
+  "pydantic": "2.13.4",
+  "dataset": {
+    "devset_path": "backend/docs/rag/phase_8/eval/devset.json",
+    "devset_count": 120,
+    "devset_sha256": "747675e0c7128ec6fce6bf2aae30285ee711b0f3ae9f9cbba3dd41230851bf01",
+    "holdout_path": "backend/docs/rag/phase_8/eval/holdout.json",
+    "holdout_count": 40,
+    "holdout_sha256": "ea3f6e3421427955dc5f64811b0c05286a939a7bc7045211b86ceb22f2df7ff7",
+    "questions_gold_order_split_modified": false
+  },
+  "attempts": {
+    "devset": 120,
+    "holdout": 40,
+    "devset_retries": 0,
+    "holdout_retries": 0
+  },
+  "metadata_note": "The runner was initially given an incorrectly expanded full SHA after the correct short SHA 7e74180. Only the revision metadata string in the six generated devset/holdout JSON files was mechanically corrected to git rev-parse HEAD; records, traces, grades, ordering, and metrics were not changed."
+}

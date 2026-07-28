@@ -8,6 +8,7 @@ FactsService(get_latest_disclosures / get_structured_values) 재사용.
 
 from __future__ import annotations
 
+import unicodedata
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -116,6 +117,36 @@ DisclosureMetric = Literal[
     "total_cash_dividend",
     "dividend_yield",
 ]
+
+
+def resolve_disclosure_event_types(
+    question: str | None,
+    requested: list[DisclosureEventType] | None = None,
+) -> list[DisclosureEventType]:
+    """사용자 표현을 DB의 구조화 공시 유형으로 결정적으로 정규화한다."""
+
+    if not question:
+        return list(requested or [])
+    compact = "".join(unicodedata.normalize("NFKC", question).lower().split())
+    resolved: list[DisclosureEventType] = []
+    if "배당" in compact:
+        resolved.append("dividend_matter")
+    if "자기주식" in compact or "자사주" in compact:
+        if any(token in compact for token in ("처분", "매각", "팔")):
+            resolved.append("treasury_stock_disposal")
+        elif any(token in compact for token in ("취득", "매입", "사들")):
+            resolved.append("treasury_stock_acquisition")
+        else:
+            resolved.append("treasury_stock_status")
+    if any(token in compact for token in ("발행주식수", "상장주식수", "총주식수")):
+        resolved.append("stock_total_status")
+    if any(token in compact for token in ("유상증자",)):
+        resolved.append("paid_in_capital_increase")
+    elif any(token in compact for token in ("자본금변동", "증자", "감자")):
+        resolved.append("capital_change_status")
+    if "해외상장" in compact:
+        resolved.append("overseas_listing_decision" if "결정" in compact else "overseas_listing")
+    return list(dict.fromkeys(resolved or list(requested or [])))
 
 
 def resolve_disclosure_metric(

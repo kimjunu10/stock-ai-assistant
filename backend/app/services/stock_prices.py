@@ -21,6 +21,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from datetime import time as wall_time
 
 from app.sources.prices import SUPPORTED_STOCK_CODES, TossApiError, TossInvestClient
 
@@ -58,6 +59,30 @@ class PriceQuote:
     currency: str
     as_of: datetime  # 체결 기준 시각(KST)
     trading_day: date
+    # 제공자 현재가 endpoint의 값은 확정 종가로 승격하지 않는다.
+    price_kind: str = "current"
+    market_status: str = "unknown"
+
+
+def market_status_at(as_of: datetime) -> str:
+    """한국 주식 거래 세션을 현재가 timestamp 기준으로 분류한다.
+
+    토스 현재가 API가 확정 종가 여부를 별도로 주지 않으므로 정규장과 NXT 장후거래를
+    구분해 노출한다. 휴일 캘린더는 일봉 데이터가 담당하며 여기서는 주말만 확정한다.
+    """
+
+    if as_of.weekday() >= 5:
+        return "closed"
+    current = as_of.timetz().replace(tzinfo=None)
+    if wall_time(8, 0) <= current < wall_time(8, 50):
+        return "pre_market"
+    if wall_time(9, 0) <= current < wall_time(15, 30):
+        return "regular_open"
+    if wall_time(15, 30) <= current < wall_time(15, 40):
+        return "session_break"
+    if wall_time(15, 40) <= current < wall_time(20, 0):
+        return "after_market"
+    return "closed"
 
 
 @dataclass
@@ -316,6 +341,8 @@ class StockPriceService:
                 currency=currency,
                 as_of=as_of,
                 trading_day=quote_day,
+                price_kind="current",
+                market_status=market_status_at(as_of),
             )
             self._cache_put(cache_key, quote)
             return quote

@@ -48,6 +48,7 @@ from app.agent.tools.disclosures import (
     DisclosureMetric,
     DisclosureValuesInput,
     SearchDisclosuresInput,
+    resolve_disclosure_event_types,
     resolve_disclosure_metric,
     run_get_disclosure_values,
     run_search_disclosures,
@@ -57,11 +58,15 @@ from app.agent.tools.news import NewsSearchPurpose, SearchNewsInput, run_search_
 from app.agent.tools.prices import (
     CalculateEventReturnInput,
     GetStockPricesInput,
-    normalize_price_lookback,
+    resolve_price_lookback,
     run_calculate_event_return,
     run_get_stock_prices,
 )
-from app.agent.tools.reports import SearchResearchReportsInput, run_search_research_reports
+from app.agent.tools.reports import (
+    SearchResearchReportsInput,
+    resolve_report_broker,
+    run_search_research_reports,
+)
 from app.agent.tools.terms import FinancialTermInput, run_lookup_financial_term
 from app.core.config import Settings
 from app.services.stock_context_safety import (
@@ -70,6 +75,48 @@ from app.services.stock_context_safety import (
 )
 
 _RETRY_TOOLS = ["search_news", "search_disclosures", "search_research_reports"]
+_INCOME_ACCOUNT_NAMES = {"매출액", "영업이익", "당기순이익"}
+_CURRENT_DOCUMENT_RE = re.compile(
+    r"이\s*(?:뉴스|기사|리포트|보고서|자료|문서)|"
+    r"무슨\s*(?:뉴스|기사|리포트|보고서)|내용|핵심|요약|설명"
+)
+_DOCUMENT_EXPANSION_RE = re.compile(r"관련\s*(?:뉴스|기사|자료)|다른|추가|더\s*찾|최근|목록")
+
+
+def _is_current_document_question(question: str | None) -> bool:
+    normalized = " ".join((question or "").split())
+    return bool(
+        _CURRENT_DOCUMENT_RE.search(normalized) and not _DOCUMENT_EXPANSION_RE.search(normalized)
+    )
+
+
+def _normalize_financial_request(
+    question: str | None,
+    account_name: str | None,
+    account_names: list[str] | None,
+    amount_type: str | None,
+    fs_div: str,
+) -> tuple[str | None, list[str], str | None, str]:
+    """모델이 흔히 혼동하는 계정 별칭·분기값·연결/별도를 질문 원문으로 고정한다."""
+
+    aliases = {"순이익": "당기순이익", "매출": "매출액"}
+    account_name = aliases.get(account_name or "", account_name)
+    normalized_accounts = [aliases.get(name, name) for name in (account_names or [])]
+    compact = "".join((question or "").lower().split())
+    if "별도" in compact:
+        fs_div = "OFS"
+    elif "단독" in compact:
+        # '단독 분기'는 3개월치라는 뜻이며 별도재무제표가 아니다.
+        fs_div = "CFS"
+    requested_accounts = {account_name, *normalized_accounts} - {None}
+    has_income = not requested_accounts or bool(requested_accounts & _INCOME_ACCOUNT_NAMES)
+    if has_income and re.search(r"(?:1|2|3|4)분기|반기", compact):
+        if "누적" in compact:
+            amount_type = "cumulative"
+        else:
+            # 제품 질의 계약: 'N분기'는 해당 분기 3개월치, 누적은 명시할 때만.
+            amount_type = "quarter"
+    return account_name, normalized_accounts, amount_type, fs_div
 
 
 def _dump(result: ToolResult) -> str:
@@ -198,15 +245,26 @@ def build_tools() -> list:
           - 주의: "단독 3분기 영업이익"의 '단독'은 별도재무제표가 아니라
             누적이 아닌 3개월치라는 뜻이다 → amount_type=quarter, fs_div 는 CFS 유지.
 
-        "3분기 영업이익"처럼 누적/3개월이 모두 가능한 표현은 한쪽을 임의로 고르지 말고
-        amount_type 을 비워 호출한다. 이때 유형이 확정되지 않으면 no_data 가 오며,
-        그 경우 사용자에게 누적인지 3개월치인지 되묻는다.
+        제품 질의 계약에서 "3분기 영업이익"은 해당 분기 3개월치(quarter)로 해석한다.
+        누적값은 사용자가 "누적"을 명시한 경우에만 cumulative 로 조회한다.
 
         정확히 일치하는 기간·유형이 없으면 no_data 를 반환하며 다른 기간으로 대체하지 않는다.
         """
         svc, err = _services(runtime)
         if err:
             return _dump(err)
+        (
+            account_name,
+            account_names,
+            amount_type,
+            fs_div,
+        ) = _normalize_financial_request(
+            getattr(runtime.context, "user_question", None),
+            account_name,
+            account_names,
+            amount_type,
+            fs_div,
+        )
         current_date = getattr(runtime.context, "current_date", None)
         if current_date:
             business_year, report_period, period_mode = resolve_financial_time_context(
@@ -223,7 +281,7 @@ def build_tools() -> list:
                 tool_name="get_financial_facts",
             ),
             account_name=account_name,
-            account_names=account_names or [],
+            account_names=account_names,
             business_year=business_year,
             report_period=report_period,
             amount_type=amount_type,
@@ -315,6 +373,10 @@ def build_tools() -> list:
                 if getattr(runtime.context, "source_type", None) == "news_event"
                 else None
             ),
+            context_only=(
+                getattr(runtime.context, "source_type", None) == "news_event"
+                and _is_current_document_question(getattr(runtime.context, "user_question", None))
+            ),
             purpose=purpose,
         )
         return _dump(run_search_news(svc.retriever, inp))
@@ -335,6 +397,24 @@ def build_tools() -> list:
         svc, err = _services(runtime)
         if err:
             return _dump(err)
+        question = getattr(runtime.context, "user_question", None)
+        event_types = resolve_disclosure_event_types(question)
+        if event_types:
+            # 정확한 수량·금액 질문을 모델이 목록 검색으로 호출해도 구조화 행을 우선한다.
+            return _dump(
+                run_get_disclosure_values(
+                    svc.facts,
+                    DisclosureValuesInput(
+                        stock_code=_resolve_stock_code(
+                            stock_code,
+                            runtime,
+                            tool_name="search_disclosures",
+                        ),
+                        event_types=event_types,
+                        metric=resolve_disclosure_metric(question, None),
+                    ),
+                )
+            )
         inp = SearchDisclosuresInput(
             stock_code=_resolve_stock_code(
                 stock_code,
@@ -381,13 +461,17 @@ def build_tools() -> list:
                 getattr(runtime.context, "user_question", None),
                 metric,
             )
+            event_types = resolve_disclosure_event_types(
+                getattr(runtime.context, "user_question", None),
+                event_types,
+            )
             inp = DisclosureValuesInput(
                 stock_code=_resolve_stock_code(
                     stock_code,
                     runtime,
                     tool_name="get_disclosure_values",
                 ),
-                event_types=event_types or [],
+                event_types=event_types,
                 metric=metric,
             )
         except ValidationError:
@@ -445,12 +529,20 @@ def build_tools() -> list:
                 tool_name="search_research_reports",
             ),
             query=query,
-            broker=broker,
+            broker=resolve_report_broker(
+                getattr(runtime.context, "user_question", None),
+                broker,
+            ),
             date_from=date_from,
             date_to=date_to,
             time_context=time_context,
             as_of_date=as_of_date,
-            report_id=report_id,
+            report_id=(
+                getattr(runtime.context, "source_id", None)
+                if getattr(runtime.context, "source_type", None) == "research_report"
+                and _is_current_document_question(getattr(runtime.context, "user_question", None))
+                else report_id
+            ),
         )
         return _dump(run_search_research_reports(svc.reports, inp))
 
@@ -482,7 +574,10 @@ def build_tools() -> list:
         if svc.prices is None:
             return _dump(error("주가 조회가 현재 구성되어 있지 않습니다."))
         try:
-            lookback = normalize_price_lookback(lookback)
+            lookback = resolve_price_lookback(
+                getattr(runtime.context, "user_question", None),
+                lookback,
+            )
         except ValueError as exc:
             return _dump(error(str(exc)))
         inp = GetStockPricesInput(

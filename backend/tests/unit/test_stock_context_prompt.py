@@ -116,7 +116,9 @@ def test_primary_news_content_is_pinned_for_short_follow_up_questions():
 
 def test_beginner_document_explanation_is_semantic_not_article_restatement():
     prompt = financial_agent_system_prompt(**_BASE)
-    assert "첫 문장은 반드시 `쉽게 말해, ...`" in prompt
+    assert "특정 도입 문구" in prompt
+    assert "강제로 붙이지 않는다" in prompt
+    assert "상투적인 도입 문구를 반복하지 않는다" in prompt
     assert "용어 = 쉬운 뜻" in prompt
     assert "원문 문장을 줄이거나 순서만 바꾼 요약을 하지 않는다" in prompt
     assert "없는 배수·수익·주가 방향은 만들지 않는다" in prompt

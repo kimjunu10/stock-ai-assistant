@@ -58,6 +58,9 @@ class ToolEvidence:
     price_numeric_cores: set[str] = field(default_factory=set)  # 가격·시작/종료가 정수 문자열
     current_price: int | None = None
     current_change_rate_pct: float | None = None
+    price_kind: str | None = None
+    market_status: str | None = None
+    price_as_of: str | None = None
     price_change_rates: set[float] = field(default_factory=set)
     # 사건 전후 주가 근거(prompt.md §6). "이 뉴스 이후" 주장의 필수 근거.
     has_event_return: bool = False  # 사건 기준(basis="event") 계산 결과가 ok 로 있는가
@@ -234,6 +237,12 @@ def _collect_price_numbers(data: Any, ev: ToolEvidence) -> None:
             rate = float(quote["change_rate_pct"])
             ev.current_change_rate_pct = rate
             ev.price_change_rates.add(round(abs(rate), 2))
+        if quote.get("price_kind"):
+            ev.price_kind = str(quote["price_kind"])
+        if quote.get("market_status"):
+            ev.market_status = str(quote["market_status"])
+        if quote.get("as_of"):
+            ev.price_as_of = str(quote["as_of"])
     period = data.get("period")
     if isinstance(period, dict):
         for k in ("start_close", "end_close"):
@@ -262,6 +271,8 @@ _CAUSAL_WORD_RE = re.compile(
     r"때문|원인|영향으로|영향(?:을|이|도)\s*(?:받아|미쳐|줬|컸|있었)"
     r"|악재로\s*작용|투자심리를\s*(?:악화|개선)"
 )
+_UP_WORD_RE = re.compile(r"상승|급등|올랐|오름|강세")
+_DOWN_WORD_RE = re.compile(r"하락|급락|내렸|떨어졌|빠졌|약세")
 
 
 def sanitize_price_movement_claims(
@@ -313,22 +324,101 @@ def sanitize_price_movement_claims(
 
 
 def sanitize_causal_language(answer: str, evidence: ToolEvidence) -> tuple[str, bool]:
-    """뉴스와 주가 움직임의 직접 인과를 단정한 답변에 안전한 한계를 명시한다."""
+    """근거 없는 뉴스→주가 직접 인과 문장을 제거하고 한계를 명시한다."""
 
     if not evidence.has_documents:
         return answer, False
-    risky = any(
-        _MOVE_WORD_RE.search(line) and _CAUSAL_WORD_RE.search(line) for line in answer.splitlines()
-    )
-    if not risky:
+    sentences = [part.strip() for part in _SENTENCE_SPLIT_RE.split(answer) if part.strip()]
+    kept: list[str] = []
+    previous_described_move = False
+    for sentence in sentences:
+        describes_move = bool(_MOVE_WORD_RE.search(sentence))
+        causal = bool(_CAUSAL_WORD_RE.search(sentence))
+        if causal and (describes_move or previous_described_move):
+            previous_described_move = describes_move
+            continue
+        kept.append(sentence)
+        previous_described_move = describes_move
+    if len(kept) == len(sentences):
         return answer, False
     caveat = (
         "뉴스와 주가 움직임이 같은 시기에 확인됐지만, 해당 뉴스가 등락의 직접적인 "
         "원인이라고 단정할 수는 없습니다."
     )
-    if answer.startswith(caveat):
+    body = "\n\n".join(kept)
+    suffix = "\n\n" + body if body else ""
+    return caveat + suffix, True
+
+
+def sanitize_conflicting_document_price_claims(
+    answer: str, evidence: ToolEvidence
+) -> tuple[str, bool]:
+    """문서끼리 등락 방향이 충돌하면 실제 가격 근거 없이 방향을 합성하지 않는다."""
+
+    if not evidence.has_documents or evidence.has_price:
         return answer, False
-    return f"{caveat}\n\n{answer}", True
+    sentences = [part.strip() for part in _SENTENCE_SPLIT_RE.split(answer) if part.strip()]
+    movement = [
+        sentence
+        for sentence in sentences
+        if _MOVE_WORD_RE.search(sentence)
+        and (_UP_WORD_RE.search(sentence) or _DOWN_WORD_RE.search(sentence))
+    ]
+    if not (
+        any(_UP_WORD_RE.search(sentence) for sentence in movement)
+        and any(_DOWN_WORD_RE.search(sentence) for sentence in movement)
+    ):
+        return answer, False
+    kept = [sentence for sentence in sentences if sentence not in movement]
+    notice = (
+        "검색된 문서의 주가 방향 설명이 서로 엇갈려, 실제 가격 데이터 없이 상승·하락을 "
+        "단정하지 않았습니다."
+    )
+    body = "\n\n".join(kept)
+    return notice + (("\n\n" + body) if body else ""), True
+
+
+_CANNED_OPENING_RE = re.compile(
+    r"^\s*(?:쉽게\s*말(?:해|하면|해서)|핵심만\s*말하면|요약하면)\s*[:,，]?\s*"
+)
+
+
+def sanitize_answer_style(answer: str) -> tuple[str, bool]:
+    """반복되는 상투적 도입만 제거한다. 답변 내용과 Markdown 구조는 보존한다."""
+
+    sanitized = _CANNED_OPENING_RE.sub("", answer, count=1)
+    return sanitized.strip(), sanitized != answer.strip()
+
+
+def sanitize_unfinalized_close_claim(
+    answer: str,
+    evidence: ToolEvidence,
+    *,
+    asks_today_close: bool,
+) -> tuple[str, bool]:
+    """미확정 현재가를 오늘 종가로 부르는 답변을 실제 quote 계약으로 교체한다."""
+
+    if not asks_today_close or evidence.price_kind != "current" or evidence.current_price is None:
+        return answer, False
+    status_labels = {
+        "pre_market": "장 시작 전",
+        "regular_open": "정규장 거래 중",
+        "session_break": "정규장 종료 후",
+        "after_market": "장후거래 중",
+        "closed": "거래 종료",
+        "unknown": "시장 상태 미확인",
+    }
+    status = status_labels.get(
+        evidence.market_status or "", evidence.market_status or "상태 미확인"
+    )
+    as_of = f" ({evidence.price_as_of} 기준)" if evidence.price_as_of else ""
+    return (
+        "오늘 확정 종가는 아직 확인되지 않았습니다.\n\n"
+        f"- 현재가: **{evidence.current_price:,.0f}원**{as_of}\n"
+        f"- 시장 상태: **{status}**\n\n"
+        "현재가는 이후 거래로 달라질 수 있어 확정 종가와 구분했습니다.",
+        True,
+    )
 
 
 def _collect_event_evidence(payload: dict, data: Any, ev: ToolEvidence) -> None:

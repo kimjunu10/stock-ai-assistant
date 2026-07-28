@@ -465,6 +465,23 @@ def test_search_news_pins_exact_ui_selected_event_before_related_results():
     assert fake.search_kwargs["context_source_id"] == "77"
 
 
+def test_search_news_context_only_returns_exact_ui_event_without_expansion():
+    fake = _FakeRetriever()
+    result = run_search_news(
+        fake,
+        SearchNewsInput(
+            stock_code="005930",
+            query="핵심 설명",
+            current_event_id="77",
+            context_only=True,
+        ),
+    )
+    assert result.status == "ok"
+    assert [item["title"] for item in result.data["news"]] == ["현재 화면 뉴스"]
+    assert not fake.search_called
+    assert not fake.recent_called
+
+
 @pytest.mark.parametrize("empty_query", [None, "", "   "])
 def test_search_news_without_topic_skips_embedding(empty_query):
     """None·빈·공백 query → list_recent_news(임베딩 없는 조건 조회) 경로."""

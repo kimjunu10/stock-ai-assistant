@@ -12,6 +12,7 @@ calculate_event_return: 특정일/사건/기간 전후 수익률(백엔드 계�
 
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timedelta
 from typing import Literal
 
@@ -63,6 +64,29 @@ def normalize_price_lookback(value: str | None) -> str | None:
     if normalized not in LOOKBACK_DAYS:
         raise ValueError(f"지원하지 않는 기간입니다: {value}")
     return normalized
+
+
+_FLOW_RE = re.compile(r"흐름|추이|변화|차트|그래프")
+_POINT_PRICE_RE = re.compile(r"현재가|지금|오늘|어제|전일|종가|마감가")
+_EXPLICIT_PERIOD_RE = re.compile(
+    r"\d+\s*(?:일|주|개월|달|년)|일주일|한\s*달|한\s*해|최근\s*(?:주|월|분기|반기|연)"
+)
+
+
+def resolve_price_lookback(question: str | None, requested: str | None) -> str | None:
+    """모호한 일반 주가 흐름에만 제품 기본 기간(1개월)을 적용한다."""
+
+    normalized = normalize_price_lookback(requested)
+    if normalized or not question:
+        return normalized
+    compact = " ".join(question.lower().split())
+    if (
+        _FLOW_RE.search(compact)
+        and not _POINT_PRICE_RE.search(compact)
+        and not _EXPLICIT_PERIOD_RE.search(compact)
+    ):
+        return "1m"
+    return None
 
 
 class GetStockPricesInput(BaseModel):
@@ -124,6 +148,8 @@ def _quote_payload(q: PriceQuote) -> dict:
         "currency": q.currency,
         "trading_day": q.trading_day.isoformat(),
         "as_of": q.as_of.isoformat(),
+        "price_kind": q.price_kind,
+        "market_status": q.market_status,
         "unit": "원",
     }
 
@@ -202,7 +228,10 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
                 inp.stock_code,
                 trading_day=q.trading_day,
                 as_of=q.as_of.isoformat(),
-                extra={"kind": "current"},
+                extra={
+                    "kind": q.price_kind,
+                    "market_status": q.market_status,
+                },
             )
         ]
 
@@ -459,6 +488,15 @@ def _daily_payload(
         points[index]["change_rate_pct"] = (
             round(change / previous_close * 100, 4) if previous_close else None
         )
+    if live_quote is not None:
+        live_day = live_quote.trading_day.isoformat()
+        live_point = next((point for point in points if point["trading_day"] == live_day), None)
+        if live_point is not None:
+            # 현재가 endpoint가 함께 준 basePrice를 전일 비교의 단일 기준으로 사용한다.
+            live_point["previous_close"] = live_quote.previous_close
+            live_point["change"] = live_quote.change
+            live_point["change_rate_pct"] = live_quote.change_rate
+            live_point["market_status"] = live_quote.market_status
     summary = points if len(points) <= 6 else points[:3] + points[-3:]
     ui, sampled = _sample_points(points)
     return {
