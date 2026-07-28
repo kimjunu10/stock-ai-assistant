@@ -132,6 +132,32 @@ def test_tool_applies_explicit_recent_when_model_omits_it(monkeypatch):
     assert inp.date_to == "2026-07-27"
 
 
+def test_tool_forces_negative_news_for_price_drop_question(monkeypatch):
+    captured = {}
+
+    def fake_run(_retriever, inp):
+        captured["input"] = inp
+        return ok({"news": []})
+
+    monkeypatch.setattr("app.agent.runtime.run_search_news", fake_run)
+    json.loads(
+        _search_news_tool().func(
+            stock_code="005930",
+            runtime=_Runtime("어제 주가가 왜 떨어졌지? 무슨 일 있었어?"),
+            query=None,
+            sentiment=None,
+            relative_period=None,
+            purpose="price_driver_down",
+        )
+    )
+
+    inp = captured["input"]
+    assert inp.sentiment == "negative"
+    assert inp.purpose == "price_driver_down"
+    assert inp.date_from == "2026-07-26"
+    assert inp.date_to == "2026-07-26"
+
+
 def test_tool_applies_explicit_last_month_without_changing_query(monkeypatch):
     captured = {}
 

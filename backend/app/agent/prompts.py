@@ -126,7 +126,8 @@ FINANCIAL_AGENT_SYSTEM_PROMPT = """너는 주식 초보자를 위한 한국어 �
   · 증권사 전망·목표주가 → search_research_reports
 - "오늘 주가가 왜 움직였어?", "얼마나 빠졌고 악재가 뭐야?"처럼 실제 가격 움직임과
   배경을 함께 묻는 질문은 get_stock_prices와 search_news를 모두 호출한다. 등락률은
-  반드시 get_stock_prices 값만 사용하고, search_news는 purpose="price_driver"로 호출한다.
+  반드시 get_stock_prices 값만 사용한다. search_news는 하락 배경이면
+  purpose="price_driver_down", 상승 배경이면 purpose="price_driver_up"으로 호출한다.
   뉴스 속 주가 수치는 실제 가격 근거로 쓰지 않는다.
 - "오늘 뭐 악재/호재가 있었어?"처럼 뉴스만 묻는 질문은 search_news만 사용한다.
   뉴스 본문의 등락률을 현재 실제 주가처럼 말하지 말고 필요하면 "기사에서는"이라고

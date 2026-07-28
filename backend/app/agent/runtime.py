@@ -55,7 +55,12 @@ from app.agent.tools.disclosures import (
     run_search_disclosures,
 )
 from app.agent.tools.financials import FinancialFactsInput, run_get_financial_facts
-from app.agent.tools.news import NewsSearchPurpose, SearchNewsInput, run_search_news
+from app.agent.tools.news import (
+    NewsSearchPurpose,
+    NewsSentiment,
+    SearchNewsInput,
+    run_search_news,
+)
 from app.agent.tools.prices import (
     CalculateEventReturnInput,
     GetStockPricesInput,
@@ -304,7 +309,7 @@ def build_tools() -> list:
         stock_code: str,
         runtime: ToolRuntime[QaRuntimeContext],
         query: str | None = None,
-        sentiment: str | None = None,
+        sentiment: NewsSentiment | None = None,
         exclude_topics: list[str] | None = None,
         include_topics: list[str] | None = None,
         date_from: str | None = None,
@@ -334,9 +339,9 @@ def build_tools() -> list:
         묻더라도 기간 표현이 없으면 반드시 생략한다.
         date_from/date_to는 사용자가 절대 날짜를 지정한 경우에만 쓴다.
 
-        purpose: 일반 뉴스는 general. "오늘 주가가 왜 내렸어?", "상승 배경은?"처럼
-        실제 등락의 관련 요인을 찾을 때는 price_driver를 쓴다. price_driver는 제목부터
-        해당 기업을 직접 식별하는 사건만 반환한다.
+        purpose: 일반 뉴스는 general. 실제 주가 하락의 관련 요인은 price_driver_down,
+        상승의 관련 요인은 price_driver_up을 쓴다. 두 price_driver 목적은 제목부터 해당
+        기업을 직접 식별하는 사건만 반환하며, 각각 negative/positive 감성을 강제한다.
         """
         svc, err = _services(runtime)
         if err:
@@ -357,8 +362,10 @@ def build_tools() -> list:
             question,
             relative_period,
         )
-        if is_price_driver_question(question):
-            purpose = "price_driver"
+        if purpose == "price_driver_down":
+            sentiment = "negative"
+        elif purpose == "price_driver_up":
+            sentiment = "positive"
         if relative_period:
             current_date = getattr(runtime.context, "current_date", None)
             if not current_date:

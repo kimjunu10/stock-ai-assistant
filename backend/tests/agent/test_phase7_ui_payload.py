@@ -104,7 +104,7 @@ def test_news_tool_creates_cards_with_the_server_date_window():
     assert visualizations == [
         {
             "type": "news_cards",
-            "title": "최근 뉴스",
+            "title": "해당 기간 뉴스",
             "data": {
                 "items": [
                     {
@@ -211,6 +211,38 @@ def test_news_cards_carry_sentiment_and_stock_code_when_present():
     item = visualizations[0]["data"]["items"][0]
     assert item["sentiment"] == "negative"
     assert item["stock_code"] == "005930"
+
+
+def test_price_driver_news_cards_describe_the_filtered_direction():
+    _, visualizations, _ = _build_ui_payload(
+        [
+            {
+                "_tool_name": "search_news",
+                "status": "ok",
+                "data": {
+                    "news": [
+                        {
+                            "source_id": "n1",
+                            "title": "주가 하락 관련 악재",
+                            "published_at": "2026-07-28T09:00:00+09:00",
+                            "sentiment": "negative",
+                            "stock_code": "005930",
+                        }
+                    ],
+                    "applied_filters": {
+                        "date_from": "2026-07-28",
+                        "date_to": "2026-07-28",
+                        "sentiment": "negative",
+                        "purpose": "price_driver_down",
+                    },
+                },
+                "sources": [{"source_id": "n1", "source_type": "news_event", "locator": {}}],
+                "warnings": [],
+            }
+        ]
+    )
+
+    assert visualizations[0]["title"] == "하락 관련 뉴스"
 
 
 def test_no_data_and_error_remain_distinct_and_do_not_make_empty_charts():

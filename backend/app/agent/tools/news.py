@@ -26,7 +26,8 @@ from app.agent.tools.common import (
 from app.rag.retrieval import HybridRetriever
 from app.services.relevance import classify_stock_relevance
 
-NewsSearchPurpose = Literal["general", "price_driver"]
+NewsSearchPurpose = Literal["general", "price_driver_down", "price_driver_up"]
+NewsSentiment = Literal["positive", "neutral", "negative"]
 
 
 class SearchNewsInput(BaseModel):
@@ -36,7 +37,7 @@ class SearchNewsInput(BaseModel):
     query: str | None = None
     date_from: str | None = None
     date_to: str | None = None
-    sentiment: str | None = None  # positive | neutral | negative (감성 조건)
+    sentiment: NewsSentiment | None = None
     include_topics: list[str] = Field(default_factory=list)
     exclude_topics: list[str] = Field(default_factory=list)
     current_event_id: str | None = None
@@ -82,7 +83,9 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
                 context_source_id=inp.current_event_id,
                 date_from=inp.date_from,
                 date_to=inp.date_to,
-                top_k=inp.limit,
+                # 하이브리드 RPC는 감성 조건을 직접 받지 않으므로, 보강된 클러스터 감성으로
+                # 후처리해도 요청 개수만큼 남을 수 있게 후보를 넉넉히 가져온다.
+                top_k=inp.limit * 3 if inp.sentiment else inp.limit,
             )
         else:
             # 주제 없음 → 임베딩 호출 없이 종목·기간·감성 조건으로 사건 최신순 조회.
@@ -93,13 +96,20 @@ def run_search_news(retriever: HybridRetriever, inp: SearchNewsInput) -> ToolRes
                 sentiment=inp.sentiment,
                 top_k=inp.limit,
             )
+        if inp.sentiment in {"positive", "neutral", "negative"}:
+            related_chunks = [
+                chunk
+                for chunk in related_chunks
+                if isinstance(chunk.source_locator, dict)
+                and chunk.source_locator.get("sentiment_label") == inp.sentiment
+            ]
         chunks = current_chunks + [
             chunk for chunk in related_chunks if chunk.source_pk != inp.current_event_id
         ]
     except Exception as e:  # noqa: BLE001
         log_tool_exception(e, layer="HybridRetriever.search_news")
         return error(sanitize_exception(e))
-    if inp.purpose == "price_driver":
+    if inp.purpose in {"price_driver_down", "price_driver_up"}:
         # 주가 원인 후보는 제목부터 해당 기업을 직접 식별하는 사건만 남긴다. 본문 어딘가에
         # 종목명이 한 번 등장한 일반 소비자 기사까지 "악재"로 노출되는 것을 막는다.
         chunks = [chunk for chunk in chunks if _direct_title_match(chunk, inp.stock_code)]
