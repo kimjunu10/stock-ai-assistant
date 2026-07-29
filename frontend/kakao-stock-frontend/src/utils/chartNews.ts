@@ -55,24 +55,24 @@ export function buildNewsMoments(candles: PriceCandle[], clusters: NewsCluster[]
     })
 
     if (sourcesByMoment.size > 0) {
-      sourcesByMoment.forEach((momentSources, bucket) => {
-        const sortedMomentSources = [...momentSources].sort((a, b) => (
-          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-        ))
-        const momentSourceIds = new Set(sortedMomentSources.map((source) => source.articleId))
-        const occurrence = {
-          ...cluster,
-          publishedAt: sortedMomentSources[0]?.publishedAt ?? cluster.publishedAt,
-          sources: [
-            ...sortedMomentSources,
-            ...clusterSources.filter((source) => !momentSourceIds.has(source.articleId)),
-          ],
-        }
-        const key = String(bucket)
-        const clustersInMoment = byMoment.get(key) ?? new Map<number, NewsCluster>()
-        clustersInMoment.set(cluster.id, occurrence)
-        byMoment.set(key, clustersInMoment)
-      })
+      const firstBucket = Math.min(...sourcesByMoment.keys())
+      const firstMomentSources = sourcesByMoment.get(firstBucket) ?? []
+      const sortedMomentSources = [...firstMomentSources].sort((a, b) => (
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      ))
+      const momentSourceIds = new Set(sortedMomentSources.map((source) => source.articleId))
+      const occurrence = {
+        ...cluster,
+        publishedAt: sortedMomentSources[0]?.publishedAt ?? cluster.publishedAt,
+        sources: [
+          ...sortedMomentSources,
+          ...clusterSources.filter((source) => !momentSourceIds.has(source.articleId)),
+        ],
+      }
+      const key = String(firstBucket)
+      const clustersInMoment = byMoment.get(key) ?? new Map<number, NewsCluster>()
+      clustersInMoment.set(cluster.id, occurrence)
+      byMoment.set(key, clustersInMoment)
       return
     }
 
