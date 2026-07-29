@@ -7,6 +7,8 @@ export interface NewsMoment {
   sentiment: Sentiment | null
 }
 
+const NEWS_INTERVAL_MS = 30 * 60 * 1000
+
 export function kstDateKey(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
@@ -28,30 +30,47 @@ function dominantSentiment(clusters: NewsCluster[]) {
   return ordered[0][1] > 0 ? ordered[0][0] : null
 }
 
+function newsIntervalEnd(time: number) {
+  // 차트 마커는 기사 시각이 속한 수집 구간의 종료 시각(정각/30분)에 고정한다.
+  // 클러스터 last_active_at은 후속 기사마다 바뀌므로 원문 시각이 있을 때는 사용하지 않는다.
+  return Math.ceil(time / NEWS_INTERVAL_MS) * NEWS_INTERVAL_MS
+}
+
 export function buildNewsMoments(candles: PriceCandle[], clusters: NewsCluster[]) {
   if (candles.length === 0) return []
   const candleDate = kstDateKey(candles.at(-1)?.time ?? '')
-  const byMoment = new Map<string, Omit<NewsMoment, 'sentiment'>>()
+  const byMoment = new Map<string, Map<number, NewsCluster>>()
 
   clusters.forEach((cluster) => {
-    if (kstDateKey(cluster.publishedAt) !== candleDate) return
-    const time = new Date(cluster.publishedAt).getTime()
-    if (Number.isNaN(time)) return
-    const bucket = Math.floor(time / (30 * 60 * 1000)) * 30 * 60 * 1000
-    const key = String(bucket)
-    const current = byMoment.get(key)
-    if (current) current.clusters.push(cluster)
-    else byMoment.set(key, { clusters: [cluster], key, time: bucket })
+    const sourceTimes = (cluster.sources ?? [])
+      .filter((source) => kstDateKey(source.publishedAt) === candleDate)
+      .map((source) => new Date(source.publishedAt).getTime())
+      .filter((time) => !Number.isNaN(time))
+    const times = sourceTimes.length > 0
+      ? sourceTimes
+      : kstDateKey(cluster.publishedAt) === candleDate
+        ? [new Date(cluster.publishedAt).getTime()]
+        : []
+
+    times.forEach((time) => {
+      if (Number.isNaN(time)) return
+      const bucket = newsIntervalEnd(time)
+      const key = String(bucket)
+      const clustersInMoment = byMoment.get(key) ?? new Map<number, NewsCluster>()
+      clustersInMoment.set(cluster.id, cluster)
+      byMoment.set(key, clustersInMoment)
+    })
   })
 
-  return [...byMoment.values()]
-    .map((moment) => {
-      const sortedClusters = [...moment.clusters].sort((a, b) => (
+  return [...byMoment.entries()]
+    .map(([key, clustersInMoment]) => {
+      const sortedClusters = [...clustersInMoment.values()].sort((a, b) => (
         b.articleCount - a.articleCount
         || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       ))
       return {
-        ...moment,
+        key,
+        time: Number(key),
         clusters: sortedClusters,
         sentiment: dominantSentiment(sortedClusters),
       }
