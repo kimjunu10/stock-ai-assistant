@@ -158,6 +158,30 @@ def test_tool_forces_negative_news_for_price_drop_question(monkeypatch):
     assert inp.date_to == "2026-07-26"
 
 
+@pytest.mark.parametrize("purpose", ["price_driver_up", "price_driver_down"])
+def test_tool_rejects_price_driver_search_for_news_sentiment_question(monkeypatch, purpose):
+    called = False
+
+    def fake_run(_retriever, _inp):
+        nonlocal called
+        called = True
+        return ok({"news": []})
+
+    monkeypatch.setattr("app.agent.runtime.run_search_news", fake_run)
+    payload = json.loads(
+        _search_news_tool().func(
+            stock_code="005930",
+            runtime=_Runtime("오늘 실적 기사 나왔지? 호재야 악재야?"),
+            query="실적",
+            relative_period="today",
+            purpose=purpose,
+        )
+    )
+
+    assert payload["status"] == "no_data"
+    assert called is False
+
+
 def test_tool_applies_explicit_last_month_without_changing_query(monkeypatch):
     captured = {}
 
