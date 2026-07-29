@@ -1,14 +1,18 @@
 """Stock and stock-home API routes."""
 
+from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 
 from app.core.config import settings
 from app.db.client import get_supabase_client
-from app.schemas.prices import StockCompanyProfile, StockMarketData, StockMarketOverview
+from app.schemas.prices import Candle, StockCompanyProfile, StockMarketData, StockMarketOverview
+from app.services.stock_prices import StockPriceService
+from app.sources.krx_prices import NaverKrxDailyPriceClient
 from app.sources.prices import SUPPORTED_STOCK_CODES, TossApiError, TossInvestClient
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
@@ -42,6 +46,27 @@ def get_toss_client() -> TossInvestClient:
     )
 
 
+@lru_cache(maxsize=1)
+def get_krx_daily_client() -> NaverKrxDailyPriceClient:
+    """'종가'와 과거 차트에 사용할 KRX 정규장 일봉 클라이언트."""
+
+    return NaverKrxDailyPriceClient(timeout_seconds=settings.toss_request_timeout_seconds)
+
+
+@lru_cache(maxsize=1)
+def get_stock_price_service() -> StockPriceService:
+    """토스 실시간 시세와 KRX 정규장 일봉을 같은 서비스 경계에서 결합한다."""
+
+    return StockPriceService(
+        get_toss_client(),
+        daily_client=get_krx_daily_client(),
+        cache_seconds=settings.stock_price_cache_seconds,
+        rate_limit_retries=settings.stock_price_rate_limit_retries,
+        rate_limit_backoff_seconds=settings.stock_price_rate_limit_backoff_seconds,
+        max_candle_pages=settings.stock_price_max_candle_pages,
+    )
+
+
 @router.get("/market-overview", response_model=StockMarketOverview)
 def get_stock_market_overview(
     client: Annotated[TossInvestClient, Depends(get_toss_client)],
@@ -58,6 +83,7 @@ def get_stock_market_overview(
 def get_stock_market_data(
     stock_code: str,
     client: Annotated[TossInvestClient, Depends(get_toss_client)],
+    price_service: Annotated[StockPriceService, Depends(get_stock_price_service)],
 ) -> StockMarketData:
     """실제 현재가, 1분봉·일봉, 호가와 가격 제한을 제공한다."""
 
@@ -65,7 +91,32 @@ def get_stock_market_data(
         raise HTTPException(status_code=404, detail="현재는 지정된 5개 종목만 제공하고 있어요.")
 
     try:
-        return client.get_stock_market_data(stock_code)
+        market_data = client.get_stock_market_data(stock_code)
+        end = datetime.now(ZoneInfo("Asia/Seoul")).date()
+        daily = price_service.get_daily_candles(
+            stock_code,
+            start=end - timedelta(days=210),
+            end=end,
+        )
+        if len(daily) < 2:
+            raise TossApiError("KRX 정규장 일봉이 부족합니다.")
+        candles = [
+            Candle(
+                time=item.trading_day.isoformat(),
+                open=item.open,
+                high=item.high,
+                low=item.low,
+                close=item.close,
+                volume=item.volume,
+            )
+            for item in daily
+        ]
+        return market_data.model_copy(
+            update={
+                "candles": candles,
+                "source": "토스증권 Open API · 네이버 금융 (KRX)",
+            }
+        )
     except TossApiError as exc:
         raise _market_data_error(exc) from exc
 

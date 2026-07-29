@@ -1,8 +1,9 @@
 """StockPriceService — Phase 6 주가 조회·수익률 계산 (SPEC §7.7·§8.7).
 
-TossInvestClient(app/sources/prices.py)의 인증·토큰·응답을 재사용해 주가를 조회한다.
-현재가의 전일 대비는 토스가 제공한 기준가·등락률을 쓰고, 기간·사건 수익률만 백엔드에서
-계산한다. Agent 는 산술하지 않는다.
+현재가·호가에는 TossInvestClient(app/sources/prices.py)를 재사용하고, 사용자에게
+'종가'로 제공하는 과거 OHLCV는 별도 KRX 정규장 일봉 클라이언트를 쓸 수 있다.
+현재가의 전일 대비는 토스가 제공한 기준가·등락률을 쓰고, 기간·사건 수익률만
+백엔드에서 계산한다. Agent 는 산술하지 않는다.
 
 핵심 규칙:
 - 현재가의 등락률은 토스 기준값을 보존하고, 기간·사건 수익률 계산은 이 모듈에서 수행한다.
@@ -26,8 +27,8 @@ from zoneinfo import ZoneInfo
 
 from app.sources.prices import SUPPORTED_STOCK_CODES, TossApiError, TossInvestClient
 
-# 토스 일봉 1회 최대(상위에서 재확인). 긴 구간은 페이징으로만 확장한다.
-# 시각은 토스가 KST(+09:00) offset 을 명시해 주므로 별도 변환 없이 그대로 파싱한다.
+# 일봉 어댑터 호출 상한. 실제 어댑터가 더 작은 페이지 크기를 적용할 수 있다.
+# 시각은 KST(+09:00) offset 을 명시하므로 별도 변환 없이 그대로 파싱한다.
 MAX_CANDLES_PER_CALL = 200
 SEOUL_TIMEZONE = ZoneInfo("Asia/Seoul")
 
@@ -161,6 +162,7 @@ class StockPriceService:
         self,
         client: TossInvestClient,
         *,
+        daily_client: object | None = None,
         cache_seconds: int = 30,
         rate_limit_retries: int = 2,
         rate_limit_backoff_seconds: float = 1.5,
@@ -170,6 +172,11 @@ class StockPriceService:
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._client = client
+        self._daily_client = daily_client or client
+        self.historical_provider = str(getattr(self._daily_client, "provider", "toss"))
+        self.historical_publisher = str(
+            getattr(self._daily_client, "publisher", "토스증권 Open API")
+        )
         self._cache_seconds = cache_seconds
         self._rate_limit_retries = max(0, rate_limit_retries)
         self._rate_limit_backoff = rate_limit_backoff_seconds
@@ -271,7 +278,7 @@ class StockPriceService:
             before: str | None = None
             for _ in range(self._max_candle_pages):
                 result = self._with_backoff(
-                    lambda b=before: self._client.fetch_daily_candles_raw(
+                    lambda b=before: self._daily_client.fetch_daily_candles_raw(
                         stock_code, count=MAX_CANDLES_PER_CALL, before=b, adjusted=adjusted
                     )
                 )

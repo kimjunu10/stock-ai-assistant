@@ -313,6 +313,7 @@ def test_price_movement_intent_requires_both_price_context_and_movement():
 
 def test_price_driver_and_event_return_intents_are_separate():
     assert is_price_driver_question("오늘 주가 왜 내렸어? 악재가 뭐야?")
+    assert is_price_driver_question("어제 주가 어떻게 됐고 뭔 일 있었어?")
     assert not is_price_driver_question("유상증자 공시 뜨고 주가 어떻게 됐어?")
     assert is_event_return_question("유상증자 공시 뜨고 주가 어떻게 됐어?")
     assert is_event_return_question("그 뉴스 이후 주가 흐름 알려줘")

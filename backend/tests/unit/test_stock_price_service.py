@@ -208,6 +208,29 @@ def test_daily_return_uses_target_and_previous_trading_day():
     assert r.end_price_kind == "close"
 
 
+def test_daily_return_can_use_separate_krx_daily_client():
+    toss_candles = [
+        _mk_candle("2026-07-27", 255000),
+        _mk_candle("2026-07-28", 218000),
+    ]
+    krx_candles = [
+        _mk_candle("2026-07-27", 254000),
+        _mk_candle("2026-07-28", 220000),
+    ]
+    toss = FakeToss(toss_candles)
+    krx = FakeToss(krx_candles)
+    svc = _svc(toss, daily_client=krx)
+
+    r = svc.get_daily_return("005930", target_date=date(2026, 7, 28))
+
+    assert r is not None
+    assert r.start_close == 254000.0
+    assert r.end_close == 220000.0
+    assert r.return_pct == -13.39
+    assert toss.daily_calls == 0
+    assert krx.daily_calls == 1
+
+
 def test_daily_return_holiday_target_snaps_to_previous_trading_day():
     candles = [
         _mk_candle("2026-07-23", 100000),

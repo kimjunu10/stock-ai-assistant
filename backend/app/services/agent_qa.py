@@ -812,10 +812,11 @@ def _build_stock_price_service(cfg: Settings):
     if not (cfg.toss_client_id and cfg.toss_client_secret):
         return None
     # 프로세스 공유 TossInvestClient(토큰·캐시 공유)를 재사용한다(중복 클라이언트 금지).
-    from app.api.routes.stocks import get_toss_client
+    from app.api.routes.stocks import get_krx_daily_client, get_toss_client
 
     return StockPriceService(
         get_toss_client(),
+        daily_client=get_krx_daily_client(),
         cache_seconds=cfg.stock_price_cache_seconds,
         rate_limit_retries=cfg.stock_price_rate_limit_retries,
         rate_limit_backoff_seconds=cfg.stock_price_rate_limit_backoff_seconds,
