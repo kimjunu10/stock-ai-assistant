@@ -95,6 +95,16 @@ describe('chart news date synchronization', () => {
       '2026-07-29T02:00:00.000Z',
     ])
     expect(moments.every((moment) => moment.clusters[0]?.id === 1)).toBe(true)
+    expect(moments.map((moment) => moment.clusters[0]?.publishedAt)).toEqual([
+      '2026-07-29T00:26:00+00:00',
+      '2026-07-29T00:36:00+00:00',
+      '2026-07-29T01:36:00+00:00',
+    ])
+    expect(moments.map((moment) => moment.clusters[0]?.sources?.[0]?.publishedAt)).toEqual([
+      '2026-07-29T00:26:00+00:00',
+      '2026-07-29T00:36:00+00:00',
+      '2026-07-29T01:36:00+00:00',
+    ])
   })
 
   it('does not count a cluster twice when multiple articles land in one interval', () => {
@@ -111,6 +121,10 @@ describe('chart news date synchronization', () => {
 
     expect(moments).toHaveLength(1)
     expect(moments[0]?.clusters.map((item) => item.id)).toEqual([1])
+    expect(moments[0]?.clusters[0]?.publishedAt).toBe('2026-07-29T00:59:00+00:00')
+    expect(moments[0]?.clusters[0]?.sources?.[0]?.publishedAt).toBe(
+      '2026-07-29T00:59:00+00:00',
+    )
   })
 
   it('keeps an exact interval boundary at that completed collection interval', () => {

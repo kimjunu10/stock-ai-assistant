@@ -42,24 +42,49 @@ export function buildNewsMoments(candles: PriceCandle[], clusters: NewsCluster[]
   const byMoment = new Map<string, Map<number, NewsCluster>>()
 
   clusters.forEach((cluster) => {
-    const sourceTimes = (cluster.sources ?? [])
-      .filter((source) => kstDateKey(source.publishedAt) === candleDate)
-      .map((source) => new Date(source.publishedAt).getTime())
-      .filter((time) => !Number.isNaN(time))
-    const times = sourceTimes.length > 0
-      ? sourceTimes
-      : kstDateKey(cluster.publishedAt) === candleDate
-        ? [new Date(cluster.publishedAt).getTime()]
-        : []
+    const clusterSources = cluster.sources ?? []
+    const sourcesByMoment = new Map<number, NonNullable<NewsCluster['sources']>>()
+    clusterSources.forEach((source) => {
+      if (kstDateKey(source.publishedAt) !== candleDate) return
+      const sourceTime = new Date(source.publishedAt).getTime()
+      if (Number.isNaN(sourceTime)) return
+      const bucket = newsIntervalEnd(sourceTime)
+      const sources = sourcesByMoment.get(bucket) ?? []
+      sources.push(source)
+      sourcesByMoment.set(bucket, sources)
+    })
 
-    times.forEach((time) => {
+    if (sourcesByMoment.size > 0) {
+      sourcesByMoment.forEach((momentSources, bucket) => {
+        const sortedMomentSources = [...momentSources].sort((a, b) => (
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        ))
+        const momentSourceIds = new Set(sortedMomentSources.map((source) => source.articleId))
+        const occurrence = {
+          ...cluster,
+          publishedAt: sortedMomentSources[0]?.publishedAt ?? cluster.publishedAt,
+          sources: [
+            ...sortedMomentSources,
+            ...clusterSources.filter((source) => !momentSourceIds.has(source.articleId)),
+          ],
+        }
+        const key = String(bucket)
+        const clustersInMoment = byMoment.get(key) ?? new Map<number, NewsCluster>()
+        clustersInMoment.set(cluster.id, occurrence)
+        byMoment.set(key, clustersInMoment)
+      })
+      return
+    }
+
+    if (kstDateKey(cluster.publishedAt) === candleDate) {
+      const time = new Date(cluster.publishedAt).getTime()
       if (Number.isNaN(time)) return
       const bucket = newsIntervalEnd(time)
       const key = String(bucket)
       const clustersInMoment = byMoment.get(key) ?? new Map<number, NewsCluster>()
       clustersInMoment.set(cluster.id, cluster)
       byMoment.set(key, clustersInMoment)
-    })
+    }
   })
 
   return [...byMoment.entries()]
