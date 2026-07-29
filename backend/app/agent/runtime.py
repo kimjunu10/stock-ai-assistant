@@ -358,6 +358,16 @@ def build_tools() -> list:
                     "추가 검색하지 않았습니다."
                 )
             )
+        if (
+            purpose in {"price_driver_down", "price_driver_up"}
+            and not is_price_driver_question(question)
+        ):
+            return _dump(
+                no_data(
+                    "실제 주가 움직임의 원인 질문이 아니므로 상승·하락 원인 뉴스를 "
+                    "추가 검색하지 않았습니다."
+                )
+            )
         relative_period = effective_news_relative_period(
             question,
             relative_period,
