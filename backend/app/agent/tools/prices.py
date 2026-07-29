@@ -125,15 +125,23 @@ def _parse_date(s: str | None) -> date | None:
         return None
 
 
-def _price_source(stock_code: str, *, trading_day: date, as_of: str, extra: dict) -> SourceRef:
+def _price_source(
+    stock_code: str,
+    *,
+    trading_day: date,
+    as_of: str,
+    extra: dict,
+    provider: str = "toss",
+    publisher: str = _DATA_SOURCE,
+) -> SourceRef:
     """주가 결과 출처 1건. source_id 는 재조회 가능한 결정적 키."""
-    locator = {"stock_code": stock_code, "interval": "1d", "provider": "toss", **extra}
+    locator = {"stock_code": stock_code, "interval": "1d", "provider": provider, **extra}
     return SourceRef(
         source_id=f"price:{stock_code}:{trading_day.isoformat()}",
         source_type="price",
         stock_code=stock_code,
         title=f"{stock_code} 주가 · {trading_day.isoformat()}",
-        publisher=_DATA_SOURCE,
+        publisher=publisher,
         published_at=trading_day.isoformat(),
         value_kind="actual",
         locator={**locator, "as_of": as_of},
@@ -213,6 +221,8 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
                             "start": r.start_trading_day.isoformat(),
                             "adjusted": r.adjusted,
                         },
+                        provider=getattr(svc, "historical_provider", "toss"),
+                        publisher=getattr(svc, "historical_publisher", _DATA_SOURCE),
                     )
                 ],
             )
@@ -245,6 +255,8 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
                     trading_day=r.end_trading_day,
                     as_of=r.end_trading_day.isoformat(),
                     extra={"start": r.start_trading_day.isoformat(), "adjusted": r.adjusted},
+                    provider=getattr(svc, "historical_provider", "toss"),
+                    publisher=getattr(svc, "historical_publisher", _DATA_SOURCE),
                 )
             ]
             # 기간 비교는 질문에 "그래프"라는 단어가 없어도 해당 구간 자체가 시각화 범위다.
@@ -299,6 +311,8 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
                         trading_day=r.start_trading_day,
                         as_of=r.start_trading_day.isoformat(),
                         extra={"kind": "period_start", "adjusted": r.adjusted},
+                        provider=getattr(svc, "historical_provider", "toss"),
+                        publisher=getattr(svc, "historical_publisher", _DATA_SOURCE),
                     )
                 )
         if inp.lookback:
@@ -371,7 +385,7 @@ def run_calculate_event_return(
                     "has_post_data": False,
                 },
             )
-        return _event_window_ok(inp, ew)
+        return _event_window_ok(inp, ew, svc=svc)
 
     except StockPriceError as e:
         log_tool_exception(e, layer="StockPriceService.get_event_window_return")
@@ -386,7 +400,12 @@ def run_calculate_event_return(
         return error(sanitize_exception(e))
 
 
-def _event_window_ok(inp: CalculateEventReturnInput, ew: EventWindowReturn) -> ToolResult:
+def _event_window_ok(
+    inp: CalculateEventReturnInput,
+    ew: EventWindowReturn,
+    *,
+    svc: StockPriceService,
+) -> ToolResult:
     """사건 전후 결과를 계약 형태로 직렬화한다(수익률은 서비스 계산값 그대로)."""
     last = ew.horizons[-1]
     data = {
@@ -433,6 +452,8 @@ def _event_window_ok(inp: CalculateEventReturnInput, ew: EventWindowReturn) -> T
             trading_day=ew.baseline_trading_day,
             as_of=ew.baseline_trading_day.isoformat(),
             extra={"kind": "event_baseline", "adjusted": ew.adjusted},
+            provider=getattr(svc, "historical_provider", "toss"),
+            publisher=getattr(svc, "historical_publisher", _DATA_SOURCE),
         )
     ]
     sources.extend(
@@ -445,6 +466,8 @@ def _event_window_ok(inp: CalculateEventReturnInput, ew: EventWindowReturn) -> T
                 "horizon_days": h.horizon_days,
                 "adjusted": ew.adjusted,
             },
+            provider=getattr(svc, "historical_provider", "toss"),
+            publisher=getattr(svc, "historical_publisher", _DATA_SOURCE),
         )
         for h in ew.horizons
     )
