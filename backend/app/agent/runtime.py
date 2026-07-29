@@ -358,9 +358,8 @@ def build_tools() -> list:
                     "추가 검색하지 않았습니다."
                 )
             )
-        if (
-            purpose in {"price_driver_down", "price_driver_up"}
-            and not is_price_driver_question(question)
+        if purpose in {"price_driver_down", "price_driver_up"} and not is_price_driver_question(
+            question
         ):
             return _dump(
                 no_data(
