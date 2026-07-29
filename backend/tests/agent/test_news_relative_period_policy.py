@@ -158,28 +158,39 @@ def test_tool_forces_negative_news_for_price_drop_question(monkeypatch):
     assert inp.date_to == "2026-07-26"
 
 
-@pytest.mark.parametrize("purpose", ["price_driver_up", "price_driver_down"])
-def test_tool_rejects_price_driver_search_for_news_sentiment_question(monkeypatch, purpose):
-    called = False
+@pytest.mark.parametrize(
+    ("question", "purpose", "expected_sentiment"),
+    [
+        ("오늘 호재 있어?", "price_driver_up", "positive"),
+        ("오늘 악재 있어?", "price_driver_down", "negative"),
+    ],
+)
+def test_tool_downgrades_price_driver_search_for_news_sentiment_question(
+    monkeypatch, question, purpose, expected_sentiment
+):
+    captured = {}
 
-    def fake_run(_retriever, _inp):
-        nonlocal called
-        called = True
+    def fake_run(_retriever, inp):
+        captured["input"] = inp
         return ok({"news": []})
 
     monkeypatch.setattr("app.agent.runtime.run_search_news", fake_run)
     payload = json.loads(
         _search_news_tool().func(
             stock_code="005930",
-            runtime=_Runtime("오늘 실적 기사 나왔지? 호재야 악재야?"),
-            query="실적",
+            runtime=_Runtime(question),
+            query=None,
             relative_period="today",
             purpose=purpose,
         )
     )
 
-    assert payload["status"] == "no_data"
-    assert called is False
+    inp = captured["input"]
+    assert payload["status"] == "ok"
+    assert inp.purpose == "general"
+    assert inp.sentiment == expected_sentiment
+    assert inp.date_from == "2026-07-27"
+    assert inp.date_to == "2026-07-27"
 
 
 def test_tool_applies_explicit_last_month_without_changing_query(monkeypatch):
