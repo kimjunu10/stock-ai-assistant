@@ -84,6 +84,21 @@ class FakePriceSvc:
             adjusted=adjusted,
         )
 
+    def get_daily_return(self, stock_code, *, target_date, adjusted=True):
+        self.calls.append(("daily_return", stock_code, target_date.isoformat()))
+        return PeriodReturn(
+            stock_code=stock_code,
+            start_trading_day=date(2026, 7, 27),
+            end_trading_day=date(2026, 7, 28),
+            start_close=220000.0,
+            end_close=210000.0,
+            change=-10000.0,
+            return_pct=-4.55,
+            currency="KRW",
+            adjusted=adjusted,
+            end_price_kind="close",
+        )
+
     def get_daily_candles(self, stock_code, *, start, end, adjusted=True):
         return [
             DailyClose(
@@ -165,7 +180,17 @@ class FakeReports:
         return []
 
 
-def _run(script, *, prices=None, reports=None, facts=None, retriever=None, event=None):
+def _run(
+    script,
+    *,
+    prices=None,
+    reports=None,
+    facts=None,
+    retriever=None,
+    event=None,
+    question="q",
+    current_date=None,
+):
     """실제 build_agent 대신, runtime.build_tools() 를 create_agent 로 직접 조립한다.
 
     event 는 서버가 확정한 사건 문맥(dict). 사건 기준 Tool 은 이 문맥에서만 발표일을
@@ -186,8 +211,14 @@ def _run(script, *, prices=None, reports=None, facts=None, retriever=None, event
         tools=build_tools(),
         context_schema=QaRuntimeContext,
     )
-    ctx = QaRuntimeContext(stock_code="005930", services=svc, **(event or {}))
-    out = agent.invoke({"messages": [{"role": "user", "content": "q"}]}, context=ctx)
+    ctx = QaRuntimeContext(
+        stock_code="005930",
+        services=svc,
+        user_question=question,
+        current_date=current_date,
+        **(event or {}),
+    )
+    out = agent.invoke({"messages": [{"role": "user", "content": question}]}, context=ctx)
     return out
 
 
@@ -221,6 +252,42 @@ def test_current_price_calls_price_tool():
     out = _run(script, prices=prices)
     assert "get_stock_prices" in _tool_names(out)
     assert ("quote", "005930") in prices.calls
+
+
+def test_yesterday_price_forces_historical_daily_return():
+    prices = FakePriceSvc()
+    script = [
+        AIMessage(
+            content="",
+            tool_calls=[
+                _tool_call(
+                    "get_stock_prices",
+                    {
+                        "stock_code": "005930",
+                        "lookback": "1w",
+                        "start_date": "2026-07-22",
+                        "end_date": "2026-07-29",
+                    },
+                )
+            ],
+        ),
+        AIMessage(content="어제 삼성전자 주가는 4.55% 하락했습니다."),
+    ]
+
+    out = _run(
+        script,
+        prices=prices,
+        question="어제 주가가 얼마나 떨어졌어?",
+        current_date="2026-07-29",
+    )
+
+    assert ("daily_return", "005930", "2026-07-28") in prices.calls
+    assert not any(call[0] == "quote" for call in prices.calls)
+    payload = _tool_payload(out, "get_stock_prices")
+    assert payload["data"]["quote"] is None
+    assert payload["data"]["requested_date"] == "2026-07-28"
+    assert payload["data"]["period"]["end_trading_day"] == "2026-07-28"
+    assert payload["data"]["period"]["end_price_kind"] == "close"
 
 
 # ── 최근 한 달 수익률 → get_stock_prices(lookback) ─────────────────

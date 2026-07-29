@@ -95,6 +95,8 @@ class GetStockPricesInput(BaseModel):
     lookback: Literal["1w", "2w", "1m", "3m", "6m", "1y"] | None = None
     start_date: str | None = None  # YYYY-MM-DD (명시 구간)
     end_date: str | None = None  # YYYY-MM-DD
+    # 특정 과거 하루의 확정 등락. 해당 거래일과 직전 거래일 종가를 비교한다.
+    target_date: str | None = None  # YYYY-MM-DD
     include_daily: bool = False  # 일봉 목록 포함 여부(기본 미포함, 요약만)
 
 
@@ -176,7 +178,46 @@ def _return_payload(r: PeriodReturn) -> dict:
 def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> ToolResult:
     """현재가 또는 지정 기간 가격을 반환한다(수익률은 서비스가 계산)."""
     try:
-        # (1) 명시 구간(start/end) → 기간 수익률 + 선택적 일봉.
+        # (1) 특정 과거 하루 → 그 거래일의 확정 종가를 직전 거래일과 비교.
+        target = _parse_date(inp.target_date)
+        if target:
+            r = svc.get_daily_return(inp.stock_code, target_date=target)
+            if r is None:
+                return no_data(
+                    f"{inp.stock_code} {target} 기준 일간 등락 데이터를 찾지 못했습니다. "
+                    "현재가로 대체하지 않았습니다."
+                )
+            data = {
+                "quote": None,
+                "period": _return_payload(r),
+                "requested_date": target.isoformat(),
+            }
+            data.update(
+                _daily_payload(
+                    svc,
+                    inp.stock_code,
+                    r.start_trading_day,
+                    r.end_trading_day,
+                )
+            )
+            return ok(
+                data,
+                sources=[
+                    _price_source(
+                        inp.stock_code,
+                        trading_day=r.end_trading_day,
+                        as_of=r.end_trading_day.isoformat(),
+                        extra={
+                            "kind": "historical_daily_return",
+                            "requested_date": target.isoformat(),
+                            "start": r.start_trading_day.isoformat(),
+                            "adjusted": r.adjusted,
+                        },
+                    )
+                ],
+            )
+
+        # (2) 명시 구간(start/end) → 기간 수익률 + 선택적 일봉.
         start = _parse_date(inp.start_date)
         end = _parse_date(inp.end_date)
         if start and end:
@@ -218,7 +259,7 @@ def run_get_stock_prices(svc: StockPriceService, inp: GetStockPricesInput) -> To
             )
             return ok(data, sources=sources)
 
-        # (2) 현재가(항상). lookback 있으면 기간 수익률도 함께.
+        # (3) 현재가(항상). lookback 있으면 기간 수익률도 함께.
         q = svc.get_current_quote(inp.stock_code)
         if q is None:
             return no_data(
