@@ -73,7 +73,7 @@ describe('chart news date synchronization', () => {
     ])
   })
 
-  it('keeps an event only in the first interval that received a source article', () => {
+  it('shows later articles as follow-ups without repeating the cluster summary title', () => {
     const moments = buildNewsMoments(
       [candle('2026-07-29T02:30:00+00:00')],
       [
@@ -91,13 +91,29 @@ describe('chart news date synchronization', () => {
 
     expect(moments.map((moment) => new Date(moment.time).toISOString())).toEqual([
       '2026-07-29T00:30:00.000Z',
+      '2026-07-29T01:00:00.000Z',
+      '2026-07-29T02:00:00.000Z',
     ])
-    expect(moments[0]?.clusters.map((item) => item.id)).toEqual([1])
+    expect(moments.every((moment) => moment.clusters[0]?.id === 1)).toBe(true)
+    expect(moments.map((moment) => moment.clusters[0]?.timelineKind)).toEqual([
+      'initial',
+      'follow_up',
+      'follow_up',
+    ])
+    expect(moments.map((moment) => moment.clusters[0]?.timelineTitle)).toEqual([
+      '뉴스 1',
+      '원문 2',
+      '원문 3',
+    ])
     expect(moments.map((moment) => moment.clusters[0]?.publishedAt)).toEqual([
       '2026-07-29T00:26:00+00:00',
+      '2026-07-29T00:36:00+00:00',
+      '2026-07-29T01:36:00+00:00',
     ])
     expect(moments.map((moment) => moment.clusters[0]?.sources?.[0]?.publishedAt)).toEqual([
       '2026-07-29T00:26:00+00:00',
+      '2026-07-29T00:36:00+00:00',
+      '2026-07-29T01:36:00+00:00',
     ])
   })
 

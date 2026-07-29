@@ -1,9 +1,15 @@
 import type { NewsCluster, PriceCandle, Sentiment } from '../types'
 
+export interface ChartNewsCluster extends NewsCluster {
+  timelineArticleCount: number
+  timelineKind: 'initial' | 'follow_up'
+  timelineTitle: string
+}
+
 export interface NewsMoment {
   key: string
   time: number
-  clusters: NewsCluster[]
+  clusters: ChartNewsCluster[]
   sentiment: Sentiment | null
 }
 
@@ -20,7 +26,7 @@ export function kstDateKey(value: string) {
   }).format(date)
 }
 
-function dominantSentiment(clusters: NewsCluster[]) {
+function dominantSentiment(clusters: ChartNewsCluster[]) {
   const counts: Record<Sentiment, number> = { negative: 0, neutral: 0, positive: 0 }
   clusters.forEach((cluster) => {
     if (cluster.sentiment) counts[cluster.sentiment] += 1
@@ -39,7 +45,7 @@ function newsIntervalEnd(time: number) {
 export function buildNewsMoments(candles: PriceCandle[], clusters: NewsCluster[]) {
   if (candles.length === 0) return []
   const candleDate = kstDateKey(candles.at(-1)?.time ?? '')
-  const byMoment = new Map<string, Map<number, NewsCluster>>()
+  const byMoment = new Map<string, Map<number, ChartNewsCluster>>()
 
   clusters.forEach((cluster) => {
     const clusterSources = cluster.sources ?? []
@@ -56,23 +62,30 @@ export function buildNewsMoments(candles: PriceCandle[], clusters: NewsCluster[]
 
     if (sourcesByMoment.size > 0) {
       const firstBucket = Math.min(...sourcesByMoment.keys())
-      const firstMomentSources = sourcesByMoment.get(firstBucket) ?? []
-      const sortedMomentSources = [...firstMomentSources].sort((a, b) => (
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-      ))
-      const momentSourceIds = new Set(sortedMomentSources.map((source) => source.articleId))
-      const occurrence = {
-        ...cluster,
-        publishedAt: sortedMomentSources[0]?.publishedAt ?? cluster.publishedAt,
-        sources: [
-          ...sortedMomentSources,
-          ...clusterSources.filter((source) => !momentSourceIds.has(source.articleId)),
-        ],
-      }
-      const key = String(firstBucket)
-      const clustersInMoment = byMoment.get(key) ?? new Map<number, NewsCluster>()
-      clustersInMoment.set(cluster.id, occurrence)
-      byMoment.set(key, clustersInMoment)
+      sourcesByMoment.forEach((momentSources, bucket) => {
+        const sortedMomentSources = [...momentSources].sort((a, b) => (
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        ))
+        const representativeSource = sortedMomentSources[0]
+        const momentSourceIds = new Set(sortedMomentSources.map((source) => source.articleId))
+        const occurrence: ChartNewsCluster = {
+          ...cluster,
+          publishedAt: representativeSource?.publishedAt ?? cluster.publishedAt,
+          sources: [
+            ...sortedMomentSources,
+            ...clusterSources.filter((source) => !momentSourceIds.has(source.articleId)),
+          ],
+          timelineArticleCount: sortedMomentSources.length,
+          timelineKind: bucket === firstBucket ? 'initial' : 'follow_up',
+          timelineTitle: bucket === firstBucket
+            ? cluster.title
+            : representativeSource?.title ?? cluster.title,
+        }
+        const key = String(bucket)
+        const clustersInMoment = byMoment.get(key) ?? new Map<number, ChartNewsCluster>()
+        clustersInMoment.set(cluster.id, occurrence)
+        byMoment.set(key, clustersInMoment)
+      })
       return
     }
 
@@ -81,8 +94,13 @@ export function buildNewsMoments(candles: PriceCandle[], clusters: NewsCluster[]
       if (Number.isNaN(time)) return
       const bucket = newsIntervalEnd(time)
       const key = String(bucket)
-      const clustersInMoment = byMoment.get(key) ?? new Map<number, NewsCluster>()
-      clustersInMoment.set(cluster.id, cluster)
+      const clustersInMoment = byMoment.get(key) ?? new Map<number, ChartNewsCluster>()
+      clustersInMoment.set(cluster.id, {
+        ...cluster,
+        timelineArticleCount: cluster.articleCount,
+        timelineKind: 'initial',
+        timelineTitle: cluster.title,
+      })
       byMoment.set(key, clustersInMoment)
     }
   })

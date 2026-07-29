@@ -1,7 +1,7 @@
 import { useEffect, useState, type SyntheticEvent } from 'react'
 import { getStock } from '../data/mockData'
 import type { AssistantContext, NewsCluster } from '../types'
-import type { NewsMoment } from '../utils/chartNews'
+import type { ChartNewsCluster, NewsMoment } from '../utils/chartNews'
 import { Icon } from './Icon'
 import { SentimentBadge } from './SentimentBadge'
 import { NewsClusterDetail } from './NewsClusterListItem'
@@ -72,12 +72,13 @@ function TimelineStory({
   onAsk,
   onOpen,
 }: {
-  cluster: NewsCluster
+  cluster: ChartNewsCluster
   onAsk: ChartNewsPanelProps['onAsk']
   onOpen: () => void
 }) {
   const stock = getStock(cluster.stockCode)
   const source = cluster.sources?.[0]
+  const displayTitle = cluster.timelineTitle
   const image = cluster.sources?.find((item) => item.imageUrl)?.imageUrl ?? stock?.imageSrc
   const [imageFailed, setImageFailed] = useState(false)
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
@@ -92,7 +93,7 @@ function TimelineStory({
 
   return (
     <article
-      aria-label={`${cluster.title} 상세 보기`}
+      aria-label={`${displayTitle} 상세 보기`}
       className="chart-news-story"
       onClick={onOpen}
       onKeyDown={(event) => {
@@ -112,15 +113,20 @@ function TimelineStory({
       </div>
       <div className="chart-news-story__content">
         <div>
-          {cluster.sentiment
-            ? <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} variant="prominent" />
-            : <span className="chart-news-story__pending">분석 전</span>}
+          <div className="chart-news-story__badges">
+            {cluster.sentiment
+              ? <SentimentBadge score={cluster.sentimentScore ?? undefined} sentiment={cluster.sentiment} variant="prominent" />
+              : <span className="chart-news-story__pending">분석 전</span>}
+            {cluster.timelineKind === 'follow_up' && (
+              <span className="chart-news-story__follow-up">후속 기사</span>
+            )}
+          </div>
           <span>
             {source?.press ? `${source.press} · ` : ''}
-            기사 {cluster.articleCount}건
+            기사 {cluster.timelineArticleCount}건
           </span>
         </div>
-        <strong>{cluster.title}</strong>
+        <strong>{displayTitle}</strong>
         <button
           onClick={(event) => {
             event.stopPropagation()
@@ -128,7 +134,7 @@ function TimelineStory({
               stockCode: cluster.stockCode,
               sourceId: String(cluster.id),
               sourceType: 'news_cluster',
-              title: cluster.title,
+              title: displayTitle,
             })
           }}
           type="button"

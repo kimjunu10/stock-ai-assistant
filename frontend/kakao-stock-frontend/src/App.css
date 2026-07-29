@@ -521,6 +521,8 @@
   .chart-news-story__content { @apply p-4; }
   .chart-news-story__content > div { @apply mb-3 flex min-h-7 items-center justify-between gap-2; }
   .chart-news-story__content > div > span:last-child { @apply overflow-hidden text-[12px] font-bold text-faint text-ellipsis whitespace-nowrap; }
+  .chart-news-story__badges { @apply flex min-w-0 items-center gap-1.5; }
+  .chart-news-story__follow-up { @apply rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-extrabold text-brand-ink; }
   .chart-news-story__pending { @apply rounded-full bg-subtle px-2.5 py-1 text-[11px] font-extrabold text-muted; }
   .chart-news-story__content > strong { @apply block min-h-[52px] text-[17px] leading-[1.55] font-extrabold tracking-[-0.25px]; }
   .chart-news-story__content > button { @apply mt-4 flex min-h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-line bg-surface text-[12px] font-extrabold text-muted hover:border-brand hover:bg-brand-soft hover:text-ink; }
