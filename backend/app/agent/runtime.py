@@ -361,12 +361,11 @@ def build_tools() -> list:
         if purpose in {"price_driver_down", "price_driver_up"} and not is_price_driver_question(
             question
         ):
-            return _dump(
-                no_data(
-                    "실제 주가 움직임의 원인 질문이 아니므로 상승·하락 원인 뉴스를 "
-                    "추가 검색하지 않았습니다."
-                )
-            )
+            # 모델이 "오늘 악재 있어?" 같은 일반 뉴스 질문을 주가 원인 검색으로
+            # 잘못 라우팅해도 조회 자체를 버리지 않는다. 방향 감성만 보존하고 일반
+            # 뉴스 검색으로 낮춰 같은 질문이 매번 동일한 데이터 경로를 타게 한다.
+            sentiment = "negative" if purpose == "price_driver_down" else "positive"
+            purpose = "general"
         relative_period = effective_news_relative_period(
             question,
             relative_period,
