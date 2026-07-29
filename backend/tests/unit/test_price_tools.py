@@ -52,6 +52,9 @@ class FakeSvc:
     ):
         return self._period
 
+    def get_daily_return(self, stock_code, *, target_date, adjusted=True):
+        return self._period
+
     def get_event_return(self, stock_code, *, event_date, pre_days, post_days, adjusted=True):
         return self._event
 
@@ -181,6 +184,34 @@ def test_get_prices_explicit_range():
     assert r.status == "ok"
     assert r.data["period"]["return_pct"] == 25.0
     assert r.sources[0].source_type == "price"
+
+
+def test_get_prices_historical_day_never_uses_current_quote():
+    period = PeriodReturn(
+        stock_code="005930",
+        start_trading_day=date(2026, 7, 27),
+        end_trading_day=date(2026, 7, 28),
+        start_close=110000.0,
+        end_close=99000.0,
+        change=-11000.0,
+        return_pct=-10.0,
+        currency="KRW",
+        adjusted=True,
+        end_price_kind="close",
+    )
+    r = run_get_stock_prices(
+        FakeSvc(quote=_quote(), period=period),
+        GetStockPricesInput(stock_code="005930", target_date="2026-07-28"),
+    )
+
+    assert r.status == "ok"
+    assert r.data["quote"] is None
+    assert r.data["requested_date"] == "2026-07-28"
+    assert r.data["period"]["start_trading_day"] == "2026-07-27"
+    assert r.data["period"]["end_trading_day"] == "2026-07-28"
+    assert r.data["period"]["return_pct"] == -10.0
+    assert r.data["period"]["end_price_kind"] == "close"
+    assert r.sources[0].source_id == "price:005930:2026-07-28"
 
 
 # ── no_data ────────────────────────────────────────────────────────

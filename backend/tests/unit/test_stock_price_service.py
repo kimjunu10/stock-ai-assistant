@@ -186,6 +186,46 @@ def test_period_return_no_data():
     assert r is None
 
 
+def test_daily_return_uses_target_and_previous_trading_day():
+    candles = [
+        _mk_candle("2026-07-24", 100000),
+        _mk_candle("2026-07-27", 110000),
+        _mk_candle("2026-07-28", 99000),
+        _mk_candle("2026-07-29", 95000),
+    ]
+
+    r = _svc(FakeToss(candles)).get_daily_return(
+        "005930",
+        target_date=date(2026, 7, 28),
+    )
+
+    assert r is not None
+    assert r.start_trading_day == date(2026, 7, 27)
+    assert r.end_trading_day == date(2026, 7, 28)
+    assert r.start_close == 110000.0
+    assert r.end_close == 99000.0
+    assert r.return_pct == -10.0
+    assert r.end_price_kind == "close"
+
+
+def test_daily_return_holiday_target_snaps_to_previous_trading_day():
+    candles = [
+        _mk_candle("2026-07-23", 100000),
+        _mk_candle("2026-07-24", 105000),
+        _mk_candle("2026-07-27", 110000),
+    ]
+
+    r = _svc(FakeToss(candles)).get_daily_return(
+        "005930",
+        target_date=date(2026, 7, 26),
+    )
+
+    assert r is not None
+    assert r.start_trading_day == date(2026, 7, 23)
+    assert r.end_trading_day == date(2026, 7, 24)
+    assert r.return_pct == 5.0
+
+
 # ── 거래일 선택(휴장일 스냅) ───────────────────────────────────────
 def test_trading_day_snap_start_after_end_before():
     # 07-25(토)·07-26(일) 휴장. start=07-25 → 다음 거래일 07-27, end=07-26 → 직전 07-24.

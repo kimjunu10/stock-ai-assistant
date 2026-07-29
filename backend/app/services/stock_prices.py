@@ -416,6 +416,48 @@ class StockPriceService:
             end_price_kind=live_quote.price_kind if use_live_end else "close",
         )
 
+    def get_daily_return(
+        self,
+        stock_code: str,
+        *,
+        target_date: date,
+        adjusted: bool = True,
+    ) -> PeriodReturn | None:
+        """target_date의 확정 일봉을 직전 거래일 종가와 비교한다.
+
+        target_date가 휴장일이면 그 이전의 가장 가까운 거래일을 대상일로 삼는다.
+        현재가 endpoint는 사용하지 않으므로 과거 일간 등락에 장중 가격이 섞이지 않는다.
+        """
+
+        self._require_supported(stock_code)
+        candles = self._collect_daily(
+            stock_code,
+            earliest=self._days_before(target_date, 14),
+            adjusted=adjusted,
+        )
+        if not candles:
+            return None
+        target = self._snap_on_or_before(candles, target_date)
+        if target is None:
+            return None
+        previous = self._snap_strictly_before(candles, target.trading_day)
+        if previous is None:
+            return None
+        change = target.close - previous.close
+        return_pct = _round2(change / previous.close * 100) if previous.close else 0.0
+        return PeriodReturn(
+            stock_code=stock_code,
+            start_trading_day=previous.trading_day,
+            end_trading_day=target.trading_day,
+            start_close=previous.close,
+            end_close=target.close,
+            change=change,
+            return_pct=return_pct,
+            currency=target.currency,
+            adjusted=adjusted,
+            end_price_kind="close",
+        )
+
     def get_event_return(
         self,
         stock_code: str,

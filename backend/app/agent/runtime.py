@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import date
+from datetime import date, timedelta
 from typing import Literal, get_args
 
 from langchain.agents import create_agent
@@ -38,6 +38,7 @@ from app.agent.prompts import financial_agent_system_prompt
 from app.agent.time_context import (
     RelativePeriod,
     effective_news_relative_period,
+    explicit_relative_period,
     is_event_return_question,
     is_price_driver_question,
     resolve_financial_time_context,
@@ -581,6 +582,7 @@ def build_tools() -> list:
         lookback: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        target_date: str | None = None,
         include_daily: bool = False,
     ) -> str:
         """종목의 **실제 주가**(최근 가격·전일 대비 등락·일봉·기간 가격)를 조회한다.
@@ -590,6 +592,8 @@ def build_tools() -> list:
         - 기간 미지정: 제공자의 최근 가격 + 직전 확정 종가 대비 등락률(백엔드 계산).
         - lookback("1w"|"2w"|"1m"|"3m"|"6m"|"1y"): 그 기간의 실제 수익률(백엔드 계산).
         - start_date/end_date(YYYY-MM-DD): 지정 구간 수익률. 휴장일은 거래일로 스냅된다.
+        - target_date(YYYY-MM-DD): 특정 과거 하루의 확정 등락률. 해당 거래일 종가를
+          직전 거래일 종가와 비교한다.
         - 기간 비교에는 해당 구간의 실제 거래일 가격이 함께 반환되어 UI가 그 구간만
           선그래프로 그린다. 장중 마지막 점은 확정 종가가 아니라 현재가다.
         - include_daily=true는 명시적인 흐름·추이·그래프 요청을 나타내는 힌트다.
@@ -608,6 +612,19 @@ def build_tools() -> list:
             )
         except ValueError as exc:
             return _dump(error(str(exc)))
+        question = getattr(runtime.context, "user_question", None)
+        if explicit_relative_period(question) == "yesterday":
+            current_date = getattr(runtime.context, "current_date", None)
+            if not current_date:
+                return _dump(error("서버의 현재 날짜를 확인할 수 없습니다."))
+            try:
+                target_date = (date.fromisoformat(current_date) - timedelta(days=1)).isoformat()
+            except ValueError:
+                return _dump(error("서버의 날짜 기준이 올바르지 않습니다."))
+            # 모델이 현재가·임의 기간 인자를 함께 보내도 사용자가 명시한 '어제'를 우선한다.
+            lookback = None
+            start_date = None
+            end_date = None
         inp = GetStockPricesInput(
             stock_code=_resolve_stock_code(
                 stock_code,
@@ -617,6 +634,7 @@ def build_tools() -> list:
             lookback=lookback,
             start_date=start_date,
             end_date=end_date,
+            target_date=target_date,
             include_daily=include_daily,
         )
         return _dump(run_get_stock_prices(svc.prices, inp))
